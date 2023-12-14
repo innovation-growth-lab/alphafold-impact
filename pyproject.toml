@@ -1,0 +1,35 @@
+[build-system]
+requires = [ "setuptools",]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "alphafold_impact"
+readme = "README.md"
+dynamic = [ "dependencies", "version",]
+
+[project.scripts]
+alphafold-impact = "alphafold_impact.__main__:main"
+
+[tool.kedro]
+package_name = "alphafold_impact"
+project_name = "alphafold-impact"
+kedro_init_version = "0.19.1"
+tools = "['Linting', 'Custom Logging', 'Data Structure', 'Kedro Viz']"
+
+[tool.ruff]
+line-length = 88
+show-fixes = true
+select = [ "F", "W", "E", "I", "UP", "PL", "T201",]
+ignore = [ "E501",]
+
+[project.entry-points."kedro.hooks"]
+
+[tool.setuptools.dynamic.dependencies]
+file = "requirements.txt"
+
+[tool.setuptools.dynamic.version]
+attr = "alphafold_impact.__version__"
+
+[tool.setuptools.packages.find]
+where = [ "src",]
+namespaces = false
