@@ -36,4 +36,4 @@ You can run the smaller pipelines by using the pipeline tags:
 $ kedro run --tags gtr_funds
 ```
 
-This pipeline dynamically fetches and processes data from various GtR endpoints, as specified in the parameters.
+This pipeline dynamically fetches and proc
