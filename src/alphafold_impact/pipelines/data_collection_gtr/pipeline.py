@@ -21,7 +21,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=W0613
         [
             node(
                 func=fetch_gtr_data,
-                inputs="params:gtr_endpoints",
+                inputs="params:param_requests",
                 outputs="gtr_raw_organisations",
                 name="fetch_gtr_data_node",
             ),
