@@ -24,6 +24,14 @@ logger = logging.getLogger(__name__)
 
 
 def _extract_main_address(addresses):
+    """Extract the main address from the addresses list.
+
+    Args:
+        addresses (List[Dict[str, Any]]): The addresses list.
+
+    Returns:
+        pd.Series: The main address.
+    """
     address = addresses["address"]
     main_address = next(
         (addr for addr in address if addr["type"] == "MAIN_ADDRESS"), None
@@ -35,7 +43,45 @@ def _extract_main_address(addresses):
     )
 
 
-def fetch_gtr_data(parameters: Dict[str, Union[str, int]]) -> List[Dict[str, Any]]:
+def _preprocess_organisations(org_df: pd.DataFrame) -> pd.DataFrame:
+    """Preprocess the organisations data.
+
+    It extracts the main address and drops the "links" column.
+
+    Args:
+        org_df (pd.DataFrame): The organisations data.
+
+    Returns:
+        pd.DataFrame: The preprocessed data.
+    """
+    address_columns = org_df["addresses"].apply(_extract_main_address)
+    address_columns = address_columns.drop("created", axis=1).add_prefix("address_")
+    org_df = org_df.drop("addresses", axis=1).join(address_columns)
+    org_df = org_df.drop(columns=["links"])
+    return org_df
+
+
+def _preprocess_funds(funds_df: pd.DataFrame) -> pd.DataFrame:
+    """Preprocess the funds data.
+
+    Extracts the value in pound (ie. {'currencyCode': 'GBP', 'amount': 283590})
+    for each row and drops the "links" column.
+
+    Args:
+        funds_df (pd.DataFrame): The funds data.
+
+    Returns:
+        pd.DataFrame: The preprocessed data.
+    """
+    funds_df["value"] = funds_df["valuePounds"].apply(lambda x: x["amount"])
+    funds_df = funds_df.drop("valuePounds", axis=1)
+    funds_df = funds_df.drop(columns=["links"])
+    return funds_df
+
+
+def fetch_gtr_data(
+    parameters: Dict[str, Union[str, int]], endpoint
+) -> List[Dict[str, Any]]:
     """Fetch data from the GtR API.
 
     Args:
@@ -45,18 +91,16 @@ def fetch_gtr_data(parameters: Dict[str, Union[str, int]]) -> List[Dict[str, Any
         List[Dict[str, Any]]: The fetched data.
     """
     gtr_config = parameters["gtr_config"]
-    endpoint, key = ( # [TEMP] Hardcoded for now on orgs
-        gtr_config["orgs"]["endpoint"], 
-        gtr_config["orgs"]["key"]
-    )
+    key = endpoint[:-1]
+
     base_url, headers, page_size = (
         gtr_config["base_url"],
         gtr_config["headers"],
-        gtr_config["page_size"]
+        gtr_config["page_size"],
     )
     max_retries, backoff_factor = (
         parameters["max_retries"],
-        parameters["backoff_factor"]
+        parameters["backoff_factor"],
     )
 
     all_data = []
@@ -82,12 +126,12 @@ def fetch_gtr_data(parameters: Dict[str, Union[str, int]]) -> List[Dict[str, Any
 
         logger.info("Fetched page %s from %s", page, endpoint)
         page += 1
-        time.sleep(random.randint(3,10))  # [HACK] Respect web etiquette
+        time.sleep(random.randint(5, 10))  # [HACK] Respect web etiquette
 
     return all_data
 
 
-def preprocess_data_to_df(raw_data: List[Dict[str, Any]]) -> pd.DataFrame:
+def preprocess_data_to_df(raw_data: List[Dict[str, Any]], endpoint) -> pd.DataFrame:
     """Preprocess data to a DataFrame.
 
     Args:
@@ -96,22 +140,8 @@ def preprocess_data_to_df(raw_data: List[Dict[str, Any]]) -> pd.DataFrame:
     Returns:
         pd.DataFrame: The preprocessed data.
     """
-    return pd.DataFrame(raw_data)
-
-
-def preprocess_organisations(org_df: pd.DataFrame) -> pd.DataFrame:
-    """Preprocess the organisations data.
-
-    It extracts the main address and drops the "links" column.
-
-    Args:
-        org_df (pd.DataFrame): The organisations data.
-
-    Returns:
-        pd.DataFrame: The preprocessed data.
-    """
-    address_columns = org_df["addresses"].apply(_extract_main_address)
-    address_columns = address_columns.drop("created", axis=1).add_prefix("address_")
-    org_df = org_df.drop("addresses", axis=1).join(address_columns)
-    org_df = org_df.drop(columns=["links"])
-    return org_df
+    df_data = pd.DataFrame(raw_data)
+    if endpoint == "organisations":
+        return _preprocess_organisations(df_data)
+    elif endpoint == "funds":
+        return _preprocess_funds(df_data)
