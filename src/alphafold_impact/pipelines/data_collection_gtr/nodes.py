@@ -17,6 +17,7 @@ import random
 import time
 from typing import Dict, List, Union, Any
 import requests
+from requests.adapters import HTTPAdapter, Retry
 import pandas as pd
 
 logger = logging.getLogger(__name__)
@@ -43,20 +44,30 @@ def fetch_gtr_data(parameters: Dict[str, Union[str, int]]) -> List[Dict[str, Any
     Returns:
         List[Dict[str, Any]]: The fetched data.
     """
-    endpoint = parameters["endpoint"]
-    key = parameters["key"]
-    page_size = parameters["page_size"]
-    base_url = "https://gtr.ukri.org/gtr/api/"
-    headers = {"Accept": "application/vnd.rcuk.gtr.json-v7"}
+    gtr_config = parameters["gtr_config"]
+    endpoint, key = ( # [TEMP] Hardcoded for now on orgs
+        gtr_config["orgs"]["endpoint"], 
+        gtr_config["orgs"]["key"]
+    )
+    base_url, headers, page_size = (
+        gtr_config["base_url"],
+        gtr_config["headers"],
+        gtr_config["page_size"]
+    )
+    max_retries, backoff_factor = (
+        parameters["max_retries"],
+        parameters["backoff_factor"]
+    )
+
     all_data = []
     page = 1
 
     while True:
         url = f"{base_url}{endpoint}?page={page}&size={page_size}"
-        response = requests.get(url, headers=headers, timeout=30)
-        if response.status_code != 200:
-            logger.error("Failed to fetch data: Status code %s", response.status_code)
-            break
+        s = requests.Session()
+        retries = Retry(total=max_retries, backoff_factor=backoff_factor)
+        s.mount("https://", HTTPAdapter(max_retries=retries))
+        response = s.get(url, headers=headers, timeout=30)
         data = response.json()
         if key in data:
             items = data[key]
