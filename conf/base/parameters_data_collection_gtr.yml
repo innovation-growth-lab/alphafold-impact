@@ -1,11 +1,13 @@
 param_requests:
   gtr_config:
-    orgs:
-      endpoint: organisations
-      key: organisation
     base_url: https://gtr.ukri.org/gtr/api/
     headers:
       Accept: application/vnd.rcuk.gtr.json-v7
     page_size: 20
   max_retries: 5
   backoff_factor: 0.3
+  orgs: organisations
+  projects: funds
+
+orgs: organisations
+funds: funds
