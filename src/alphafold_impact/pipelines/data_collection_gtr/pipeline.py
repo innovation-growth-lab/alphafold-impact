@@ -23,15 +23,14 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=W0613
                 func=fetch_gtr_data,
                 inputs=["params:param_requests", "params:orgs"],
                 outputs="gtr_raw_organisations",
-                tags=["orgs"],
             ),
             node(
                 func=preprocess_data_to_df,
                 inputs=["gtr_raw_organisations", "params:orgs"],
                 outputs="gtr_organisations",
-                tags=["orgs"],
             ),
-        ]
+        ],
+        tags="gtr-orgs",
     )
     funds_pipeline = pipeline(
         [
@@ -47,7 +46,8 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=W0613
                 outputs="gtr_funds",
                 tags=["funds"],
             ),
-        ]
+        ],
+        tags="gtr-funds",
     )
 
     return organisations_pipeline + funds_pipeline
