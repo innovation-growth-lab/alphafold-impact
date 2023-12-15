@@ -1,0 +1,10 @@
+gtr_endpoints:
+  endpoint: organisations
+  key: organisation
+  page_size: 20
+
+address_columns:
+  - address_id
+  - address_created
+  - address_postcode
+  - address_region

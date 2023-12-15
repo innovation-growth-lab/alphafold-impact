@@ -1,6 +1,27 @@
+gtr_raw_organisations:
+  type: json.JSONDataset
+  # filepath: organisations.json
+  filepath: s3://alphafold-impact/data/01_raw/gtr/organisations.json
+  credentials: dev_s3
+
+gtr_organisations:
+  type: pandas.ParquetDataset
+  filepath: s3://alphafold-impact/data/02_intermediate/gtr/organisations.parquet
+  credentials: dev_s3
+  load_args:
+    engine: pyarrowworks_for_concepts:
+  type: ${_json.type}
+  filepath: s3://alphafold-impact/data/01_raw/openalex/works/works_for_concepts.json
+  credentials: s3_credentials
+
 oa_raw_works_for_concepts_and_years:
   type: kedro_datasets.pandas.JSONDataset
   filepath: s3://alphafold-impact/data/01_raw/openalex/works/oa_works_for_concepts_and_years.json
+  credentials: s3_credentials
+
+works_for_concepts:
+  type: ${_json.type}
+  filepath: s3://alphafold-impact/data/01_raw/openalex/works/works_for_concepts.json
   credentials: s3_credentials
 
 oa_int_works_incoming_citations:
