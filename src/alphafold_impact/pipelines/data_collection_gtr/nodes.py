@@ -6,10 +6,8 @@ Functions:
     Fetches data from the GtR API based on the provided parameters.
 
 - preprocess_data_to_df(raw_data: List[Dict[str, Any]]) -> pd.DataFrame:
-    Preprocesses the raw data into a pandas DataFrame.
-
-- preprocess_organisations(org_df: pd.DataFrame) -> pd.DataFrame:
-    Preprocesses the data by extracting the main address and dropping unnecessary columns.
+    Preprocesses the raw data into a pandas DataFrame, and performs some
+    additional preprocessing steps based on the endpoint.
 """
 
 import logging
