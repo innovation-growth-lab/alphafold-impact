@@ -13,6 +13,7 @@ Functions:
 """
 
 import logging
+import random
 import time
 from typing import Dict, List, Union, Any
 import requests
@@ -54,7 +55,7 @@ def fetch_gtr_data(parameters: Dict[str, Union[str, int]]) -> List[Dict[str, Any
         url = f"{base_url}{endpoint}?page={page}&size={page_size}"
         response = requests.get(url, headers=headers, timeout=30)
         if response.status_code != 200:
-            logging.error("Failed to fetch data: Status code %s", response.status_code)
+            logger.error("Failed to fetch data: Status code %s", response.status_code)
             break
         data = response.json()
         if key in data:
@@ -65,12 +66,12 @@ def fetch_gtr_data(parameters: Dict[str, Union[str, int]]) -> List[Dict[str, Any
                 item["page_fetched_from"] = page  # Add page info
                 all_data.append(item)
         else:
-            logging.error("No '%s' key found in the response", key)
+            logger.error("No '%s' key found in the response", key)
             break
 
-        logging.info("Fetched page %s from %s", page, endpoint)
+        logger.info("Fetched page %s from %s", page, endpoint)
         page += 1
-        time.sleep(1)  # [HACK] Respect web etiquette
+        time.sleep(random.randint(3,10))  # [HACK] Respect web etiquette
 
     return all_data
 
