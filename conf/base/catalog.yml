@@ -1,0 +1,12 @@
+gtr_raw_organisations:
+  type: json.JSONDataset
+  # filepath: organisations.json
+  filepath: s3://alphafold-impact/data/01_raw/gtr/organisations.json
+  credentials: dev_s3
+
+gtr_organisations:
+  type: pandas.ParquetDataset
+  filepath: s3://alphafold-impact/data/02_intermediate/gtr/organisations.parquet
+  credentials: dev_s3
+  load_args:
+    engine: pyarrow
