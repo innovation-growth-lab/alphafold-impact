@@ -149,3 +149,10 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# additiona
+session_store.db
+stats.json
+.envrc
+.telemetry
+.vscode
