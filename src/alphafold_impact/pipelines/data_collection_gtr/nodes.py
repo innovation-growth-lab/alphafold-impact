@@ -103,23 +103,32 @@ def fetch_gtr_data(
 
     all_data = []
     page = 1
+    total_pages = 1
 
-    while True:
-        url = f"{base_url}{endpoint}?page={page}&size={page_size}"
-        s = requests.Session()
+    while page <= total_pages:
+        url = f"{base_url}{endpoint}?p={page}&s={page_size}"
+        session = requests.Session()
         retries = Retry(total=max_retries, backoff_factor=backoff_factor)
-        s.mount("https://", HTTPAdapter(max_retries=retries))
-        response = s.get(url, headers=headers, timeout=30)
-        data = response.json()
-        if key in data:
-            items = data[key]
-            if not items:
+        session.mount("https://", HTTPAdapter(max_retries=retries))
+        response = session.get(url, headers=headers, timeout=30)
+        try:
+            data = response.json()
+            if "totalPages" in data and page == 1:
+                logger.info("Total pages: %s", data["totalPages"])
+                total_pages = data["totalPages"]
+            if key in data:
+                items = data[key]
+                if not items:
+                    logger.info("No more data to fetch. Exiting loop.")
+                    break
+                for item in items:
+                    item["page_fetched_from"] = page  # Add page info
+                    all_data.append(item)
+            else:
+                logger.error("No '%s' key found in the response", key)
                 break
-            for item in items:
-                item["page_fetched_from"] = page  # Add page info
-                all_data.append(item)
-        else:
-            logger.error("No '%s' key found in the response", key)
+        except ValueError: # [HACK] includes simplejson.decoder.JSONDecodeError
+            logger.error("Failed to decode JSON response")
             break
 
         logger.info("Fetched page %s from %s", page, endpoint)
