@@ -3,6 +3,7 @@
 #
 # Documentation for this file format can be found in "Parameters"
 # Link: https://docs.kedro.org/en/0.19.1/configuration/parameters.html
+
 api:
   mailto: data_analytics@nesta.org.uk
   perpage: "200"
@@ -15,3 +16,11 @@ direction:
   outgoing: cites
 
 subfolder: work_id
+
+test_concept_ids:
+  - "c10010492" # Protein sequencing
+  - "c204328495" # Protein folding
+
+test_publication_years:
+  - 2022
+  - 2023
