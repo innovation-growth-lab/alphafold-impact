@@ -1,13 +1,13 @@
 from kedro.pipeline import Pipeline, node, pipeline
 
-from .nodes import oa_works_for_concepts_and_years, save_oa_works_to_s3
+from .nodes import retrieve_oa_works_for_concepts_and_years, save_oa_works_to_s3
 
 
 def create_pipeline(**kwargs) -> Pipeline:
     return pipeline(
         [
             node(
-                func=oa_works_for_concepts_and_years,
+                func=retrieve_oa_works_for_concepts_and_years,
                 inputs=[
                     "params:concept_ids",
                     "params:publication_years",

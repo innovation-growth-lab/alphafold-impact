@@ -6,7 +6,7 @@ import json
 from kedro_datasets.json import JSONDataset
 
 
-def oa_works_for_single_concept_and_year(
+def retrieve_oa_works_for_single_concept_and_year(
     concept_id: str, year: int, per_page: int
 ) -> List[dict]:
     """
@@ -74,7 +74,7 @@ def chunk_list(input_list: List[str], chunk_size: int) -> List[List[str]]:
     ]
 
 
-def oa_works_for_concepts_and_years(
+def retrieve_oa_works_for_concepts_and_years(
     concept_ids: List[str],
     publication_years: List[int],
     chunk_size: int = 40,
@@ -99,7 +99,9 @@ def oa_works_for_concepts_and_years(
     for year in tqdm(publication_years, desc="Years"):
         for concept_chunk in tqdm(concept_chunks, desc="Concept Chunks", leave=False):
             for concept_id in tqdm(concept_chunk, desc="Concepts", leave=False):
-                works = oa_works_for_single_concept_and_year(concept_id, year, per_page)
+                works = retrieve_oa_works_for_single_concept_and_year(
+                    concept_id, year, per_page
+                )
                 all_works.extend(works)
     n_works = len(works)
     print(f"Retrieved {n_works} works")
