@@ -1,6 +1,6 @@
 from kedro.pipeline import Pipeline, node, pipeline
 
-from .nodes import oa_works_for_concepts_and_years
+from .nodes import oa_works_for_concepts_and_years, save_oa_works_to_s3
 
 
 def create_pipeline(**kwargs) -> Pipeline:
@@ -12,8 +12,12 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "params:concept_ids",
                     "params:publication_years",
                 ],
-                outputs="oa_works",
-                name="retrieve_oa_works_for_concepts_and_years_node",
+                outputs="oa_works_for_concepts_list",
+            ),
+            node(
+                func=save_oa_works_to_s3,
+                inputs="oa_works_for_concepts_list",
+                outputs="oa_works_for_concepts_json",
             ),
         ]
     )
