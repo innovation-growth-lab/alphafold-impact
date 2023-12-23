@@ -2,6 +2,8 @@ import requests
 from tqdm import tqdm
 import math
 from typing import List
+import json
+from kedro_datasets.json import JSONDataset
 
 
 def oa_works_for_single_concept_and_year(
@@ -20,8 +22,8 @@ def oa_works_for_single_concept_and_year(
     """
     base_url = "https://api.openalex.org/works"
     works = []
-    next_cursor = "*"  # Initialize the cursor
-    first_request = True  # Flag to indicate the first request
+    next_cursor = "*"
+    first_request = True
 
     while True:
         params = {
@@ -59,7 +61,7 @@ def oa_works_for_single_concept_and_year(
             )
             break
 
-    if not first_request:  # Close the page progress bar if it was used
+    if not first_request:
         page_progress.close()
 
     return works
@@ -101,4 +103,14 @@ def oa_works_for_concepts_and_years(
                 all_works.extend(works)
     n_works = len(works)
     print(f"Retrieved {n_works} works")
-    return all_works
+    return works
+
+
+def save_oa_works_to_s3(works: List[dict]) -> None:
+    """Transforms OpenAlex works list into json object and saves to S3"""
+    json_works = json.dumps(works)
+    json_dataset = JSONDataset(
+        filepath="s3://alphafold-impact/data/01_raw/openalex/works/works_for_concepts.json"
+    )
+    json_dataset.save(json_works)
+    return json_dataset
