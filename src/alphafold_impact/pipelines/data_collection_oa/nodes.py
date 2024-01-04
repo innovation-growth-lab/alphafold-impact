@@ -110,9 +110,8 @@ def retrieve_oa_works_for_concepts_and_years(
 
 def save_oa_works_to_s3(works: List[dict]) -> JSONDataset:
     """Transforms OpenAlex works list into json object and saves to S3"""
-    json_works = json.dumps(works)
     json_dataset = JSONDataset(
         filepath="s3://alphafold-impact/data/01_raw/openalex/works/works_for_concepts.json"
     )
-    json_dataset.save(json_works)
+    json_dataset.save(works)
     return json_dataset
