@@ -11,3 +11,7 @@ kedro~=0.19.1
 ruff~=0.0.290
 scikit-learn~=1.0
 seaborn~=0.12.1
+transformers~=4.36.2
+torch~=2.1.2
+torchvision~=0.16.2
+tensorflow~=2.15.0
