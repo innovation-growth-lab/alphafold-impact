@@ -2,7 +2,6 @@ import requests
 from tqdm import tqdm
 import math
 from typing import List
-import json
 from kedro_datasets.json import JSONDataset
 
 
