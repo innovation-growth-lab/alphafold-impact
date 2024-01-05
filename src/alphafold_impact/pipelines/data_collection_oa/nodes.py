@@ -17,7 +17,6 @@ from typing import Iterator, List, Dict, Sequence, Union
 from kedro.io import AbstractVersionedDataset
 from requests.adapters import HTTPAdapter, Retry
 import requests
-from typing import List
 
 logger = logging.getLogger(__name__)
 
