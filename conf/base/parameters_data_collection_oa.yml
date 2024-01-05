@@ -1,0 +1,18 @@
+# This is a boilerplate parameters config generated for pipeline 'data_collection_oa'
+# using Kedro 0.19.1.
+#
+# Documentation for this file format can be found in "Parameters"
+# Link: https://docs.kedro.org/en/0.19.1/configuration/parameters.html
+api:
+  mailto: data_analytics@nesta.org.uk
+  perpage: "200"
+  
+get:
+  work_id: W3177828909 
+  alphafold_id: W3177828909 # Highly accurate and fast protein structure prediction with AlphaFold
+  
+direction: 
+  incoming: cited_by
+  outgoing: cites
+
+subfolder: work_id

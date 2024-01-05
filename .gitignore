@@ -156,3 +156,4 @@ stats.json
 .envrc
 .telemetry
 .vscode
+__pycache__/
