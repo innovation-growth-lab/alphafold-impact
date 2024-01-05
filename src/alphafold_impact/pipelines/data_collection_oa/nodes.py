@@ -104,13 +104,4 @@ def retrieve_oa_works_for_concepts_and_years(
                 all_works.extend(works)
     n_works = len(works)
     print(f"Retrieved {n_works} works")
-    return works
-
-
-def save_oa_works_to_s3(works: List[dict]) -> JSONDataset:
-    """Transforms OpenAlex works list into json object and saves to S3"""
-    json_dataset = JSONDataset(
-        filepath="s3://alphafold-impact/data/01_raw/openalex/works/works_for_concepts.json"
-    )
-    json_dataset.save(works)
-    return json_dataset
+    return pd.DataFrame(works)
