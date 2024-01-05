@@ -1,8 +1,8 @@
 import requests
-from tqdm import tqdm
 import math
 from typing import List
-from kedro_datasets.json import JSONDataset
+from tqdm import tqdm
+import pandas as pd
 
 
 def retrieve_oa_works_for_single_concept_and_year(
