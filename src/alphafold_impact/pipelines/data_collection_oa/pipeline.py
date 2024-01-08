@@ -14,12 +14,12 @@ To run this pipeline, use the following command:
 
 To run this pipeline with a specific work ID, use the following command:
 
-        $ kedro run --pipeline data_collection_oa --params=get.work_id=<work_id> 
-        (ie. --params=get.work_id=W2741809807)
+        $ kedro run --pipeline data_collection_oa --params get.work_id=<work_id> 
+        (ie. --params get.work_id=W2741809807)
 
 To run this pipeline with a specific direction, use the following command:
 
-        $ kedro run --pipeline data_collection_oa --tags=<direction> (ie. --tags=incoming)
+        $ kedro run --pipeline data_collection_oa --tags <direction> (ie. --tags incoming)
 
 The pipeline also includes a `downstream_impact_pipeline` that is used to collect the
 incoming citations for the papers that cite the given work ID. This pipeline is used to
@@ -28,7 +28,11 @@ work that cites the work_id.
 
 To run this pipeline, use the following command:
     
-            $ kedro run --pipeline data_collection_oa --tags=downstream_impact
+            $ kedro run --pipeline data_collection_oa --tags downstream_impact
+
+The pipeline will save the data to the following location:
+            s3://alphafold-impact/data/02_intermediate/openalex/works/cited_by/downstream/<work_id>
+using a partitioned dataset.
 """
 
 from kedro.pipeline import Pipeline, node, pipeline
@@ -49,6 +53,20 @@ template_pipeline = pipeline(
             outputs="template",
         )
     ]
+)
+
+incoming_pipeline = mpl(
+    pipe=template_pipeline,
+    parameters={"params:direction.template": "params:direction.incoming"},
+    outputs={"template": "works_outgoing_citations"},
+    tags="incoming",
+)
+
+outgoing_pipeline = mpl(
+    pipe=template_pipeline,
+    parameters={"params:direction.template": "params:direction.outgoing"},
+    outputs={"template": "works_incoming_citations"},
+    tags="outgoing",
 )
 
 downstream_impact_pipeline = pipeline(
@@ -73,20 +91,6 @@ downstream_impact_pipeline = pipeline(
         ),
     ],
     tags="downstream_impact",
-)
-
-incoming_pipeline = mpl(
-    pipe=template_pipeline,
-    parameters={"params:direction.template": "params:direction.incoming"},
-    outputs={"template": "works_outgoing_citations"},
-    tags="incoming",
-)
-
-outgoing_pipeline = mpl(
-    pipe=template_pipeline,
-    parameters={"params:direction.template": "params:direction.outgoing"},
-    outputs={"template": "works_incoming_citations"},
-    tags="outgoing",
 )
 
 

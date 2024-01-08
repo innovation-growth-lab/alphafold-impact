@@ -8,8 +8,7 @@ api:
   perpage: "200"
   
 get:
-  work_id: W3177828909 
-  alphafold_id: W3177828909 # Highly accurate and fast protein structure prediction with AlphaFold
+  work_id: W3177828909 # Highly accurate and fast protein structure prediction with AlphaFold
   
 direction: 
   incoming: cited_by
