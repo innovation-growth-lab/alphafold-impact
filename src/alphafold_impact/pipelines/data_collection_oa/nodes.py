@@ -1,7 +1,7 @@
-import requests
-import math
-from typing import List
 import logging
+from typing import List
+import requests
+from requests.adapters import HTTPAdapter, Retry
 import pandas as pd
 
 
@@ -44,23 +44,34 @@ def retrieve_oa_works_chunk(
     next_cursor = "*"
     works = []
 
+    session = requests.Session()
+    retries = Retry(
+        total=5,
+        backoff_factor=0.3,
+    )
+    session.mount("https://", HTTPAdapter(max_retries=retries))
+
     while True:
         params = {
             "filter": create_concept_year_filter(concept_ids, years),
             "per_page": works_per_page,
             "cursor": next_cursor,
         }
-        response = requests.get(base_url, params=params)
+        try:
+            response = session.get(base_url, params=params, timeout=30)
 
-        if response.status_code == 200:
-            data = response.json()
-            current_works = data.get("results", [])
-            works.extend(current_works)
-            next_cursor = data.get("meta", {}).get("next_cursor")
-            if not (current_works and next_cursor):
+            if response.status_code == 200:
+                data = response.json()
+                current_works = data.get("results", [])
+                works.extend(current_works)
+                next_cursor = data.get("meta", {}).get("next_cursor")
+                if not (current_works and next_cursor):
+                    break
+            else:
+                logger.error(f"Error fetching data: {response.status_code}")
                 break
-        else:
-            logger.error(f"Error fetching data: {response.status_code}")
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Request failed: {e}")
             break
 
     return works
