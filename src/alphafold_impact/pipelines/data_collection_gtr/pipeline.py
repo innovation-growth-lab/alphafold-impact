@@ -53,11 +53,3 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=W0613
         pipelines.append(pipe)
 
     return sum(pipelines)
-
-
-# [TODO] I would like to have a pipeline that can iterate over a number of possible endpoints for GtR data,
-#       but I'm not sure how to do this with Kedro. I think I need to define a pipeline for each endpoint,
-#       and then have a pipeline that calls each of these pipelines in turn. For now the best I've managed
-#       is to have two separate pipelines, one for organisations and one for funds. I can use tags to
-#       distinguish between the two. There's probably a better solution using modular pipelines:
-#       https://docs.kedro.org/en/stable/nodes_and_pipelines/modular_pipelines.html
