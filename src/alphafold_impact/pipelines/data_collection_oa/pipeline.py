@@ -1,3 +1,10 @@
+"""
+Pipeline for collecting OpenAlex data from a list of concepts and years.
+
+To run this pipeline, use the following command:
+
+        $ kedro run --pipeline data_collection_oa
+"""
 from kedro.pipeline import Pipeline, node, pipeline
 from .nodes import retrieve_oa_works_for_concepts_and_years
 

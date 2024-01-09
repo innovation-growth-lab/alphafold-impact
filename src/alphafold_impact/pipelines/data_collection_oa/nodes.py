@@ -1,3 +1,13 @@
+"""
+This module contains nodes for collecting OpenAlex works for a list of concept IDs.
+
+Functions:
+    create_concept_year_filter: Creates an API query filter string for the OpenAlex API.
+    retrieve_oa_works_chunk: Retrieves a chunk of OpenAlex works for a chunk of concept IDs.
+    chunk_list: Divides the input list into chunks of specified size.
+    retrieve_oa_works_for_concepts_and_years: Retrieves OpenAlex works for the specified
+        concept IDs and publication years.
+"""
 import logging
 from typing import List
 import requests
@@ -14,11 +24,11 @@ def create_concept_year_filter(concept_ids: List[str], years: List[int]) -> str:
     based on lists of concept IDs and years.
 
     Args:
-        concept_ids: A list of concept IDs (e.g., ['c12345', 'c67890']).
-        years: A list of publication years (e.g., [2020, 2021]).
+        concept_ids (List[str]): A list of concept IDs (e.g., ['c12345', 'c67890']).
+        years (List[int]): A list of publication years (e.g., [2020, 2021]).
 
     Returns:
-        A formatted API query filter string.
+        str: A formatted API query filter string.
     """
     year_filter = f"publication_year:{'|'.join(map(str, years))}" if years else ""
     concept_filter = f"concepts.id:{'|'.join(concept_ids)}" if concept_ids else ""
@@ -33,12 +43,12 @@ def retrieve_oa_works_chunk(
     and publication years.
 
     Args:
-        concept_ids: A list of OpenAlex concept IDs.
-        years: A list of publication years.
-        works_per_page: The number of results to retrieve per API request.
+        concept_ids (List[str]): A list of OpenAlex concept IDs.
+        years (List[int]): A list of publication years.
+        works_per_page (int): The number of results to retrieve per API request.
 
     Returns:
-        List containing works for the given concept IDs and years.
+        List[dict]: List containing works for the given concept IDs and years.
     """
     base_url = "https://api.openalex.org/works"
     next_cursor = "*"
@@ -68,17 +78,26 @@ def retrieve_oa_works_chunk(
                 if not (current_works and next_cursor):
                     break
             else:
-                logger.error(f"Error fetching data: {response.status_code}")
+                logger.error("Error fetching data: %s", response.status_code)
                 break
         except requests.exceptions.RequestException as e:
-            logger.error(f"Request failed: {e}")
+            logger.error("Request failed: %s", e)
             break
 
     return works
 
 
 def chunk_list(input_list: List[str], chunk_size: int) -> List[List[str]]:
-    """Divides the input list into chunks of specified size."""
+    """
+    Divides the input list into chunks of specified size.
+
+    Args:
+        input_list (List[str]): The input list to be divided into chunks.
+        chunk_size (int): The size of each chunk.
+
+    Returns:
+        List[List[str]]: A list of chunks.
+    """
     return [
         input_list[i : i + chunk_size] for i in range(0, len(input_list), chunk_size)
     ]
@@ -97,24 +116,24 @@ def retrieve_oa_works_for_concepts_and_years(
     compiles the results into a single deduplicated DataFrame.
 
     Args:
-        concept_ids: A list of OpenAlex concept IDs.
-        publication_years: A list of publication years.
-        chunk_size: The number of concept IDs to process in each API call (default is 40).
-        per_page: The number of results to retrieve per API call (default is 200).
+        concept_ids (List[str]): A list of OpenAlex concept IDs.
+        publication_years (List[int]): A list of publication years.
+        chunk_size (int, optional): The number of concept IDs to process in each API call (default is 40).
+        per_page (int, optional): The number of results to retrieve per API call (default is 200).
 
     Returns:
-        A pandas DataFrame containing all unique retrieved works.
+        pd.DataFrame: A pandas DataFrame containing all unique retrieved works.
     """
     all_works = []
     concept_id_chunks = chunk_list(concept_ids, chunk_size)
 
     for index, concept_chunk in enumerate(concept_id_chunks, start=1):
-        logger.info(f"Processing chunk {index}/{len(concept_id_chunks)}")
+        logger.info("Processing chunk %s/%s", index, len(concept_id_chunks))
         chunk_works = retrieve_oa_works_chunk(
             concept_chunk, publication_years, per_page
         )
         all_works.extend(chunk_works)
 
     all_works_df = pd.DataFrame(all_works).drop_duplicates(subset=["id"])
-    logger.info(f"Retrieved {len(all_works_df)} works.")
+    logger.info("Retrieved %s works.", len(all_works_df))
     return all_works_df
