@@ -2,12 +2,9 @@
 This module contains functions for fetching and preprocessing data from the GtR API.
 
 Functions:
-- fetch_gtr_data(parameters: Dict[str, Union[str, int]]) -> List[Dict[str, Any]]:
-    Fetches data from the GtR API based on the provided parameters.
-
-- preprocess_data_to_df(raw_data: List[Dict[str, Any]]) -> pd.DataFrame:
-    Preprocesses the raw data into a pandas DataFrame, and performs some
-    additional preprocessing steps based on the endpoint.
+    fetch_gtr_data: Fetches data from the GtR API based on the provided parameters.
+    preprocess_data_to_df: Preprocesses the fetched data to a DataFrame.
+    GtRDataPreprocessor: Class for preprocessing GtR data.
 """
 
 import logging
@@ -17,64 +14,149 @@ from typing import Dict, List, Union, Any
 import requests
 from requests.adapters import HTTPAdapter, Retry
 import pandas as pd
+from .utils import (
+    api_config,
+    extract_main_address,
+    extract_value_from_nested_dict,
+    transform_nested_dict
+)
 
 logger = logging.getLogger(__name__)
 
 
-def _extract_main_address(addresses):
-    """Extract the main address from the addresses list.
-
-    Args:
-        addresses (List[Dict[str, Any]]): The addresses list.
-
-    Returns:
-        pd.Series: The main address.
+class GtRDataPreprocessor:
     """
-    address = addresses["address"]
-    main_address = next(
-        (addr for addr in address if addr["type"] == "MAIN_ADDRESS"), None
-    )
-    return (
-        pd.Series(main_address)
-        if main_address
-        else pd.Series([None] * 4, index=["id", "created", "postCode", "region"])
-    )
+    Class for preprocessing GtR data.
 
-
-def _preprocess_organisations(org_df: pd.DataFrame) -> pd.DataFrame:
-    """Preprocess the organisations data.
-
-    It extracts the main address and drops the "links" column.
-
-    Args:
-        org_df (pd.DataFrame): The organisations data.
-
-    Returns:
-        pd.DataFrame: The preprocessed data.
+    This class provides methods to preprocess different types of GtR data, such as organisations,
+    funds, publications, and projects.
     """
-    address_columns = org_df["addresses"].apply(_extract_main_address)
-    address_columns = address_columns.drop("created", axis=1).add_prefix("address_")
-    org_df = org_df.drop("addresses", axis=1).join(address_columns)
-    org_df = org_df.drop(columns=["links"])
-    return org_df
 
+    def __init__(self) -> None:
+        self.methods = {
+            "organisations": self._preprocess_organisations,
+            "funds": self._preprocess_funds,
+            "outcomes/publications": self._preprocess_publications,
+            "projects": self._preprocess_projects,
+        }
 
-def _preprocess_funds(funds_df: pd.DataFrame) -> pd.DataFrame:
-    """Preprocess the funds data.
+    def _preprocess_organisations(self, org_df: pd.DataFrame) -> pd.DataFrame:
+        """Preprocess the organisations data.
 
-    Extracts the value in pound (ie. {'currencyCode': 'GBP', 'amount': 283590})
-    for each row and drops the "links" column.
+        It extracts the main address and drops the "links" column.
 
-    Args:
-        funds_df (pd.DataFrame): The funds data.
+        Args:
+            org_df (pd.DataFrame): The organisations data.
 
-    Returns:
-        pd.DataFrame: The preprocessed data.
-    """
-    funds_df["value"] = funds_df["valuePounds"].apply(lambda x: x["amount"])
-    funds_df = funds_df.drop("valuePounds", axis=1)
-    funds_df = funds_df.drop(columns=["links"])
-    return funds_df
+        Returns:
+            pd.DataFrame: The preprocessed data.
+        """
+        address_columns = org_df["addresses"].apply(extract_main_address)
+        address_columns = address_columns.drop("created", axis=1).add_prefix("address_")
+        org_df = org_df.drop("addresses", axis=1).join(address_columns)
+        org_df = org_df.drop(columns=["links"])
+        return org_df
+
+    def _preprocess_funds(self, funds_df: pd.DataFrame) -> pd.DataFrame:
+        """Preprocess the funds data.
+
+        Extracts the value in pound (ie. {'currencyCode': 'GBP', 'amount': 283590})
+        for each row and drops the "links" column.
+
+        Args:
+            funds_df (pd.DataFrame): The funds data.
+
+        Returns:
+            pd.DataFrame: The preprocessed data.
+        """
+        funds_df["value"] = funds_df["valuePounds"].apply(lambda x: x["amount"])
+        funds_df = funds_df.drop("valuePounds", axis=1)
+        funds_df = funds_df.drop(columns=["links"])
+        return funds_df
+
+    def _preprocess_publications(self, publications_df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Preprocesses the publications DataFrame by extracting project_id, renaming
+        columns, and selecting specific columns.
+
+        Args:
+            publications_df (pd.DataFrame): The input DataFrame containing publications data.
+
+        Returns:
+            pd.DataFrame: The preprocessed DataFrame with selected columns.
+
+        """
+        # extract project_id
+        publications_df["project_id"] = publications_df["links"].apply(
+            lambda x: extract_value_from_nested_dict(
+                data=x,
+                outer_key="link",
+                inner_key="rel",
+                inner_value="PROJECT",
+                extract_key="href",
+            )
+        )
+
+        # rename cols
+        publications_df = publications_df.rename(
+            columns={
+                "id": "outcome_id",
+                "journalTitle": "journal_title",
+                "publicationUrl": "publication_url",
+            }
+        )
+
+        return publications_df[
+            [
+                "project_id",
+                "outcome_id",
+                "title",
+                "type",
+                "journal_title",
+                "publication_url",
+                "doi",
+                "author",
+            ]
+        ]
+
+    def _preprocess_projects(self, projects_df: pd.DataFrame) -> pd.DataFrame:
+        
+        columns_to_transform = {
+            "identifiers": ["value", "type"],
+            "researchSubjects": ["id", "text", "percentage"],
+            "researchTopics": ["id", "text", "percentage"]
+        }
+
+        for col, keys in columns_to_transform.items():
+            projects_df = transform_nested_dict(projects_df, col, keys)
+
+        # rename cols
+        projects_df = projects_df.rename(
+            columns={
+                "grantCategory": "grant_category",
+                "abstractText": "abstract_text",
+                "leadFunder": "lead_funder",
+                "leadOrganisationDepartment": "lead_org_department",
+                "researchTopics": "research_topics",
+                "researchSubjects": "research_subjects",
+                "id": "project_id",
+            }
+        )
+
+        return projects_df[
+            [
+                "project_id",
+                "identifiers",
+                "title",
+                "abstract_text",
+                "status",
+                "grant_category",
+                "lead_funder",
+                "lead_org_department",
+                "research_topics",
+                "research_subjects",
+            ]
+        ]
 
 
 def fetch_gtr_data(
@@ -88,36 +170,27 @@ def fetch_gtr_data(
     Returns:
         List[Dict[str, Any]]: The fetched data.
     """
-    gtr_config = parameters["gtr_config"]
-    key = endpoint[:-1]
-
-    base_url, headers, page_size = (
-        gtr_config["base_url"],
-        gtr_config["headers"],
-        gtr_config["page_size"],
-    )
-    max_retries, backoff_factor = (
-        parameters["max_retries"],
-        parameters["backoff_factor"],
-    )
+    config = api_config(parameters, endpoint)
 
     all_data = []
     page = 1
     total_pages = 1
 
     while page <= total_pages:
-        url = f"{base_url}{endpoint}?p={page}&s={page_size}"
+        url = f"{config['base_url']}{endpoint}?p={page}&s={config['page_size']}"
         session = requests.Session()
-        retries = Retry(total=max_retries, backoff_factor=backoff_factor)
+        retries = Retry(
+            total=config["max_retries"], backoff_factor=config["backoff_factor"]
+        )
         session.mount("https://", HTTPAdapter(max_retries=retries))
-        response = session.get(url, headers=headers, timeout=30)
+        response = session.get(url, headers=config["headers"], timeout=30)
         try:
             data = response.json()
             if "totalPages" in data and page == 1:
                 logger.info("Total pages: %s", data["totalPages"])
                 total_pages = data["totalPages"]
-            if key in data:
-                items = data[key]
+            if config["key"] in data:
+                items = data[config["key"]]
                 if not items:
                     logger.info("No more data to fetch. Exiting loop.")
                     break
@@ -125,15 +198,15 @@ def fetch_gtr_data(
                     item["page_fetched_from"] = page  # Add page info
                     all_data.append(item)
             else:
-                logger.error("No '%s' key found in the response", key)
+                logger.error("No '%s' key found in the response", config["key"])
                 break
-        except ValueError: # [HACK] includes simplejson.decoder.JSONDecodeError
+        except ValueError:  # [HACK] includes simplejson.decoder.JSONDecodeError
             logger.error("Failed to decode JSON response")
             break
 
         logger.info("Fetched page %s from %s", page, endpoint)
         page += 1
-        time.sleep(random.randint(5, 10))  # [HACK] Respect web etiquette
+        time.sleep(random.randint(2, 3))  # [HACK] Respect web etiquette
 
     return all_data
 
@@ -148,7 +221,5 @@ def preprocess_data_to_df(raw_data: List[Dict[str, Any]], endpoint) -> pd.DataFr
         pd.DataFrame: The preprocessed data.
     """
     df_data = pd.DataFrame(raw_data)
-    if endpoint == "organisations":
-        return _preprocess_organisations(df_data)
-    elif endpoint == "funds":
-        return _preprocess_funds(df_data)
+    preprocess = GtRDataPreprocessor()
+    return preprocess.methods[endpoint](df_data)
