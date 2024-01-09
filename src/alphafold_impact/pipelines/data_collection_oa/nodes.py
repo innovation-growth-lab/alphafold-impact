@@ -2,14 +2,15 @@
 This module contains functions for fetching and preprocessing data from the GtR API.
 
 Functions:
-- _revert_abstract_index(abstract_inverted_index: Dict[str, Sequence[int]]) -> str: 
-    Reverts the abstract inverted index to the original text.
-- _parse_results(response: List[Dict]) -> Dict[str, List[str]]: 
-    Parses OpenAlex API response to retain specific information.
-- _citation_works_generator(mailto: str, perpage: str, work_id: str, direction: str) -> Iterator[list]: 
-    Creates a generator that yields a list of works from the OpenAlex API based on a given work ID.
-- collect_citation_papers(mailto: str, perpage: str, work_id: str, direction: str) -> list: 
-    Collects all papers cited by specific work IDs.
+    collect_citation_papers: Collects all papers cited by specific work IDs.
+    load_work_ids: Loads the file corresponding to a particular work_id in a PartitionedDataSet,
+        extracts all ids, and returns these as a list.
+
+Internal functions:
+    _revert_abstract_index: Reverts the abstract inverted index to the original text.
+    _parse_results: Parses OpenAlex API response to retain basic variables.
+    _citation_works_generator: Creates a generator that yields a list of works from the OpenAlex API based on a
+        given work ID.
 """
 
 import logging
@@ -95,6 +96,8 @@ def _citation_works_generator(
     given work ID.
 
     Args:
+        mailto (str): The email address to use for the API.
+        perpage (str): The number of results to return per page.
         work_id (str): A single work ID to filter by 'cites'.
         direction (str): The direction of the citation. Either 'cites' or 'cited_by'.
 
@@ -136,8 +139,10 @@ def collect_citation_papers(
     """Collects all papers cited by specific work IDs.
 
     Args:
+        mailto (str): The email address to use for the API.
         work_ids (List[str]): A list of work IDs to filter by either 'cites' or 'cited_by'.
         direction (str): The direction of the citation. Either 'cites' or 'cited_by'.
+        perpage (str): The number of results to return per page.
 
     Returns:
         dict: A dictionary containing the work_id as key and the list of papers as value.

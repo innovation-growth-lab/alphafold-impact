@@ -23,7 +23,3 @@ downstream_incoming_citations:
   filename_suffix: ".json"
   path: "s3://alphafold-impact/data/02_intermediate/openalex/works/cited_by/downstream/${globals:get.work_id, undefined}/"
   credentials: s3_credentials
-
-# TODO: The intention is for downstream_incoming_citations to create a subfolder given the work_id. This
-# is not working at the moment, although it is possible using runtime arguments.
-# https://docs.kedro.org/en/stable/configuration/advanced_configuration.html#how-to-override-configuration-with-runtime-parameters-with-the-omegaconfigloader
