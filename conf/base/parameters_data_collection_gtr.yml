@@ -6,8 +6,9 @@ param_requests:
     page_size: 100
   max_retries: 5
   backoff_factor: 0.3
-  orgs: organisations
-  projects: funds
 
-orgs: organisations
-funds: funds
+endpoints:
+  orgs: organisations
+  funds: funds
+  publications: outcomes/publications
+  projects: projects
