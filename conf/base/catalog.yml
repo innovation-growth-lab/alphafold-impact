@@ -1,0 +1,25 @@
+works_for_concepts:
+  type: ${_json.type}
+  filepath: s3://alphafold-impact/data/01_raw/openalex/works/works_for_concepts.json
+  credentials: s3_credentials
+
+works_incoming_citations:
+  type: partitions.PartitionedDataset
+  dataset: ${_json.type}
+  filename_suffix: ".json"
+  path: s3://alphafold-impact/data/02_intermediate/openalex/works/cited_by/
+  credentials: s3_credentials
+
+works_outgoing_citations:
+  type: partitions.PartitionedDataset
+  dataset: ${_json.type}
+  filename_suffix: ".json"
+  path: s3://alphafold-impact/data/02_intermediate/openalex/works/cites/
+  credentials: s3_credentials
+
+downstream_incoming_citations:
+  type: partitions.PartitionedDataset
+  dataset: ${_json.type}
+  filename_suffix: ".json"
+  path: "s3://alphafold-impact/data/02_intermediate/openalex/works/cited_by/downstream/${globals:get.work_id, undefined}/"
+  credentials: s3_credentials

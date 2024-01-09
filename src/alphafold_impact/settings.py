@@ -32,12 +32,11 @@ CONFIG_LOADER_CLASS = OmegaConfigLoader
 CONFIG_LOADER_ARGS = {
       "base_env": "base",
       "default_run_env": "local",
-#       "config_patterns": {
-#           "spark" : ["spark*/"],
-#           "parameters": ["parameters*", "parameters*/**", "**/parameters*"],
-#       }
+      "config_patterns": {
+            # "parameters": ["parameters*", "parameters*/**", "**/parameters*", "globals*"],
+            "globals": ["parameters*", "parameters*/**", "**/parameters*", "globals*"]
+      }
 }
-
 # Class that manages Kedro's library components.
 # from kedro.framework.context import KedroContext
 # CONTEXT_CLASS = KedroContext
