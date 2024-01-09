@@ -1,27 +1,45 @@
-gtr_raw_organisations:
-  type: json.JSONDataset
-  filepath: s3://alphafold-impact/data/01_raw/gtr/organisations.json
+_gtr_raw: &_gtr_raw
+  type: ${_json.type}
   credentials: s3_credentials
 
-gtr_organisations:
+_gtr_intermediate: &_gtr_intermediate
   type: pandas.ParquetDataset
-  filepath: s3://alphafold-impact/data/02_intermediate/gtr/organisations.parquet
   credentials: s3_credentials
   load_args:
     engine: pyarrow
+
+gtr_raw_projects:
+  <<: *_gtr_raw
+  filepath: s3://alphafold-impact/data/01_raw/gtr/projects.json
+
+gtr_raw_publications:
+  <<: *_gtr_raw
+  filepath: s3://alphafold-impact/data/01_raw/gtr/outcomes/publications.json
+
+gtr_raw_organisations:
+  <<: *_gtr_raw
+  filepath: s3://alphafold-impact/data/01_raw/gtr/organisations.json
 
 gtr_raw_funds:
-  type: json.JSONDataset
+  <<: *_gtr_raw
   filepath: s3://alphafold-impact/data/01_raw/gtr/funds.json
-  credentials: s3_credentials
 
-gtr_funds:
-  type: pandas.ParquetDataset
+gtr_intermediate_projects:
+  <<: *_gtr_intermediate
+  filepath: s3://alphafold-impact/data/02_intermediate/gtr/projects.parquet
+
+gtr_intermediate_publications:
+  <<: *_gtr_intermediate
+  filepath: s3://alphafold-impact/data/02_intermediate/gtr/outcomes/publications.parquet
+
+gtr_intermediate_organisations:
+  <<: *_gtr_intermediate
+  filepath: s3://alphafold-impact/data/02_intermediate/gtr/organisations.parquet
+
+gtr_intermediate_funds:
+  <<: *_gtr_intermediate
   filepath: s3://alphafold-impact/data/02_intermediate/gtr/funds.parquet
-  credentials: s3_credentials
-  load_args:
-    engine: pyarrow
-    
+  
 works_for_concepts:
   type: ${_json.type}
   filepath: s3://alphafold-impact/data/01_raw/openalex/works/works_for_concepts.json
@@ -37,21 +55,21 @@ works_for_concepts:
   filepath: s3://alphafold-impact/data/01_raw/openalex/works/works_for_concepts.json
   credentials: s3_credentials
 
-oa_int_works_incoming_citations:
+_work_citations: &_work_citations
   type: partitions.PartitionedDataset
   dataset: ${_json.type}
   filename_suffix: ".json"
+  credentials: s3_credentials
+
+works_incoming_citations:
+  <<: *_work_citations
   path: s3://alphafold-impact/data/02_intermediate/openalex/works/cited_by/
-  credentials: s3_credentials
 
-oa_int_works_outgoing_citations:
-  type: partitions.PartitionedDataset
-  dataset: ${_json.type}
-  filename_suffix: ".json"
+works_outgoing_citations:
+  <<: *_work_citations
   path: s3://alphafold-impact/data/02_intermediate/openalex/works/cites/
-  credentials: s3_credentials
-
-oa_int_downstream_incoming_citations:
+  
+downstream_incoming_citations:
   type: partitions.PartitionedDataset
   dataset: ${_json.type}
   filename_suffix: ".json"
