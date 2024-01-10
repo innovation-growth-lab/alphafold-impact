@@ -40,7 +40,7 @@ def create_list_doi_inputs(df: pd.DataFrame) -> list:
     Returns:
         list: A list of doi values.
     """
-    return df[df["doi"].notnull()]["doi"].tolist()[:150]
+    return df[df["doi"].notnull()]["doi"].tolist()
 
 
 def create_dictionary_doi_to_oa(

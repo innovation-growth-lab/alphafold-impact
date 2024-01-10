@@ -84,5 +84,5 @@ downstream_incoming_citations:
   type: partitions.PartitionedDataset
   dataset: ${_json.type}
   filename_suffix: ".json"
-  path: "s3://alphafold-impact/data/02_intermediate/openalex/works/cited_by/downstream/${runtime_params:get.work_id, globals:get.work_id}/"
+  path: "s3://alphafold-impact/data/02_intermediate/openalex/works/cited_by/downstream/${runtime_params:get.work_id, globals:get.work_id}/" # else option is always string...
   credentials: s3_credentials
