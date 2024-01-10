@@ -1,6 +1,7 @@
 """
-Pipeline for collecting OpenAlex publications from that correspond to a
-given Gateway to Research publication.
+Pipeline for collecting OpenAlex publications that match the doi values
+for the Gateway to Research publications. The pipeline then collects all
+papers that these publications cite.
 
 To run this pipeline, use the following command:
 
