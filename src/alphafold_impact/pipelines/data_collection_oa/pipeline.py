@@ -36,7 +36,7 @@ The pipeline will save the data to the following location:
             s3://alphafold-impact/data/02_intermediate/openalex/works/cited_by/downstream/<work_id>
 using a partitioned dataset.
 
-The pipeline also includes `works_for_concepts_and_years` that is used to collect
+The pipeline also includes `works_for_concepts_and_years` pipeline that is used to collect
 OpenAlex works for a specified list of OpenAlex concepts and publication years.
 
 To run this pipeline, use the following command:
