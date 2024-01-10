@@ -1,6 +1,13 @@
 """
-This is a boilerplate pipeline 'data_enrichment_gtr'
-generated using Kedro 0.19.1
+This module contains the functions used to enrich the Gateway to Research
+(GtR) data with OpenAlex data.
+
+Functions:
+    create_pipeline: Creates the data enrichment pipeline.
+    preprocess_publication_doi: Preprocess the Gateway to Research publication data to include
+        doi values that are compatible with OA filter module.
+    create_list_doi_inputs: Create a list of doi values from the Gateway to Research publication data.
+    create_dictionary_doi_to_oa: Create a dictionary of doi values to OpenAlex publication data.
 """
 from typing import Dict, List, Any
 import pandas as pd
