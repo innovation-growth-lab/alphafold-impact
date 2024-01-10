@@ -98,7 +98,7 @@ downstream_impact_pipeline = pipeline(
                 "mailto": "params:api.mailto",
                 "perpage": "params:api.perpage",
                 "work_ids": "work_ids",
-                "filter_by": "params:direction.cited_by",
+                "filter_by": "params:direction.cites",
             },
             outputs="oa_int_downstream_incoming_citations",
         ),

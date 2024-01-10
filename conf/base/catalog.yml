@@ -74,11 +74,11 @@ _work_citations: &_work_citations
 
 works_incoming_citations:
   <<: *_work_citations
-  path: s3://alphafold-impact/data/02_intermediate/openalex/works/cited_by/
+  path: s3://alphafold-impact/data/02_intermediate/openalex/works/cites/
 
 works_outgoing_citations:
   <<: *_work_citations
-  path: s3://alphafold-impact/data/02_intermediate/openalex/works/cites/
+  path: s3://alphafold-impact/data/02_intermediate/openalex/works/cited_by/
   
 downstream_incoming_citations:
   type: partitions.PartitionedDataset
