@@ -62,6 +62,7 @@ def _revert_abstract_index(abstract_inverted_index: Dict[str, Sequence[int]]) ->
 def _parse_results(response: List[Dict]) -> Dict[str, List[str]]:
     """Parses OpenAlex API response to retain:
         - id
+        - doi
         - display_name
         - title
         - publication_date
@@ -81,6 +82,7 @@ def _parse_results(response: List[Dict]) -> Dict[str, List[str]]:
     return [
         {
             "id": paper["id"],
+            "doi": paper["doi"],
             "display_name": paper["display_name"],
             "title": paper["title"],
             "publication_date": paper["publication_date"],
@@ -139,44 +141,72 @@ def _citation_works_generator(
         yield results
 
 
+def _chunk_work_ids(ids: List[str], chunk_size: int = 50) -> List[str]:
+    """Yield successive chunk_size-sized chunks from ids."""
+    for i in range(0, len(ids), chunk_size):
+        yield "|".join(ids[i : i + chunk_size])
+
+
+def _fetch_papers_for_id(work_id: str, **kwargs) -> List[dict]:
+    """Fetches all papers cited by a specific work ID."""
+    papers_for_id = []
+    for page, papers in enumerate(_citation_works_generator(work_id=work_id, **kwargs)):
+        papers_for_id.extend(_parse_results(papers))
+        logger.info(
+            "Fetching page %s for %s. Total papers collected: %s",
+            page,
+            work_id,
+            len(papers_for_id),
+        )
+    return papers_for_id
+
+
 def collect_papers(
-    mailto: str, perpage: str, work_ids: Union[str, List[str], Dict[str, str]], filter_by: str
-) -> Dict[str, Callable]:
+    mailto: str,
+    perpage: str,
+    work_ids: Union[str, List[str], Dict[str, str]],
+    filter_by: str,
+    group_work_ids: bool = False,
+    eager_loading: bool = False,
+) -> Union[Dict[str, Callable], Dict[str, List[dict]]]:
     """
-    Prepares callables to collect all papers cited by specific work IDs.
+    Prepares to collect all papers cited by specific work IDs, either eagerly or lazily.
 
     Args:
         mailto (str): The email address to use for the API.
         work_ids (List[str] or Dict[str, str]): Work IDs or a dictionary of work IDs.
-        filter_by (str): The filter condition.
+        filter_by (str): The filter condition for oa papers.
         perpage (str): The number of results to return per page.
+        group_work_ids (bool): If True, groups work_ids into chunks of up to 50.
+        eager_loading (bool): If True, executes data fetching eagerly.
 
     Returns:
-        dict: A dictionary where each key is a work_id and each value is a callable
-              that, when called, returns the list of papers for that work_id.
+        dict: A dictionary where each key is a work_id (or grouped work_ids) and
+              each value is either a callable (lazy) or a list of papers (eager).
     """
+
     if isinstance(work_ids, str):
         work_ids = [work_ids]
     if isinstance(work_ids, dict):
         work_ids = list(work_ids.values())
 
-    def fetch_papers_for_id(work_id: str) -> List[dict]:
-        papers_for_id = []
-        for page, papers in enumerate(
-            _citation_works_generator(
-                mailto=mailto, perpage=perpage, work_id=work_id, filter_by=filter_by
-            )
-        ):
-            papers_for_id.extend(_parse_results(papers))
-            logger.info(
-                "Fetching page %s of %s. Total papers collected: %s",
-                page,
-                work_id,
-                len(papers_for_id),
-            )
-        return papers_for_id
+    if group_work_ids:
+        work_ids = list(_chunk_work_ids(work_ids))
 
-    return {work_id: lambda work_id=work_id: fetch_papers_for_id(work_id) for work_id in work_ids}
+    if eager_loading:
+        return {
+            work_id: _fetch_papers_for_id(
+                work_id=work_id, mailto=mailto, perpage=perpage, filter_by=filter_by
+            )
+            for work_id in work_ids
+        }
+    else:
+        return {
+            work_id: lambda work_id=work_id: _fetch_papers_for_id(
+                work_id=work_id, mailto=mailto, perpage=perpage, filter_by=filter_by
+            )
+            for work_id in work_ids
+        }
 
 
 def load_work_ids(

@@ -5,6 +5,10 @@ format that can be used by the rest of the project. To run this pipeline,
 use the following command:
 
     $ kedro run --pipeline data_collection_gtr
+
+Alternatively, you can run this pipeline for a single endpoint:
+
+    $ kedro run --pipeline data_collection_gtr --tags gtr-projects
 """
 from kedro.pipeline import Pipeline, node, pipeline
 from kedro.pipeline.modular_pipeline import pipeline as mpl

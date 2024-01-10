@@ -1,0 +1,4 @@
+oa:
+  alphafold_id: W3177828909 # Highly accurate and fast protein structure prediction with AlphaFold
+  group_work_ids: True
+  eager_loading: True
