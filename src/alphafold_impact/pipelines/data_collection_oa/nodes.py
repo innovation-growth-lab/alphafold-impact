@@ -18,10 +18,10 @@ Internal functions:
     _chunk_list: Divides the input list into chunks of specified size.
 """
 import logging
-from typing import Iterator, List, Dict, Sequence, Union
+from typing import Iterator, List, Dict, Sequence, Union, Callable
+from kedro.io import AbstractVersionedDataset
 from requests.adapters import HTTPAdapter, Retry
 import requests
-from kedro.io import AbstractVersionedDataset
 import pandas as pd
 
 
@@ -96,7 +96,7 @@ def _parse_results(response: List[Dict]) -> Dict[str, List[str]]:
 
 
 def _citation_works_generator(
-    mailto: str, perpage: str, work_id: str, direction: str
+    mailto: str, perpage: str, work_id: str, filter_by: str
 ) -> Iterator[list]:
     """Creates a generator that yields a list of works from the OpenAlex API based on a
     given work ID.
@@ -105,7 +105,7 @@ def _citation_works_generator(
         mailto (str): The email address to use for the API.
         perpage (str): The number of results to return per page.
         work_id (str): A single work ID to filter by 'cites'.
-        direction (str): The direction of the citation. Either 'cites' or 'cited_by'.
+        filter_by (str): The filter condition for oa papers.
 
     Yields:
         Iterator[list]: A generator that yields a list of works from the OpenAlex API
@@ -113,7 +113,7 @@ def _citation_works_generator(
     """
 
     cursor_url = (
-        f"https://api.openalex.org/works?filter={direction}:{work_id}"
+        f"https://api.openalex.org/works?filter={filter_by}:{work_id}"
         f"&mailto={mailto}&per-page={perpage}&cursor={{}}"
     )
 
@@ -139,34 +139,32 @@ def _citation_works_generator(
         yield results
 
 
-def collect_citation_papers(
-    mailto: str, perpage: str, work_ids: Union[str, List[str]], direction: str
-) -> dict:
-    """Collects all papers cited by specific work IDs.
+def collect_papers(
+    mailto: str, perpage: str, work_ids: Union[str, List[str], Dict[str, str]], filter_by: str
+) -> Dict[str, Callable]:
+    """
+    Prepares callables to collect all papers cited by specific work IDs.
 
     Args:
         mailto (str): The email address to use for the API.
-        work_ids (List[str]): A list of work IDs to filter by either 'cites' or 'cited_by'.
-        direction (str): The direction of the citation. Either 'cites' or 'cited_by'.
+        work_ids (List[str] or Dict[str, str]): Work IDs or a dictionary of work IDs.
+        filter_by (str): The filter condition.
         perpage (str): The number of results to return per page.
 
     Returns:
-        dict: A dictionary containing the work_id as key and the list of papers as value.
+        dict: A dictionary where each key is a work_id and each value is a callable
+              that, when called, returns the list of papers for that work_id.
     """
-
-    assert direction in ["cites", "cited_by"], (
-        f"Invalid direction: {direction}. " f"Must be either 'cites' or 'cited_by'."
-    )
-
     if isinstance(work_ids, str):
         work_ids = [work_ids]
+    if isinstance(work_ids, dict):
+        work_ids = list(work_ids.values())
 
-    all_papers = {}
-    for work_id in work_ids:
+    def fetch_papers_for_id(work_id: str) -> List[dict]:
         papers_for_id = []
         for page, papers in enumerate(
             _citation_works_generator(
-                mailto=mailto, perpage=perpage, work_id=work_id, direction=direction
+                mailto=mailto, perpage=perpage, work_id=work_id, filter_by=filter_by
             )
         ):
             papers_for_id.extend(_parse_results(papers))
@@ -176,9 +174,9 @@ def collect_citation_papers(
                 work_id,
                 len(papers_for_id),
             )
-        all_papers[work_id] = papers_for_id
+        return papers_for_id
 
-    return all_papers
+    return {work_id: lambda work_id=work_id: fetch_papers_for_id(work_id) for work_id in work_ids}
 
 
 def load_work_ids(

@@ -48,7 +48,7 @@ from kedro.pipeline import Pipeline, node, pipeline
 from kedro.pipeline.modular_pipeline import pipeline as mpl
 
 from .nodes import (
-    collect_citation_papers,
+    collect_papers,
     load_work_ids,
     retrieve_oa_works_for_concepts_and_years,
 )
@@ -56,12 +56,12 @@ from .nodes import (
 template_pipeline = pipeline(
     [
         node(
-            func=collect_citation_papers,
+            func=collect_papers,
             inputs={
                 "mailto": "params:api.mailto",
                 "perpage": "params:api.perpage",
                 "work_ids": "params:get.work_id",
-                "direction": "params:direction.template",
+                "filter_by": "params:direction.template",
             },
             outputs="template",
         )
@@ -93,12 +93,12 @@ downstream_impact_pipeline = pipeline(
             outputs="work_ids",
         ),
         node(
-            func=collect_citation_papers,
+            func=collect_papers,
             inputs={
                 "mailto": "params:api.mailto",
                 "perpage": "params:api.perpage",
                 "work_ids": "work_ids",
-                "direction": "params:direction.incoming",
+                "filter_by": "params:direction.incoming",
             },
             outputs="oa_int_downstream_incoming_citations",
         ),
