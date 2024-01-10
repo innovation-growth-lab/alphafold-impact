@@ -50,13 +50,7 @@ def create_dictionary_doi_to_oa(
     doi_to_oa_dict = {}
     for _, value in dictionary.items():
         for item in value:
-            doi_to_oa_dict[item["doi"]] = item["id"].replace("https://openalex.org/", "")
+            doi_to_oa_dict[item["doi"]] = item["id"].replace(
+                "https://openalex.org/", ""
+            )
     return doi_to_oa_dict
-
-
-
-def check(
-        dictionary,
-        df
-):
-    return df

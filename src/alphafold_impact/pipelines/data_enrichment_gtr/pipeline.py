@@ -1,21 +1,22 @@
 """
-This is a boilerplate pipeline 'data_enrichment_gtr'
-generated using Kedro 0.19.1
+Pipeline for collecting OpenAlex publications from that correspond to a
+given Gateway to Research publication.
+
+To run this pipeline, use the following command:
+
+    $ kedro run --pipeline data_enrichment_gtr
 """
 
 from kedro.pipeline import Pipeline, pipeline, node
-from alphafold_impact.pipelines.data_collection_oa.nodes import (
-    collect_papers
-)
+from alphafold_impact.pipelines.data_collection_oa.nodes import collect_papers
 from .nodes import (
     preprocess_publication_doi,
     create_list_doi_inputs,
     create_dictionary_doi_to_oa,
-    # check
 )
 
 
-def create_pipeline(**kwargs) -> Pipeline:
+def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
     return pipeline(
         [
             node(
@@ -37,7 +38,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "filter_by": "params:oa_gtr.filter",
                     "group_work_ids": "params:oa.group_work_ids",
                     "eager_loading": "params:oa.eager_loading",
-
                 },
                 outputs="gtr_dict_matches",
             ),
@@ -56,10 +56,5 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 outputs="gtr_intermediate_publication_citations",
             ),
-            # node(
-            #     func=check,
-            #     inputs=["gtr_intermediate_publications_oa_dict", "gtr_intermediate_publication_citations"],
-            #     outputs="testy"
-            # )
         ]
     )
