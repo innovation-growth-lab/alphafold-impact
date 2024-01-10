@@ -39,6 +39,17 @@ gtr_intermediate_organisations:
 gtr_intermediate_funds:
   <<: *_gtr_intermediate
   filepath: s3://alphafold-impact/data/02_intermediate/gtr/funds.parquet
+
+gtr_intermediate_publications_oa_dict:
+  <<: *_gtr_raw
+  filepath: s3://alphafold-impact/data/02_intermediate/gtr/outcomes/pub_oa_dict.json
+
+gtr_intermediate_publication_citations:
+  <<: *_gtr_raw
+  path: s3://alphafold-impact/data/02_intermediate/gtr/outcomes/publication_citations/
+  type: partitions.PartitionedDataset
+  dataset: ${_json.type}
+  filename_suffix: ".json"
   
 works_for_concepts:
   type: ${_json.type}

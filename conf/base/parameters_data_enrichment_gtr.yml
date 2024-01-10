@@ -1,0 +1,8 @@
+# This is a boilerplate parameters config generated for pipeline 'data_enrichment_gtr'
+# using Kedro 0.19.1.
+#
+# Documentation for this file format can be found in "Parameters"
+# Link: https://docs.kedro.org/en/0.19.1/configuration/parameters.html
+
+oa_gtr:
+  filter: doi
