@@ -70,15 +70,15 @@ template_pipeline = pipeline(
 
 incoming_pipeline = mpl(
     pipe=template_pipeline,
-    parameters={"params:direction.template": "params:direction.incoming"},
-    outputs={"template": "oa_int_works_outgoing_citations"},
+    parameters={"params:direction.template": "params:direction.cites"},
+    outputs={"template": "works_outgoing_citations"},
     tags="incoming",
 )
 
 outgoing_pipeline = mpl(
     pipe=template_pipeline,
-    parameters={"params:direction.template": "params:direction.outgoing"},
-    outputs={"template": "oa_int_works_incoming_citations"},
+    parameters={"params:direction.template": "params:direction.cited_by"},
+    outputs={"template": "works_incoming_citations"},
     tags="outgoing",
 )
 
@@ -98,7 +98,7 @@ downstream_impact_pipeline = pipeline(
                 "mailto": "params:api.mailto",
                 "perpage": "params:api.perpage",
                 "work_ids": "work_ids",
-                "filter_by": "params:direction.incoming",
+                "filter_by": "params:direction.cited_by",
             },
             outputs="oa_int_downstream_incoming_citations",
         ),

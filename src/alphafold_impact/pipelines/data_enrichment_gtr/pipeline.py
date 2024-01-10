@@ -52,7 +52,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                     "mailto": "params:api.mailto",
                     "perpage": "params:api.perpage",
                     "work_ids": "gtr_intermediate_publications_oa_dict",
-                    "filter_by": "params:direction.outgoing",
+                    "filter_by": "params:direction.cited_by", # 
                 },
                 outputs="gtr_intermediate_publication_citations",
             ),

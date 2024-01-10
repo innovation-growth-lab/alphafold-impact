@@ -12,8 +12,8 @@ get:
   work_id: W3177828909 # Highly accurate and fast protein structure prediction with AlphaFold
   
 direction: 
-  incoming: cited_by
-  outgoing: cites
+  cited_by: cited_by
+  cites: cites
 
 subfolder: work_id
 
