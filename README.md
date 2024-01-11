@@ -51,6 +51,16 @@ To see and update the dependency requirements for your project use `requirements
 
 [Further information about project dependencies](https://docs.kedro.org/en/stable/kedro_project_setup/dependencies.html#project-specific-dependencies)
 
+## AWS S3 credentials
+
+AWS S3 credentials need to be stored in `local/credentials.yml` in the format:
+
+```yaml
+s3_credentials:
+  key: xxx
+  secret: yyy
+```
+
 ## How to work with Kedro and notebooks
 
 > Note: Using `kedro jupyter` or `kedro ipython` to run your notebook provides these variables in scope: `catalog`, `context`, `pipelines` and `session`.
