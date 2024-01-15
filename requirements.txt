@@ -11,3 +11,4 @@ kedro~=0.19.1
 ruff~=0.0.290
 scikit-learn~=1.0
 seaborn~=0.12.1
+pytest==7.4.4
