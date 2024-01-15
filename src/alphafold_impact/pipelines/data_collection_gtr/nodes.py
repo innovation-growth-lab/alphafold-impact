@@ -160,12 +160,13 @@ class GtRDataPreprocessor:
 
 
 def fetch_gtr_data(
-    parameters: Dict[str, Union[str, int]], endpoint
+    parameters: Dict[str, Union[str, int]], endpoint, test: bool = False
 ) -> List[Dict[str, Any]]:
     """Fetch data from the GtR API.
 
     Args:
         parameters (Dict[str, Union[str, int]]): Parameters for the API request.
+        endpoint (str): The endpoint to fetch data from.
 
     Returns:
         List[Dict[str, Any]]: The fetched data.
@@ -188,7 +189,7 @@ def fetch_gtr_data(
             data = response.json()
             if "totalPages" in data and page == 1:
                 logger.info("Total pages: %s", data["totalPages"])
-                total_pages = data["totalPages"]
+                total_pages = data["totalPages"] if not test else 2
             if config["key"] in data:
                 items = data[config["key"]]
                 if not items:

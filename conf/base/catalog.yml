@@ -8,41 +8,28 @@ _gtr_intermediate: &_gtr_intermediate
   load_args:
     engine: pyarrow
 
-gtr_raw_projects:
+# Raw Gateway to Research data - includes projects, publications, organisations and funds 
+
+"{source}.{label}.raw":
   <<: *_gtr_raw
-  filepath: s3://alphafold-impact/data/01_raw/gtr/projects.json
+  filepath: s3://alphafold-impact/data/01_raw/test/{source}/{label}.json
 
-gtr_raw_publications:
-  <<: *_gtr_raw
-  filepath: s3://alphafold-impact/data/01_raw/gtr/outcomes/publications.json
+# Intermediate Gateway to Research data - includes projects, publications, organisations and funds
 
-gtr_raw_organisations:
-  <<: *_gtr_raw
-  filepath: s3://alphafold-impact/data/01_raw/gtr/organisations.json
-
-gtr_raw_funds:
-  <<: *_gtr_raw
-  filepath: s3://alphafold-impact/data/01_raw/gtr/funds.json
-
-gtr_intermediate_projects:
+"{source}.{label}.intermediate":
   <<: *_gtr_intermediate
-  filepath: s3://alphafold-impact/data/02_intermediate/gtr/projects.parquet
+  filepath: s3://alphafold-impact/data/02_intermediate/test/{source}/{label}.parquet
 
-gtr_intermediate_publications:
-  <<: *_gtr_intermediate
-  filepath: s3://alphafold-impact/data/02_intermediate/gtr/outcomes/publications.parquet
-
-gtr_intermediate_organisations:
-  <<: *_gtr_intermediate
-  filepath: s3://alphafold-impact/data/02_intermediate/gtr/organisations.parquet
-
-gtr_intermediate_funds:
-  <<: *_gtr_intermediate
-  filepath: s3://alphafold-impact/data/02_intermediate/gtr/funds.parquet
+# OpenAlex data from publications in Gateawy to Research
 
 gtr_intermediate_publications_oa_dict:
   <<: *_gtr_raw
-  filepath: s3://alphafold-impact/data/02_intermediate/gtr/outcomes/pub_oa_dict.json
+  path: s3://alphafold-impact/data/01_raw/gtr/outcomes/publications/oa/
+  type: partitions.PartitionedDataset
+  dataset: ${_json.type}
+  filename_suffix: ".json"
+
+# OpenAlex data from citations of publications in Gateway to Research
 
 gtr_intermediate_publication_citations:
   <<: *_gtr_raw
@@ -50,7 +37,9 @@ gtr_intermediate_publication_citations:
   type: partitions.PartitionedDataset
   dataset: ${_json.type}
   filename_suffix: ".json"
-  
+
+# Openalex data from works in Gateway to Research
+
 works_for_concepts:
   type: ${_json.type}
   filepath: s3://alphafold-impact/data/01_raw/openalex/works/works_for_concepts.json
@@ -84,5 +73,5 @@ downstream_incoming_citations:
   type: partitions.PartitionedDataset
   dataset: ${_json.type}
   filename_suffix: ".json"
-  path: "s3://alphafold-impact/data/02_intermediate/openalex/works/cited_by/downstream/${runtime_params:get.work_id, globals:get.work_id}/" # else option is always string...
+  path: "s3://alphafold-impact/data/02_intermediate/openalex/works/downstream/${runtime_params:get.work_id, undefined}/" # else option is always string...
   credentials: s3_credentials

@@ -8,27 +8,12 @@ use the following command:
 
 Alternatively, you can run this pipeline for a single endpoint:
 
-    $ kedro run --pipeline data_collection_gtr --tags gtr-projects
+    $ kedro run --pipeline data_collection_gtr --tags projects
 """
 from kedro.pipeline import Pipeline, node, pipeline
-from kedro.pipeline.modular_pipeline import pipeline as mpl
 
+from alphafold_impact import settings
 from .nodes import fetch_gtr_data, preprocess_data_to_df  # pylint: disable=E0401
-
-template_pipeline = pipeline(
-    [
-        node(
-            func=fetch_gtr_data,
-            inputs=["params:param_requests", "params:endpoint_template"],
-            outputs="raw_output_template",
-        ),
-        node(
-            func=preprocess_data_to_df,
-            inputs=["raw_output_template", "params:endpoint_template"],
-            outputs="intermediate_output_template",
-        ),
-    ]
-)
 
 
 def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=W0613
@@ -37,23 +22,31 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=W0613
     Returns:
         Pipeline: The data collection pipeline.
     """
+    template_pipeline = pipeline(
+        [
+            node(
+                func=fetch_gtr_data,
+                inputs=["params_template", "endpoint_template"],
+                outputs="raw",
+                name="fetch_gtr_data",
+            ),
+            node(
+                func=preprocess_data_to_df,
+                inputs=["raw", "endpoint_template"],
+                outputs="intermediate",
+                name="preprocess_data_to_df",
+            ),
+        ]
+    )
 
-    pipelines = list()
-    for endpoint in ['projects', 'publications', 'organisations', 'funds']:
-        # Create a pipeline for each endpoint
-        pipeline_name = f'gtr-{endpoint}'
-        pipe = mpl(
-            pipe=template_pipeline,
-            parameters={
-                "endpoint_template": f"params:endpoints.{endpoint}",
-            },
-            outputs={
-                "raw_output_template": f"gtr_raw_{endpoint}",
-                "intermediate_output_template": f"gtr_intermediate_{endpoint}",
-            },
-            tags=pipeline_name,
+    pipelines = []
+    for endpoint, label in settings.DYNAMIC_PIPELINES_MAPPING["gtr"]:
+        pipelines.append(
+            pipeline(
+                template_pipeline,
+                inputs={"params_template": f"params:gtr.{endpoint}.param_requests", "endpoint_template": f"params:gtr.{endpoint}.label"},
+                namespace=f"gtr.{label}",
+                tags=[endpoint, "gtr"],
+            )
         )
-        # Add the pipeline to the list of pipelines
-        pipelines.append(pipe)
-
     return sum(pipelines)
