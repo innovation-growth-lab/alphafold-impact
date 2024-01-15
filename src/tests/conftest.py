@@ -1,3 +1,4 @@
+# pylint: skip-file
 from pathlib import Path
 import pytest
 from kedro.config import OmegaConfigLoader
