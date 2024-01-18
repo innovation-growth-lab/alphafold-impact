@@ -1,8 +1,8 @@
-_gtr_raw: &_gtr_raw
+_js: &_js
   type: ${_json.type}
   credentials: s3_credentials
 
-_gtr_intermediate: &_gtr_intermediate
+_pq: &_pq
   type: pandas.ParquetDataset
   credentials: s3_credentials
   load_args:
@@ -10,30 +10,34 @@ _gtr_intermediate: &_gtr_intermediate
 
 # Raw Gateway to Research data - includes projects, publications, organisations and funds 
 
-"{source}.{label}.raw":
-  <<: *_gtr_raw
-  filepath: s3://alphafold-impact/data/01_raw/test/{source}/{label}.json
+"{source}.collection.{label}.raw":
+  <<: *_js
+  filepath: s3://alphafold-impact/data/01_raw/{source}/{label}.json
 
 # Intermediate Gateway to Research data - includes projects, publications, organisations and funds
 
-"{source}.{label}.intermediate":
-  <<: *_gtr_intermediate
-  filepath: s3://alphafold-impact/data/02_intermediate/test/{source}/{label}.parquet
+"{source}.collection.{label}.intermediate":
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/02_intermediate/{source}/{label}.parquet
 
 # OpenAlex data from publications in Gateawy to Research
 
-gtr_intermediate_publications_oa_dict:
-  <<: *_gtr_raw
-  path: s3://alphafold-impact/data/01_raw/gtr/outcomes/publications/oa/
+gtr.enrichment.publications.oa.dict:
+  <<: *_js
+  filepath: s3://alphafold-impact/data/02_intermediate/gtr/outcomes/publications/oa/doi_oaid.json
+
+gtr.enrichment.publications.oa.tmp:
+  <<: *_js
+  path: s3://alphafold-impact/data/00_tmp/gtr/outcomes/publications/oa/
   type: partitions.PartitionedDataset
   dataset: ${_json.type}
   filename_suffix: ".json"
 
 # OpenAlex data from citations of publications in Gateway to Research
 
-gtr_intermediate_publication_citations:
-  <<: *_gtr_raw
-  path: s3://alphafold-impact/data/02_intermediate/gtr/outcomes/publication_citations/
+gtr.enrichment.publications.oa.citations:
+  <<: *_js
+  path: s3://alphafold-impact/data/02_intermediate/gtr/outcomes/publications/oa/citations/
   type: partitions.PartitionedDataset
   dataset: ${_json.type}
   filename_suffix: ".json"
