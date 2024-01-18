@@ -20,7 +20,7 @@ from alphafold_impact.settings import DYNAMIC_PIPELINES_MAPPING
 @pytest.fixture
 def params(project_context):
     """Get the parameters for the GtR API."""
-    return project_context.config_loader["parameters"]["gtr"]
+    return project_context.config_loader["parameters"]["gtr"]["data_collection"]
 
 
 class TestNodes:
@@ -39,7 +39,7 @@ class TestNodes:
         Raises:
             AssertionError: If any of the assertions fail.
         """
-        # Fetch data from the GtR API
+        # Fetch data from the GtR API (there has )
         data = fetch_gtr_data(
             parameters=params[endpoint]["param_requests"],
             endpoint=label,
@@ -65,62 +65,22 @@ class TestNodes:
         self._dataframe_has_no_links_column(data)
 
     def _response_is_list(self, data):
-        """
-        Assert that the response data is a list.
-
-        Args:
-            data (list): The response data to be checked.
-
-        Raises:
-            AssertionError: If the data is not a list.
-        """
+        """Assert that the response is a list."""
         assert isinstance(data, list)
 
     def _response_object_is_dict(self, data):
-        """
-        Assert that each item in the response list is a dictionary.
-
-        Args:
-            data (list): The response data to be checked.
-
-        Raises:
-            AssertionError: If any item in the data is not a dictionary.
-        """
+        """Assert that each item in the response list is a dictionary."""
         assert isinstance(data[0], dict)
 
     def _response_dict_has_keys(self, data):
-        """
-        Assert that each dictionary in the response has the required keys.
-
-        Args:
-            data (list): The response data to be checked.
-
-        Raises:
-            AssertionError: If any dictionary in the data is missing the required keys.
-        """
+        """Assert that each dictionary in the response has the required keys."""
         assert "id" in data[0].keys()
         assert "page_fetched_from" in data[0].keys()
 
     def _dataframe_is_returned(self, data):
-        """
-        Assert that the processed data is a pandas DataFrame.
-
-        Args:
-            data (pd.DataFrame): The processed data to be checked.
-
-        Raises:
-            AssertionError: If the data is not a pandas DataFrame.
-        """
+        """Assert that the processed data is a pandas DataFrame."""
         assert isinstance(data, pd.DataFrame)
 
     def _dataframe_has_no_links_column(self, data):
-        """
-        Assert that the processed data does not have a "links" column.
-
-        Args:
-            data (pd.DataFrame): The processed data to be checked.
-
-        Raises:
-            AssertionError: If the data has a "links" column.
-        """
+        """Assert that the processed data does not have a "links" column."""
         assert "links" not in data.columns
