@@ -9,6 +9,10 @@ use the following command:
 Alternatively, you can run this pipeline for a single endpoint:
 
     $ kedro run --pipeline data_collection_gtr --tags projects
+
+In regards to the use of namespaces, note that these are appended as
+prefixes to the outputs of the nodes in the pipeline. 
+
 """
 from kedro.pipeline import Pipeline, node, pipeline
 
@@ -26,13 +30,13 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=W0613
         [
             node(
                 func=fetch_gtr_data,
-                inputs=["params_template", "endpoint_template"],
+                inputs=["params:param_requests", "params:label", "params:test"],
                 outputs="raw",
                 name="fetch_gtr_data",
             ),
             node(
                 func=preprocess_data_to_df,
-                inputs=["raw", "endpoint_template"],
+                inputs=["raw", "params:label"],
                 outputs="intermediate",
                 name="preprocess_data_to_df",
             ),
@@ -40,13 +44,18 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=W0613
     )
 
     pipelines = []
-    for endpoint, label in settings.DYNAMIC_PIPELINES_MAPPING["gtr"]:
+    for label in settings.DYNAMIC_PIPELINES_MAPPING["gtr"]:
         pipelines.append(
             pipeline(
                 template_pipeline,
-                inputs={"params_template": f"params:gtr.{endpoint}.param_requests", "endpoint_template": f"params:gtr.{endpoint}.label"},
-                namespace=f"gtr.{label}",
-                tags=[endpoint, "gtr"],
+                parameters={"params:test": "test"},
+                namespace=f"gtr.data_collection.{label}",
+                tags=[label.rsplit('/', maxsplit=1)[-1], "gtr"],
             )
         )
     return sum(pipelines)
+
+# Note: "params:" get resolved with the namespace. Inputs need to specify them being parameters,
+# otherwise they are assumed to be datasets. Their namespace is not prepended, ie. needs to define
+# params:gtr.data_collection.{endpoint}.param_requests. Parameters argument assumes "params:" 
+# prefix.

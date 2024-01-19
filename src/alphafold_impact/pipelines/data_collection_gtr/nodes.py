@@ -120,7 +120,7 @@ class GtRDataPreprocessor:
         ]
 
     def _preprocess_projects(self, projects_df: pd.DataFrame) -> pd.DataFrame:
-        
+        """Preprocess the projects data."""
         columns_to_transform = {
             "identifiers": ["value", "type"],
             "researchSubjects": ["id", "text", "percentage"],
