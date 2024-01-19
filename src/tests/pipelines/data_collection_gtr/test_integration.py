@@ -26,8 +26,8 @@ def params(project_context):
 class TestNodes:
     """Test the data collection GTR pipeline nodes."""
 
-    @pytest.mark.parametrize("endpoint, label", DYNAMIC_PIPELINES_MAPPING["gtr"])
-    def test_pipeline(self, params, endpoint, label):
+    @pytest.mark.parametrize("endpoint", DYNAMIC_PIPELINES_MAPPING["gtr"])
+    def test_pipeline(self, params, endpoint):
         """
         Test that data is fetched from the GtR API and processed correctly.
 
@@ -42,7 +42,7 @@ class TestNodes:
         # Fetch data from the GtR API (there has )
         data = fetch_gtr_data(
             parameters=params[endpoint]["param_requests"],
-            endpoint=label,
+            endpoint=endpoint,
             test=True,
         )
 
@@ -57,7 +57,7 @@ class TestNodes:
         data = pd.DataFrame(data)
         # Preprocess the data based on the specified label
         preprocess = GtRDataPreprocessor()
-        data = preprocess.methods[label](data)
+        data = preprocess.methods[endpoint](data)
 
         # Assert that the processed data is a pandas DataFrame
         self._dataframe_is_returned(data)

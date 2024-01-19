@@ -33,24 +33,11 @@ CONFIG_LOADER_ARGS = {
     "base_env": "base",
     "default_run_env": "local",
     "config_patterns": {
-        # "parameters": ["parameters*", "parameters*/**", "**/parameters*", "globals*"],
         "globals": ["parameters*", "parameters*/**", "**/parameters*", "globals*"]
     },
 }
-# Class that manages Kedro's library components.
-# from kedro.framework.context import KedroContext
-# CONTEXT_CLASS = KedroContext
-
-# Class that manages the Data Catalog.
-# from kedro.io import DataCatalog
-# DATA_CATALOG_CLASS = DataCatalog
 
 DYNAMIC_PIPELINES_MAPPING = {
-    "gtr": [
-        ("projects", "projects"),
-        ("publications", "outcomes/publications"),
-        ("organisations", "organisations"),
-        ("funds", "funds"),
-    ],
-    #     "price_predictor": ["base", "candidate1", "candidate2", "candidate3"],
+    "gtr": ["projects", "outcomes/publications", "organisations", "funds"],
+    "oa": ["cites", "cited_by"],
 }
