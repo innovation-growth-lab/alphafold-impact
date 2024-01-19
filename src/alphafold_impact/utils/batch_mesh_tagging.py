@@ -2,7 +2,7 @@
 This file contains functions for using the SKR web python API
 for submitting batch jobs using the NLM Medical Text Indexer (MTI).
 
-See: https://github.com/lhncbc/skr_web_python_api
+See here for installation steps: https://github.com/lhncbc/skr_web_python_api
 
 Get UMLS API key from here: https://uts.nlm.nih.gov/uts/profile
 """
