@@ -1,217 +1,78 @@
 """
-This module contains functions for fetching and preprocessing data from the OpenAlex API.
+This module contains functions for fetching and preprocessing data from the OA API.
 
-Functions:
-    collect_citation_papers: Collects all papers cited by specific work IDs.
-    load_work_ids: Loads the file corresponding to a particular work_id in a PartitionedDataSet,
-        extracts all ids, and returns these as a list.
-    retrieve_oa_works_for_concepts_and_years: Retrieves OpenAlex works for the specified
-        concept IDs and publication years.
+OpenAlex baseline:
+    collect_papers: Collect papers based on the provided work IDs.
+    load_work_ids: Load the file corresponding to a particular work_id in a PartitionedDataSet,
+        extract all ids, and return these as a list.
 
-Internal functions:
-    _revert_abstract_index: Reverts the abstract inverted index to the original text.
-    _parse_results: Parses OpenAlex API response to retain basic variables.
-    _citation_works_generator: Creates a generator that yields a list of works from the OpenAlex API based on a
-        given work ID.
-    _create_concept_year_filter: Creates an API query filter string for the OpenAlex API.
-    _retrieve_oa_works_chunk: Retrieves a chunk of OpenAlex works for a chunk of concept IDs.
-    _chunk_list: Divides the input list into chunks of specified size.
+OpenAlex - Gateway to Research:
+    preprocess_publication_doi: Preprocess the Gateway to Research publication data to include
+        doi values that are compatible with OA filter module.
+    create_list_doi_inputs: Create a list of doi values from the Gateway to Research publication
+        data.
+    load_referenced_work_ids: Load referenced work IDs from the dataset.
 """
 import logging
-from typing import Iterator, List, Dict, Sequence, Union, Callable
-from kedro.io import AbstractVersionedDataset
-from requests.adapters import HTTPAdapter, Retry
-import requests
+from typing import List, Dict, Sequence, Union, Callable, Tuple
 import pandas as pd
-
+from kedro.io import AbstractDataset
+from .utils import (
+    preprocess_work_ids,
+    fetch_papers_eager,
+    fetch_papers_lazy,
+    fetch_papers_parallel,
+)
 
 logger = logging.getLogger(__name__)
-
-
-def _revert_abstract_index(abstract_inverted_index: Dict[str, Sequence[int]]) -> str:
-    """Reverts the abstract inverted index to the original text.
-
-    Args:
-        abstract_inverted_index (Dict[str, Sequence[int]]): The abstract inverted index.
-
-    Returns:
-        str: The original text.
-    """
-    try:
-        length_of_text = (
-            max(
-                [
-                    index
-                    for sublist in abstract_inverted_index.values()
-                    for index in sublist
-                ]
-            )
-            + 1
-        )
-        recreated_text = [""] * length_of_text
-
-        for word, indices in abstract_inverted_index.items():
-            for index in indices:
-                recreated_text[index] = word
-
-        return " ".join(recreated_text)
-    except (AttributeError, ValueError):
-        return ""
-
-
-def _parse_results(response: List[Dict]) -> Dict[str, List[str]]:
-    """Parses OpenAlex API response to retain:
-        - id
-        - doi
-        - display_name
-        - title
-        - publication_date
-        - abstract_inverted_index
-        - authorships
-        - cited_by_count
-        - concepts
-        - keywords
-        - grants
-
-    Args:
-        response (List[Dict]): The response from the OpenAlex API.
-
-    Returns:
-        Dict[str, List[str]]: A dictionary containing the parsed information.
-    """
-    return [
-        {
-            "id": paper["id"],
-            "doi": paper["doi"],
-            "display_name": paper["display_name"],
-            "title": paper["title"],
-            "publication_date": paper["publication_date"],
-            "abstract": _revert_abstract_index(paper["abstract_inverted_index"]),
-            "authorships": paper["authorships"],
-            "cited_by_count": paper["cited_by_count"],
-            "concepts": paper["concepts"],
-            "keywords": paper["keywords"],
-            "grants": paper["grants"],
-        }
-        for paper in response
-    ]
-
-
-def _citation_works_generator(
-    mailto: str, perpage: str, work_id: str, filter_by: str
-) -> Iterator[list]:
-    """Creates a generator that yields a list of works from the OpenAlex API based on a
-    given work ID.
-
-    Args:
-        mailto (str): The email address to use for the API.
-        perpage (str): The number of results to return per page.
-        work_id (str): A single work ID to filter by 'cites'.
-        filter_by (str): The filter condition for oa papers.
-
-    Yields:
-        Iterator[list]: A generator that yields a list of works from the OpenAlex API
-        based on a given work ID.
-    """
-
-    cursor_url = (
-        f"https://api.openalex.org/works?filter={filter_by}:{work_id}"
-        f"&mailto={mailto}&per-page={perpage}&cursor={{}}"
-    )
-
-    cursor = "*"
-    session = requests.Session()
-    retries = Retry(total=5, backoff_factor=0.3)
-    session.mount("https://", HTTPAdapter(max_retries=retries))
-
-    # make a call to estimate total number of results
-    response = session.get(cursor_url.format(cursor), timeout=20)
-    data = response.json()
-    total_results = data["meta"]["count"]
-    num_calls = total_results // int(perpage) + 1
-    logger.info(
-        "Total results for %s: %s, in %s calls", work_id, total_results, num_calls
-    )
-
-    while cursor:
-        response = session.get(cursor_url.format(cursor), timeout=20)
-        data = response.json()
-        results = data.get("results")
-        cursor = data["meta"].get("next_cursor", False)
-        yield results
-
-
-def _chunk_work_ids(ids: List[str], chunk_size: int = 50) -> List[str]:
-    """Yield successive chunk_size-sized chunks from ids."""
-    for i in range(0, len(ids), chunk_size):
-        yield "|".join(ids[i : i + chunk_size])
-
-
-def _fetch_papers_for_id(work_id: str, **kwargs) -> List[dict]:
-    """Fetches all papers cited by a specific work ID."""
-    papers_for_id = []
-    for page, papers in enumerate(_citation_works_generator(work_id=work_id, **kwargs)):
-        papers_for_id.extend(_parse_results(papers))
-        logger.info(
-            "Fetching page %s for %s. Total papers collected: %s",
-            page,
-            work_id,
-            len(papers_for_id),
-        )
-    return papers_for_id
 
 
 def collect_papers(
     mailto: str,
     perpage: str,
     work_ids: Union[str, List[str], Dict[str, str]],
-    filter_by: str,
+    filter_criteria: str,
     group_work_ids: bool = False,
     eager_loading: bool = False,
+    slice_keys: bool = False,
+    parallelise: bool = False,
 ) -> Union[Dict[str, Callable], Dict[str, List[dict]]]:
     """
-    Prepares to collect all papers cited by specific work IDs, either eagerly or lazily.
+    Collects papers based on the provided work IDs.
 
     Args:
-        mailto (str): The email address to use for the API.
-        work_ids (List[str] or Dict[str, str]): Work IDs or a dictionary of work IDs.
-        filter_by (str): The filter condition for oa papers.
-        perpage (str): The number of results to return per page.
-        group_work_ids (bool): If True, groups work_ids into chunks of up to 50.
-        eager_loading (bool): If True, executes data fetching eagerly.
+        mailto (str): The email address to be used for API requests.
+        perpage (str): The number of papers to fetch per page.
+        work_ids (Union[str, List[str], Dict[str, str]]): The work IDs to collect papers for.
+        filter_criteria (str): The filter to apply when fetching papers.
+        group_work_ids (bool, optional): Whether to group the work IDs. Defaults to False.
+        eager_loading (bool, optional): Whether to eagerly load all papers. Defaults to False.
+        slice_keys (bool, optional): Whether to use slices as keys in the result dictionary.
+            Defaults to False.
+        parallelise (bool, optional): Whether to parallelize the fetching of papers.
+            Defaults to False.
 
     Returns:
-        dict: A dictionary where each key is a work_id (or grouped work_ids) and
-              each value is either a callable (lazy) or a list of papers (eager).
+        Union[Dict[str, Callable], Dict[str, List[dict]]]: A dictionary containing
+        the collected papers.
+            If eager_loading is True, the values are Callables that fetch the papers.
+            If eager_loading is False, the values are Lists of dictionaries representing the
+                fetched papers.
     """
+    # preprocess work_ids
+    work_ids = preprocess_work_ids(work_ids, group_work_ids)
 
-    if isinstance(work_ids, str):
-        work_ids = [work_ids]
-    if isinstance(work_ids, dict):
-        work_ids = list(work_ids.values())
-
-    if group_work_ids:
-        work_ids = list(_chunk_work_ids(work_ids))
-
-    if eager_loading:
-        return {
-            work_id: _fetch_papers_for_id(
-                work_id=work_id, mailto=mailto, perpage=perpage, filter_by=filter_by
+    # fetch papers for each work_id
+    if not parallelise:
+        if eager_loading:
+            return fetch_papers_eager(
+                work_ids, mailto, perpage, filter_criteria, slice_keys
             )
-            for work_id in work_ids
-        }
-    else:
-        return {
-            work_id: lambda work_id=work_id: _fetch_papers_for_id(
-                work_id=work_id, mailto=mailto, perpage=perpage, filter_by=filter_by
-            )
-            for work_id in work_ids
-        }
+        return fetch_papers_lazy(work_ids, mailto, perpage, filter_criteria, slice_keys)
+    return fetch_papers_parallel(work_ids, mailto, perpage, filter_criteria)
 
 
-def load_work_ids(
-    work_id: str, dataset: Sequence[AbstractVersionedDataset]
-) -> List[str]:
+def load_work_ids(work_id: str, dataset: Sequence[AbstractDataset]) -> List[str]:
     """
     Loads the file corresponding to a particular work_id in a PartitionedDataSet,
     extracts all ids, and returns these as a list.
@@ -348,3 +209,78 @@ def retrieve_oa_works_for_concepts_and_years(
     all_works_df = pd.DataFrame(all_works).drop_duplicates(subset=["id"])
     logger.info("Retrieved %s works.", len(all_works_df))
     return all_works_df
+
+
+def preprocess_publication_doi(df: pd.DataFrame) -> pd.DataFrame:
+    """Preprocess the Gateway to Research publication data to include
+    doi values that are compatible with OA filter module.
+
+    Args:
+        df (pd.DataFrame): The Gateway to Research publication data.
+
+    Returns:
+        pd.DataFrame: The preprocessed publication data.
+    """
+    # Ensure the DOI column exists
+    if "doi" in df.columns:
+        df["doi"] = (
+            df["doi"]
+            .str.replace("/dx.", "/", regex=True)
+            .str.replace("http:", "https:", regex=False)
+            .str.split()
+            .str[0]
+            .apply(lambda x: x if isinstance(x, str) and x.count(":") <= 1 else None)
+        )
+    return df
+
+
+def create_list_doi_inputs(df: pd.DataFrame) -> list:
+    """Create a list of doi values from the Gateway to Research publication data.
+
+    Args:
+        df (pd.DataFrame): The Gateway to Research publication data.
+
+    Returns:
+        list: A list of doi values.
+    """
+    return df[(df["doi"].notnull()) & (df.duplicated(subset="doi"))]["doi"].tolist()
+
+
+def load_referenced_work_ids(
+    dataset: Dict[str, Sequence[Sequence[AbstractDataset]]]
+) -> Tuple[List[str], Dict[str, str]]:
+    """
+    Load referenced work IDs from the dataset.
+
+    Args:
+        dataset (Dict[str, Sequence[Sequence[AbstractDataset]]]): A dictionary
+            containing the dataset.
+
+    Returns:
+        Tuple[List[str], Dict[str, str]]: A tuple containing the list of work IDs
+            and a dictionary mapping work IDs to DOIs.
+    """
+    oa_doi_dict = {}
+    work_ids = set()
+    for timestamp, loader in dataset.items():
+        logger.info("Loading work IDs from %s", timestamp)
+        data = loader()
+
+        # for each OR call that we made to openalex
+        for call in data:
+            for work in call:
+                ref_works = [
+                    w.replace("https://openalex.org/", "")
+                    for w in work["referenced_works"]
+                ]
+                work_id = work.get("id").replace("https://openalex.org/", "")
+                doi = work.get("doi").replace("https://doi.org/", "")
+                oa_doi_dict[work_id] = {}
+                oa_doi_dict[work_id]["doi"] = doi
+                oa_doi_dict[work_id]["referenced_works"] = ref_works
+                work_ids.update(ref_works)
+
+    work_ids = list(work_ids)
+    logger.info("Work IDs loaded: %s", len(work_ids))
+
+    return work_ids, oa_doi_dict
