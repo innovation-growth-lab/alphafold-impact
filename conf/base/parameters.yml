@@ -7,13 +7,25 @@ oa:
       perpage: "200"
   
     # Data retrieval settings
-    get:
+    get: &get
       work_id: W2741809807
 
     # Retrieval directions
-    direction: 
-      cited_by: cited_by
-      cites: cites
+    direction:
+      cited_by:
+        get: *get
+        api: *api
+        filter: cited_by
+      cites:
+        get: *get
+        api: *api
+        filter: cites
+
+    # Downstream works
+    downstream:
+      api: *api
+      get: *get
+      filter: cites
 
     # Additional settings
     config: &config

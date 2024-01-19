@@ -58,21 +58,17 @@ works_for_concepts:
   filepath: s3://alphafold-impact/data/01_raw/oa/works/works_for_concepts.json
   credentials: s3_credentials
 
-downstream_incoming_citations:
-  type: partitions.PartitionedDataset
-  dataset: ${_json.type}
-  filename_suffix: ".json"
-  path: "s3://alphafold-impact/data/02_intermediate/openalex/works/downstream/${runtime_params:get.work_id, undefined}/" # else option is always string...
-  credentials: s3_credentials
-
-oa.data_collection.cites:
+oa.data_collection.direction.cites.raw: &cites_raw
   <<: *_js_ptd
-  path: s3://alphafold-impact/data/02_intermediate/oa/works/cites/
+  path: s3://alphafold-impact/data/01_raw/oa/works/cites/
 
-oa.data_collection.cited_by:
+oa.data_collection.direction.cited_by.raw:
   <<: *_js_ptd
-  path: s3://alphafold-impact/data/02_intermediate/oa/works/cited_by/
+  path: s3://alphafold-impact/data/01_raw/oa/works/cited_by/
   
-oa.data_collection.downstream.cites:
+oa.data_collection.downstream.cites.input: # [HACK] need to fetch in different nameplace
+  <<: *cites_raw
+
+oa.data_collection.downstream.cites.intermediate:
   <<: *_js_ptd
   path: "s3://alphafold-impact/data/02_intermediate/oa/works/downstream/${globals:oa.data_collection.get.work_id}/" # else option is always string...

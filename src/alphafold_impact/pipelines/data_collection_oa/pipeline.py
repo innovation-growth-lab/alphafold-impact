@@ -38,15 +38,15 @@ from .nodes import (
 
 
 def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
-    template_pipeline = pipeline(
+    template_citation_pipeline = pipeline(
         [
             node(
                 func=collect_papers,
                 inputs={
-                    "mailto": "params:mailto",
-                    "perpage": "params:perpage",
-                    "work_ids": "params:work_id",
-                    "filter_criteria": "params:direction",
+                    "mailto": "params:api.mailto",
+                    "perpage": "params:api.perpage",
+                    "work_ids": "params:get.work_id",
+                    "filter_criteria": "params:filter",
                 },
                 outputs="raw",
             )
@@ -54,19 +54,12 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
     )
 
     pipelines = []
-    for prefix, direction in settings.DYNAMIC_PIPELINES_MAPPING["oa"]:
+    for filter_ in settings.DYNAMIC_PIPELINES_MAPPING["oa"]:
         pipelines.append(
             pipeline(
-                template_pipeline,
-                parameters={
-                    "params:direction": f"params:{prefix}.direction.{direction}",
-                    "params:mailto": f"params:{prefix}.api.mailto",
-                    "params:perpage": f"params:{prefix}.api.perpage",
-                    "params:work_id": f"params:{prefix}.get.work_id",
-                },
-                outputs={"raw": f"{prefix}.{direction}"},
-                namespace=f"{prefix}.{direction}",
-                tags=[direction, "oa"],
+                template_citation_pipeline,
+                namespace=f"oa.data_collection.direction.{filter_}",
+                tags=[filter_, "oa"],
             )
         )
 
@@ -76,7 +69,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                 func=load_work_ids,
                 inputs={
                     "work_id": "params:get.work_id",
-                    "dataset": "cites",
+                    "dataset": "cites.input",
                 },
                 outputs="work_ids",
             ),
@@ -86,13 +79,13 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                     "mailto": "params:api.mailto",
                     "perpage": "params:api.perpage",
                     "work_ids": "work_ids",
-                    "filter_criteria": "params:direction.cites",
+                    "filter_criteria": "params:filter",
                 },
-                outputs="downstream.cites",
+                outputs="cites.intermediate",
             ),
         ],
-        namespace="oa.data_collection",
-        tags="downstream_impact",
+        namespace="oa.data_collection.downstream",
+        tags="downstream",
     )
 
 
