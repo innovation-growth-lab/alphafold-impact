@@ -1,4 +1,63 @@
+# OpenAlex (oa) configuration
 oa:
-  alphafold_id: W3177828909 # Highly accurate and fast protein structure prediction with AlphaFold
-  group_work_ids: True
-  eager_loading: True
+  data_collection:
+    # API configuration
+    api: &api
+      mailto: data_analytics@nesta.org.uk
+      perpage: "200"
+  
+    # Data retrieval settings
+    get:
+      work_id: W2741809807
+
+    # Retrieval directions
+    direction: 
+      cited_by: cited_by
+      cites: cites
+
+    # Additional settings
+    config: &config
+      subfolder: work_id
+      alphafold_id: W3177828909 # AlphaFold
+      group_work_ids: True
+      eager_loading: True
+      slice_keys: True
+      parallelise: True
+
+    # Filtering options
+    gtr:
+      api: *api
+      config: *config
+      filter_doi: doi
+      filter_oa: "ids.openalex"
+
+# Gateway to Research (gtr) configuration
+gtr:
+  # Data collection parameters
+  data_collection:
+
+    # Common request parameters
+    _param_requests:
+      gtr_config:
+        base_url: https://gtr.ukri.org/gtr/api/
+        headers:
+          Accept: application/vnd.rcuk.gtr.json-v7
+        page_size: 100
+      max_retries: 5
+      backoff_factor: 0.3
+
+    # Specific data endpoints
+    outcomes/publications:
+      param_requests: ${.._param_requests}
+      label: outcomes/publications
+    organisations:
+      param_requests: ${.._param_requests}
+      label: organisations
+    funds:
+      param_requests: ${.._param_requests}
+      label: funds
+    projects:
+      param_requests: ${.._param_requests}
+      label: projects
+
+test: False
