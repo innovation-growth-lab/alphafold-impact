@@ -12,6 +12,7 @@ from kedro.pipeline import Pipeline, pipeline, node
 from .nodes import (
     load_institutions_data,
     process_institutions,
+    process_publications,
     process_alphafold_citations
 )
 
@@ -22,14 +23,20 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
             node(
                 func=load_institutions_data,
                 inputs=["works"],
-                outputs=["authors", "publications"],
-                tags=["gtr.processing", "gtr.institutions"],
+                outputs=["authors.raw", "publications.raw"],
+                tags=["gtr.processing", "gtr.institutions", "gtr.publications"],
             ),
             node(
                 func=process_institutions,
                 inputs=["authors"],
                 outputs="institutions",
                 tags=["gtr.processing", "gtr.institutions"],
+            ),
+            node(
+                func=process_publications,
+                inputs=["publications.raw"],
+                outputs="publications",
+                tags=["gtr.processing", "gtr.publications"],
             ),
             node(
                 func=process_alphafold_citations,

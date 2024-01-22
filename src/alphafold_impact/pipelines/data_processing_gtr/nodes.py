@@ -106,7 +106,7 @@ def process_institutions(gtr_authors: List[dict]):
     data_institutions = pd.DataFrame(
         gtr_authors,
         columns=[
-            "paper_id",
+            "work_id",
             "author_id",
             "institution_id",
             "institution_name",
@@ -115,6 +115,39 @@ def process_institutions(gtr_authors: List[dict]):
     )
 
     return data_institutions
+
+def process_publications(gtr_publications: List[dict]):
+    """
+    Process the publications data from GTR publications.
+
+    Args:
+        gtr_publications (List[dict]): List of dictionaries containing GTR publications data.
+
+    Returns:
+        pd.DataFrame: Processed publications data as a pandas DataFrame.
+    """
+
+    logger.info("Processing publications data.")
+
+    # unpack dictionaries, remove url from oa id
+    gtr_publications = [
+        (k, v["title"], v["abstract"], v["doi"], v["publication_date"])
+        for k, v in gtr_publications.items()
+    ]
+
+    # create a pandas dataframe
+    data_publications = pd.DataFrame(
+        gtr_publications,
+        columns=[
+            "work_id",
+            "title",
+            "abstract",
+            "doi",
+            "publication_date",
+        ],
+    )
+
+    return data_publications
 
 
 def process_alphafold_citations(reference_dict, cites_data):
