@@ -188,6 +188,3 @@ def process_alphafold_citations(reference_dict, cites_data):
         ["work_id", "doi", "af_direct_citation", "af_indirect_citations"]
     ]
     return af_citations
-
-
-# Note many have affiliations when manually searching on OpenAlex, but not when using the API.

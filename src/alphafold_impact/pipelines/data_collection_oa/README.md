@@ -1,71 +1,36 @@
-# Data Collection OpenAlex Pipeline
+# OpenAlex Data Collection Pipeline (`data_collection_oa`)
 
 ## Overview
-This pipeline collects data from the OpenAlex API.
+The `data_collection_oa` pipeline is designed for fetching and preprocessing data from the OpenAlex (OA) API. This pipeline is part of a Kedro project and focuses on collecting data for research and analysis purposes.
 
-This pipeline has multiple pipeline components to allow for:
-   - collecting incoming (cites) or outgoing (references) citations for a given work using the OpenAlex API. The pipeline is structured to create two separate flows – `incoming_pipeline` and `outgoing_pipeline` – for collecting incoming and outgoing citations respectively. Additionally, it includes a `downstream_impact_pipeline` to assess the downstream impact of a work.
-   - retrieving works from specified related concept IDs and publication years.
+## Modules
+### `nodes.py`
+This module contains the core functions for interacting with the OA API. Key functionalities include:
+- **Collecting Papers (`collect_papers`)**: Fetches papers based on specified work IDs, with options for grouping, eager loading, and parallel processing.
+- **Loading Work IDs (`load_work_ids`)**: Loads work IDs from a dataset and prepares them for further processing.
+- **Retrieving Works for Concepts and Years (`retrieve_oa_works_for_concepts_and_years`)**: Gathers OA works based on concept IDs and publication years, handling API limitations.
+- **Preprocessing DOI Values (`preprocess_publication_doi`)**: Prepares DOI values from Gateway to Research data for compatibility with OA filters.
+- **Creating DOI Lists (`create_list_doi_inputs`)**: Generates lists of DOI values from preprocessed data.
+- **Loading Referenced Work IDs (`load_referenced_work_ids`)**: Extracts work IDs and DOI mappings from a dataset.
 
-## Running the OpenAlex Incoming and Outgoing Citation Collection Pipeline
-The pipeline can be executed in different modes based on the requirements:
+### `pipeline.py`
+Defines the `data_collection_oa` pipeline, which includes several sub-pipelines:
+- **Base Pipeline**: Focuses on collecting OA publications for specific work IDs and their citations.
+- **GtR Pipeline**: Targets OpenAlex publications matching DOIs from Gateway to Research and collects papers cited by these publications.
+- **Concepts and Years Pipeline**: Gathers OA works for specific concepts and publication years.
+- **Downstream Impact Pipeline**: Analyses the downstream impact of works based on citations and references.
 
-1. **Standard Run:**
-   ```
-   $ kedro run --pipeline data_collection_oa
-   ```
+### `utils.py`
+Contains utility functions supporting data collection tasks, including parsing API responses, handling pagination, and error management.
 
-2. **Run with a Specific Work ID:**
-   ```
-   $ kedro run --pipeline data_collection_oa --params=get.work_id=<work_id>
-   ```
+## Usage
+To execute the entire `data_collection_oa` pipeline, run:
+```bash
+$ kedro run --pipeline data_collection_oa
+```
 
-3. **Run with a Specific Direction:**
-   ```
-   $ kedro run --pipeline data_collection_oa --tags=<direction>
-   ```
-
-4. **Run for Downstream Impact Analysis:**
-   ```
-   $ kedro run --pipeline data_collection_oa --tags=downstream_impact
-   ```
-
-5. **Run for Retrieving Works from Concept IDs and Publication Years:**
-   ```
-   $ kedro run --pipeline data_collection_oa --tags=works_for_concepts_and_years
-   ```
-
-## Pipeline Structure
-The main pipeline is a template that is used to generate the two specific pipelines. It utilizes the `modular_pipeline` function to create the `incoming_pipeline` and `outgoing_pipeline`. Each pipeline is tagged accordingly, and the output folders are named dynamically based on the direction of the citations.
-
-### Nodes
-The key functions in the `nodes` module include:
-
-Functions:
-- `collect_citation_papers`: Collects all papers cited by specific work IDs.
-- `load_work_ids`: Loads the file corresponding to a particular work_id in a PartitionedDataSet,
-        extracts all ids, and returns these as a list.
-- `retrieve_oa_works_for_concepts_and_years`: Retrieves OpenAlex works for the specified
-        concept IDs and publication years.
-
-Internal functions:
-- `_revert_abstract_index`: Reverts the abstract inverted index to the original text.
-- `_parse_results`: Parses OpenAlex API response to retain basic variables.
-- `_citation_works_generator`: Creates a generator that yields a list of works from the OpenAlex API based on a
-        given work ID.
-- `_create_concept_year_filter`: Creates an API query filter string for the OpenAlex API.
-- `_retrieve_oa_works_chunk`: Retrieves a chunk of OpenAlex works for a chunk of concept IDs.
-- `_chunk_list`: Divides the input list into chunks of specified size.
-
-## Novelties
-### Modular Pipelines
-Modular pipelines are used to create flexible, reusable, and easily maintainable pipeline sections. This project utilizes modular pipelines to separate the logic for collecting incoming and outgoing citations.
-
-### Partitioned Datasets
-The pipeline leverages Kedro's Partitioned Datasets to manage data storage efficiently. This allows handling large datasets by dividing them into manageable parts, each corresponding to a specific work ID.
-
-## To Do
-- **Saving Downstream Impact Data:** A desired feature is to save downstream impact data in a subfolder named after the `work_id`. This is currently achievable using runtime parameters but not with static ones. Future iterations of the pipeline may explore custom configurations to enable this functionality.
-
-- **Custom Configurations:** Investigate potential methods for creating a custom config that allows dynamic naming of output directories based on static parameters.
-
+For running specific parts of the pipeline, use the `--namespace` and `--tags` flags. For example:
+```bash
+$ kedro run --pipeline data_collection_oa --namespace oa.data_collection.gtr
+$ kedro run --pipeline data_collection_oa --tags downstream_impact
+```

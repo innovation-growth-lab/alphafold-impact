@@ -1,48 +1,30 @@
-# Data Collection GtR Pipeline
+# Gateway to Research (GtR) Data Collection Pipeline (`data_collection_gtr`)
 
 ## Overview
+The `data_collection_gtr` pipeline is designed to fetch and preprocess data from the Gateway to Research (GtR) API. This pipeline is a component of a Kedro project, focusing on efficiently gathering and preparing GtR data for analysis and research within the project.
 
-This pipeline is designed to fetch and preprocess data from the Gateway to Research (GtR) API. It handles various data types such as organisations, funds, publications, and projects, efficiently processing them into a format suitable for in-depth analysis.
+## Modules
+### `nodes.py`
+This module contains the key functions and classes for interacting with the GtR API. It includes:
+- **Fetching GtR Data (`fetch_gtr_data`)**: Retrieves data from the GtR API based on specified parameters.
+- **Preprocessing Data to DataFrame (`preprocess_data_to_df`)**: Converts the fetched raw data into a structured pandas DataFrame.
+- **GtR Data Preprocessor Class**: A class that provides methods for preprocessing various types of GtR data, including organisations, funds, publications, and projects.
 
-## Nodes Description
+### `pipeline.py`
+Defines the `data_collection_gtr` pipeline, which includes nodes for:
+- Fetching data from various endpoints of the GtR API.
+- Preprocessing the fetched data into a format suitable for further analysis and usage in the project.
 
-### fetch_gtr_data
-- **Purpose**: Retrieves data (e.g., organisations, funds, publications, projects) from the GtR API based on specified parameters.
-- **Inputs**: A dictionary of parameters and the endpoint URL.
-- **Outputs**: A list of dictionaries containing the raw data fetched from the API.
+### `utils.py`
+Contains utility functions supporting the pipeline, including API configuration construction, main address extraction, and nested dictionary transformation.
 
-### preprocess_data_to_df
-- **Purpose**: Transforms the raw data into a structured pandas DataFrame and preprocesses it according to the data type.
-- **Inputs**: Raw data list and the type of endpoint (e.g., organisations, funds).
-- **Outputs**: A pandas DataFrame with preprocessed data.
-
-### GtRDataPreprocessor Class
-- **Purpose**: Provides methods for preprocessing different types of GtR data.
-- **Methods**:
-  - `_preprocess_organisations`: Processes organisation data, extracting main addresses and cleaning data.
-  - `_preprocess_funds`: Processes funds data, extracting financial values and cleaning data.
-  - `_preprocess_publications`: Processes publication data, extracting relevant information and restructuring.
-  - `_preprocess_projects`: Processes project data, transforming nested dictionaries and cleaning data.
-
-## Running the Pipeline
-
-To execute the entire data collection pipeline, use:
-
+## Usage
+To execute the entire `data_collection_gtr` pipeline, run:
 ```bash
 $ kedro run --pipeline data_collection_gtr
 ```
 
-For running specific parts of the pipeline, use the corresponding tags:
-
+For running specific parts of the pipeline, such as a single endpoint, use the `--tags` flag. For example:
 ```bash
-$ kedro run --tags organisations
-$ kedro run --tags funds
-$ kedro run --tags publications
-$ kedro run --tags pronjects
+$ kedro run --pipeline data_collection_gtr --tags projects
 ```
-
-This pipeline dynamically interacts with various GtR API endpoints as defined in the parameters, ensuring a comprehensive collection and processing of data.
-
----
-
-**Note**: The `nodes.py` module contains the implementation details of the functions used in the pipeline. The `pipeline.py` script defines the structure and sequence of the data processing workflow. The `utils.py` module provides auxiliary functions that support data processing tasks.
