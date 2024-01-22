@@ -8,7 +8,7 @@ oa:
   
     # Data retrieval settings
     get: &get
-      work_id: W2741809807
+      work_id: W3177828909 # AlphaFold
 
     # Retrieval directions
     direction:
@@ -30,7 +30,6 @@ oa:
     # Additional settings
     config: &config
       subfolder: work_id
-      alphafold_id: W3177828909 # AlphaFold
       group_work_ids: True
       eager_loading: True
       slice_keys: True

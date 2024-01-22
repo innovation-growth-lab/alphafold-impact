@@ -14,6 +14,22 @@ _js_ptd: &_js_ptd
   filename_suffix: ".json"
   credentials: s3_credentials
 
+# OA
+oa.data_collection.direction.cites.raw: &cites_raw
+  <<: *_js_ptd
+  path: s3://alphafold-impact/data/01_raw/oa/works/cites/
+
+oa.data_collection.direction.cited_by.raw:
+  <<: *_js_ptd
+  path: s3://alphafold-impact/data/01_raw/oa/works/cited_by/
+  
+oa.data_collection.downstream.cites.input: # [HACK] need to fetch in different nameplace
+  <<: *cites_raw
+
+oa.data_collection.downstream.cites.intermediate:
+  <<: *_js_ptd
+  path: "s3://alphafold-impact/data/02_intermediate/oa/works/downstream/${globals:oa.data_collection.get.work_id}/"
+
 # Raw Gateway to Research data - includes projects, publications, organisations and funds 
 
 "{source}.data_collection.{label}.raw":
@@ -32,19 +48,39 @@ oa.data_collection.gtr.publications: # [HACK] fetch the above's template for pub
   <<: *_pq
   filepath: s3://alphafold-impact/data/02_intermediate/gtr/outcomes/publications.parquet
 
-oa.data_collection.gtr.dict:
+oa.data_collection.gtr.dict: &gtr_dict_raw
   <<: *_js
   filepath: s3://alphafold-impact/data/02_intermediate/gtr/outcomes/publications/oa/doi_oaid.json
 
-oa.data_collection.gtr.works:
+oa.data_collection.gtr.works: &gtr_works_raw
   <<: *_js_ptd
   path: s3://alphafold-impact/data/01_raw/gtr/outcomes/publications/oa/works/
-
-# OpenAlex data from citations of publications in Gateway to Research
 
 oa.data_collection.gtr.citations:
   <<: *_js_ptd
   path: s3://alphafold-impact/data/01_raw/gtr/outcomes/publications/oa/citations/
+
+# Gateway to research processing
+oa.data_processing.gtr.dict:
+  <<: *gtr_dict_raw
+
+oa.data_processing.gtr.works:
+  <<: *gtr_works_raw
+
+oa.data_processing.gtr.cites.raw:
+  <<: *cites_raw
+
+oa.data_processing.gtr.publications:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/03_primary/gtr/outcomes/publications/oa/publications.parquet
+
+oa.data_processing.gtr.institutions:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/03_primary/gtr/outcomes/publications/oa/institutions.parquet
+
+oa.data_processing.gtr.citations.alphafold:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/03_primary/gtr/outcomes/publications/oa/citations.parquet
 
 # Openalex works
 
@@ -58,17 +94,3 @@ works_for_concepts:
   filepath: s3://alphafold-impact/data/01_raw/oa/works/works_for_concepts.json
   credentials: s3_credentials
 
-oa.data_collection.direction.cites.raw: &cites_raw
-  <<: *_js_ptd
-  path: s3://alphafold-impact/data/01_raw/oa/works/cites/
-
-oa.data_collection.direction.cited_by.raw:
-  <<: *_js_ptd
-  path: s3://alphafold-impact/data/01_raw/oa/works/cited_by/
-  
-oa.data_collection.downstream.cites.input: # [HACK] need to fetch in different nameplace
-  <<: *cites_raw
-
-oa.data_collection.downstream.cites.intermediate:
-  <<: *_js_ptd
-  path: "s3://alphafold-impact/data/02_intermediate/oa/works/downstream/${globals:oa.data_collection.get.work_id}/" # else option is always string...
