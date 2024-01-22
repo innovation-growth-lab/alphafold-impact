@@ -30,28 +30,6 @@ expected_keys = [
     "referenced_works",
 ]
 
-
-def test_data_is_list(data):
-    assert isinstance(data, list), "Data should be a list"
-
-
-def test_items_are_dicts(data):
-    for item in data:
-        assert isinstance(item, dict), "Each item in data should be a dictionary"
-
-
-def test_expected_keys_in_dicts(data):
-    for item in data:
-        assert set(item.keys()) == set(
-            expected_keys
-        ), "Each item should have the expected keys"
-
-
-def test_id_is_not_empty(data):
-    for item in data:
-        assert item["id"], "id should not be empty"
-
-
 @pytest.fixture
 def params(project_context):
     """Get the parameters for the GtR API."""
@@ -84,13 +62,18 @@ def test_collect_papers(params, filter_):
     data = list(loader_dict.values())[0]()
 
     # Assert that the response is a list
-    test_data_is_list(data)
+    assert isinstance(data, list), "Data should be a list"
 
     # Assert that each item in the response list is a dictionary
-    test_items_are_dicts(data)
+    for item in data:
+        assert isinstance(item, dict), "Each item in data should be a dictionary"
 
     # Assert that each dictionary in the response has the required keys
-    test_expected_keys_in_dicts(data)
+    for item in data:
+        assert set(item.keys()) == set(
+            expected_keys
+        ), "Each item should have the expected keys"
 
     # Assert that the id is not empty
-    test_id_is_not_empty(data)
+    for item in data:
+        assert item["id"], "id should not be empty"

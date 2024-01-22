@@ -42,6 +42,14 @@ oa:
       filter_doi: doi
       filter_oa: "ids.openalex"
 
+test_concept_ids:
+  - "c10010492" # Protein sequencing
+  - "c204328495" # Protein folding
+
+test_publication_years:
+  - 2022
+  - 2023
+
 # Gateway to Research (gtr) configuration
 gtr:
   # Data collection parameters
