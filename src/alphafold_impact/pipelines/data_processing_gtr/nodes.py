@@ -25,9 +25,12 @@ def load_institutions_data(data_dict: Dict[str, AbstractDataset]) -> Dict[str, d
         dict: A dictionary containing the loaded institutions data.
     """
     logger.info("Loading chunked data.")
-    gtr_authors, gtr_publications = Parallel(n_jobs=-1, verbose=10)(
+    gtr_data = Parallel(n_jobs=-1, verbose=10)(
         delayed(_load_institutions)(partition) for partition in data_dict.values()
     )
+
+    # split the list of dictionaries into two lists of dictionaries
+    gtr_authors, gtr_publications = zip(*gtr_data)
 
     # join the list of dictionaries into a single dictionary
     return (
