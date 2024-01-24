@@ -154,7 +154,6 @@ def preprocess_publication_doi(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         pd.DataFrame: The preprocessed publication data.
     """
-    # Ensure the DOI column exists
     if "doi" in df.columns:
         df["doi"] = (
             df["doi"]

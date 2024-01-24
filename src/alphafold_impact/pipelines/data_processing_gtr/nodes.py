@@ -14,7 +14,7 @@ from joblib import Parallel, delayed
 logger = logging.getLogger(__name__)
 
 
-def load_institutions_data(data_dict: Dict[str, AbstractDataset]) -> Dict[str, dict]:
+def load_gtr_data(data_dict: Dict[str, AbstractDataset]) -> Dict[str, dict]:
     """
     Load institutions data from a dictionary of partitions.
 
@@ -26,7 +26,7 @@ def load_institutions_data(data_dict: Dict[str, AbstractDataset]) -> Dict[str, d
     """
     logger.info("Loading chunked data.")
     gtr_data = Parallel(n_jobs=-1, verbose=10)(
-        delayed(_load_institutions)(partition) for partition in data_dict.values()
+        delayed(_load_gtr_works)(partition) for partition in data_dict.values()
     )
 
     # split the list of dictionaries into two lists of dictionaries
@@ -39,7 +39,7 @@ def load_institutions_data(data_dict: Dict[str, AbstractDataset]) -> Dict[str, d
     )
 
 
-def _load_institutions(loader_obj: AbstractDataset) -> Dict[str, Tuple[str, str, str]]:
+def _load_gtr_works(loader_obj: AbstractDataset) -> Dict[str, Tuple[str, str, str]]:
     """
     Load institutions data from the given loader object.
 

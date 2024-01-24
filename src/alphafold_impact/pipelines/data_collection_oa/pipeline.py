@@ -109,13 +109,13 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                 func=preprocess_publication_doi,
                 inputs="publications",
                 outputs="preproc",
-                tags=["gtr.citations", "gtr.publications"],
+                tags=["gtr.list", "gtr.citations", "gtr.publications"],
             ),
             node(
                 func=create_list_doi_inputs,
                 inputs="preproc",
                 outputs="doi_list",
-                tags=["gtr.citations", "gtr.publications"],
+                tags=["gtr.list", "gtr.citations", "gtr.publications"],
             ),
             node(
                 func=collect_papers,
