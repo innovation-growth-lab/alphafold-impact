@@ -175,7 +175,7 @@ def create_list_doi_inputs(df: pd.DataFrame) -> list:
     Returns:
         list: A list of doi values.
     """
-    return df[(df["doi"].notnull()) & (df.duplicated(subset="doi"))]["doi"].tolist()
+    return df[df["doi"].notnull()]["doi"].drop_duplicates().tolist()
 
 
 def load_referenced_work_ids(
