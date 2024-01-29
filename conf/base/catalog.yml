@@ -14,7 +14,7 @@ _js_ptd: &_js_ptd
   filename_suffix: ".json"
   credentials: s3_credentials
 
-_js_ptd: &_csv_ptd
+_csv_ptd: &_csv_ptd
   type: partitions.PartitionedDataset
     dataset:
     type: pandas.CSVDataset
