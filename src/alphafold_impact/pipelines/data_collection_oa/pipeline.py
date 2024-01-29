@@ -35,7 +35,7 @@ from .nodes import (
     load_referenced_work_ids,
     retrieve_oa_works_for_concepts_and_years,
     fetch_citation_depth,
-    create_network_graph
+    create_network_graph,
 )
 
 
@@ -97,10 +97,11 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                     "params:test_concept_ids",
                     "params:test_publication_years",
                 ],
-                outputs="oa_raw_works_for_concepts_and_years",
+                outputs="raw",
             ),
         ],
-        tags="works_for_concepts_and_years",
+        namespace="oa.data_collection.works_for_concepts",
+        tags="works_for_concepts",
     )
 
     gtr_collection_pipeline = pipeline(

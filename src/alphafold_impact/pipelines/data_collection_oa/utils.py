@@ -2,14 +2,15 @@
 Utilities for data collection from OpenAlex.
     _revert_abstract_index: Revert the abstract inverted index to the original text.
     _parse_results: Parse OpenAlex API response
-    _works_generator: Create a generator that yields a list of works from the OpenAlex API 
-        based on a given work ID.
+    _works_generator: Create a generator that yields a list of works from the
+        OpenAlex API based on a given work ID.
     preprocess_work_ids: Preprocess work_ids to ensure they are in the correct format.
     _chunk_work_ids: Yield successive chunk_size-sized chunks from ids.
     _fetch_papers_for_id: Fetch all papers cited by a specific work ID.
     fetch_papers_parallel: Fetch papers in parallel.
     fetch_papers_eager: Fetch papers eagerly.
     fetch_papers_lazy: Fetch papers lazily.
+    chunk_list: Divides the input list into chunks of specified size.
 """
 
 import logging
@@ -20,6 +21,7 @@ import requests
 from joblib import Parallel, delayed
 
 logger = logging.getLogger(__name__)
+
 
 def _revert_abstract_index(abstract_inverted_index: Dict[str, Sequence[int]]) -> str:
     """Reverts the abstract inverted index to the original text.
@@ -235,9 +237,7 @@ def fetch_papers_parallel(
     ]
     logger.info("Slicing data. Number of work_id_chunks: %s", len(work_id_chunks))
     return {
-        f"s{str(i)}": lambda chunk=chunk: Parallel(
-            n_jobs=parallel_jobs, verbose=10
-        )(
+        f"s{str(i)}": lambda chunk=chunk: Parallel(n_jobs=parallel_jobs, verbose=10)(
             delayed(_fetch_papers_for_id)(work_id, mailto, perpage, filter_criteria)
             for work_id in chunk
         )
@@ -260,6 +260,22 @@ def _create_concept_year_filter(concept_ids: List[str], years: List[int]) -> str
     year_filter = f"publication_year:{'|'.join(map(str, years))}" if years else ""
     concept_filter = f"concepts.id:{'|'.join(concept_ids)}" if concept_ids else ""
     return ",".join(filter(None, [year_filter, concept_filter]))
+
+
+def chunk_list(input_list: List[str], chunk_size: int) -> List[List[str]]:
+    """
+    Divides the input list into chunks of specified size.
+
+    Args:
+        input_list (List[str]): The input list to be divided into chunks.
+        chunk_size (int): The size of each chunk.
+
+    Returns:
+        List[List[str]]: A list of chunks.
+    """
+    return [
+        input_list[i : i + chunk_size] for i in range(0, len(input_list), chunk_size)
+    ]
 
 
 def retrieve_oa_works_chunk(

@@ -32,6 +32,15 @@ oa:
       api: *api
       get: *get
       filter: cites
+    
+    # Works for concepts
+    works_for_concepts:
+      test_concept_ids:
+        - "c10010492" # Protein sequencing
+        - "c204328495" # Protein folding
+      test_publication_years:
+        - 2022
+        - 2023
 
     # Additional settings
     config: &config
@@ -47,14 +56,6 @@ oa:
       config: *config
       filter_doi: doi
       filter_oa: "ids.openalex"
-
-test_concept_ids:
-  - "c10010492" # Protein sequencing
-  - "c204328495" # Protein folding
-
-test_publication_years:
-  - 2022
-  - 2023
 
 # Gateway to Research (gtr) configuration
 gtr:
