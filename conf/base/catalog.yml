@@ -1,27 +1,96 @@
+_js: &_js
+  type: ${_json.type}
+  credentials: s3_credentials
+
+_pq: &_pq
+  type: pandas.ParquetDataset
+  credentials: s3_credentials
+  load_args:
+    engine: pyarrow
+
+_js_ptd: &_js_ptd
+  type: partitions.PartitionedDataset
+  dataset: ${_json.type}
+  filename_suffix: ".json"
+  credentials: s3_credentials
+
+# OA
+oa.data_collection.direction.cites.raw: &cites_raw
+  <<: *_js_ptd
+  path: s3://alphafold-impact/data/01_raw/oa/works/cites/
+
+oa.data_collection.direction.cited_by.raw:
+  <<: *_js_ptd
+  path: s3://alphafold-impact/data/01_raw/oa/works/cited_by/
+  
+oa.data_collection.downstream.cites.input: # [HACK] need to fetch in different nameplace
+  <<: *cites_raw
+
+oa.data_collection.downstream.cites.intermediate:
+  <<: *_js_ptd
+  path: "s3://alphafold-impact/data/02_intermediate/oa/works/downstream/${globals:oa.data_collection.get.work_id}/"
+
+# Raw Gateway to Research data - includes projects, publications, organisations and funds 
+
+"{source}.data_collection.{label}.raw":
+  <<: *_js
+  filepath: s3://alphafold-impact/data/01_raw/{source}/{label}.json
+
+# Intermediate Gateway to Research data - includes projects, publications, organisations and funds
+
+"{source}.data_collection.{label}.intermediate":
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/02_intermediate/{source}/{label}.parquet
+
+# OpenAlex data from publications in Gateawy to Research
+
+oa.data_collection.gtr.publications: # [HACK] fetch the above's template for publications in gtr-oa pl
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/02_intermediate/gtr/outcomes/publications.parquet
+
+oa.data_collection.gtr.dict: &gtr_dict_raw
+  <<: *_js
+  filepath: s3://alphafold-impact/data/02_intermediate/gtr/outcomes/publications/oa/doi_oaid.json
+
+oa.data_collection.gtr.works: &gtr_works_raw
+  <<: *_js_ptd
+  path: s3://alphafold-impact/data/01_raw/gtr/outcomes/publications/oa/works/
+
+oa.data_collection.gtr.citations:
+  <<: *_js_ptd
+  path: s3://alphafold-impact/data/01_raw/gtr/outcomes/publications/oa/citations/
+
+# Gateway to research processing
+oa.data_processing.gtr.dict:
+  <<: *gtr_dict_raw
+
+oa.data_processing.gtr.works:
+  <<: *gtr_works_raw
+
+oa.data_processing.gtr.cites.raw:
+  <<: *cites_raw
+
+oa.data_processing.gtr.publications:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/03_primary/gtr/outcomes/publications/oa/publications.parquet
+
+oa.data_processing.gtr.institutions:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/03_primary/gtr/outcomes/publications/oa/institutions.parquet
+
+oa.data_processing.gtr.citations.alphafold:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/03_primary/gtr/outcomes/publications/oa/citations.parquet
+
+# Openalex works - Concepts
+
 oa_raw_works_for_concepts_and_years:
   type: kedro_datasets.pandas.JSONDataset
   filepath: s3://alphafold-impact/data/01_raw/openalex/works/oa_works_for_concepts_and_years.json
   credentials: s3_credentials
 
-oa_int_works_incoming_citations:
-  type: partitions.PartitionedDataset
-  dataset: ${_json.type}
-  filename_suffix: ".json"
-  path: s3://alphafold-impact/data/02_intermediate/openalex/works/cited_by/
+works_for_concepts:
+  type: ${_json.type}
+  filepath: s3://alphafold-impact/data/01_raw/oa/works/works_for_concepts.json
   credentials: s3_credentials
-
-oa_int_works_outgoing_citations:
-  type: partitions.PartitionedDataset
-  dataset: ${_json.type}
-  filename_suffix: ".json"
-  path: s3://alphafold-impact/data/02_intermediate/openalex/works/cites/
-  credentials: s3_credentials
-
-oa_int_downstream_incoming_citations:
-  type: partitions.PartitionedDataset
-  dataset: ${_json.type}
-  filename_suffix: ".json"
-  path: "s3://alphafold-impact/data/02_intermediate/openalex/works/cited_by/downstream/${globals:get.work_id, undefined}/"
-  credentials: s3_credentials
-
 

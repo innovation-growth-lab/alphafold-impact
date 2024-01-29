@@ -1,0 +1,82 @@
+# OpenAlex (oa) configuration
+oa:
+  data_collection:
+    # API configuration
+    api: &api
+      mailto: data_analytics@nesta.org.uk
+      perpage: "200"
+  
+    # Data retrieval settings
+    get: &get
+      work_id: W3177828909 # AlphaFold
+
+    # Retrieval directions
+    direction:
+      cited_by:
+        get: *get
+        api: *api
+        filter: cited_by
+      cites:
+        get: *get
+        api: *api
+        filter: cites
+
+    # Downstream works
+    downstream:
+      api: *api
+      get: *get
+      filter: cites
+
+    # Additional settings
+    config: &config
+      subfolder: work_id
+      group_work_ids: True
+      eager_loading: True
+      slice_keys: True
+      parallelise: True
+
+    # Filtering options
+    gtr:
+      api: *api
+      config: *config
+      filter_doi: doi
+      filter_oa: "ids.openalex"
+
+test_concept_ids:
+  - "c10010492" # Protein sequencing
+  - "c204328495" # Protein folding
+
+test_publication_years:
+  - 2022
+  - 2023
+
+# Gateway to Research (gtr) configuration
+gtr:
+  # Data collection parameters
+  data_collection:
+
+    # Common request parameters
+    _param_requests:
+      gtr_config:
+        base_url: https://gtr.ukri.org/gtr/api/
+        headers:
+          Accept: application/vnd.rcuk.gtr.json-v7
+        page_size: 100
+      max_retries: 5
+      backoff_factor: 0.3
+
+    # Specific data endpoints
+    outcomes/publications:
+      param_requests: ${.._param_requests}
+      label: outcomes/publications
+    organisations:
+      param_requests: ${.._param_requests}
+      label: organisations
+    funds:
+      param_requests: ${.._param_requests}
+      label: funds
+    projects:
+      param_requests: ${.._param_requests}
+      label: projects
+
+test: False
