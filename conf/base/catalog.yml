@@ -14,6 +14,15 @@ _js_ptd: &_js_ptd
   filename_suffix: ".json"
   credentials: s3_credentials
 
+_js_ptd: &_csv_ptd
+  type: partitions.PartitionedDataset
+    dataset:
+    type: pandas.CSVDataset
+    save_args:
+      index: False
+  filename_suffix: '.csv'
+  credentials: s3_credentials
+
 # OA
 oa.data_collection.direction.cites.raw: &cites_raw
   <<: *_js_ptd
@@ -94,12 +103,8 @@ works_for_concepts:
   filepath: s3://alphafold-impact/data/01_raw/oa/works/works_for_concepts.json
   credentials: s3_credentials
 
-nih_raw_clinical_trials:
-  type: partitions.PartitionedDataset
+# NIH - Clinical Trials
+
+nih.data_collection.clinical_trials.raw:
+  <<: *_csv_ptd
   path: s3://alphafold-impact/data/01_raw/nih/clinical_trials/
-  dataset:
-    type: pandas.CSVDataset
-    save_args:
-      index: False
-  filename_suffix: '.csv'
-  credentials: s3_credentials
