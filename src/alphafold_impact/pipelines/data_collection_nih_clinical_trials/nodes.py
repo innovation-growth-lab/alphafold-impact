@@ -155,7 +155,7 @@ def _json_to_csv(
     for batch_number, i in enumerate(range(0, len(file_paths), batch_size), start=1):
         batch_files = file_paths[i : i + batch_size]
         current_batch_number = str(batch_number).zfill(3)
-        file_name = f"nih_clinical_trials_batch_{current_batch_number}.csv"
+        file_name = f"nih_clinical_trials_batch_{current_batch_number}"
         partitions[
             file_name
         ] = lambda files_to_process=batch_files, batch_num=current_batch_number: _process_batch(
