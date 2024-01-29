@@ -2,8 +2,8 @@
 This module contains functions for fetching NIH clinical trials data.
 
 Functions:
-    collect_and_save_nih_clinical_trials: Downloads, extracts,
-    combines and saves NIH clinical trials data as a partitioned dataset.
+    collect_and_save_nih_clinical_trials: Downloads, extracts, combines
+        and saves NIH clinical trials data as a partitioned dataset.
 """
 import logging
 from pathlib import Path
