@@ -88,4 +88,35 @@ nih:
       zip_save_path: data/00_tmp/nih_ct.zip
       extract_path: data/01_raw/nih/clinical_trials/
 
+lens:
+  data_collection:
+    api:
+      base_url: 'https://api.lens.org/patent/search'
+      token: QrN2bSOp8NiVSktDd8gWZ8Y5XMDsejM8hnID6dgUr1F80nSHvBfU # ${..lens_token}
+      size: 100
+      max_retries: 5
+      backoff_factor: 0.3
+    jurisdictions:
+      united_states: US
+      european_union: EP
+    months:
+      "01": "01"
+      "02": "02"
+      "03": "03"
+      "04": "04"
+      "05": "05"
+      "06": "06"
+      "07": "07"
+      "08": "08"
+      "09": "09"
+      "10": "10"
+      "11": "11"
+      "12": "12"
+    years:
+      "2021": "2021"
+      "2022": "2022"
+      "2023": "2023"
+      "2024": "2024"
+
+
 test: False
