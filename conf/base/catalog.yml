@@ -16,7 +16,7 @@ _js_ptd: &_js_ptd
 
 _csv_ptd: &_csv_ptd
   type: partitions.PartitionedDataset
-    dataset:
+  dataset:
     type: pandas.CSVDataset
     save_args:
       index: False
