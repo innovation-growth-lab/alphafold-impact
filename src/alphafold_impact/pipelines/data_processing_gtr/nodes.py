@@ -2,8 +2,13 @@
 This module contains the functions used in the data processing pipeline for
     the Gateway to Research data.
 
-The functions are used to load the data, process it, and save it in the
-    required format.
+Functions:
+    load_gtr_data: Loads the GtR data from a dictionary of partitions.
+    _load_gtr_works: Loads the GtR data from a given loader object.
+    process_institutions: Processes the institutions data from GtR authors.
+    process_publications: Processes the publications data from GtR publications.
+    process_alphafold_citations: Processes the AlphaFold citations for each work in the
+        reference dictionary.
 """
 import logging
 from typing import Dict, List, Tuple
@@ -81,7 +86,7 @@ def _load_gtr_works(loader_obj: AbstractDataset) -> Dict[str, Tuple[str, str, st
     return institutions_dict, publications_dict
 
 
-def process_institutions(gtr_authors: List[dict]):
+def process_institutions(gtr_authors: List[dict]) -> pd.DataFrame:
     """
     Process the institutions data from GTR authors.
 
@@ -116,7 +121,8 @@ def process_institutions(gtr_authors: List[dict]):
 
     return data_institutions
 
-def process_publications(gtr_publications: List[dict]):
+
+def process_publications(gtr_publications: List[dict]) -> pd.DataFrame:
     """
     Process the publications data from GTR publications.
 
@@ -150,7 +156,9 @@ def process_publications(gtr_publications: List[dict]):
     return data_publications
 
 
-def process_alphafold_citations(reference_dict, cites_data):
+def process_alphafold_citations(
+    reference_dict: Dict[str, dict], cites_data: Dict[str, AbstractDataset]
+) -> pd.DataFrame:
     """
     Process the AlphaFold citations for each work in the reference dictionary.
 

@@ -18,7 +18,7 @@ from .utils import (
     api_config,
     extract_main_address,
     extract_value_from_nested_dict,
-    transform_nested_dict
+    transform_nested_dict,
 )
 
 logger = logging.getLogger(__name__)
@@ -124,7 +124,7 @@ class GtRDataPreprocessor:
         columns_to_transform = {
             "identifiers": ["value", "type"],
             "researchSubjects": ["id", "text", "percentage"],
-            "researchTopics": ["id", "text", "percentage"]
+            "researchTopics": ["id", "text", "percentage"],
         }
 
         for col, keys in columns_to_transform.items():
@@ -212,11 +212,14 @@ def fetch_gtr_data(
     return all_data
 
 
-def preprocess_data_to_df(raw_data: List[Dict[str, Any]], endpoint) -> pd.DataFrame:
+def preprocess_data_to_df(
+    raw_data: List[Dict[str, Any]], endpoint: str
+) -> pd.DataFrame:
     """Preprocess data to a DataFrame.
 
     Args:
         raw_data (List[Dict[str, Any]]): The raw data in a list of dictionaries.
+        endpoint (str): The endpoint to preprocess data for.
 
     Returns:
         pd.DataFrame: The preprocessed data.

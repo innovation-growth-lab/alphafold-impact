@@ -43,16 +43,15 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=W0613
         ]
     )
 
-    pipelines = []
-    for label in settings.DYNAMIC_PIPELINES_MAPPING["gtr"]:
-        pipelines.append(
-            pipeline(
-                template_pipeline,
-                parameters={"params:test": "test"},
-                namespace=f"gtr.data_collection.{label}",
-                tags=[label.rsplit('/', maxsplit=1)[-1], "gtr"],
-            )
+    pipelines = [
+        pipeline(
+            template_pipeline,
+            parameters={"params:test": "test"},
+            namespace=f"gtr.data_collection.{label}",
+            tags=[label.rsplit('/', maxsplit=1)[-1], "gtr"],
         )
+        for label in settings.DYNAMIC_PIPELINES_MAPPING["gtr"]
+    ]
     return sum(pipelines)
 
 # Note: "params:" get resolved with the namespace. Inputs need to specify them being parameters,

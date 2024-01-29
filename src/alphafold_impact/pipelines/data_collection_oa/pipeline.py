@@ -53,15 +53,14 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
         ]
     )
 
-    pipelines = []
-    for filter_ in settings.DYNAMIC_PIPELINES_MAPPING["oa"]:
-        pipelines.append(
-            pipeline(
-                template_citation_pipeline,
-                namespace=f"oa.data_collection.direction.{filter_}",
-                tags=[filter_, "oa"],
-            )
+    baseline_pipelines = [
+        pipeline(
+            template_citation_pipeline,
+            namespace=f"oa.data_collection.direction.{filter_}",
+            tags=[filter_, "oa"],
         )
+        for filter_ in settings.DYNAMIC_PIPELINES_MAPPING["oa"]
+    ]
 
     downstream_impact_pipeline = pipeline(
         [
@@ -159,7 +158,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
     )
 
     return (
-        sum(pipelines)  # Base pipelines
+        sum(baseline_pipelines)  # Base pipelines
         + downstream_impact_pipeline  # Base pipelines
         + works_for_concepts_and_years # Concept and year pipelines
         + gtr_collection_pipeline  # GtR pipelines
