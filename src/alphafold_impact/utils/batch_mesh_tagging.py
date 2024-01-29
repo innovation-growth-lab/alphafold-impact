@@ -10,8 +10,13 @@ from skr_web_api import Submission
 
 
 def skr_web_python_api_generic_batch(
-    email: str, api_key: str, txt_file_name: str, text: str, cmd: str, cmdargs: str
-):
+    email: str,
+    api_key: str,
+    txt_file_name: str,
+    text: str,
+    cmd: str,
+    cmdargs: str,
+) -> str:
     """Submits NIH Generic Batch job using the SKR Web API
 
     Args:
