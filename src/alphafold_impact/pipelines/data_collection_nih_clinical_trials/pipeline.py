@@ -15,11 +15,12 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=collect_and_save_nih_clinical_trials,
                 inputs={
-                    "nih_ct_download_url": "params:nih.data_collection.clinical_trials.download_url",
-                    "nih_ct_zip_save_path": "params:nih.data_collection.clinical_trials.zip_save_path",
-                    "nih_ct_extract_path": "params:nih.data_collection.clinical_trials.extract_path",
+                    "nih_ct_download_url": "params:download_url",
+                    "nih_ct_zip_save_path": "params:zip_save_path",
+                    "nih_ct_extract_path": "params:extract_path",
                 },
-                outputs="nih.data_collection.clinical_trials.raw",
+                outputs="raw",
             ),
-        ]
+        ],
+        namespace="nih.data_collection.clinical_trials",
     )
