@@ -33,13 +33,13 @@ def _download_zip_file(zip_url: str, zip_save_path: str) -> Path:
     logger.info("Downloading ZIP file from %s", zip_url)
     response = requests.get(zip_url, timeout=30)
     response.raise_for_status()
-    zip_save_path = Path(zip_save_path)
-    zip_save_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(zip_save_path, "wb") as file:
+    zip_path = Path(zip_save_path)
+    zip_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(zip_path, "wb") as file:
         file.write(response.content)
 
-    logger.info("Downloaded ZIP file to %s", zip_save_path)
-    return zip_save_path
+    logger.info("Downloaded ZIP file to %s", zip_path)
+    return zip_path
 
 
 def _unzip_and_flatten(zip_path: Path, extract_path: str) -> List[Path]:
