@@ -79,4 +79,13 @@ gtr:
       param_requests: ${.._param_requests}
       label: projects
 
+# National Institutes of Health (nih) configuration 
+nih:
+  # Data collection parameters
+  data_collection:
+    clinical_trials:
+      download_url: https://classic.clinicaltrials.gov/AllAPIJSON.zip
+      zip_save_path: data/00_tmp/nih_ct.zip
+      extract_path: data/01_raw/nih/clinical_trials/
+
 test: False
