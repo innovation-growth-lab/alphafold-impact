@@ -85,7 +85,7 @@ nih:
   data_collection:
     clinical_trials:
       download_url: https://classic.clinicaltrials.gov/AllAPIJSON.zip
-      zip_save_path: data/00_temp/nih_ct.zip
+      zip_save_path: data/00_tmp/nih_ct.zip
       extract_path: data/01_raw/nih/clinical_trials/
 
 test: False
