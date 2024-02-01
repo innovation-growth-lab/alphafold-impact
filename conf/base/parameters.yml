@@ -124,4 +124,53 @@ lens:
       "2023": "2023"
       "2024": "2024"
 
+
+nsf:
+  data_collection:
+    api:
+      base_url: http://api.nsf.gov/services/v1/awards.json
+    digits:
+      - "18"
+      - "19"
+      - "20"
+      - "21"
+      - "22"
+      - "23"
+      - "24"
+    variables:
+      - parentUeiNumber
+      - ueiNumber
+      - title
+      - abstractText
+      - awardee
+      - pdPIName
+      - coPDPI
+      - date
+      - startDate
+      - expDate
+      - estimatedTotalAmt
+      - fundsObligatedAmt
+      - fundProgramName
+      - awardeeCity
+      - awardeeCountryCode
+      - awardeeDistrictCode
+      - awardeeStateCode
+      - awardeeZipCode
+      - perfCity
+      - perfCountryCode
+      - perfDistrictCode
+      - perfLocation
+      - perfStateCode
+      - perfZipCode
+      - poName
+      - primaryProgram
+      - transType
+      - cfdaNumber
+      - agency
+      - fundAgencyCode
+      - awardAgencyCode
+      - publicationResearch
+      - publicationConference
+      - projectOutComesReport
+      
 test: False
