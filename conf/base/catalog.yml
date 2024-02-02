@@ -215,3 +215,8 @@ cb.data_processing.people_descriptions.raw:
 cb.data_processing.people.raw:
   <<: *_cb_raw
   filepath: ${diss.crunchbase}/people.csv
+
+# NSF
+"nsf.data_collection.awards.{year}.raw":
+  <<: *_js_ptd
+  path: s3://alphafold-impact/data/01_raw/nsf/awards/{year}/
