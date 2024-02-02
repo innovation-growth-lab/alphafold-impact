@@ -1,6 +1,14 @@
-"""
-This is a boilerplate pipeline 'data_collection_nsf'
-generated using Kedro 0.19.1
+"""Pipeline for data collection.
+
+This pipeline fetches data from the NSF API and preprocesses it into a
+format that can be used by the rest of the project. To run this pipeline,
+use the following command:
+
+    $ kedro run --pipeline data_collection_nsf
+
+Alternatively, you can run this pipeline for a single year:
+
+    $ kedro run --pipeline data_collection_nsf --tags 2018
 """
 
 from kedro.pipeline import Pipeline, pipeline, node
@@ -17,9 +25,9 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=W0613
         [
             node(
                 func=fetch_nsf_data,
-                inputs=["params:api_config", "params:variables", "params:digit"],
-                outputs="raw",
-                name="fetch_gtr_data",
+                inputs=["params:api_config", "params:variables", "raw"],
+                outputs="intermediate",
+                name="fetch_nsf_data",
             ),
         ]
     )
@@ -27,15 +35,13 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=W0613
     pipelines = [
         pipeline(
             template_pipeline,
-            parameters={"params:api_config": "nsf.data_collection.api"},
-            namespace=f"nsf.data_collection.{label}",
+            parameters={
+                "params:api_config": "nsf.data_collection.api",
+                "params:variables": "nsf.data_collection.variables",    
+            },
+            namespace=f"nsf.data_collection.awards.{label}",
             tags=[label, "nsf"],
         )
         for label in settings.DYNAMIC_PIPELINES_MAPPING["nsf"]
     ]
     return sum(pipelines)
-
-# Note: "params:" get resolved with the namespace. Inputs need to specify them being parameters,
-# otherwise they are assumed to be datasets. Their namespace is not prepended, ie. needs to define
-# params:gtr.data_collection.{endpoint}.param_requests. Parameters argument assumes "params:" 
-# prefix.

@@ -131,7 +131,7 @@ nsf:
       base_url: http://api.nsf.gov/services/v1/awards.json
       max_retries: 5
       backoff_factor: 0.3
-    _variables: &_variables
+    variables:
       - parentUeiNumber
       - ueiNumber
       - title
@@ -166,27 +166,6 @@ nsf:
       - publicationResearch
       - publicationConference
       - projectOutComesReport
-    "18": 
-      digit: "18"
-      variables: *_variables
-    "19":
-      digit: "19"
-      variables: *_variables
-    "20": 
-      digit: "20"
-      variables: *_variables
-    "21":
-      digit: "21"
-      variables: *_variables
-    "22":
-      digit: "22"
-      variables: *_variables
-    "23": 
-      digit: "23"
-      variables: *_variables
-    "24": 
-      digit: "24"
-      variables: *_variables
-  
+      - id
       
 test: False

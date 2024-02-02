@@ -21,13 +21,13 @@ def _create_publication_objects(publication_list: List[str]) -> Dict[str, str]:
     Create publication objects from a list of paper data.
 
     Args:
-        publication_list (List[str]): A list of paper data in the format 
+        publication_list (List[str]): A list of paper data in the format
             "journal~year~volume~authors~doi~...".
 
     Returns:
-        Dict[str, str]: A dictionary of publication objects, where the keys 
+        Dict[str, str]: A dictionary of publication objects, where the keys
             are the NSF PAR IDs and the values are dictionaries
-        containing the publication information (journal, year, volume, 
+        containing the publication information (journal, year, volume,
             authors, title, doi).
     """
     publication_dict = {}
@@ -82,19 +82,28 @@ def fetch_award_data(
 
     logger.info("Requesting award data for %s", award_id)
     try:
-        response = session.get(
-            f"{base_url}?id={award_id}?printFields={fields}",
-            timeout=30,
-        )
+        while True:
+            response = session.get(
+                f"{base_url}?id={award_id}&printFields={fields}",
+                timeout=30,
+            )
+            if not response.content:
+                logger.info("Received empty response for %s", award_id)
+
+            if response.status_code == 200 and response.content:
+                break
 
         data = response.json()
         award = data.get("response", {}).get("award", [])
         if award:
             logger.info("Received award data for %s", award_id)
             award_object = award[0]
-            award_object["publicationResearch"] = _create_publication_objects(
-                award_object["publicationResearch"]
-            )
+            if "publicationResearch" in award_object:
+                award_object["publicationResearch"] = _create_publication_objects(
+                    award_object["publicationResearch"]
+                )
+            else:
+                award_object["publicationResearch"] = {}
             return award_object
         else:
             logger.info("No award data received for %s", award_id)
@@ -104,20 +113,24 @@ def fetch_award_data(
         return {}
 
 
-def fetch_nsf_data(config: Dict[str, str], fields: List[str], award_year: str):
+# def fetch_awards_list_from_zip(zip_file_path: str) -> List[str]:
+
+
+def fetch_nsf_data(config: Dict[str, str], fields: List[str], award_list: List[str]):
     """
-    Fetches NSF data for a given award year.
+    Fetches NSF data for a given list of awards.
 
     Args:
         config (Dict[str, str]): Configuration parameters for fetching data.
         fields (List[str]): List of fields to fetch for each award.
-        award_year (str): Year of the awards to fetch.
+        award_list (str): List of award IDs to fetch data for.
 
     Returns:
         dict: A dictionary containing the fetched NSF data.
     """
-    award_ids = [f"{award_year}{i:05}" for i in range(100000)]
-    awards = Parallel(n_jobs=6, verbose=10)(
-        delayed(fetch_award_data)(config, fields, award_id) for award_id in award_ids
+    logger.info("Fetching NSF data for year %s", award_list[0][:2])
+    awards = Parallel(n_jobs=5, verbose=10)(
+        delayed(fetch_award_data)(config, fields, award_id) for award_id in award_list
     )
-    return {k: v for d in awards for k, v in d.items() if d}
+    logger.info("Fetched NSF data for year %s", award_list[0][:2])
+    return {d["id"]: {k: v for k, v in d.items() if k != "id"} for d in awards}

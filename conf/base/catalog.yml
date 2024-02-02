@@ -218,5 +218,10 @@ cb.data_processing.people.raw:
 
 # NSF
 "nsf.data_collection.awards.{year}.raw":
+  type: alphafold_impact.datasets.zip_dataset.ZipDataset
+  filepath: s3://alphafold-impact/data/01_raw/nsf/{year}.zip
+  credentials: s3_credentials
+
+"nsf.data_collection.awards.{year}.intermediate":
   <<: *_js_ptd
-  path: s3://alphafold-impact/data/01_raw/nsf/awards/{year}/
+  path: s3://alphafold-impact/data/02_intermediate/nsf/awards/{year}/
