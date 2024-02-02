@@ -33,7 +33,7 @@ def trials_with_references(
         sorted(nih_clinical_trials_partitions.items()), start=1
     ):
         ct_partition_data_with_refs = ct_partition_load_func().query(
-            "`DerivedSection.ConditionBrowseModule.ConditionMeshList.ConditionMesh`.notna()"
+            "`ProtocolSection.ReferencesModule.ReferenceList.Reference`.notna()"
         )
 
         ct_with_refs_combined = pd.concat(
