@@ -4,9 +4,9 @@ the NIH clinical trials data.
 
 Functions:
     trials_with_references: Loads NIH clinical trials from partitioned
-        dataset, filter out trials that do not reference a paper,
-        concatenate results into one DataFrame.
-    nih_clinical_trials_links_to_papers: Produced a DataFrame which can
+        dataset, filters out trials that do not reference a paper,
+        concatenates results into one DataFrame.
+    nih_clinical_trials_links_to_papers: Produces a DataFrame which can
         be used to link NIH clinical trials to research papers via 
         PubMed ID or DOI.
 """
@@ -23,8 +23,8 @@ logger = logging.getLogger(__name__)
 def trials_with_references(
     nih_clinical_trials_partitions: Dict[str, Callable[[], Any]]
 ) -> pd.DataFrame:
-    """Loads NIH clinical trials from partitioned dataset, filter out trials
-    that do not reference a paper, concatenate results into one DataFrame.
+    """Loads NIH clinical trials from partitioned dataset, filters out trials
+    that do not reference a paper, concatenates results into one DataFrame.
 
     Args:
         nih_clinical_trials_partitions (dict): Partitioned dataset of NIH clinical trials.
