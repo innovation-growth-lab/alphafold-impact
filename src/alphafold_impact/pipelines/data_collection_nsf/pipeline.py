@@ -12,8 +12,9 @@ Alternatively, you can run this pipeline for a single year:
 """
 
 from kedro.pipeline import Pipeline, pipeline, node
-from .nodes import fetch_nsf_data  # pylint: disable=E0401
 from alphafold_impact import settings
+from .nodes import fetch_nsf_data  # pylint: disable=E0401
+
 
 def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=W0613
     """Pipeline for data collection.
@@ -37,7 +38,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=W0613
             template_pipeline,
             parameters={
                 "params:api_config": "nsf.data_collection.api",
-                "params:variables": "nsf.data_collection.variables",    
+                "params:variables": "nsf.data_collection.variables",
             },
             namespace=f"nsf.data_collection.awards.{label}",
             tags=[label, "nsf"],
