@@ -133,4 +133,5 @@ def fetch_nsf_data(config: Dict[str, str], fields: List[str], award_list: List[s
         delayed(fetch_award_data)(config, fields, award_id) for award_id in award_list
     )
     logger.info("Fetched NSF data for year %s", award_list[0][:2])
+    awards = [award for award in awards if award.get("id")]
     return {d["id"]: {k: v for k, v in d.items() if k != "id"} for d in awards}
