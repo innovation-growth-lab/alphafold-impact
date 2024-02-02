@@ -14,6 +14,7 @@ https://docs.kedro.org/en/stable/kedro_project_setup/settings.html."""
 
 # Class that manages storing KedroSession data.
 from pathlib import Path  # noqa: E402
+import itertools
 
 from kedro_viz.integrations.kedro.sqlite_store import SQLiteStore  # noqa: E402
 
@@ -40,4 +41,11 @@ CONFIG_LOADER_ARGS = {
 DYNAMIC_PIPELINES_MAPPING = {
     "gtr": ["projects", "outcomes/publications", "organisations", "funds"],
     "oa": ["cites", "cited_by"],
+    "lens": list(
+        itertools.product(
+            ["united_states", "european_union"],
+            [f"{i:02d}" for i in range(1, 13)],
+            [2022, 2023, 2024]
+        )
+    ),
 }
