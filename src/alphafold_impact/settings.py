@@ -15,7 +15,6 @@ https://docs.kedro.org/en/stable/kedro_project_setup/settings.html."""
 # Class that manages storing KedroSession data.
 from pathlib import Path  # noqa: E402
 import itertools
-from calendar import monthrange
 
 from kedro_viz.integrations.kedro.sqlite_store import SQLiteStore  # noqa: E402
 

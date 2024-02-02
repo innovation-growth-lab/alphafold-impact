@@ -92,7 +92,6 @@ lens:
   data_collection:
     api:
       base_url: 'https://api.lens.org/patent/search'
-      token: QrN2bSOp8NiVSktDd8gWZ8Y5XMDsejM8hnID6dgUr1F80nSHvBfU # ${..lens_token}
       size: 100
       max_retries: 5
       backoff_factor: 0.3

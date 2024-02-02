@@ -1,7 +1,7 @@
 # Lens API Data Collection Pipeline (`data_collection_lens`)
 
 ## Overview
-The `data_collection_lens` pipeline fetches data from the Lens API. This pipeline outputs individual JSON files containing patents that match the permutation of years, months, and juridictions (EU and US). Due to limits with the Lens API, only 100k patents can be downloaded in a given month.
+The `data_collection_lens` pipeline fetches data from the Lens API. This pipeline outputs individual JSON files containing patents that match the permutation of years, months, and jurisdictions (EU and US). Due to limits with the Lens API, only 100k patents can be downloaded in a given month.
 
 ## Modules
 ### `nodes.py`

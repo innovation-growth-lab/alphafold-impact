@@ -1,11 +1,25 @@
 """
-This is a boilerplate pipeline 'data_collection_lens'
-generated using Kedro 0.19.1
+Pipeline for collecting Lens patent data. It includes:
+
+    Base:
+    - Getting Lens API credentials.
+    - Creating a request form for Lens data collection.
+    - Fetching Lens data.
+
+To run this pipeline, use the following command:
+
+    $ kedro run --pipeline data_collection_lens
+
+To run a specific pipeline, use a combination of the --namespace and --tags flags:
+
+    $ kedro run --pipeline data_collection_lens --namespace lens.data_collection.<jurisdiction>.<year>.<month>
+    $ kedro run --pipeline data_collection_lens --tags lens
+
 """
 
 from kedro.pipeline import Pipeline, pipeline, node
 from alphafold_impact import settings
-from .nodes import create_request_form, fetch_lens_data
+from .nodes import create_request_form, fetch_lens_data, get_app_credentials
 
 
 def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=unused-argument
@@ -17,12 +31,19 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=unused-argument
     template_pipeline = pipeline(
         [
             node(
+                func=get_app_credentials,
+                inputs=None,
+                outputs="lens_token",
+                name="get_app_credentials",
+            ),
+            node(
                 func=create_request_form,
                 inputs=[
                     "params:api.config",
                     "params:month",
                     "params:year",
                     "params:jurisdiction",
+                    "lens_token"
                 ],
                 outputs=["request_body", "headers"],
                 name="create_request_form",

@@ -7,6 +7,7 @@ Functions:
 """
 import logging
 import time
+import yaml
 from typing import Dict, Tuple
 from calendar import monthrange
 import requests
@@ -14,9 +15,14 @@ from requests.adapters import HTTPAdapter, Retry
 
 logger = logging.getLogger(__name__)
 
+def get_app_credentials():
+    """Get the credentials for the Lens API."""
+    with open("./conf/base/credentials.yml") as cred:
+        token = yaml.safe_load(cred).get("lens_token")
+    return token
 
 def create_request_form(
-    config: Dict[str, str], month: str, year: str, jurisdiction: str
+    config: Dict[str, str], month: str, year: str, jurisdiction: str, token: str
 ) -> Tuple[str, Dict[str, str]]:
     """Create the JSON request body and headers for the Lens API.
 
@@ -61,7 +67,7 @@ def create_request_form(
         config["size"],
     )
 
-    headers = {"Authorization": config["token"], "Content-Type": "application/json"}
+    headers = {"Authorization": token, "Content-Type": "application/json"}
 
     return request_body, headers
 
