@@ -113,10 +113,10 @@ nih.data_collection.clinical_trials.raw:
   <<: *_csv_ptd
   path: s3://alphafold-impact/data/01_raw/nih/clinical_trials/
 
-nih.processing.clinical_trials_with_references.intermediate:
+nih.data_processing.clinical_trials_with_references.intermediate:
   <<: *_csv
   filepath: s3://alphafold-impact/data/02_intermediate/nih/clinical_trials/clinical_trials_with_references.csv
 
-nih.processing.clinical_trials_links_to_papers.intermediate:
+nih.data_processing.clinical_trials_links_to_papers.intermediate:
   <<: *_csv
   filepath: s3://alphafold-impact/data/02_intermediate/nih/clinical_trials/clinical_trials_links_to_papers.csv
