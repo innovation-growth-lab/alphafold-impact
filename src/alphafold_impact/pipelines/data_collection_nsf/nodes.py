@@ -10,7 +10,6 @@ import logging
 from typing import Dict, List
 import requests
 from requests.adapters import HTTPAdapter, Retry
-from urllib3.exceptions import MaxRetryError
 from joblib import Parallel, delayed
 
 logger = logging.getLogger(__name__)
@@ -108,8 +107,8 @@ def fetch_award_data(
         else:
             logger.info("No award data received for %s", award_id)
             return {}
-    except MaxRetryError:
-        logger.exception("Failed to fetch award data for %s", award_id)
+    except Exception as e:  # pylint: disable=broad-except
+        logger.exception("Failed to fetch award data for %s: %s", award_id, e)
         return {}
 
 
