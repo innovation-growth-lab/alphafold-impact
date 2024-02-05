@@ -13,6 +13,10 @@ _pkl: &_pkl
   credentials: s3_credentials
   backend: pickle
 
+_csv: &_csv
+  type: pandas.CSVDataset
+  credentials: s3_credentials
+
 _js_ptd: &_js_ptd
   type: partitions.PartitionedDataset
   dataset: ${_json.type}
@@ -117,6 +121,14 @@ lens.data_collection.{jurisdiction}.{year}.{month}.raw:
 nih.data_collection.clinical_trials.raw:
   <<: *_csv_ptd
   path: s3://alphafold-impact/data/01_raw/nih/clinical_trials/
+
+nih.data_processing.clinical_trials_with_references.intermediate:
+  <<: *_csv
+  filepath: s3://alphafold-impact/data/02_intermediate/nih/clinical_trials/clinical_trials_with_references.csv
+
+nih.data_processing.clinical_trials_links_to_papers.intermediate:
+  <<: *_csv
+  filepath: s3://alphafold-impact/data/02_intermediate/nih/clinical_trials/clinical_trials_links_to_papers.csv
 
 # OA depth data
 oa.data_collection.depth.works:
