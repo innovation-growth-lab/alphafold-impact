@@ -6,9 +6,10 @@ Functions:
     trials_with_references: Loads NIH clinical trials from partitioned
         dataset, filters out trials that do not reference a paper,
         concatenates results into one DataFrame.
-    nih_clinical_trials_links_to_papers: Produces a DataFrame which can
+    trials_links_to_papers: Produces a DataFrame which can
         be used to link NIH clinical trials to research papers via 
-        PubMed ID or DOI.
+        PubMed ID or DOI. This function's expected input is the
+        output from trials_with_references.
 """
 from typing import Dict, Callable, Any
 import logging

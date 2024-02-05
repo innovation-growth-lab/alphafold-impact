@@ -7,7 +7,7 @@ The `data_processing_nih_clinical_trials` pipeline processes raw data fetched fr
 ### `nodes.py`
 This module contains the core functionalities for the pipeline:
 - `trials_with_references`: Loads NIH clinical trials from partitioned dataset, filters out trials that do not reference a paper, concatenates results into one DataFrame.
-- `trials_links_to_papers`: Produces a DataFrame which can be used to link NIH clinical trials to research papers via PubMed ID or DOI.
+- `trials_links_to_papers`: Produces a DataFrame which can be used to link NIH clinical trials to research papers via PubMed ID or DOI. This function's expected input is the output from trials_with_references.
 
 
 ### `pipeline.py`
