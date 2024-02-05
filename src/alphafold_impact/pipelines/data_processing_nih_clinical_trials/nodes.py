@@ -107,9 +107,9 @@ def trials_links_to_papers(
 
     This function takes a DataFrame containing clinical trial data with references
     to papers and performs the following data processing steps:
-    1. Creates new columns for each component of the paper reference.
-    2. Creates new column for the DOI.
-    3. Renames and reorders columns.
+        1. Creates new columns for each component of the paper reference.
+        2. Creates new column for the DOI.
+        3. Renames and reorders columns.
 
     Args:
         clinical_trials_with_references (pd.DataFrame): A DataFrame containing
