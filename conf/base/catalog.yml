@@ -8,6 +8,11 @@ _pq: &_pq
   load_args:
     engine: pyarrow
 
+_pkl: &_pkl
+  type: pickle.PickleDataset
+  credentials: s3_credentials
+  backend: pickle
+
 _js_ptd: &_js_ptd
   type: partitions.PartitionedDataset
   dataset: ${_json.type}
@@ -112,3 +117,16 @@ lens.data_collection.{jurisdiction}.{year}.{month}.raw:
 nih.data_collection.clinical_trials.raw:
   <<: *_csv_ptd
   path: s3://alphafold-impact/data/01_raw/nih/clinical_trials/
+
+# OA depth data
+oa.data_collection.depth.works:
+  <<: *_js_ptd
+  path: s3://alphafold-impact/data/01_raw/oa/works/depth/
+
+oa.data_collection.depth.edges:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/02_intermediate/oa/works/depth/edges.parquet
+
+oa.data_collection.depth.network:
+  <<: *_pkl
+  filepath: s3://alphafold-impact/data/02_intermediate/oa/works/depth/network.pkl

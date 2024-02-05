@@ -12,10 +12,20 @@ OpenAlex - Gateway to Research:
     create_list_doi_inputs: Create a list of doi values from the Gateway to Research publication
         data.
     load_referenced_work_ids: Load referenced work IDs from the dataset.
+
+OpenAlex - Citation Depth:
+    fetch_citation_depth: Iterates over an updating list of papers to process, yielding the
+        response from collect papers for each paper in the list. As papers are collected, they are
+        added to the set, while new, one-level deeper papers, are added to the list.
+    store_final_edges: Stores the final edges and works in the network graph.
+    create_network_graph: Creates the network graph from the edges, a list of tuples with the format
+        (target, source).
 """
+
 import logging
 from typing import List, Dict, Sequence, Union, Callable, Tuple
 import pandas as pd
+import networkx as nx
 from kedro.io import AbstractDataset
 from .utils import (
     preprocess_work_ids,
@@ -122,7 +132,7 @@ def retrieve_oa_works_for_concepts_and_years(
     Args:
         concept_ids (List[str]): A list of OpenAlex concept IDs.
         publication_years (List[int]): A list of publication years.
-        chunk_size (int, optional): The number of concept IDs to process in each API call 
+        chunk_size (int, optional): The number of concept IDs to process in each API call
             (default is 40).
         per_page (int, optional): The number of results to retrieve per API call (default is 200).
 
@@ -216,3 +226,89 @@ def load_referenced_work_ids(
     logger.info("Work IDs loaded: %s", len(work_ids))
 
     return work_ids, oa_doi_dict
+
+
+def fetch_citation_depth(
+    seed_paper: str, api_config: Dict[str, str], filter_config: str
+):
+    """
+    Iterates over an updating list of papers to process, yielding the response from collect
+    papers for each paper in the list. As papers are collected, they are added to the set, while
+    new, one-level deeper papers, are added to the list.
+
+    Args:
+        seed_paper (str): The seed paper to start from.
+        api_config (Dict[str, str]): The API configuration.
+        filter_config (str): The filter to apply when fetching papers.
+
+    Yields:
+        Tuple[List[Tuple[str, str]], Dict[str, dict]]: A tuple containing the edge list and the
+        collected papers.
+    """
+    processed_paper_ids = set()
+    papers_to_process = {seed_paper}  # Use a set for uniqueness and efficient look-up
+    edge_list = []
+
+    while papers_to_process:
+        logger.info("Processing %s papers", len(papers_to_process))
+        paper = (
+            papers_to_process.pop()
+        )  # Sets are unordered, so pop removes a random element
+        if paper in processed_paper_ids:
+            logger.info("Skipping %s", paper)
+            continue
+
+        processed_paper_ids.add(paper)
+        logger.info("Processing %s", paper)
+        child_papers = collect_papers(
+            work_ids=paper,
+            mailto=api_config["mailto"],
+            perpage=api_config["perpage"],
+            filter_criteria=filter_config,
+            group_work_ids=False,
+            eager_loading=True,
+        )[paper]
+        logger.info("Collected %s child papers", len(child_papers))
+
+        new_papers = set()
+        for child in child_papers:
+            child_id = child.get("id", "").replace("https://openalex.org/", "")
+            edge = (paper, child_id)
+            edge_list.append(edge)
+            logger.info("Adding edge for %s to %s", paper, child_id)
+
+            if child_id not in processed_paper_ids:
+                new_papers.add(child_id)
+
+            child_dict = {child_id: child}
+            yield edge_list, child_dict  # Yielding individual edges and child dicts
+
+        # Efficiently extend the papers_to_process without duplicates
+        papers_to_process.update(new_papers - processed_paper_ids)
+
+
+def store_final_edges(edges: List[Tuple[str, str]]) -> pd.DataFrame:
+    """
+    Stores the final edges and works in the network graph.
+
+    Args:
+        edges (List[Tuple[str, str]]): The edges of the network graph.
+
+    Returns:
+        pd.DataFrame: The edges of the network graph, with columns (target, ssource).
+    """
+    return pd.DataFrame(edges, columns=["target", "source"])
+
+
+def create_network_graph(edges: pd.DataFrame) -> nx.Graph:
+    """
+    Creates the network graph from the edges, a list of tuples with the format (target, source).
+
+    Args:
+        edges (pd.DataFrame): The edges of the network graph.
+
+    Returns:
+        nx.Graph: The network graph.
+    """
+    G = nx.from_pandas_edgelist(edges, "target", "source")
+    return G

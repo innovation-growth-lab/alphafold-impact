@@ -27,6 +27,12 @@ oa:
       get: *get
       filter: cites
 
+    # Citation depth works
+    depth:
+      api: *api
+      get: *get
+      filter: cites
+
     # Additional settings
     config: &config
       subfolder: work_id
