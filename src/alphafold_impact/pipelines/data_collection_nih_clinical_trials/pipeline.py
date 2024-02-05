@@ -3,7 +3,7 @@
 This pipeline fetches NIH clinical trials data.
 To run this pipeline, use the following command:
 
-    $ kedro run --pipeline data_collection_gtr
+    $ kedro run --pipeline data_collection_nih_clinical_trials
 """
 from kedro.pipeline import Pipeline, pipeline, node
 from .nodes import collect_and_save_nih_clinical_trials
