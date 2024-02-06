@@ -17,7 +17,6 @@ OpenAlex - Citation Depth:
     fetch_citation_depth: Iterates over an updating list of papers to process, yielding the
         response from collect papers for each paper in the list. As papers are collected, they are
         added to the set, while new, one-level deeper papers, are added to the list.
-    store_final_edges: Stores the final edges and works in the network graph.
     create_network_graph: Creates the network graph from the edges, a list of tuples with the format
         (target, source).
 """
@@ -27,6 +26,7 @@ from typing import List, Dict, Sequence, Union, Callable, Tuple
 import pandas as pd
 import networkx as nx
 from kedro.io import AbstractDataset
+from joblib import Parallel, delayed
 from .utils import (
     preprocess_work_ids,
     fetch_papers_eager,
@@ -230,7 +230,7 @@ def load_referenced_work_ids(
 
 def fetch_citation_depth(
     seed_paper: str, api_config: Dict[str, str], filter_config: str
-):
+) -> Tuple[Dict[str, pd.DataFrame], Dict[str, List[dict]]]:
     """
     Iterates over an updating list of papers to process, yielding the response from collect
     papers for each paper in the list. As papers are collected, they are added to the set, while
@@ -242,62 +242,67 @@ def fetch_citation_depth(
         filter_config (str): The filter to apply when fetching papers.
 
     Yields:
-        Tuple[List[Tuple[str, str]], Dict[str, dict]]: A tuple containing the edge list and the
-        collected papers.
+        Tuple[Dict[str, pd.DataFrame], Dict[str, List[dict]]]: A tuple containing the edges and
+        the papers.
     """
     processed_paper_ids = set()
     papers_to_process = {seed_paper}  # Use a set for uniqueness and efficient look-up
-    edge_list = []
 
     while papers_to_process:
         logger.info("Processing %s papers", len(papers_to_process))
-        paper = (
-            papers_to_process.pop()
-        )  # Sets are unordered, so pop removes a random element
-        if paper in processed_paper_ids:
-            logger.info("Skipping %s", paper)
-            continue
+        current_batch = set()
 
-        processed_paper_ids.add(paper)
-        logger.info("Processing %s", paper)
-        child_papers = collect_papers(
-            work_ids=paper,
-            mailto=api_config["mailto"],
-            perpage=api_config["perpage"],
-            filter_criteria=filter_config,
-            group_work_ids=False,
-            eager_loading=True,
-        )[paper]
-        logger.info("Collected %s child papers", len(child_papers))
+        # take up to 60 papers for processing
+        while papers_to_process and len(current_batch) < 60:
+            current_batch.add(papers_to_process.pop())
+
+        processed_paper_ids.update(current_batch)
+        logger.info("Processing the following papers: %s", current_batch)
+
+        # parallel fetching of papers
+        child_papers = Parallel(n_jobs=8, backend="loky", verbose=10)(
+            delayed(collect_papers)(
+                work_ids=paper,
+                mailto=api_config["mailto"],
+                perpage=api_config["perpage"],
+                filter_criteria=filter_config,
+                eager_loading=True,
+            )
+            for paper in current_batch
+        )
+
+        # flatten the list of dicts into a single dict
+        child_papers_flat = {k: v for d in child_papers for k, v in d.items()}
+
+        lengths = {key: len(value) for key, value in child_papers_flat.items()}
+        logger.info("Lengths of value lists: %s", lengths)
 
         new_papers = set()
-        for child in child_papers:
-            child_id = child.get("id", "").replace("https://openalex.org/", "")
-            edge = (paper, child_id)
-            edge_list.append(edge)
-            logger.info("Adding edge for %s to %s", paper, child_id)
+        for parent, children in child_papers_flat.items():
+            edge_list = []
+            logger.info("Adding edges and storing JSONs for %s", parent)
+            edge_list = [
+                (parent, child.get("id", "").replace("https://openalex.org/", ""))
+                for child in children
+            ]
+            new_papers.update(
+                [
+                    clean_id
+                    for child in children
+                    if (
+                        clean_id := child.get("id", "").replace(
+                            "https://openalex.org/", ""
+                        )
+                    )
+                    not in processed_paper_ids
+                ]
+            )
 
-            if child_id not in processed_paper_ids:
-                new_papers.add(child_id)
+            edge_list_df = pd.DataFrame(edge_list, columns=["target", "source"])
+            yield {parent: edge_list_df}, {parent: children}
 
-            child_dict = {child_id: child}
-            yield edge_list, child_dict  # Yielding individual edges and child dicts
-
-        # Efficiently extend the papers_to_process without duplicates
+        # extend the papers_to_process without duplicates
         papers_to_process.update(new_papers - processed_paper_ids)
-
-
-def store_final_edges(edges: List[Tuple[str, str]]) -> pd.DataFrame:
-    """
-    Stores the final edges and works in the network graph.
-
-    Args:
-        edges (List[Tuple[str, str]]): The edges of the network graph.
-
-    Returns:
-        pd.DataFrame: The edges of the network graph, with columns (target, ssource).
-    """
-    return pd.DataFrame(edges, columns=["target", "source"])
 
 
 def create_network_graph(edges: pd.DataFrame) -> nx.Graph:

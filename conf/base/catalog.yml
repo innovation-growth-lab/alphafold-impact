@@ -124,8 +124,8 @@ oa.data_collection.depth.works:
   path: s3://alphafold-impact/data/01_raw/oa/works/depth/
 
 oa.data_collection.depth.edges:
-  <<: *_pq
-  filepath: s3://alphafold-impact/data/02_intermediate/oa/works/depth/edges.parquet
+  <<: *_csv_ptd
+  path: s3://alphafold-impact/data/02_intermediate/oa/works/depth/edges/
 
 oa.data_collection.depth.network:
   <<: *_pkl

@@ -35,7 +35,6 @@ from .nodes import (
     load_referenced_work_ids,
     retrieve_oa_works_for_concepts_and_years,
     fetch_citation_depth,
-    store_final_edges,
     create_network_graph
 )
 
@@ -168,13 +167,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                     "api_config": "params:api",
                     "filter_config": "params:filter",
                 },
-                outputs=["inner_edges", "works"],
-                tags="network",
-            ),
-            node(
-                func=store_final_edges,
-                inputs=["inner_edges"],
-                outputs="edges",
+                outputs=["edges", "works"],
                 tags="network",
             ),
             node(
