@@ -252,8 +252,8 @@ def fetch_citation_depth(
         logger.info("Processing %s papers", len(papers_to_process))
         current_batch = set()
 
-        # take up to 60 papers for processing
-        while papers_to_process and len(current_batch) < 60:
+        # take up to 200 papers for processing
+        while papers_to_process and len(current_batch) < 200:
             current_batch.add(papers_to_process.pop())
 
         processed_paper_ids.update(current_batch)
@@ -280,11 +280,21 @@ def fetch_citation_depth(
         new_papers = set()
         for parent, children in child_papers_flat.items():
             edge_list = []
-            logger.info("Adding edges and storing JSONs for %s", parent)
+
+            # removing papers published before 2021-01-01
+            children = [
+                child
+                for child in children
+                if child.get("publication_date") >= "2021-01-01"
+            ]
+
+            # adding edges
             edge_list = [
                 (parent, child.get("id", "").replace("https://openalex.org/", ""))
                 for child in children
             ]
+
+            # updating the list of new papers
             new_papers.update(
                 [
                     clean_id
