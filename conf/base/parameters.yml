@@ -160,7 +160,7 @@ s2:
         - contexts
         - intents
         - isInfluential
-      perpage: 100
+      perpage: 500
 
 nsf:
   data_collection:

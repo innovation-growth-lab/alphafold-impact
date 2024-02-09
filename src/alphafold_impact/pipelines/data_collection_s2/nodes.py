@@ -7,17 +7,22 @@ Functions:
         and filters them based on a specified AlphaFold DOI.
 """
 
+import logging
 from typing import Sequence, Dict
 import re
 import requests
 from requests.adapters import HTTPAdapter, Retry
 from kedro.io import AbstractDataset
 
+logger = logging.getLogger(__name__)
+
 
 def load_alphafold_citation_ids(
     input_loaders: AbstractDataset, work_id: str
 ) -> Sequence[str]:
     """Loads the citation IDs for the AlphaFold paper. Requires OA pipeline."""
+
+    logger.info("Loading citation IDs for Alphafold")
     citations = input_loaders[work_id]()
 
     dois = [
@@ -79,7 +84,7 @@ def fetch_citation_details(
 
         offset += perpage
         url = (
-            f"{base_url}/citations/{work_id}/{direction}?"
+            f"{base_url}/{work_id}/{direction}?"
             f"fields={','.join(fields)}&offset={offset}&limit={perpage}"
         )
 
@@ -105,10 +110,18 @@ def get_citation_details(
     """
     citation_details = {}
     for work_id in work_ids:
+        logger.info("Fetching citation details for %s", work_id)
         work_id = f"DOI:{work_id}"
-        data = fetch_citation_details(work_id, **kwargs)
-        for item in data:
-            if item["citedPaper"]["externalIds"]["DOI"] == af_doi:
-                citation_details[work_id] = item
-                break
+        try:
+            data = fetch_citation_details(work_id, **kwargs)
+            for item in data:
+                if item["citedPaper"]["externalIds"].get("DOI", "") == af_doi:
+                    citation_details[work_id] = item
+                    break
+        except Exception: # pylint: disable=broad-except
+            logger.warning("Failed to fetch citation details for %s", work_id)
+            continue
     return citation_details
+
+# Some are failing, the result of DOI not being quite unique (the domain does redirects).
+# We may be able to fetch these using PubMed IDs, but the baseline OA pipeline did not fetch these.
