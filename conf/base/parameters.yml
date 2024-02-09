@@ -147,6 +147,20 @@ lens:
       "2023": "2023"
       "2024": "2024"
 
+s2:
+  data_collection:
+    af_paper: W3177828909
+    af_doi: 10.1038/s41586-021-03819-2
+    api:
+      base_url: https://api.semanticscholar.org/graph/v1/paper
+      cites: citations
+      cited_by: references
+      fields:
+        - externalIds
+        - contexts
+        - intents
+        - isInfluential
+      perpage: 100
 
 nsf:
   data_collection:

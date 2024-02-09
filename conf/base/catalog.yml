@@ -257,3 +257,10 @@ cb.data_processing.people.raw:
   <<: *_js_ptd
   path: s3://alphafold-impact/data/02_intermediate/nsf/awards/{year}/
 
+# semantic scholar
+s2.data_collection.cites.input:
+  <<: *cites_raw
+
+s2.data_collection.intent.alphafold.raw:
+  <<: *_js
+  filepath: s3://alphafold-impact/data/01_raw/s2/intent/alphafold.json
