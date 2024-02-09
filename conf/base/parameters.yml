@@ -93,6 +93,19 @@ nih:
       download_url: https://classic.clinicaltrials.gov/AllAPIJSON.zip
       zip_save_path: data/00_tmp/nih_ct.zip
       extract_path: data/01_raw/nih/clinical_trials/
+    funded_projects:
+      api_url: 'https://api.reporter.nih.gov/v2/projects/search'
+      years:
+        - 2018
+        - 2019
+        - 2020 
+        - 2021
+        - 2022
+        - 2023
+        - 2024
+    funding_opportunities:
+      api_url: 'https://search.grants.nih.gov/guide/api/data'
+      end_date: '10022024'
 
 lens:
   data_collection:
