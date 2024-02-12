@@ -149,18 +149,20 @@ lens:
 
 s2:
   data_collection:
-    af_paper: W3177828909
-    af_doi: 10.1038/s41586-021-03819-2
-    api:
-      base_url: https://api.semanticscholar.org/graph/v1/paper
-      cites: citations
-      cited_by: references
-      fields:
-        - externalIds
-        - contexts
-        - intents
-        - isInfluential
-      perpage: 500
+    strength:
+      af_paper: W3177828909
+      af_doi: 10.1038/s41586-021-03819-2
+      api:
+        base_url: https://api.semanticscholar.org/graph/v1/paper
+        cites: citations
+        cited_by: references
+        fields:
+          - externalIds
+          - contextsWithIntent
+          - isInfluential
+        perpage: 500
+      min_level: 0
+      max_level: 5
 
 nsf:
   data_collection:

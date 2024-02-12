@@ -137,6 +137,7 @@ nih.data_processing.clinical_trials_links_to_papers.intermediate:
   <<: *_csv
   filepath: s3://alphafold-impact/data/02_intermediate/nih/clinical_trials/clinical_trials_links_to_papers.csv
 
+
 nih.data_collection.funded_projects.raw:
   <<: *_csv_ptd
   path: s3://alphafold-impact/data/01_raw/nih/funded_projects/
@@ -257,10 +258,24 @@ cb.data_processing.people.raw:
   <<: *_js_ptd
   path: s3://alphafold-impact/data/02_intermediate/nsf/awards/{year}/
 
-# semantic scholar
-s2.data_collection.cites.input:
+
+s2.data_collection.strength.cites.input:
   <<: *cites_raw
 
-s2.data_collection.intent.alphafold.raw:
+"s2.data_collection.strength.level.{lvl}.log.ids.in": &s2_log
+  <<: *_js
+  filepath: s3://alphafold-impact/data/01_raw/s2/strength/log/{lvl}/ids.json
+
+"s2.data_collection.strength.level.{lvl}.log.ids.out":
+  <<: *s2_log
+
+s2.data_collection.strength.level.0:
   <<: *_csv
-  filepath: s3://alphafold-impact/data/01_raw/s2/intent/alphafold_citations.csv
+  filepath: s3://alphafold-impact/data/01_raw/s2/strength/0/10.1038/s41586-021-03819-2.csv
+
+"s2.data_collection.strength.level.{lvl}": &s2_lvl
+  <<: *_csv_ptd
+  path: s3://alphafold-impact/data/01_raw/s2/strength/{lvl}/
+
+"s2.data_collection.strength.level.{lvl}.raw":
+  <<: *s2_lvl
