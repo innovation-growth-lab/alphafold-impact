@@ -7,7 +7,7 @@ from kedro.pipeline import Pipeline, node, pipeline
 from .nodes import (
     load_alphafold_citation_ids,
     fetch_citation_details,
-    get_citation_details
+    get_alphafold_citation_details
 )
 
 def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
@@ -22,7 +22,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                 outputs="af_citations",
             ),
             node(
-                func=get_citation_details,
+                func=get_alphafold_citation_details,
                 inputs={
                     "work_ids": "af_citations",
                     "af_doi": "params:af_doi",

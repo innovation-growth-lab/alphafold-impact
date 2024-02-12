@@ -262,5 +262,5 @@ s2.data_collection.cites.input:
   <<: *cites_raw
 
 s2.data_collection.intent.alphafold.raw:
-  <<: *_js
-  filepath: s3://alphafold-impact/data/01_raw/s2/intent/alphafold.json
+  <<: *_csv
+  filepath: s3://alphafold-impact/data/01_raw/s2/intent/alphafold_citations.csv
