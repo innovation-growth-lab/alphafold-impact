@@ -6,7 +6,6 @@ generated using Kedro 0.19.1
 from kedro.pipeline import Pipeline, node, pipeline
 from .nodes import (
     load_alphafold_citation_ids,
-    fetch_citation_details,
     get_alphafold_citation_details
 )
 
