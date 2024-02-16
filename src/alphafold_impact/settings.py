@@ -45,7 +45,8 @@ DYNAMIC_PIPELINES_MAPPING = {
         itertools.product(
             ["united_states", "european_union"],
             [f"{i:02d}" for i in range(1, 13)],
-            [2022, 2023, 2024]
+            [2022, 2023, 2024],
         )
     ),
+    "nsf": ["2018", "2019", "2020", "2021", "2022", "2023", "2024"],
 }
