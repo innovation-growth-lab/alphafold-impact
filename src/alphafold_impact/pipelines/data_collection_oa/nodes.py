@@ -22,7 +22,7 @@ OpenAlex - Citation Depth:
 """
 
 import logging
-from typing import List, Dict, Sequence, Union, Callable, Tuple
+from typing import List, Dict, Sequence, Union, Callable, Tuple, Generator
 import pandas as pd
 import networkx as nx
 from kedro.io import AbstractDataset
@@ -230,14 +230,14 @@ def load_referenced_work_ids(
 
 def fetch_citation_depth(
     seed_paper: str, api_config: Dict[str, str], filter_config: str
-) -> Tuple[Dict[str, pd.DataFrame], Dict[str, List[dict]]]:
+) -> Generator[Tuple[Dict[str, pd.DataFrame], Dict[str, List[dict]]], None, None]:
     """
     Iterates over an updating list of papers to process, yielding the response from collect
     papers for each paper in the list. As papers are collected, they are added to the set, while
     new, one-level deeper papers, are added to the list.
 
     Args:
-        seed_paper (str): The seed paper to start from.
+        seed_paper (str): The seed work ID paper to start from, ie. AlphaFold's.
         api_config (Dict[str, str]): The API configuration.
         filter_config (str): The filter to apply when fetching papers.
 

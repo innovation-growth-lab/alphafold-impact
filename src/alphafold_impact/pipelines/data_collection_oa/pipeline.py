@@ -182,7 +182,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
 
     return (
         sum(baseline_pipelines)  # Base pipelines
-        + downstream_impact_pipeline  # Base pipelines
+        + downstream_impact_pipeline  # Papers that cite papers that cite AF
         + works_for_concepts_and_years  # Concept and year pipelines
         + gtr_collection_pipeline  # GtR pipelines
         + network_pipeline  # Network pipeline

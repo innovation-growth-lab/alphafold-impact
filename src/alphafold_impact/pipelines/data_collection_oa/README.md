@@ -12,7 +12,7 @@ This module contains the core functions for interacting with the OA API. Key fun
 - **Preprocessing DOI Values (`preprocess_publication_doi`)**: Prepares DOI values from Gateway to Research data for compatibility with OA filters.
 - **Creating DOI Lists (`create_list_doi_inputs`)**: Generates lists of DOI values from preprocessed data.
 - **Loading Referenced Work IDs (`load_referenced_work_ids`)**: Extracts work IDs and DOI mappings from a dataset.
-- **Dynamically descending a citation tree (`fetch_citation_depth`)**: Iteratres over a list of papers to yield OA responses.
+- **Dynamically descending a citation tree (`fetch_citation_depth`)**: Iterates over a list of papers to yield OA responses.
 
 ### `pipeline.py`
 Defines the `data_collection_oa` pipeline, which includes several sub-pipelines:
