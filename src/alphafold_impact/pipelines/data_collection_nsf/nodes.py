@@ -6,6 +6,7 @@ Functions:
     fetch_award_data: Fetch award data for a given award ID.
     fetch_nsf_data: Fetch NSF data for a given award year.
 """
+
 import logging
 from typing import Dict, List
 import requests
@@ -25,9 +26,9 @@ def _create_publication_objects(publication_list: List[str]) -> Dict[str, str]:
 
     Returns:
         Dict[str, str]: A dictionary of publication objects, where the keys
-            are the NSF PAR IDs and the values are dictionaries
-        containing the publication information (journal, year, volume,
-            authors, title, doi).
+            are the NSF PAR IDs and the values are dictionaries containing
+            the publication information (journal, year, volume, authors,
+            title, doi).
     """
     publication_dict = {}
     for paper in publication_list:
@@ -112,10 +113,9 @@ def fetch_award_data(
         return {}
 
 
-# def fetch_awards_list_from_zip(zip_file_path: str) -> List[str]:
-
-
-def fetch_nsf_data(config: Dict[str, str], fields: List[str], award_list: List[str]):
+def fetch_nsf_data(
+    config: Dict[str, str], fields: List[str], award_list: List[str]
+) -> Dict[str, Dict[str, str]]:
     """
     Fetches NSF data for a given list of awards.
 
