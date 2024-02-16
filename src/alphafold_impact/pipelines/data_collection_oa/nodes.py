@@ -12,11 +12,21 @@ OpenAlex - Gateway to Research:
     create_list_doi_inputs: Create a list of doi values from the Gateway to Research publication
         data.
     load_referenced_work_ids: Load referenced work IDs from the dataset.
+
+OpenAlex - Citation Depth:
+    fetch_citation_depth: Iterates over an updating list of papers to process, yielding the
+        response from collect papers for each paper in the list. As papers are collected, they are
+        added to the set, while new, one-level deeper papers, are added to the list.
+    create_network_graph: Creates the network graph from the edges, a list of tuples with the format
+        (target, source).
 """
+
 import logging
-from typing import List, Dict, Sequence, Union, Callable, Tuple
+from typing import List, Dict, Sequence, Union, Callable, Tuple, Generator
 import pandas as pd
+import networkx as nx
 from kedro.io import AbstractDataset
+from joblib import Parallel, delayed
 from .utils import (
     preprocess_work_ids,
     fetch_papers_eager,
@@ -122,7 +132,7 @@ def retrieve_oa_works_for_concepts_and_years(
     Args:
         concept_ids (List[str]): A list of OpenAlex concept IDs.
         publication_years (List[int]): A list of publication years.
-        chunk_size (int, optional): The number of concept IDs to process in each API call 
+        chunk_size (int, optional): The number of concept IDs to process in each API call
             (default is 40).
         per_page (int, optional): The number of results to retrieve per API call (default is 200).
 
@@ -216,3 +226,104 @@ def load_referenced_work_ids(
     logger.info("Work IDs loaded: %s", len(work_ids))
 
     return work_ids, oa_doi_dict
+
+
+def fetch_citation_depth(
+    seed_paper: str, api_config: Dict[str, str], filter_config: str
+) -> Generator[Tuple[Dict[str, pd.DataFrame], Dict[str, List[dict]]], None, None]:
+    """
+    Iterates over an updating list of papers to process, yielding the response from collect
+    papers for each paper in the list. As papers are collected, they are added to the set, while
+    new, one-level deeper papers, are added to the list.
+
+    Args:
+        seed_paper (str): The seed work ID paper to start from, ie. AlphaFold's.
+        api_config (Dict[str, str]): The API configuration.
+        filter_config (str): The filter to apply when fetching papers.
+
+    Yields:
+        Tuple[Dict[str, pd.DataFrame], Dict[str, List[dict]]]: A tuple containing the edges and
+        the papers.
+    """
+    processed_paper_ids = set()
+    papers_to_process = {seed_paper}  # Use a set for uniqueness and efficient look-up
+
+    while papers_to_process:
+        logger.info("Processing %s papers", len(papers_to_process))
+        current_batch = set()
+
+        # take up to 200 papers for processing
+        while papers_to_process and len(current_batch) < 200:
+            current_batch.add(papers_to_process.pop())
+
+        processed_paper_ids.update(current_batch)
+        logger.info("Processing the following papers: %s", current_batch)
+
+        # parallel fetching of papers
+        child_papers = Parallel(n_jobs=8, backend="loky", verbose=10)(
+            delayed(collect_papers)(
+                work_ids=paper,
+                mailto=api_config["mailto"],
+                perpage=api_config["perpage"],
+                filter_criteria=filter_config,
+                eager_loading=True,
+            )
+            for paper in current_batch
+        )
+
+        # flatten the list of dicts into a single dict
+        child_papers_flat = {k: v for d in child_papers for k, v in d.items()}
+
+        lengths = {key: len(value) for key, value in child_papers_flat.items()}
+        logger.info("Lengths of value lists: %s", lengths)
+
+        new_papers = set()
+        for parent, children in child_papers_flat.items():
+            edge_list = []
+
+            # removing papers published before 2021-01-01
+            children = [
+                child
+                for child in children
+                if child.get("publication_date") >= "2021-01-01"
+            ]
+
+            # adding edges
+            edge_list = [
+                (parent, child.get("id", "").replace("https://openalex.org/", ""))
+                for child in children
+            ]
+
+            # updating the list of new papers
+            new_papers.update(
+                [
+                    clean_id
+                    for child in children
+                    if (
+                        clean_id := child.get("id", "").replace(
+                            "https://openalex.org/", ""
+                        )
+                    )
+                    not in processed_paper_ids
+                ]
+            )
+
+            edge_list_df = pd.DataFrame(edge_list, columns=["target", "source"])
+            yield {parent: edge_list_df}, {parent: children}
+
+        # extend the papers_to_process without duplicates
+        papers_to_process.update(new_papers - processed_paper_ids)
+
+
+def create_network_graph(edges: pd.DataFrame) -> nx.Graph:
+    """
+    Creates the network graph from the edges, a list of tuples with the format (target, source).
+
+    Args:
+        edges (pd.DataFrame): The edges of the network graph.
+
+    Returns:
+        nx.Graph: The network graph.
+    """
+    G = nx.from_pandas_edgelist(edges, "target", "source")
+    return G

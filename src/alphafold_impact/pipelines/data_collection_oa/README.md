@@ -12,6 +12,7 @@ This module contains the core functions for interacting with the OA API. Key fun
 - **Preprocessing DOI Values (`preprocess_publication_doi`)**: Prepares DOI values from Gateway to Research data for compatibility with OA filters.
 - **Creating DOI Lists (`create_list_doi_inputs`)**: Generates lists of DOI values from preprocessed data.
 - **Loading Referenced Work IDs (`load_referenced_work_ids`)**: Extracts work IDs and DOI mappings from a dataset.
+- **Dynamically descending a citation tree (`fetch_citation_depth`)**: Iterates over a list of papers to yield OA responses.
 
 ### `pipeline.py`
 Defines the `data_collection_oa` pipeline, which includes several sub-pipelines:
@@ -19,6 +20,7 @@ Defines the `data_collection_oa` pipeline, which includes several sub-pipelines:
 - **GtR Pipeline**: Targets OpenAlex publications matching DOIs from Gateway to Research and collects papers cited by these publications.
 - **Concepts and Years Pipeline**: Gathers OA works for specific concepts and publication years.
 - **Downstream Impact Pipeline**: Analyses the downstream impact of works based on citations and references.
+- **Network pipeline**: Creates a network of paper citations from a seed paper.
 
 ### `utils.py`
 Contains utility functions supporting data collection tasks, including parsing API responses, handling pagination, and error management.

@@ -33,7 +33,9 @@ from .nodes import (
     preprocess_publication_doi,
     create_list_doi_inputs,
     load_referenced_work_ids,
-    retrieve_oa_works_for_concepts_and_years
+    retrieve_oa_works_for_concepts_and_years,
+    fetch_citation_depth,
+    create_network_graph
 )
 
 
@@ -86,7 +88,6 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
         namespace="oa.data_collection.downstream",
         tags="downstream",
     )
-
 
     works_for_concepts_and_years = pipeline(
         [
@@ -157,9 +158,32 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
         namespace="oa.data_collection.gtr",
     )
 
+    network_pipeline = pipeline(
+        [
+            node(
+                func=fetch_citation_depth,
+                inputs={
+                    "seed_paper": "params:get.work_id",
+                    "api_config": "params:api",
+                    "filter_config": "params:filter",
+                },
+                outputs=["edges", "works"],
+                tags="network",
+            ),
+            node(
+                func=create_network_graph,
+                inputs=["edges"],
+                outputs="network",
+                tags="network",
+            ),
+        ],
+        namespace="oa.data_collection.depth",
+    )
+
     return (
         sum(baseline_pipelines)  # Base pipelines
-        + downstream_impact_pipeline  # Base pipelines
-        + works_for_concepts_and_years # Concept and year pipelines
+        + downstream_impact_pipeline  # Papers that cite papers that cite AF
+        + works_for_concepts_and_years  # Concept and year pipelines
         + gtr_collection_pipeline  # GtR pipelines
+        + network_pipeline  # Network pipeline
     )
