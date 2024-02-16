@@ -34,7 +34,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                 outputs=["level.0", "level.0.log.ids.out"],
             ),
         ],
-        tags=["s2.level.0"],
+        tags=["s2.level.0", "strength"],
         namespace="s2.data_collection.strength",
     )
 
@@ -68,9 +68,8 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                 "api.fields": "params:s2.data_collection.strength.api.fields",
                 "api.perpage": "params:s2.data_collection.strength.api.perpage",
             },
-            # outputs="raw",
             namespace=f"s2.data_collection.strength.level.{level+1}",
-            tags=["s2.levels"],
+            tags=["s2.levels", "strength"],
         )
         for level in settings.DYNAMIC_PIPELINES_MAPPING["s2"]
     ]

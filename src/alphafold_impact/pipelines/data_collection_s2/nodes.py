@@ -8,7 +8,8 @@ Functions:
 """
 
 import logging
-from typing import Sequence, Dict, Tuple, Union
+from math import isnan
+from typing import Sequence, Dict, Tuple, Union, Generator, List, Any
 import re
 import pandas as pd
 import requests
@@ -100,7 +101,7 @@ def fetch_citation_details(
 
 def get_alphafold_citation_details(
     work_ids: Sequence[Tuple[str, str, str, str]], af_doi: str, **kwargs
-) -> pd.DataFrame:
+) -> Tuple[pd.DataFrame, Sequence[Tuple[str, int]]]:
     """Retrieves citation details for a given list of work IDs and filters
     them based on the specified AlphaFold DOI.
 
@@ -154,19 +155,16 @@ def get_alphafold_citation_details(
     return {af_doi: citation_details}, [tuple([af_doi, 34265844])]
 
 
-#  list(set(citation_details["child_doi"].to_list()))
-
-
 def fetch_citation_strength(
     parent_data: Sequence[Dict[str, AbstractDataset]],
     logs: Sequence[Tuple[str, str]],
     **kwargs,
-) -> pd.DataFrame:
+) -> Generator[Dict[str, List[Dict[str, Any]]], List[List[str]]]:
     """
     Fetches the citation strength for a new level based on the parent data and logs.
 
     Args:
-        parent_data (Sequence[Dict[str, AbstractDataset]]): The parent data containing 
+        parent_data (Sequence[Dict[str, AbstractDataset]]): The parent data containing
             the datasets.
         logs (Sequence[Tuple[str, str]]): The logs containing the paper IDs.
         **kwargs: Additional keyword arguments.
@@ -175,14 +173,15 @@ def fetch_citation_strength(
         pd.DataFrame: The citation strength data.
 
     Yields:
-        Dict[str, List[Dict[str, Any]]], List[List[str]]: The citation details for each 
+        Dict[str, List[Dict[str, Any]]], List[List[str]]: The citation details for each
             paper and the processed paper IDs.
     """
     logger.info("Fetching citation strength for a new level")
     processed_paper_ids = set(tuple(log) for log in logs)
     paper_ids_to_process = set()
 
-    for _, loader in parent_data.items():
+    for parid, loader in parent_data.items():
+        logger.info("reading data from %s", parid)
         data = loader()
         set_of_papers = (
             set(zip(data["child_doi"].to_list(), data["child_pmid"].to_list()))
@@ -197,30 +196,37 @@ def fetch_citation_strength(
             current_paper,
             len(paper_ids_to_process),
         )
+
+        # fetch citation details with DOI
         try:
             citation_details = fetch_citation_details(
                 work_id=f"DOI:{current_paper[0]}", **kwargs
             )
         except requests.exceptions.HTTPError:
-            pass
+            citation_details = []
 
-        if not citation_details and current_paper[1]:
+        if not citation_details and not isnan(current_paper[1]):
+            # if unsuccessful, fetch citation details with PMID
             try:
                 citation_details = fetch_citation_details(
-                    work_id=f"PMID:{current_paper[1]}", **kwargs
+                    work_id=f"PMID:{int(current_paper[1])}", **kwargs
                 )
             except requests.exceptions.HTTPError:
-                continue
+                citation_details = []
+        # add to processed list
+        processed_paper_ids.add(current_paper)
+
+        if not citation_details:
+            logger.warning("No citation details found for %s", current_paper)
+            continue
 
         logger.info("Fetched citation details for %s", current_paper)
         citation_details = process_citations(
             citations=citation_details, parent=current_paper
         )
 
-        processed_paper_ids.add(current_paper)
-
         logger.info("Fetched citation details for %s", current_paper)
-        yield {current_paper[0]: citation_details}, [current_paper]
+        yield {str(current_paper[0]): citation_details}, [""]
 
     logger.info(
         "Finished fetching citation strength for a new level. Flushing IDs list."
