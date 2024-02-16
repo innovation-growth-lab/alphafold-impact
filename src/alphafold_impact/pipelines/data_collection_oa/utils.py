@@ -81,6 +81,7 @@ def _parse_results(response: List[Dict]) -> Dict[str, List[str]]:
             "keywords": paper.get("keywords", []),
             "grants": paper.get("grants", []),
             "referenced_works": paper.get("referenced_works", []),
+            "ids": paper.get("ids", []),
         }
         for paper in response
     ]
@@ -190,9 +191,7 @@ def fetch_papers_eager(
 ) -> Dict[str, List[dict]]:
     """Fetches papers eagerly."""
     return {
-        work_id
-        if not slice_keys
-        else f"s{str(i)}": _fetch_papers_for_id(
+        work_id if not slice_keys else f"s{str(i)}": _fetch_papers_for_id(
             work_id=work_id,
             mailto=mailto,
             perpage=perpage,
@@ -211,9 +210,9 @@ def fetch_papers_lazy(
 ) -> Dict[str, Callable]:
     """Fetches papers lazily."""
     return {
-        work_id
-        if not slice_keys
-        else f"s{str(i)}": lambda work_id=work_id: _fetch_papers_for_id(
+        (
+            work_id if not slice_keys else f"s{str(i)}"
+        ): lambda work_id=work_id: _fetch_papers_for_id(
             work_id=work_id,
             mailto=mailto,
             perpage=perpage,
