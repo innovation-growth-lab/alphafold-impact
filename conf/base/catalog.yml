@@ -8,11 +8,6 @@ _pq: &_pq
   load_args:
     engine: pyarrow
 
-_pkl: &_pkl
-  type: pickle.PickleDataset
-  credentials: s3_credentials
-  backend: pickle
-
 _csv: &_csv
   type: pandas.CSVDataset
   credentials: s3_credentials
@@ -220,16 +215,3 @@ cb.data_processing.people_descriptions.raw:
 cb.data_processing.people.raw:
   <<: *_cb_raw
   filepath: ${diss.crunchbase}/people.csv
-
-# OA depth data
-oa.data_collection.depth.works:
-  <<: *_js_ptd
-  path: s3://alphafold-impact/data/01_raw/oa/works/depth/
-
-oa.data_collection.depth.edges:
-  <<: *_pq
-  filepath: s3://alphafold-impact/data/02_intermediate/oa/works/depth/edges.parquet
-
-oa.data_collection.depth.network:
-  <<: *_pkl
-  filepath: s3://alphafold-impact/data/02_intermediate/oa/works/depth/network.pkl
