@@ -12,6 +12,10 @@ _csv: &_csv
   type: pandas.CSVDataset
   credentials: s3_credentials
 
+_txt: &_txt
+  type: text.TextDataset
+  credentials: s3_credentials
+
 _pkl: &_pkl
   type: pickle.PickleDataset
   credentials: s3_credentials
@@ -141,6 +145,18 @@ nih.data_collection.funding_opportunities.raw:
 nih.data_processing.funding_opportunities.intermediate:
   <<: *_csv
   filepath: s3://alphafold-impact/data/02_intermediate/nih/funding_opportunities/funding_opportunities.csv
+
+nih.data_processing.funding_opportunities_mesh_tagging_input_text.intermediate:
+  <<: *_txt
+  filepath: s3://alphafold-impact/data/02_intermediate/nih/funding_opportunities/mesh_tagging_input_text.txt
+
+nih.data_processing.funding_opportunities_mesh_tagging_output_text.intermediate:
+  <<: *_txt
+  filepath: s3://alphafold-impact/data/02_intermediate/nih/funding_opportunities/mesh_tagging_output_text.txt
+
+nih.data_processing.funding_opportunities_mesh_tagging_output_df.intermediate:
+  <<: *_csv
+  filepath: s3://alphafold-impact/data/02_intermediate/nih/funding_opportunities/mesh_tagging_output_df.csv
 
 # OA depth data
 oa.data_collection.depth.works:
