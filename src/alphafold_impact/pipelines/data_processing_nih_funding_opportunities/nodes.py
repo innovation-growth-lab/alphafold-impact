@@ -20,7 +20,6 @@ def _remove_leading_text_from_cols(
 
     Returns:
         pd.DataFrame: A DataFrame with specified leading text removed from column names.
-
     """
     return df.rename(
         columns=lambda col: (
@@ -44,11 +43,6 @@ def _filter_dataframe_by_year(
 
     Returns:
         pd.DataFrame: A DataFrame filtered to include rows from the specified year onwards.
-
-    Example:
-        >>> df = pd.DataFrame({'reldate': ['1997-02-07T00:00:00.000Z', '1995-01-01T00:00:00.000Z']})
-        >>> filter_dataframe_by_year(df, 'reldate')
-        # returns df with only the row '1997-02-07T00:00:00.000Z'
     """
     df[column_name] = pd.to_datetime(df[column_name])
     return df[df[column_name].dt.year >= year]

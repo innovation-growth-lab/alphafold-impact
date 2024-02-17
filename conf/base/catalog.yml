@@ -138,6 +138,10 @@ nih.data_collection.funding_opportunities.raw:
   <<: *_csv
   filepath: s3://alphafold-impact/data/01_raw/nih/funding_opportunities/funding_opportunities.csv
 
+nih.data_processing.funding_opportunities.intermediate:
+  <<: *_csv
+  filepath: s3://alphafold-impact/data/02_intermediate/nih/funding_opportunities/funding_opportunities.csv
+
 # OA depth data
 oa.data_collection.depth.works:
   <<: *_js_ptd
@@ -151,78 +155,78 @@ oa.data_collection.depth.network:
   <<: *_pkl
   filepath: s3://alphafold-impact/data/02_intermediate/oa/works/depth/network.pkl
 
-# Crunchbase data
-_cb_raw: &_cb_raw
-  type: pandas.CSVDataset
-  credentials: nesta_s3_credentials
+# # Crunchbase data
+# _cb_raw: &_cb_raw
+#   type: pandas.CSVDataset
+#   credentials: nesta_s3_credentials
 
-cb.data_processing.acquisitions.raw:
-  <<: *_cb_raw
-  filepath: ${diss.crunchbase}/acquisitions.csv
+# cb.data_processing.acquisitions.raw:
+#   <<: *_cb_raw
+#   filepath: ${diss.crunchbase}/acquisitions.csv
 
-cb.data_processing.category_groups.raw:
-  <<: *_cb_raw
-  filepath: ${diss.crunchbase}/category_groups.csv
+# cb.data_processing.category_groups.raw:
+#   <<: *_cb_raw
+#   filepath: ${diss.crunchbase}/category_groups.csv
 
-cb.data_processing.degrees.raw:
-  <<: *_cb_raw
-  filepath: ${diss.crunchbase}/degrees.csv
+# cb.data_processing.degrees.raw:
+#   <<: *_cb_raw
+#   filepath: ${diss.crunchbase}/degrees.csv
 
-cb.data_processing.event_appearances.raw:
-  <<: *_cb_raw
-  filepath: ${diss.crunchbase}/event_appearances.csv
+# cb.data_processing.event_appearances.raw:
+#   <<: *_cb_raw
+#   filepath: ${diss.crunchbase}/event_appearances.csv
 
-cb.data_processing.events.raw:
-  <<: *_cb_raw
-  filepath: ${diss.crunchbase}/events.csv
+# cb.data_processing.events.raw:
+#   <<: *_cb_raw
+#   filepath: ${diss.crunchbase}/events.csv
 
-cb.data_processing.funding_rounds.raw:
-  <<: *_cb_raw
-  filepath: ${diss.crunchbase}/funding_rounds.csv
+# cb.data_processing.funding_rounds.raw:
+#   <<: *_cb_raw
+#   filepath: ${diss.crunchbase}/funding_rounds.csv
 
-cb.data_processing.funds.raw:
-  <<: *_cb_raw
-  filepath: ${diss.crunchbase}/funds.csv
+# cb.data_processing.funds.raw:
+#   <<: *_cb_raw
+#   filepath: ${diss.crunchbase}/funds.csv
 
-cb.data_processing.investment_partners.raw:
-  <<: *_cb_raw
-  filepath: ${diss.crunchbase}/investment_partners.csv
+# cb.data_processing.investment_partners.raw:
+#   <<: *_cb_raw
+#   filepath: ${diss.crunchbase}/investment_partners.csv
 
-cb.data_processing.investments.raw:
-  <<: *_cb_raw
-  filepath: ${diss.crunchbase}/investments.csv
+# cb.data_processing.investments.raw:
+#   <<: *_cb_raw
+#   filepath: ${diss.crunchbase}/investments.csv
   
-cb.data_processing.investors.raw:
-  <<: *_cb_raw
-  filepath: ${diss.crunchbase}/investors.csv
+# cb.data_processing.investors.raw:
+#   <<: *_cb_raw
+#   filepath: ${diss.crunchbase}/investors.csv
   
-cb.data_processing.ipos.raw:
-  <<: *_cb_raw
-  filepath: ${diss.crunchbase}/ipos.csv
+# cb.data_processing.ipos.raw:
+#   <<: *_cb_raw
+#   filepath: ${diss.crunchbase}/ipos.csv
   
-cb.data_processing.jobs.raw:
-  <<: *_cb_raw
-  filepath: ${diss.crunchbase}/jobs.csv
+# cb.data_processing.jobs.raw:
+#   <<: *_cb_raw
+#   filepath: ${diss.crunchbase}/jobs.csv
   
-cb.data_processing.org_parents.raw:
-  <<: *_cb_raw
-  filepath: ${diss.crunchbase}/org_parents.csv
+# cb.data_processing.org_parents.raw:
+#   <<: *_cb_raw
+#   filepath: ${diss.crunchbase}/org_parents.csv
   
-cb.data_processing.organization_descriptions.raw:
-  <<: *_cb_raw
-  filepath: ${diss.crunchbase}/organization_descriptions.csv
+# cb.data_processing.organization_descriptions.raw:
+#   <<: *_cb_raw
+#   filepath: ${diss.crunchbase}/organization_descriptions.csv
   
-cb.data_processing.organizations.raw:
-  <<: *_cb_raw
-  filepath: ${diss.crunchbase}/organizations.csv
+# cb.data_processing.organizations.raw:
+#   <<: *_cb_raw
+#   filepath: ${diss.crunchbase}/organizations.csv
   
-cb.data_processing.people_descriptions.raw:
-  <<: *_cb_raw
-  filepath: ${diss.crunchbase}/people_descriptions.csv
+# cb.data_processing.people_descriptions.raw:
+#   <<: *_cb_raw
+#   filepath: ${diss.crunchbase}/people_descriptions.csv
   
-cb.data_processing.people.raw:
-  <<: *_cb_raw
-  filepath: ${diss.crunchbase}/people.csv
+# cb.data_processing.people.raw:
+#   <<: *_cb_raw
+#   filepath: ${diss.crunchbase}/people.csv
 
 # NSF
 "nsf.data_collection.awards.{year}.raw":
