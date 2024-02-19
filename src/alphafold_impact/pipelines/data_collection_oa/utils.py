@@ -2,11 +2,11 @@
 Utilities for data collection from OpenAlex.
     _revert_abstract_index: Revert the abstract inverted index to the original text.
     _parse_results: Parse OpenAlex API response
-    _works_generator: Create a generator that yields a list of works from the
-        OpenAlex API based on a given work ID.
-    preprocess_work_ids: Preprocess work_ids to ensure they are in the correct format.
-    _chunk_work_ids: Yield successive chunk_size-sized chunks from ids.
-    _fetch_papers_for_id: Fetch all papers cited by a specific work ID.
+    _works_generator: Create a generator that yields a list of works from the OpenAlex API 
+        based on a given work ID.
+    preprocess_oa_ids: Preprocess oa_ids to ensure they are in the correct format.
+    _chunk_oa_ids: Yield successive chunk_size-sized chunks from ids.
+    fetch_papers_for_id: Fetch all papers cited by a specific work ID.
     fetch_papers_parallel: Fetch papers in parallel.
     fetch_papers_eager: Fetch papers eagerly.
     fetch_papers_lazy: Fetch papers lazily.
@@ -14,13 +14,14 @@ Utilities for data collection from OpenAlex.
 """
 
 import logging
-from typing import Iterator, List, Dict, Sequence, Union, Callable
+from typing import Iterator, List, Dict, Sequence, Union, Callable, Generator
 import time
 from requests.adapters import HTTPAdapter, Retry
 import requests
 from joblib import Parallel, delayed
 
 logger = logging.getLogger(__name__)
+
 
 
 def _revert_abstract_index(abstract_inverted_index: Dict[str, Sequence[int]]) -> str:
@@ -90,8 +91,8 @@ def _parse_results(response: List[Dict]) -> Dict[str, List[str]]:
 def _works_generator(
     mailto: str,
     perpage: str,
-    work_id: str,
-    filter_criteria: str,
+    oa_id: Union[str, List[str]],
+    filter_criteria: Union[str, List[str]],
     session: requests.Session,
 ) -> Iterator[list]:
     """Creates a generator that yields a list of works from the OpenAlex API based on a
@@ -100,18 +101,29 @@ def _works_generator(
     Args:
         mailto (str): The email address to use for the API.
         perpage (str): The number of results to return per page.
-        work_id (str): A single work ID to filter by 'cites'.
-        filter_criteria (str): The filter condition for oa papers.
+        oa_id (Union[str, List[str]): The work ID to use for the API.
+        filter_criteria (Union[str, List[str]]): The filter criteria to use for the API.
         session (requests.Session): The requests session to use.
 
     Yields:
         Iterator[list]: A generator that yields a list of works from the OpenAlex API
         based on a given work ID.
     """
-
     cursor = "*"
+    assert isinstance(
+        filter_criteria, type(oa_id)
+    ), "filter_criteria and oa_id must be of the same type."
+
+    # multiple filter criteria
+    if isinstance(filter_criteria, list) and isinstance(oa_id, list):
+        filter_string = ",".join(
+            [f"{criteria}:{id_}" for criteria, id_ in zip(filter_criteria, oa_id)]
+        )
+    else:
+        filter_string = f"{filter_criteria}:{oa_id}"
+
     cursor_url = (
-        f"https://api.openalex.org/works?filter={filter_criteria}:{work_id}"
+        f"https://api.openalex.org/works?filter={filter_string}"
         f"&mailto={mailto}&per-page={perpage}&cursor={{}}"
     )
 
@@ -126,7 +138,7 @@ def _works_generator(
             response = session.get(cursor_url.format(cursor), timeout=20)
             data = response.json()
 
-        logger.info("Fetching data for %s", work_id[:50])
+        logger.info("Fetching data for %s", oa_id[:50])
         total_results = data["meta"]["count"]
         num_calls = total_results // int(perpage) + 1
         logger.info("Total results: %s, in %s calls", total_results, num_calls)
@@ -138,39 +150,45 @@ def _works_generator(
             yield results
 
     except Exception as e:  # pylint: disable=broad-except
-        logger.error("Error fetching data for %s: %s", work_id, e)
+        logger.error("Error fetching data for %s: %s", oa_id, e)
         return []
 
 
-def preprocess_work_ids(
-    work_ids: Union[str, List[str], Dict[str, str]], group_work_ids: bool
+def preprocess_oa_ids(
+    oa_ids: Union[str, List[str], Dict[str, str]], group_oa_ids: bool
 ) -> List[str]:
-    """Preprocesses work_ids to ensure they are in the correct format."""
-    if isinstance(work_ids, str):
-        work_ids = [work_ids]
-    if isinstance(work_ids, dict):
-        work_ids = list(work_ids.values())
-    if group_work_ids:
-        work_ids = list(_chunk_work_ids(work_ids))
-    return work_ids
+    """Preprocesses oa_ids to ensure they are in the correct format."""
+    if isinstance(oa_ids, str):
+        oa_ids = [oa_ids]
+    if isinstance(oa_ids, dict):
+        oa_ids = list(oa_ids.values())
+    if group_oa_ids:
+        oa_ids = list(_chunk_oa_ids(oa_ids))
+    return oa_ids
 
 
-def _chunk_work_ids(ids: List[str], chunk_size: int = 50) -> List[str]:
+def _chunk_oa_ids(ids: List[str], chunk_size: int = 50) -> Generator[str, None, None]:
     """Yield successive chunk_size-sized chunks from ids."""
     for i in range(0, len(ids), chunk_size):
         yield "|".join(ids[i : i + chunk_size])
 
 
-def _fetch_papers_for_id(
-    work_id: str, mailto: str, perpage: str, filter_criteria: str
+def fetch_papers_for_id(
+    oa_id: Union[str, List[str]],
+    mailto: str,
+    perpage: str,
+    filter_criteria: Union[str, List[str]],
 ) -> List[dict]:
     """Fetches all papers cited by a specific work ID."""
+    assert isinstance(
+        filter_criteria, type(oa_id)
+    ), "filter_criteria and oa_id must be of the same type."
     papers_for_id = []
     session = requests.Session()
     retries = Retry(total=5, backoff_factor=0.3)
     session.mount("https://", HTTPAdapter(max_retries=retries))
     for page, papers in enumerate(
-        _works_generator(mailto, perpage, work_id, filter_criteria, session)
+        _works_generator(mailto, perpage, oa_id, filter_criteria, session)
     ):
         papers_for_id.extend(_parse_results(papers))
         logger.info(
@@ -182,65 +200,91 @@ def _fetch_papers_for_id(
     return papers_for_id
 
 
+def yield_papers_for_id(
+    oa_id: Union[str, List[str]],
+    mailto: str,
+    perpage: str,
+    filter_criteria: Union[str, List[str]],
+) -> Generator[Dict[str, List[dict]], None, None]:
+    """Fetches all papers cited by a specific work ID."""
+    assert isinstance(
+        filter_criteria, type(oa_id)
+    ), "filter_criteria and oa_id must be of the same type."
+    papers_collected = 0
+    session = requests.Session()
+    retries = Retry(total=5, backoff_factor=0.3)
+    session.mount("https://", HTTPAdapter(max_retries=retries))
+    for page, papers in enumerate(
+        _works_generator(mailto, perpage, oa_id, filter_criteria, session)
+    ):
+        results = _parse_results(papers)
+        papers_collected += len(results)
+        logger.info(
+            "Fetching page %s. Total papers collected: %s",
+            page,
+            papers_collected,
+        )
+
+        yield {f"p{page}": results}
+
+
 def fetch_papers_eager(
-    processed_ids: List[str],
+    processed_ids: Union[List[str], List[List[str]]],
     mailto: str,
     perpage: int,
-    filter_criteria: str,
+    filter_criteria: Union[str, List[str]],
     slice_keys: bool,
 ) -> Dict[str, List[dict]]:
     """Fetches papers eagerly."""
     return {
-        work_id if not slice_keys else f"s{str(i)}": _fetch_papers_for_id(
-            work_id=work_id,
+        oa_id if not slice_keys else f"s{str(i)}": fetch_papers_for_id(
+            oa_id=oa_id,
             mailto=mailto,
             perpage=perpage,
             filter_criteria=filter_criteria,
         )
-        for i, work_id in enumerate(processed_ids)
+        for i, oa_id in enumerate(processed_ids)
     }
 
 
 def fetch_papers_lazy(
-    processed_ids: List[str],
+    processed_ids: Union[List[str], List[List[str]]],
     mailto: str,
     perpage: int,
-    filter_criteria: str,
+    filter_criteria: Union[str, List[str]],
     slice_keys: bool,
 ) -> Dict[str, Callable]:
     """Fetches papers lazily."""
     return {
         (
-            work_id if not slice_keys else f"s{str(i)}"
-        ): lambda work_id=work_id: _fetch_papers_for_id(
-            work_id=work_id,
+            oa_id if not slice_keys else f"s{str(i)}"
+        ): lambda oa_id=oa_id: fetch_papers_for_id(
+            oa_id=oa_id,
             mailto=mailto,
             perpage=perpage,
             filter_criteria=filter_criteria,
         )
-        for i, work_id in enumerate(processed_ids)
+        for i, oa_id in enumerate(processed_ids)
     }
 
 
 def fetch_papers_parallel(
-    processed_ids: List[str],
+    processed_ids: Union[List[str], List[List[str]]],
     mailto: str,
     perpage: int,
-    filter_criteria: str,
+    filter_criteria: Union[str, List[str]],
     parallel_jobs: int = 4,
 ) -> Dict[str, List[Callable]]:
     """Fetches papers in parallel."""
-    # slice work_ids
-    work_id_chunks = [
-        processed_ids[i : i + 80] for i in range(0, len(processed_ids), 80)
-    ]
-    logger.info("Slicing data. Number of work_id_chunks: %s", len(work_id_chunks))
+    # slice oa_ids
+    oa_id_chunks = [processed_ids[i : i + 80] for i in range(0, len(processed_ids), 80)]
+    logger.info("Slicing data. Number of oa_id_chunks: %s", len(oa_id_chunks))
     return {
         f"s{str(i)}": lambda chunk=chunk: Parallel(n_jobs=parallel_jobs, verbose=10)(
-            delayed(_fetch_papers_for_id)(work_id, mailto, perpage, filter_criteria)
-            for work_id in chunk
+            delayed(fetch_papers_for_id)(oa_id, mailto, perpage, filter_criteria)
+            for oa_id in chunk
         )
-        for i, chunk in enumerate(work_id_chunks)
+        for i, chunk in enumerate(oa_id_chunks)
     }
 
 

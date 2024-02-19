@@ -40,7 +40,18 @@ CONFIG_LOADER_ARGS = {
 
 DYNAMIC_PIPELINES_MAPPING = {
     "gtr": ["projects", "outcomes/publications", "organisations", "funds"],
-    "oa": ["cites", "cited_by"],
+    "oa": {
+        "directions": ["cites", "cited_by"],
+        "subfields": [
+            "structural_biology",
+            "biochemistry",
+            "bioinformatics",
+            "drug_discovery",
+            "molecular_biology",
+            "protein_design",
+            "systems_biology",
+        ],
+    },
     "lens": list(
         itertools.product(
             ["united_states", "european_union"],

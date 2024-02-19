@@ -4,15 +4,15 @@ the OA API.
 
 OpenAlex baseline:
     collect_papers: Collect papers based on the provided work IDs.
-    load_work_ids: Load the file corresponding to a particular work_id
-        in a PartitionedDataSet, extract all ids, and return these as a list.
+    load_oa_ids: Load the file corresponding to a particular oa_id in a PartitionedDataSet,
+        extract all ids, and return these as a list.
 
 OpenAlex - Gateway to Research:
-    preprocess_publication_doi: Preprocess the Gateway to Research publication
-        data to include doi values that are compatible with OA filter module.
-    create_list_doi_inputs: Create a list of doi values from the
-        Gateway to Research publication data.
-    load_referenced_work_ids: Load referenced work IDs from the dataset.
+    preprocess_publication_doi: Preprocess the Gateway to Research publication data to include
+        doi values that are compatible with OA filter module.
+    create_list_doi_inputs: Create a list of doi values from the Gateway to Research publication
+        data.
+    load_referenced_oa_ids: Load referenced work IDs from the dataset.
 
 OpenAlex - Citation Depth:
     fetch_citation_depth: Iterates over an updating list of papers to process, yielding the
@@ -28,17 +28,18 @@ OpenAlex - Citation Depth:
 
 import logging
 from typing import List, Dict, Sequence, Union, Callable, Tuple, Generator
+from itertools import chain
 import pandas as pd
 import networkx as nx
 from kedro.io import AbstractDataset
 from joblib import Parallel, delayed
 from .utils import (
-    preprocess_work_ids,
+    preprocess_oa_ids,
     fetch_papers_eager,
     fetch_papers_lazy,
     fetch_papers_parallel,
     retrieve_oa_works_chunk,
-    chunk_list,
+    yield_papers_for_id
 )
 
 logger = logging.getLogger(__name__)
@@ -47,12 +48,13 @@ logger = logging.getLogger(__name__)
 def collect_papers(
     mailto: str,
     perpage: str,
-    work_ids: Union[str, List[str], Dict[str, str]],
-    filter_criteria: str,
-    group_work_ids: bool = False,
+    oa_ids: Union[str, List[str], List[List[str]], Dict[str, str]],
+    filter_criteria: Union[str, List[str]],
+    group_oa_ids: bool = False,
     eager_loading: bool = False,
     slice_keys: bool = False,
     parallelise: bool = False,
+    concepts: bool = False,
 ) -> Union[Dict[str, Callable], Dict[str, List[dict]]]:
     """
     Collects papers based on the provided work IDs.
@@ -60,9 +62,10 @@ def collect_papers(
     Args:
         mailto (str): The email address to be used for API requests.
         perpage (str): The number of papers to fetch per page.
-        work_ids (Union[str, List[str], Dict[str, str]]): The work IDs to collect papers for.
-        filter_criteria (str): The filter to apply when fetching papers.
-        group_work_ids (bool, optional): Whether to group the work IDs. Defaults to False.
+        oa_ids (Union[str, List[str], List[List[str]], Dict[str, str]]): The work IDs to fetch
+            papers for.
+        filter_criteria (Union[str, List[str]]): The filter to apply when fetching papers.
+        group_oa_ids (bool, optional): Whether to group the work IDs. Defaults to False.
         eager_loading (bool, optional): Whether to eagerly load all papers. Defaults to False.
         slice_keys (bool, optional): Whether to use slices as keys in the result dictionary.
             Defaults to False.
@@ -76,34 +79,38 @@ def collect_papers(
             If eager_loading is False, the values are Lists of dictionaries representing the
                 fetched papers.
     """
-    # preprocess work_ids
-    work_ids = preprocess_work_ids(work_ids, group_work_ids)
+    # preprocess oa_ids
+    oa_ids = preprocess_oa_ids(oa_ids, group_oa_ids)
 
-    # fetch papers for each work_id
+    # if concepts, simplify code and run direct fetch
+    if concepts:
+        return yield_papers_for_id(oa_ids, mailto, perpage, filter_criteria)
+
+    # fetch papers for each oa_id
     if not parallelise:
         if eager_loading:
             return fetch_papers_eager(
-                work_ids, mailto, perpage, filter_criteria, slice_keys
+                oa_ids, mailto, perpage, filter_criteria, slice_keys
             )
-        return fetch_papers_lazy(work_ids, mailto, perpage, filter_criteria, slice_keys)
-    return fetch_papers_parallel(work_ids, mailto, perpage, filter_criteria)
+        return fetch_papers_lazy(oa_ids, mailto, perpage, filter_criteria, slice_keys)
+    return fetch_papers_parallel(oa_ids, mailto, perpage, filter_criteria)
 
 
-def load_work_ids(work_id: str, dataset: Sequence[AbstractDataset]) -> List[str]:
+def load_oa_ids(oa_id: str, dataset: Sequence[AbstractDataset]) -> List[str]:
     """
-    Loads the file corresponding to a particular work_id in a PartitionedDataSet,
+    Loads the file corresponding to a particular oa_id in a PartitionedDataSet,
     extracts all ids, and returns these as a list.
 
     Args:
-        work_id (str): The work_id to load the file for.
+        oa_id (str): The oa_id to load the file for.
         dataset (PartitionedDataSet): The PartitionedDataSet containing the files.
 
     Returns:
         List[str]: A list of all ids extracted from the file.
     """
-    data = dataset[work_id]()
+    data = dataset[oa_id]()
     ids = [paper["id"].replace("https://openalex.org/", "") for paper in data]
-    logger.info("Loaded %s ids for %s", len(ids), work_id)
+    logger.info("Loaded %s ids for %s", len(ids), oa_id)
     return ids
 
 
@@ -178,7 +185,7 @@ def create_list_doi_inputs(df: pd.DataFrame) -> list:
     return df[df["doi"].notnull()]["doi"].drop_duplicates().tolist()
 
 
-def load_referenced_work_ids(
+def load_referenced_oa_ids(
     dataset: Dict[str, Sequence[Sequence[AbstractDataset]]]
 ) -> Tuple[List[str], Dict[str, str]]:
     """
@@ -193,7 +200,7 @@ def load_referenced_work_ids(
             and a dictionary mapping work IDs to DOIs.
     """
     oa_doi_dict = {}
-    work_ids = set()
+    oa_ids = set()
     for timestamp, loader in dataset.items():
         logger.info("Loading work IDs from %s", timestamp)
         data = loader()
@@ -205,15 +212,96 @@ def load_referenced_work_ids(
                     w.replace("https://openalex.org/", "")
                     for w in work["referenced_works"]
                 ]
-                work_id = work.get("id").replace("https://openalex.org/", "")
+                oa_id = work.get("id").replace("https://openalex.org/", "")
                 doi = work.get("doi").replace("https://doi.org/", "")
-                oa_doi_dict[work_id] = {"doi": doi, "referenced_works": ref_works}
-                work_ids.update(ref_works)
+                oa_doi_dict[oa_id] = {}
+                oa_doi_dict[oa_id]["doi"] = doi
+                oa_doi_dict[oa_id]["referenced_works"] = ref_works
+                oa_ids.update(ref_works)
 
-    work_ids = list(work_ids)
-    logger.info("Work IDs loaded: %s", len(work_ids))
+    oa_ids = list(oa_ids)
+    logger.info("Work IDs loaded: %s", len(oa_ids))
 
-    return work_ids, oa_doi_dict
+    return oa_ids, oa_doi_dict
+
+
+def fetch_subfield_baseline(
+    oa_concept_ids: List[str],
+    from_publication_date: str,
+    api_config: Dict[str, str],
+) -> Generator[Tuple[Dict[str, pd.DataFrame], Dict[str, List[dict]]], None, None]:
+    """
+    Fetches the baseline data for a subfield based on the given concept IDs and publication date.
+
+    Args:
+        oa_concept_ids (List[str]): List of concept IDs.
+        from_publication_date (str): The publication date from which to fetch the papers.
+        api_config (Dict[str, str]): API configuration parameters.
+
+    Yields:
+        Tuple[Dict[str, pd.DataFrame], Dict[str, List[dict]]]: A generator that yields a tuple containing two dictionaries.
+            The first dictionary contains dataframes with different fields as keys.
+            The second dictionary contains lists of dictionaries with concept information.
+
+    Returns:
+        None: This function does not return anything directly.
+    """
+
+    # Preprocess concept IDs
+    oa_concept_ids = "|".join(oa_concept_ids)
+
+    # filter criteria
+    filter_ids = [from_publication_date, oa_concept_ids]
+
+    # fetch papers
+    return collect_papers(
+        mailto=api_config["mailto"],
+        perpage=api_config["perpage"],
+        oa_ids=filter_ids,
+        filter_criteria=["from_publication_date", "concepts.id"],
+        concepts=True,
+    )
+
+
+def fetch_subfield_and_logic(
+    oa_main_concept_ids: List[str],
+    oa_and_concept_ids: List[List[str]],
+    from_publication_date: str,
+    api_config: Dict[str, str],
+) -> Generator[Tuple[Dict[str, pd.DataFrame], Dict[str, List[dict]]], None, None]:
+    """
+    Fetches papers based on a set of OA concepts that must at least have one concept
+    in a separate list of concepts. Allows to control for AI research that is also
+    related to fields of SB.
+
+    Args:
+        oa_main_concept_ids (List[str]): List of main concept IDs.
+        oa_and_concept_ids (List[List[str]]): List of lists of concept IDs.
+        from_publication_date (str): Publication date filter.
+        api_config (Dict[str, str]): API configuration.
+
+    Yields:
+        Tuple[Dict[str, pd.DataFrame], Dict[str, List[dict]]]: A generator that yields a tuple containing
+            dictionaries of dataframes and dictionaries of lists of dictionaries.
+
+    Returns:
+        None: This function does not return anything directly.
+    """
+
+    # flatten the list of lists
+    oa_main_concept_ids = "|".join(oa_main_concept_ids)
+    oa_and_concept_ids = "|".join(list(chain(*oa_and_concept_ids)))
+
+    # filter criteria
+    filter_ids = [from_publication_date, oa_main_concept_ids, oa_and_concept_ids]
+
+    return collect_papers(
+        mailto=api_config["mailto"],
+        perpage=api_config["perpage"],
+        oa_ids=filter_ids,
+        filter_criteria=["from_publication_date", "concepts.id", "concepts.id"],
+        concepts=True,
+    )
 
 
 def fetch_citation_depth(
@@ -250,7 +338,7 @@ def fetch_citation_depth(
         # parallel fetching of papers
         child_papers = Parallel(n_jobs=8, backend="loky", verbose=10)(
             delayed(collect_papers)(
-                work_ids=paper,
+                oa_ids=paper,
                 mailto=api_config["mailto"],
                 perpage=api_config["perpage"],
                 filter_criteria=filter_config,

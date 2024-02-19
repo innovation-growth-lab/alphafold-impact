@@ -119,6 +119,23 @@ works_for_concepts:
   filepath: s3://alphafold-impact/data/01_raw/oa/works/works_for_concepts.json
   credentials: s3_credentials
 
+# OA depth data
+oa.data_collection.depth.works:
+  <<: *_js_ptd
+  path: s3://alphafold-impact/data/01_raw/oa/works/depth/
+
+oa.data_collection.depth.edges:
+  <<: *_csv_ptd
+  path: s3://alphafold-impact/data/02_intermediate/oa/works/depth/edges/
+
+oa.data_collection.depth.network:
+  <<: *_pkl
+  filepath: s3://alphafold-impact/data/02_intermediate/oa/works/depth/network.pkl
+
+"oa.data_collection.subfield.{subfield}.raw":
+  <<: *_js_ptd
+  path: s3://alphafold-impact/data/01_raw/oa/works/subfield/{subfield}/
+
 # Lens data
 lens.data_collection.{jurisdiction}.{year}.{month}.raw:
   <<: *_js_ptd
