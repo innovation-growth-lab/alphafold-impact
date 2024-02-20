@@ -13,7 +13,7 @@ Alternatively, you can run this pipeline for a single year:
 
 from kedro.pipeline import Pipeline, pipeline, node
 from alphafold_impact import settings
-from .nodes import fetch_nsf_data  # pylint: disable=E0401
+from .nodes import fetch_nsf_data, fetch_nsf_archived_funding_opportunities  # pylint: disable=E0401
 
 
 def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=W0613
@@ -45,4 +45,21 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=W0613
         )
         for label in settings.DYNAMIC_PIPELINES_MAPPING["nsf"]
     ]
-    return sum(pipelines)
+
+    archived_programmes_pipeline = pipeline(
+        [
+            node(
+                func=fetch_nsf_archived_funding_opportunities,
+                inputs={
+                    "archived_search_url": "params:archived_search_url",
+                    "config": "params:api",
+                    "base_url": "params:base_url",
+                },
+                outputs="nsf.data_collection.funding_opportunities",
+            ),
+        ],
+        namespace="nsf.data_collection.archived_funding_opportunities",
+        tags=["archived_programmes", "nsf"],
+    )
+
+    return sum(pipelines) + archived_programmes_pipeline

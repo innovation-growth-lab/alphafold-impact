@@ -258,6 +258,13 @@ cb.data_processing.people.raw:
   <<: *_js_ptd
   path: s3://alphafold-impact/data/02_intermediate/nsf/awards/{year}/
 
+nsf.data_collection.funding_opportunities.raw:
+  <<: *_csv
+  filepath: s3://alphafold-impact/data/01_raw/nsf/funding_opportunities/nsf_funding.csv
+
+nsf.data_collection.archived_funding_opportunities.raw:
+  <<: *_csv
+  filepath: s3://alphafold-impact/data/01_raw/nsf/funding_opportunities/archived_nsf_funding.csv
 
 s2.data_collection.strength.cites.input:
   <<: *cites_raw

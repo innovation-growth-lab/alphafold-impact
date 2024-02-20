@@ -206,5 +206,11 @@ nsf:
       - publicationConference
       - projectOutComesReport
       - id
+    archived_funding_opportunities:
+      base_url: https://www.nsf.gov
+      archived_search_url: https://www.nsf.gov/funding/archived_funding_results.jsp?queryText=&date_slct=0&pubStatus=ARCHIVED&fundingType=0&nsfOrgs=allorg&advForm=true&Submit=&showItems=1000
+      api:
+        max_retries: 5
+        backoff_factor: 0.3
       
 test: False
