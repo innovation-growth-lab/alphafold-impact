@@ -55,7 +55,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=W0613
                     "config": "params:api",
                     "base_url": "params:base_url",
                 },
-                outputs="nsf.data_collection.funding_opportunities",
+                outputs="raw",
             ),
         ],
         namespace="nsf.data_collection.archived_funding_opportunities",
