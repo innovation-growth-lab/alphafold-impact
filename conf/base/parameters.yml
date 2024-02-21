@@ -106,6 +106,15 @@ nih:
     funding_opportunities:
       api_url: 'https://search.grants.nih.gov/guide/api/data'
       end_date: '10022024'
+  data_processing:
+    funding_opportunities:
+      year: 2017
+      mesh_tagging:
+        id_col: id
+        text_col: purpose
+        batch_name: funding_opps
+        cmd: MTI
+        cmdargs: -MoD_PP
 
 lens:
   data_collection:

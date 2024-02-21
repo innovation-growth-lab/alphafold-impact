@@ -1,5 +1,2 @@
 _json:
   type: json.JSONDataset
-
-diss:
-  crunchbase: s3://discovery-iss/data/crunchbase/Crunchbase_20240109_000941

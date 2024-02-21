@@ -12,6 +12,10 @@ _csv: &_csv
   type: pandas.CSVDataset
   credentials: s3_credentials
 
+_txt: &_txt
+  type: text.TextDataset
+  credentials: s3_credentials
+
 _pkl: &_pkl
   type: pickle.PickleDataset
   credentials: s3_credentials
@@ -138,6 +142,22 @@ nih.data_collection.funding_opportunities.raw:
   <<: *_csv
   filepath: s3://alphafold-impact/data/01_raw/nih/funding_opportunities/funding_opportunities.csv
 
+nih.data_processing.funding_opportunities.intermediate:
+  <<: *_csv
+  filepath: s3://alphafold-impact/data/02_intermediate/nih/funding_opportunities/funding_opportunities.csv
+
+nih.data_processing.funding_opportunities_mesh_tagging_input_text.intermediate:
+  <<: *_txt
+  filepath: s3://alphafold-impact/data/02_intermediate/nih/funding_opportunities/mesh_tagging_input_text.txt
+
+nih.data_processing.funding_opportunities_mesh_tagging_output_text.intermediate:
+  <<: *_txt
+  filepath: s3://alphafold-impact/data/02_intermediate/nih/funding_opportunities/mesh_tagging_output_text.txt
+
+nih.data_processing.funding_opportunities_mesh_tagging_output_df.intermediate:
+  <<: *_csv
+  filepath: s3://alphafold-impact/data/02_intermediate/nih/funding_opportunities/mesh_tagging_output_df.csv
+
 # OA depth data
 oa.data_collection.depth.works:
   <<: *_js_ptd
@@ -158,71 +178,71 @@ _cb_raw: &_cb_raw
 
 cb.data_processing.acquisitions.raw:
   <<: *_cb_raw
-  filepath: ${diss.crunchbase}/acquisitions.csv
+  filepath: ${globals:diss.crunchbase}/acquisitions.csv
 
 cb.data_processing.category_groups.raw:
   <<: *_cb_raw
-  filepath: ${diss.crunchbase}/category_groups.csv
+  filepath: ${globals:diss.crunchbase}/category_groups.csv
 
 cb.data_processing.degrees.raw:
   <<: *_cb_raw
-  filepath: ${diss.crunchbase}/degrees.csv
+  filepath: ${globals:diss.crunchbase}/degrees.csv
 
 cb.data_processing.event_appearances.raw:
   <<: *_cb_raw
-  filepath: ${diss.crunchbase}/event_appearances.csv
+  filepath: ${globals:diss.crunchbase}/event_appearances.csv
 
 cb.data_processing.events.raw:
   <<: *_cb_raw
-  filepath: ${diss.crunchbase}/events.csv
+  filepath: ${globals:diss.crunchbase}/events.csv
 
 cb.data_processing.funding_rounds.raw:
   <<: *_cb_raw
-  filepath: ${diss.crunchbase}/funding_rounds.csv
+  filepath: ${globals:diss.crunchbase}/funding_rounds.csv
 
 cb.data_processing.funds.raw:
   <<: *_cb_raw
-  filepath: ${diss.crunchbase}/funds.csv
+  filepath: ${globals:diss.crunchbase}/funds.csv
 
 cb.data_processing.investment_partners.raw:
   <<: *_cb_raw
-  filepath: ${diss.crunchbase}/investment_partners.csv
+  filepath: ${globals:diss.crunchbase}/investment_partners.csv
 
 cb.data_processing.investments.raw:
   <<: *_cb_raw
-  filepath: ${diss.crunchbase}/investments.csv
+  filepath: ${globals:diss.crunchbase}/investments.csv
   
 cb.data_processing.investors.raw:
   <<: *_cb_raw
-  filepath: ${diss.crunchbase}/investors.csv
+  filepath: ${globals:diss.crunchbase}/investors.csv
   
 cb.data_processing.ipos.raw:
   <<: *_cb_raw
-  filepath: ${diss.crunchbase}/ipos.csv
+  filepath: ${globals:diss.crunchbase}/ipos.csv
   
 cb.data_processing.jobs.raw:
   <<: *_cb_raw
-  filepath: ${diss.crunchbase}/jobs.csv
+  filepath: ${globals:diss.crunchbase}/jobs.csv
   
 cb.data_processing.org_parents.raw:
   <<: *_cb_raw
-  filepath: ${diss.crunchbase}/org_parents.csv
+  filepath: ${globals:diss.crunchbase}/org_parents.csv
   
 cb.data_processing.organization_descriptions.raw:
   <<: *_cb_raw
-  filepath: ${diss.crunchbase}/organization_descriptions.csv
+  filepath: ${globals:diss.crunchbase}/organization_descriptions.csv
   
 cb.data_processing.organizations.raw:
   <<: *_cb_raw
-  filepath: ${diss.crunchbase}/organizations.csv
+  filepath: ${globals:diss.crunchbase}/organizations.csv
   
 cb.data_processing.people_descriptions.raw:
   <<: *_cb_raw
-  filepath: ${diss.crunchbase}/people_descriptions.csv
+  filepath: ${globals:diss.crunchbase}/people_descriptions.csv
   
 cb.data_processing.people.raw:
   <<: *_cb_raw
-  filepath: ${diss.crunchbase}/people.csv
+  filepath: ${globals:diss.crunchbase}/people.csv
 
 # NSF
 "nsf.data_collection.awards.{year}.raw":
