@@ -1,16 +1,17 @@
 """
-This module contains functions for fetching and preprocessing data from the OA API.
+This module contains functions for fetching and preprocessing data from
+the OA API.
 
 OpenAlex baseline:
     collect_papers: Collect papers based on the provided work IDs.
-    load_work_ids: Load the file corresponding to a particular work_id in a PartitionedDataSet,
-        extract all ids, and return these as a list.
+    load_work_ids: Load the file corresponding to a particular work_id
+        in a PartitionedDataSet, extract all ids, and return these as a list.
 
 OpenAlex - Gateway to Research:
-    preprocess_publication_doi: Preprocess the Gateway to Research publication data to include
-        doi values that are compatible with OA filter module.
-    create_list_doi_inputs: Create a list of doi values from the Gateway to Research publication
-        data.
+    preprocess_publication_doi: Preprocess the Gateway to Research publication
+        data to include doi values that are compatible with OA filter module.
+    create_list_doi_inputs: Create a list of doi values from the
+        Gateway to Research publication data.
     load_referenced_work_ids: Load referenced work IDs from the dataset.
 
 OpenAlex - Citation Depth:
@@ -19,6 +20,10 @@ OpenAlex - Citation Depth:
         added to the set, while new, one-level deeper papers, are added to the list.
     create_network_graph: Creates the network graph from the edges, a list of tuples with the format
         (target, source).
+    
+ OpenAlex works for concepts:
+    retrieve_oa_works_for_concepts_and_years: Collect papers based on
+        the provided concept IDs and years.
 """
 
 import logging
@@ -33,6 +38,7 @@ from .utils import (
     fetch_papers_lazy,
     fetch_papers_parallel,
     retrieve_oa_works_chunk,
+    chunk_list,
 )
 
 logger = logging.getLogger(__name__)
@@ -101,22 +107,6 @@ def load_work_ids(work_id: str, dataset: Sequence[AbstractDataset]) -> List[str]
     return ids
 
 
-def _chunk_list(input_list: List[str], chunk_size: int) -> List[List[str]]:
-    """
-    Divides the input list into chunks of specified size.
-
-    Args:
-        input_list (List[str]): The input list to be divided into chunks.
-        chunk_size (int): The size of each chunk.
-
-    Returns:
-        List[List[str]]: A list of chunks.
-    """
-    return [
-        input_list[i : i + chunk_size] for i in range(0, len(input_list), chunk_size)
-    ]
-
-
 def retrieve_oa_works_for_concepts_and_years(
     concept_ids: List[str],
     publication_years: List[int],
@@ -140,7 +130,7 @@ def retrieve_oa_works_for_concepts_and_years(
         pd.DataFrame: A pandas DataFrame containing all unique retrieved works.
     """
     all_works = []
-    concept_id_chunks = _chunk_list(concept_ids, chunk_size)
+    concept_id_chunks = chunk_list(concept_ids, chunk_size)
 
     for index, concept_chunk in enumerate(concept_id_chunks, start=1):
         logger.info("Processing chunk %s/%s", index, len(concept_id_chunks))
@@ -217,9 +207,7 @@ def load_referenced_work_ids(
                 ]
                 work_id = work.get("id").replace("https://openalex.org/", "")
                 doi = work.get("doi").replace("https://doi.org/", "")
-                oa_doi_dict[work_id] = {}
-                oa_doi_dict[work_id]["doi"] = doi
-                oa_doi_dict[work_id]["referenced_works"] = ref_works
+                oa_doi_dict[work_id] = {"doi": doi, "referenced_works": ref_works}
                 work_ids.update(ref_works)
 
     work_ids = list(work_ids)
