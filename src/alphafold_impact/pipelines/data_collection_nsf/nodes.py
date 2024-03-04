@@ -11,7 +11,9 @@ import logging
 from typing import Dict, List
 import requests
 from requests.adapters import HTTPAdapter, Retry
+from bs4 import BeautifulSoup as bs
 from joblib import Parallel, delayed
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -125,7 +127,7 @@ def fetch_nsf_data(
         award_list (str): List of award IDs to fetch data for.
 
     Returns:
-        dict: A dictionary containing the fetched NSF data.
+        Dict[str, str]: A dictionary containing the fetched NSF data.
     """
     logger.info("Fetching NSF data for year %s", award_list[0][:2])
     awards = Parallel(n_jobs=5, verbose=10)(
@@ -134,3 +136,143 @@ def fetch_nsf_data(
     logger.info("Fetched NSF data for year %s", award_list[0][:2])
     awards = [award for award in awards if award.get("id")]
     return {d["id"]: {k: v for k, v in d.items() if k != "id"} for d in awards}
+
+
+def fetch_nsf_archived_funding_opportunities(
+    archived_search_url: str,
+    config: Dict[str, str],
+    base_url: str,
+) -> pd.DataFrame:
+    """
+    Fetches archived funding opportunities from the NSF website and returns
+        them as a pandas DataFrame.
+
+    Args:
+        archived_search_url (str): The URL of the archived search page.
+        config (Dict[str, str]): Configuration parameters for the request.
+        base_url (str): The base URL of the NSF website.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing the fetched funding opportunities
+            with the following columns:
+            - URL: The URL of the funding opportunity.
+            - Title: The title of the funding opportunity.
+            - Synopsis: The synopsis of the funding opportunity.
+            - Linked Awards: The linked awards of the funding opportunity.
+            - Solicitation URL: The URL of the solicitation.
+
+    """
+    session = requests.Session()
+    retries = Retry(
+        total=config["max_retries"], backoff_factor=config["backoff_factor"]
+    )
+    session.mount("https://", HTTPAdapter(max_retries=retries))
+    response = session.get(archived_search_url)
+
+    soup = bs(response.content, "html.parser")
+    opportunity_links = soup.find_all("p", class_="l-exc__heading")
+    funding_opps = [
+        {
+            "href": base_url + link.a["href"],
+            "title": link.a.get_text(strip=True).replace("\xa0", " "),
+        }
+        for link in opportunity_links
+        if link.a
+    ]
+
+    # get opportunity details for each funding opportunity
+    details = [
+        _get_opportunity_details(funding_opp["href"], base_url, session)
+        for funding_opp in funding_opps
+    ]
+
+    # add the details to the funding opportunities
+    for i, funding_opp in enumerate(funding_opps):
+        funding_opp.update(details[i])
+
+    # transform to dataframe with custom column names
+    return pd.DataFrame(
+        funding_opps,
+        columns=["URL", "Title", "Synopsis", "Linked Awards", "Solicitation URL"],
+    )
+
+
+def _get_opportunity_details(
+    href: str, base_url: str, session: requests.Session
+) -> Dict[str, str]:
+    """
+    Retrieves the program details from a given URL.
+
+    Args:
+        href (str): The URL to retrieve the program details from.
+        base_url (str): The base URL used to construct the complete links.
+        session (requests.Session): The session object to send the HTTP GET request.
+
+    Returns:
+        dict: A dictionary containing the program details, including the synopsis,
+            funded link, and solicitation link.
+    """
+
+    logger.info("Fetching details for %s", href)
+    # Send an HTTP GET request to the URL
+    response = session.get(href)
+
+    # Parse the HTML content
+    soup = bs(response.text, "html.parser")
+
+    # Find the SYNOPSIS section and collect subsequent <p> elements
+    synopsis_tag = soup.find("strong", class_="greybold", string="SYNOPSIS")
+    synopsis_text = []
+
+    if synopsis_tag:
+        try:
+            synopsis_text = "\n".join(
+                [
+                    sibling.text.strip()
+                    for sibling in synopsis_tag.find_next()
+                    if sibling.name == "p"
+                ]
+            )
+
+        except TypeError:
+            synopsis_text = ""
+
+    # Find the right links
+    try:
+        funded_link_href = soup.find(
+            "a",
+            href=lambda href: href
+            and (
+                href.startswith("/awardsearch/advancedSearchResult")
+                or href.startswith(f"{base_url}/awardsearch/advancedSearchResult")
+            ),
+        )["href"]
+
+        if not funded_link_href.startswith(base_url):
+            funded_link_href = base_url + funded_link_href
+
+        funded_link_href = funded_link_href.strip()
+    except TypeError:
+        funded_link_href = ""
+
+    try:
+        solicitation_link_href = (
+            base_url
+            + soup.find(
+                "a",
+                href=lambda href: href
+                and (
+                    href.startswith("/publications/pub_summ")
+                    or href.startswith(f"{base_url}/publications/pub_summ")
+                ),
+            )["href"]
+        ).strip()
+    except TypeError:
+        solicitation_link_href = ""
+
+    logger.info("Fetched details for %s", href)
+    return {
+        "synopsis": synopsis_text,
+        "funded_link_href": funded_link_href,
+        "solicitation_link_href": solicitation_link_href,
+    }
