@@ -127,7 +127,7 @@ def fetch_nsf_data(
         award_list (str): List of award IDs to fetch data for.
 
     Returns:
-        dict: A dictionary containing the fetched NSF data.
+        Dict[str, str]: A dictionary containing the fetched NSF data.
     """
     logger.info("Fetching NSF data for year %s", award_list[0][:2])
     awards = Parallel(n_jobs=5, verbose=10)(
@@ -144,7 +144,7 @@ def fetch_nsf_archived_funding_opportunities(
     base_url: str,
 ) -> pd.DataFrame:
     """
-    Fetches archived funding opportunities from the NSF website and returns 
+    Fetches archived funding opportunities from the NSF website and returns
         them as a pandas DataFrame.
 
     Args:
@@ -153,7 +153,7 @@ def fetch_nsf_archived_funding_opportunities(
         base_url (str): The base URL of the NSF website.
 
     Returns:
-        pd.DataFrame: A DataFrame containing the fetched funding opportunities 
+        pd.DataFrame: A DataFrame containing the fetched funding opportunities
             with the following columns:
             - URL: The URL of the funding opportunity.
             - Title: The title of the funding opportunity.
@@ -244,7 +244,7 @@ def _get_opportunity_details(
             href=lambda href: href
             and (
                 href.startswith("/awardsearch/advancedSearchResult")
-                or href.startswith(base_url + "/awardsearch/advancedSearchResult")
+                or href.startswith(f"{base_url}/awardsearch/advancedSearchResult")
             ),
         )["href"]
 
@@ -254,7 +254,7 @@ def _get_opportunity_details(
         funded_link_href = funded_link_href.strip()
     except TypeError:
         funded_link_href = ""
-        
+
     try:
         solicitation_link_href = (
             base_url
@@ -263,7 +263,7 @@ def _get_opportunity_details(
                 href=lambda href: href
                 and (
                     href.startswith("/publications/pub_summ")
-                    or href.startswith(base_url + "/publications/pub_summ")
+                    or href.startswith(f"{base_url}/publications/pub_summ")
                 ),
             )["href"]
         ).strip()
