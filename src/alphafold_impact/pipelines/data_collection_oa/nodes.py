@@ -38,6 +38,7 @@ from .utils import (
     fetch_papers_parallel,
     retrieve_oa_works_chunk,
     yield_papers_for_id,
+    chunk_list
 )
 
 logger = logging.getLogger(__name__)
