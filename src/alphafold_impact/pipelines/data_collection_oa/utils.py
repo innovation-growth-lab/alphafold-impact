@@ -80,9 +80,12 @@ def _parse_results(response: List[Dict]) -> Dict[str, List[str]]:
             "cited_by_count": paper.get("cited_by_count", ""),
             "concepts": paper.get("concepts", []),
             "keywords": paper.get("keywords", []),
+            "mesh_terms": paper.get("mesh", []),
+            "topics": paper.get("topics", []),
             "grants": paper.get("grants", []),
             "referenced_works": paper.get("referenced_works", []),
             "ids": paper.get("ids", []),
+            "counts_by_year": paper.get("counts_by_year", []),
         }
         for paper in response
     ]
@@ -151,7 +154,7 @@ def _works_generator(
 
     except Exception as e:  # pylint: disable=broad-except
         logger.error("Error fetching data for %s: %s", oa_id, e)
-        return []
+        yield []
 
 
 def preprocess_oa_ids(

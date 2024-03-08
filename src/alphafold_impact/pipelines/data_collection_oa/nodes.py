@@ -30,16 +30,14 @@ import logging
 from typing import List, Dict, Sequence, Union, Callable, Tuple, Generator
 from itertools import chain
 import pandas as pd
-import networkx as nx
 from kedro.io import AbstractDataset
-from joblib import Parallel, delayed
 from .utils import (
     preprocess_oa_ids,
     fetch_papers_eager,
     fetch_papers_lazy,
     fetch_papers_parallel,
     retrieve_oa_works_chunk,
-    yield_papers_for_id
+    yield_papers_for_id,
 )
 
 logger = logging.getLogger(__name__)
@@ -239,12 +237,10 @@ def fetch_subfield_baseline(
         api_config (Dict[str, str]): API configuration parameters.
 
     Yields:
-        Tuple[Dict[str, pd.DataFrame], Dict[str, List[dict]]]: A generator that yields a tuple containing two dictionaries.
+        Tuple[Dict[str, pd.DataFrame], Dict[str, List[dict]]]: A generator that yields a tuple
+            containing two dictionaries.
             The first dictionary contains dataframes with different fields as keys.
             The second dictionary contains lists of dictionaries with concept information.
-
-    Returns:
-        None: This function does not return anything directly.
     """
 
     # Preprocess concept IDs
@@ -281,11 +277,9 @@ def fetch_subfield_and_logic(
         api_config (Dict[str, str]): API configuration.
 
     Yields:
-        Tuple[Dict[str, pd.DataFrame], Dict[str, List[dict]]]: A generator that yields a tuple containing
-            dictionaries of dataframes and dictionaries of lists of dictionaries.
-
-    Returns:
-        None: This function does not return anything directly.
+        Tuple[Dict[str, pd.DataFrame], Dict[str, List[dict]]]: A generator that yields
+            a tuple containing dictionaries of dataframes and dictionaries of lists
+            of dictionaries.
     """
 
     # flatten the list of lists
@@ -302,104 +296,3 @@ def fetch_subfield_and_logic(
         filter_criteria=["from_publication_date", "concepts.id", "concepts.id"],
         concepts=True,
     )
-
-
-def fetch_citation_depth(
-    seed_paper: str, api_config: Dict[str, str], filter_config: str
-) -> Generator[Tuple[Dict[str, pd.DataFrame], Dict[str, List[dict]]], None, None]:
-    """
-    Iterates over an updating list of papers to process, yielding the response from collect
-    papers for each paper in the list. As papers are collected, they are added to the set, while
-    new, one-level deeper papers, are added to the list.
-
-    Args:
-        seed_paper (str): The seed work ID paper to start from, ie. AlphaFold's.
-        api_config (Dict[str, str]): The API configuration.
-        filter_config (str): The filter to apply when fetching papers.
-
-    Yields:
-        Tuple[Dict[str, pd.DataFrame], Dict[str, List[dict]]]: A tuple containing the edges and
-        the papers.
-    """
-    processed_paper_ids = set()
-    papers_to_process = {seed_paper}  # Use a set for uniqueness and efficient look-up
-
-    while papers_to_process:
-        logger.info("Processing %s papers", len(papers_to_process))
-        current_batch = set()
-
-        # take up to 200 papers for processing
-        while papers_to_process and len(current_batch) < 200:
-            current_batch.add(papers_to_process.pop())
-
-        processed_paper_ids.update(current_batch)
-        logger.info("Processing the following papers: %s", current_batch)
-
-        # parallel fetching of papers
-        child_papers = Parallel(n_jobs=8, backend="loky", verbose=10)(
-            delayed(collect_papers)(
-                oa_ids=paper,
-                mailto=api_config["mailto"],
-                perpage=api_config["perpage"],
-                filter_criteria=filter_config,
-                eager_loading=True,
-            )
-            for paper in current_batch
-        )
-
-        # flatten the list of dicts into a single dict
-        child_papers_flat = {k: v for d in child_papers for k, v in d.items()}
-
-        lengths = {key: len(value) for key, value in child_papers_flat.items()}
-        logger.info("Lengths of value lists: %s", lengths)
-
-        new_papers = set()
-        for parent, children in child_papers_flat.items():
-            edge_list = []
-
-            # removing papers published before 2021-01-01
-            children = [
-                child
-                for child in children
-                if child.get("publication_date") >= "2021-01-01"
-            ]
-
-            # adding edges
-            edge_list = [
-                (parent, child.get("id", "").replace("https://openalex.org/", ""))
-                for child in children
-            ]
-
-            # updating the list of new papers
-            new_papers.update(
-                [
-                    clean_id
-                    for child in children
-                    if (
-                        clean_id := child.get("id", "").replace(
-                            "https://openalex.org/", ""
-                        )
-                    )
-                    not in processed_paper_ids
-                ]
-            )
-
-            edge_list_df = pd.DataFrame(edge_list, columns=["target", "source"])
-            yield {parent: edge_list_df}, {parent: children}
-
-        # extend the papers_to_process without duplicates
-        papers_to_process.update(new_papers - processed_paper_ids)
-
-
-def create_network_graph(edges: pd.DataFrame) -> nx.Graph:
-    """
-    Creates the network graph from the edges, a list of tuples with the format (target, source).
-
-    Args:
-        edges (pd.DataFrame): The edges of the network graph.
-
-    Returns:
-        nx.Graph: The network graph.
-    """
-    G = nx.from_pandas_edgelist(edges, "target", "source")
-    return G

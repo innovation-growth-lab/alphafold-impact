@@ -35,9 +35,7 @@ from .nodes import (
     load_referenced_oa_ids,
     retrieve_oa_works_for_concepts_and_years,
     fetch_subfield_baseline,
-    fetch_citation_depth,
-    create_network_graph,
-    fetch_subfield_and_logic
+    fetch_subfield_and_logic,
 )
 
 
@@ -198,30 +196,8 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                 outputs="raw",
             ),
         ],
-        tags="subfield_artificial_intelligence",
+        tags=["subfield_artificial_intelligence", "subfield"],
         namespace="oa.data_collection.subfield.artificial_intelligence",
-    )
-
-    network_pipeline = pipeline(
-        [
-            node(
-                func=fetch_citation_depth,
-                inputs={
-                    "seed_paper": "params:get.work_id",
-                    "api_config": "params:api",
-                    "filter_config": "params:filter",
-                },
-                outputs=["edges", "works"],
-                tags="network",
-            ),
-            node(
-                func=create_network_graph,
-                inputs=["edges"],
-                outputs="network",
-                tags="network",
-            ),
-        ],
-        namespace="oa.data_collection.depth",
     )
 
     return (
@@ -231,5 +207,4 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
         + gtr_collection_pipeline  # GtR pipelines
         + sum(subfield_baselines)  # Subfield pipelines
         + subfield_artificial_intelligence_pipeline  # AI pipeline
-        + network_pipeline  # Network pipeline
     )

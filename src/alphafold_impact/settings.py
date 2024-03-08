@@ -27,6 +27,7 @@ SESSION_STORE_ARGS = {"path": str(Path(__file__).parents[2])}
 
 # Class that manages how configuration is loaded.
 from kedro.config import OmegaConfigLoader  # noqa: E402
+from omegaconf.resolvers import oc
 
 CONFIG_LOADER_CLASS = OmegaConfigLoader
 # Keyword arguments to pass to the `CONFIG_LOADER_CLASS` constructor.
@@ -34,8 +35,12 @@ CONFIG_LOADER_ARGS = {
     "base_env": "base",
     "default_run_env": "local",
     "config_patterns": {
-        "globals": ["parameters*", "parameters*/**", "**/parameters*", "globals*"]
+        "globals": ["parameters*", "parameters*/**", "**/parameters*", "globals*"],
+        "credentials": ["credentials*", "credentials*/**", "**/credentials*"],
     },
+    "custom_resolvers": {
+        "oc.env": oc.env,
+    }
 }
 
 DYNAMIC_PIPELINES_MAPPING = {
@@ -61,4 +66,5 @@ DYNAMIC_PIPELINES_MAPPING = {
     ),
     "s2": [0,1,2,3,4,5],
     "nsf": ["2018", "2019", "2020", "2021", "2022", "2023", "2024"],
+    "depth_levels": [0,1,2,3]
 }

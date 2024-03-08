@@ -9,6 +9,7 @@ oa:
     # Data retrieval settings
     get: &get
       work_id: W3177828909 # AlphaFold
+      # work_id: W2741809807
 
     # Retrieval directions
     direction:
@@ -32,6 +33,13 @@ oa:
       api: *api
       get: *get
       filter: cites
+      max_depth: 4
+      levels:
+        0: 0
+        1: 1
+        2: 2
+        3: 3
+
     
     # Works for concepts
     works_for_concepts:
@@ -61,20 +69,20 @@ oa:
           - c204328495 # Protein folding
           - c119145174 # Protein data bank
           - c2778815515 # Intrinsically disordered proteins
-        from_date: "2016-01-01"
+        from_date: "2010-01-01"
         api: *api
       biochemistry:
         concept_ids: &bc_concept_ids
           - c55493867 # Biochemistry
           - c12554922 # Biophysics
           - c71240020 # Stereochmistry
-        from_date: "2016-01-01"
+        from_date: "2010-01-01"
         api: *api
       bioinformatics:
         concept_ids: &bi_concept_ids
           - c70721500 # Computational biology
           - c60644358 # Bioinformatics
-        from_date: "2016-01-01"
+        from_date: "2010-01-01"
         api: *api
       drug_discovery:
         concept_ids: &dd_concept_ids
@@ -84,7 +92,7 @@ oa:
           - c103637391 # Drug repositioning
           - c150903083 # Biotechnology
           - c163763905 # Precision medicine
-        from_date: "2016-01-01"
+        from_date: "2010-01-01"
         api: *api
       molecular_biology:
         concept_ids: &mb_concept_ids
@@ -92,7 +100,7 @@ oa:
           - c159047783 # Virology
           - c89423630 # Microbiology
           - c153911025 # Molecular biology
-        from_date: "2016-01-01"
+        from_date: "2010-01-01"
         api: *api
       protein_design:
         concept_ids:  &pd_concept_ids
@@ -101,14 +109,14 @@ oa:
           - c147816474 # Protein engineering
           - c152769699 # Protein design
           - c3675279 # Protein biosynthesis
-        from_date: "2016-01-01"
+        from_date: "2010-01-01"
         api: *api
       systems_biology:
         concept_ids:  &sysb_concept_ids
           - c46111723 # Proteomics
           - c152662350 # Systems biology
           - c21565614 # Metabolomics
-        from_date: "2016-01-01"
+        from_date: "2010-01-01"
         api: *api
       artificial_intelligence:
         concept_ids: &ai_concept_ids
@@ -118,12 +126,11 @@ oa:
           - c108583219 # Deep learning
           - c50644808 # Artificial neural network
           - c124101348 # Data mining
-        from_date: "2016-01-01"
+        from_date: "2010-01-01"
         api: *api
         and_ids:
           - *sb_concept_ids
           - *bc_concept_ids
-          - *ai_concept_ids
           - *bi_concept_ids
           - *dd_concept_ids
           - *mb_concept_ids
@@ -144,6 +151,24 @@ oa:
       config: *config
       filter_doi: doi
       filter_oa: "ids.openalex"
+
+  data_processing:
+    depth:
+      seed_id: W3177828909
+      mesh_tagging:
+        id_col: child_id
+        text_col: abstract
+        batch_name: funding_opps
+        cmd: MTI
+        cmdargs: -MoD_PP
+
+test_concept_ids:
+  - "c10010492" # Protein sequencing
+  - "c204328495" # Protein folding
+
+test_publication_years:
+  - 2022
+  - 2023
 
 # Gateway to Research (gtr) configuration
 gtr:
@@ -204,6 +229,9 @@ nih:
         batch_name: funding_opps
         cmd: MTI
         cmdargs: -MoD_PP
+mesh_tagging:
+  # email: ${oc.env:UMLS_EMAIL}
+  # api_key: ${oc.env:UMLS_API_KEY}
 
 lens:
   data_collection:

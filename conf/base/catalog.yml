@@ -132,9 +132,50 @@ oa.data_collection.depth.network:
   <<: *_pkl
   filepath: s3://alphafold-impact/data/02_intermediate/oa/works/depth/network.pkl
 
+# OA specific depth
+oa.data_collection.depth.level.raw:
+  <<: *_js_ptd
+  path: s3://alphafold-impact/data/01_raw/oa/works/depth/level/
+
 "oa.data_collection.subfield.{subfield}.raw":
   <<: *_js_ptd
   path: s3://alphafold-impact/data/01_raw/oa/works/subfield/{subfield}/
+
+"oa.data_collection.depth.mesh.{level}.intermediate":
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/02_intermediate/oa/works/depth/level/{level}/main.parquet
+
+oa.data_processing.depth.intermediate:
+  type: pandas.GenericDataset
+  file_format: csv
+  filepath: s3://alphafold-impact/data/02_intermediate/oa/works/depth/data_with_abstracts.csv
+  fs_args:
+    open_args_save:
+      mode: a
+  save_args:
+    mode: a
+    index: false
+    header: false
+  load_args:
+    index_col: 0
+    header: None
+    names:
+      - child_id
+      - parent_id
+      - doi
+      - title
+      - abstract
+      - publication_date
+
+oa.data_processing.depth.mesh_tagging.intermediate:
+  <<: *_csv
+  filepath: s3://alphafold-impact/data/02_intermediate/oa/works/depth/mesh_tagging_output_df.csv
+
+oa.data_processing.depth.edges.intermediate:
+  <<: *_csv
+  filepath: s3://alphafold-impact/data/02_intermediate/oa/works/depth/edges.csv
+
+
 
 # Lens data
 lens.data_collection.{jurisdiction}.{year}.{month}.raw:
@@ -178,19 +219,6 @@ nih.data_processing.funding_opportunities_mesh_tagging_output_text.intermediate:
 nih.data_processing.funding_opportunities_mesh_tagging_output_df.intermediate:
   <<: *_csv
   filepath: s3://alphafold-impact/data/02_intermediate/nih/funding_opportunities/mesh_tagging_output_df.csv
-
-# OA depth data
-oa.data_collection.depth.works:
-  <<: *_js_ptd
-  path: s3://alphafold-impact/data/01_raw/oa/works/depth/
-
-oa.data_collection.depth.edges:
-  <<: *_csv_ptd
-  path: s3://alphafold-impact/data/02_intermediate/oa/works/depth/edges/
-
-oa.data_collection.depth.network:
-  <<: *_pkl
-  filepath: s3://alphafold-impact/data/02_intermediate/oa/works/depth/network.pkl
 
 # Crunchbase data
 _cb_raw: &_cb_raw
