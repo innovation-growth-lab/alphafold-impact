@@ -11,20 +11,77 @@ from ...utils.nih_mesh_tagging import (  # pylint: disable=E0402
     mesh_results_to_df,
 )
 from .nodes import (
-    combine_depth_strength_level_0, 
+    combine_depth_strength_level_0,
     combine_depth_strength_other_levels,
-    process_subfield_data
+    process_subfield_data,
+    process_data_by_level,
 )
 
 
-def create_pipeline(**kwargs) -> Pipeline: # pylint: disable=unused-argument&missing-function-docstring
+def create_pipeline(
+    **kwargs,
+) -> Pipeline:  # pylint: disable=unused-argument&missing-function-docstring
+
+    mesh_processing = pipeline(
+        [
+            node(
+                func=process_data_by_level,
+                inputs={
+                    "data": "raw_data",
+                    "level": "level_placeholder",
+                    "extra_mesh": "extra_mesh_placeholder",
+                },
+                outputs="intermediate_data",
+            )
+        ]
+    )
+
+    mesh_levels = [
+        pipeline(
+            mesh_processing,
+            inputs={
+                "raw_data": "oa.data_collection.depth.level.raw",
+                "level_placeholder": f"params:oa.data_collection.depth.levels.{level}",
+                "extra_mesh_placeholder": "params:true_",
+            },
+            outputs={
+                "intermediate_data": f"oa.data_processing.depth.mesh.{level}.intermediate",
+            },
+            tags=[
+                f"oa.data_processing.depth.mesh.level.{str(level)}",
+                "oa.data_processing.depth.mesh.levels",
+            ],
+            namespace=f"oa.data_processing.depth.mesh.level.{str(level)}",
+        )
+        for level in settings.DYNAMIC_PIPELINES_MAPPING["depth_levels"]
+    ]
+
+    no_mesh_levels = [
+        pipeline(
+            mesh_processing,
+            inputs={
+                "raw_data": "oa.data_collection.depth.level.raw",
+                "level_placeholder": f"params:oa.data_collection.depth.levels.{level}",
+                "extra_mesh_placeholder": "params:false_",
+            },
+            outputs={
+                "intermediate_data": f"oa.data_processing.depth.no_mesh.{level}.intermediate",
+            },
+            tags=[
+                f"oa.data_processing.depth.no_mesh.level.{str(level)}",
+                "oa.data_processing.depth.no_mesh.levels",
+            ],
+            namespace=f"oa.data_processing.depth.no_mesh.level.{str(level)}",
+        )
+        for level in settings.DYNAMIC_PIPELINES_MAPPING["depth_levels"]
+    ]
 
     merge_zeroth_level = pipeline(
         [
             node(
                 combine_depth_strength_level_0,
                 inputs={
-                    "depth_data": "oa.data_collection.depth.no_mesh.0.intermediate",
+                    "depth_data": "oa.data_processing.depth.no_mesh.0.intermediate",
                     "strength_data": "s2.data_collection.strength.level.0",
                 },
                 outputs="oa.data_processing.depth.level.0.primary",
@@ -40,8 +97,8 @@ def create_pipeline(**kwargs) -> Pipeline: # pylint: disable=unused-argument&mis
                 node(
                     combine_depth_strength_other_levels,
                     inputs={
-                        "previous_depth_data": f"oa.data_collection.depth.no_mesh.{level-1}.intermediate",
-                        "depth_data": f"oa.data_collection.depth.no_mesh.{level}.intermediate",
+                        "previous_depth_data": f"oa.data_processing.depth.no_mesh.{level-1}.intermediate",
+                        "depth_data": f"oa.data_processing.depth.no_mesh.{level}.intermediate",
                         "strength_data": f"s2.data_collection.strength.level.{level}",
                     },
                     outputs=f"oa.data_processing.depth.level.{level}.primary",
@@ -90,9 +147,9 @@ def create_pipeline(**kwargs) -> Pipeline: # pylint: disable=unused-argument&mis
             node(
                 func=process_subfield_data,
                 inputs={
-                    "data": "oa.data_collection.subfield.placeholder.raw",
+                    "data": "data_placeholder.raw",
                 },
-                outputs="oa.data_processing.subfield.placeholder.primary",
+                outputs="data_placeholder.primary",
             )
         ],
     )
@@ -101,17 +158,24 @@ def create_pipeline(**kwargs) -> Pipeline: # pylint: disable=unused-argument&mis
         pipeline(
             subfield_pipeline,
             inputs={
-                "oa.data_collection.subfield.placeholder.raw": f"oa.data_collection.subfield.{subfield}.raw",
+                "data_placeholder.raw": f"oa.data_collection.subfield.{subfield}.raw",
             },
             outputs={
-                "oa.data_processing.subfield.placeholder.primary": f"oa.data_processing.subfield.{subfield}.primary",
+                "data_placeholder.primary": f"oa.data_processing.subfield.{subfield}.primary",
             },
             tags=[
                 f"oa.data_processing.subfield.{subfield}",
                 "oa.data_processing.subfields",
-            ]
+            ],
         )
         for subfield in settings.DYNAMIC_PIPELINES_MAPPING["oa"]["subfields"]
     ]
 
-    return mesh_tagging_pipeline + merge_zeroth_level + sum(merge_pipelines) + sum(subfield_pipelines)
+    return (
+        sum(mesh_levels)
+        + sum(no_mesh_levels)
+        + mesh_tagging_pipeline
+        + merge_zeroth_level
+        + sum(merge_pipelines)
+        + sum(subfield_pipelines)
+    )

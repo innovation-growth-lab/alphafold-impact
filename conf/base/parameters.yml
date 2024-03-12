@@ -229,7 +229,7 @@ nih:
         batch_name: funding_opps
         cmd: MTI
         cmdargs: -MoD_PP
-mesh_tagging:
+# mesh_tagging:
   # email: ${oc.env:UMLS_EMAIL}
   # api_key: ${oc.env:UMLS_API_KEY}
 

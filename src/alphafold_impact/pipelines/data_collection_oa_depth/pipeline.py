@@ -8,11 +8,9 @@ To run this pipeline, use the following command:
 """
 
 from kedro.pipeline import Pipeline, pipeline, node
-from alphafold_impact import settings
 from .nodes import (
     fetch_citation_all_depth,
-    fetch_citation_to_specific_depth,
-    process_data_by_level,
+    fetch_citation_to_specific_depth
 )
 
 
@@ -48,63 +46,8 @@ def create_pipeline(**kwargs) -> Pipeline:
         tags="oa.data_collection.depth.level",
     )
 
-    mesh_processing = pipeline(
-        [
-            node(
-                func=process_data_by_level,
-                inputs={
-                    "data": "raw_data",
-                    "level": "level_placeholder",
-                    "extra_mesh": "extra_mesh_placeholder",
-                },
-                outputs="intermediate_data",
-            )
-        ]
-    )
-
-    mesh_levels = [
-        pipeline(
-            mesh_processing,
-            inputs={
-                "raw_data": "oa.data_collection.depth.level.raw",
-                "level_placeholder": f"params:oa.data_collection.depth.levels.{level}",
-                "extra_mesh_placeholder": "params:true_",
-            },
-            outputs={
-                "intermediate_data": f"oa.data_collection.depth.mesh.{level}.intermediate",
-            },
-            tags=[
-                f"oa.data_collection.depth.mesh.level.{str(level)}",
-                "oa.data_collection.depth.mesh.levels",
-            ],
-            namespace=f"oa.data_collection.depth.mesh.level.{str(level)}",
-        )
-        for level in settings.DYNAMIC_PIPELINES_MAPPING["depth_levels"]
-    ]
-
-    no_mesh_levels = [
-        pipeline(
-            mesh_processing,
-            inputs={
-                "raw_data": "oa.data_collection.depth.level.raw",
-                "level_placeholder": f"params:oa.data_collection.depth.levels.{level}",
-                "extra_mesh_placeholder": "params:false_",
-            },
-            outputs={
-                "intermediate_data": f"oa.data_collection.depth.no_mesh.{level}.intermediate",
-            },
-            tags=[
-                f"oa.data_collection.depth.no_mesh.level.{str(level)}",
-                "oa.data_collection.depth.no_mesh.levels",
-            ],
-            namespace=f"oa.data_collection.depth.no_mesh.level.{str(level)}",
-        )
-        for level in settings.DYNAMIC_PIPELINES_MAPPING["depth_levels"]
-    ]
 
     return (
         full_depth_pipeline
         + fixed_depth_pipeline
-        + sum(mesh_levels)
-        + sum(no_mesh_levels)
     )
