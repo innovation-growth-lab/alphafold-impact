@@ -234,7 +234,7 @@ def json_loader(data: Dict[str, AbstractDataset], key: str, level: int) -> pd.Da
         {
             k: v
             for k, v in item.items()
-            if k in ["id", "doi", "publication_date", "mesh_terms"]
+            if k in ["id", "doi", "publication_date", "mesh_terms", "cited_by_count"]
         }
         for item in raw_json_data
     ]
@@ -280,36 +280,42 @@ def fetch_additional_mesh(df: pd.DataFrame) -> pd.DataFrame:
             i + 1,
             len(dois),
         )
-        stream = Entrez.esearch(db="pubmed", term=doi, retmax="1")
-        record = Entrez.read(stream)
+        Entrez.email = "david.ampudia@nesta.org.uk"
 
-        # if I get a record, I want to extract the pubmed ID, which is the first ID in the list
-        pmid = record["IdList"][0] if record["IdList"] else None
-
-        # if pubmed_id is not None, I want to fetch the mesh terms
-        if pmid:
-            stream = Entrez.efetch(db="pubmed", id=pmid, retmax="250")
+        try:
+            stream = Entrez.esearch(db="pubmed", term=doi, retmax="1")
             record = Entrez.read(stream)
 
-            # get the meshheadings & descriptors
-            mesh_terms = record["PubmedArticle"][0]["MedlineCitation"].get(
-                "MeshHeadingList", None
-            )
-            if mesh_terms:
-                descriptors = [
-                    (
-                        heading["DescriptorName"].attributes["UI"],
-                        str(heading["DescriptorName"]),
-                    )
-                    for heading in mesh_terms
-                ]
-            else:
-                descriptors = None
+            # if I get a record, I want to extract the pubmed ID, which is the first ID in the list
+            pmid = record["IdList"][0] if record["IdList"] else None
 
-            # update the dataframe with the new mesh terms for the corresponding DOI, removing the [DOI] part
-            df.at[df[df["doi"] == doi.replace("[DOI]", "")].index[0], "mesh_terms"] = (
-                descriptors
-            )
+            # if pubmed_id is not None, I want to fetch the mesh terms
+            if pmid:
+                stream = Entrez.efetch(db="pubmed", id=pmid, retmax="250")
+                record = Entrez.read(stream)
+
+                # get the meshheadings & descriptors
+                mesh_terms = record["PubmedArticle"][0]["MedlineCitation"].get(
+                    "MeshHeadingList", None
+                )
+                if mesh_terms:
+                    descriptors = [
+                        (
+                            heading["DescriptorName"].attributes["UI"],
+                            str(heading["DescriptorName"]),
+                        )
+                        for heading in mesh_terms
+                    ]
+                else:
+                    descriptors = None
+
+                # update the dataframe with the new mesh terms for the corresponding DOI, removing the [DOI] part
+                df.at[
+                    df[df["doi"] == doi.replace("[DOI]", "")].index[0], "mesh_terms"
+                ] = descriptors
+
+        except Exception as e:  # pylint: disable=W0718
+            logger.error("Error fetching mesh terms for DOI %s: %s", doi, e)
 
     logger.info(
         "Still missing mesh terms for %s DOIs", len(df[df["mesh_terms"].isna()])
@@ -317,13 +323,16 @@ def fetch_additional_mesh(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def process_data_by_level(data: Dict[str, AbstractDataset], level: int) -> pd.DataFrame:
+def process_data_by_level(
+    data: Dict[str, AbstractDataset], level: int, extra_mesh: str = True
+) -> pd.DataFrame:
     """
     Process data by level and return a DataFrame with selected columns.
 
     Args:
         data (Dict[str, AbstractDataset]): A dictionary containing the input data.
         level (int): The level to process the data for.
+        extra_mesh (bool): Whether to enrich the data with additional mesh terms.
 
     Returns:
         pd.DataFrame: A DataFrame containing the processed data with selected columns.
@@ -339,13 +348,15 @@ def process_data_by_level(data: Dict[str, AbstractDataset], level: int) -> pd.Da
 
     # Iterate over data batches in current level
     for df_batch in data_gen:
-        logger.info("Processing parent IDs: %s", df_batch["parent_id"].iloc[0])
-        # Fetch additional mesh terms for current batch
-        df_batch = fetch_additional_mesh(df_batch)
+
+        if extra_mesh:
+            logger.info("Processing parent IDs: %s", df_batch["parent_id"].iloc[0])
+            # Fetch additional mesh terms for current batch
+            df_batch = fetch_additional_mesh(df_batch)
 
         # Append current batch to level DataFrame
         df_level = pd.concat([df_level, df_batch])
 
     return df_level[
-        ["parent_id", "id", "level", "doi", "publication_date", "mesh_terms"]
+        ["parent_id", "id", "level", "doi", "publication_date", "mesh_terms", "cited_by_count"]
     ]

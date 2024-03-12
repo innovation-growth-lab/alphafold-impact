@@ -145,42 +145,56 @@ oa.data_collection.depth.level.raw:
   <<: *_pq
   filepath: s3://alphafold-impact/data/02_intermediate/oa/works/depth/level/{level}/main.parquet
 
-oa.data_processing.depth.intermediate:
-  type: pandas.GenericDataset
-  file_format: csv
-  filepath: s3://alphafold-impact/data/02_intermediate/oa/works/depth/data_with_abstracts.csv
-  fs_args:
-    open_args_save:
-      mode: a
-  save_args:
-    mode: a
-    index: false
-    header: false
-  load_args:
-    index_col: 0
-    header: None
-    names:
-      - child_id
-      - parent_id
-      - doi
-      - title
-      - abstract
-      - publication_date
+"oa.data_collection.depth.no_mesh.{level}.intermediate":
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/02_intermediate/oa/works/depth/level/{level}/no_mesh_main.parquet
 
-oa.data_processing.depth.mesh_tagging.intermediate:
-  <<: *_csv
-  filepath: s3://alphafold-impact/data/02_intermediate/oa/works/depth/mesh_tagging_output_df.csv
+# oa.data_processing.depth.intermediate:
+#   type: pandas.GenericDataset
+#   file_format: csv
+#   filepath: s3://alphafold-impact/data/02_intermediate/oa/works/depth/data_with_abstracts.csv
+#   fs_args:
+#     open_args_save:
+#       mode: a
+#   save_args:
+#     mode: a
+#     index: false
+#     header: false
+#   load_args:
+#     index_col: 0
+#     header: None
+#     names:
+#       - child_id
+#       - parent_id
+#       - doi
+#       - title
+#       - abstract
+#       - publication_date
 
-oa.data_processing.depth.edges.intermediate:
-  <<: *_csv
-  filepath: s3://alphafold-impact/data/02_intermediate/oa/works/depth/edges.csv
+# oa.data_processing.depth.mesh_tagging.intermediate:
+#   <<: *_csv
+#   filepath: s3://alphafold-impact/data/02_intermediate/oa/works/depth/mesh_tagging_output_df.csv
 
+# oa.data_processing.depth.edges.intermediate:
+#   <<: *_csv
+#   filepath: s3://alphafold-impact/data/02_intermediate/oa/works/depth/edges.csv
 
+"oa.data_processing.depth.level.{level}.primary":
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/03_primary/oa/works/depth/level/{level}/main.parquet
 
+"oa.data_processing.subfield.{subfield}.primary":
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/03_primary/oa/works/subfield/{subfield}/main.parquet
+  
 # Lens data
 lens.data_collection.{jurisdiction}.{year}.{month}.raw:
   <<: *_js_ptd
   path: s3://alphafold-impact/data/01_raw/lens/{jurisdiction}/{year}/{month}/# NIH - Clinical Trials
+
+nih.data_collection.mesh_terms:
+  <<: *_csv
+  filepath: s3://alphafold-impact/data/01_raw/nih/mesh/gdm_mesh_taxonomy.csv
 
 # NIH data
 nih.data_collection.clinical_trials.raw:
