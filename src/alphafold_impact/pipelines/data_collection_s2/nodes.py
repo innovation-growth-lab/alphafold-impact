@@ -159,7 +159,7 @@ def fetch_citation_strength(
     parent_data: Sequence[Dict[str, AbstractDataset]],
     logs: Sequence[Tuple[str, str]],
     **kwargs,
-) -> Generator[Dict[str, List[Dict[str, Any]]], List[List[str]]]:
+) -> Generator[Dict[str, List[Dict[str, Any]]], List[List[str]], None]:
     """
     Fetches the citation strength for a new level based on the parent data and logs.
 
