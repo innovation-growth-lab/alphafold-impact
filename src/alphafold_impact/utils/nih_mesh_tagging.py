@@ -23,23 +23,8 @@ def _remove_newlines(df: pd.DataFrame, column: str) -> pd.DataFrame:
     Returns:
         pd.DataFrame: The DataFrame with newline characters removed from the specified column.
     """
-    df[column] = df[column].astype(str).str.replace("\n", "", regex=False)
+    df[column] = df[column].astype(str).str.replace("\n", " ", regex=False)
     return df
-
-
-def _remove_prc_rows(mesh_results: str) -> str:
-    """
-    Processes the input string, removing lines that contain '|PRC|'.
-
-    Args:
-        mesh_results (str): A string containing the input data.
-
-    Returns:
-        str: A string with lines containing '|PRC|' removed.
-    """
-    return "\n".join(
-        [line for line in mesh_results.splitlines() if "|PRC|" not in line]
-    )
 
 
 def generate_text_for_mesh_tagging(df: pd.DataFrame, id_col: str, text_col: str) -> str:
@@ -109,8 +94,17 @@ def mesh_results_to_df(mesh_results: str) -> pd.DataFrame:
         pd.DataFrame: A DataFrame with columns, 'text_id',
             'mesh_term', 'mesh_term_id'.
     """
-    mesh_results_no_prc = _remove_prc_rows(mesh_results)
-    rows = [line.split("|") for line in mesh_results_no_prc.strip().split("\n")]
+    rows = [line.split("|") for line in mesh_results.strip().split("\n")]
     return pd.DataFrame(
-        rows, columns=["text_id", "mesh_term", "mesh_term_id", "position"]
-    ).drop(columns=["position"])
+        rows,
+        columns=[
+            "text_id",
+            "mesh_term",
+            "mesh_term_id",
+            "cui",
+            "tag1",
+            "method",
+            "tag2",
+            "tag3",
+        ],
+    )
