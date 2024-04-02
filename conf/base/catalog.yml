@@ -137,10 +137,6 @@ oa.data_collection.depth.level.raw:
   <<: *_js_ptd
   path: s3://alphafold-impact/data/01_raw/oa/works/depth/level/
 
-"oa.data_collection.subfield.{subfield}.raw":
-  <<: *_js_ptd
-  path: s3://alphafold-impact/data/01_raw/oa/works/subfield/{subfield}/
-
 "oa.data_processing.depth.mesh.{level}.intermediate":
   <<: *_pq
   filepath: s3://alphafold-impact/data/02_intermediate/oa/works/depth/level/{level}/main.parquet
@@ -149,39 +145,13 @@ oa.data_collection.depth.level.raw:
   <<: *_pq
   filepath: s3://alphafold-impact/data/02_intermediate/oa/works/depth/level/{level}/no_mesh_main.parquet
 
-# oa.data_processing.depth.intermediate:
-#   type: pandas.GenericDataset
-#   file_format: csv
-#   filepath: s3://alphafold-impact/data/02_intermediate/oa/works/depth/data_with_abstracts.csv
-#   fs_args:
-#     open_args_save:
-#       mode: a
-#   save_args:
-#     mode: a
-#     index: false
-#     header: false
-#   load_args:
-#     index_col: 0
-#     header: None
-#     names:
-#       - child_id
-#       - parent_id
-#       - doi
-#       - title
-#       - abstract
-#       - publication_date
-
-# oa.data_processing.depth.mesh_tagging.intermediate:
-#   <<: *_csv
-#   filepath: s3://alphafold-impact/data/02_intermediate/oa/works/depth/mesh_tagging_output_df.csv
-
-# oa.data_processing.depth.edges.intermediate:
-#   <<: *_csv
-#   filepath: s3://alphafold-impact/data/02_intermediate/oa/works/depth/edges.csv
-
 "oa.data_processing.depth.level.{level}.primary":
   <<: *_pq
   filepath: s3://alphafold-impact/data/03_primary/oa/works/depth/level/{level}/main.parquet
+
+"oa.data_collection.subfield.{subfield}.raw":
+  <<: *_js_ptd
+  path: s3://alphafold-impact/data/01_raw/oa/works/subfield/{subfield}/
 
 "oa.data_processing.subfield.{subfield}.primary":
   <<: *_pq
@@ -217,7 +187,6 @@ nih.data_processing.clinical_trials_with_references.intermediate:
 nih.data_processing.clinical_trials_links_to_papers.intermediate:
   <<: *_csv
   filepath: s3://alphafold-impact/data/02_intermediate/nih/clinical_trials/clinical_trials_links_to_papers.csv
-
 
 nih.data_collection.funded_projects.raw:
   <<: *_csv_ptd

@@ -49,7 +49,7 @@ def _json_loader(
         {
             k: v
             for k, v in item.items()
-            if k in ["id", "doi", "publication_date", "mesh_terms", "cited_by_count"]
+            if k in ["id", "doi", "publication_date", "mesh_terms", "cited_by_count", "authorships"]
         }
         for item in raw_json_data
     ]
@@ -62,6 +62,29 @@ def _json_loader(
     # mesh terms is a list of dictionaries, I want to keep only a list of tuples with "descriptor_ui" and "descriptor_name" for each
     df["mesh_terms"] = df["mesh_terms"].apply(
         lambda x: [(c["descriptor_ui"], c["descriptor_name"]) for c in x] if x else None
+    )
+
+    # break atuhorship nested dictionary jsons, create triplets of authorship
+    df["authorships"] = df["authorships"].apply(
+        lambda x: (
+            [
+                (
+                    author["author"]["id"].replace("https://openalex.org/", ""),
+                    inst["id"].replace("https://openalex.org/", ""),
+                    author["author_position"],
+                )
+                if author["institutions"]
+                else [
+                    author["author"]["id"].replace("https://openalex.org/", ""),
+                    "",
+                    author["author_position"],
+                ]
+                for author in x
+                for inst in author["institutions"] or [{}]
+            ]
+            if x
+            else None
+        )
     )
 
     # change doi to remove the url
@@ -181,6 +204,7 @@ def process_data_by_level(
             "publication_date",
             "mesh_terms",
             "cited_by_count",
+            "authorships"
         ]
     ]
 
@@ -235,6 +259,7 @@ def combine_depth_strength_level_0(
             "mesh_terms",
             "strength",
             "cited_by_count",
+            "authorships"
         ]
     ]
 
@@ -293,6 +318,7 @@ def combine_depth_strength_other_levels(
             "mesh_terms",
             "strength",
             "cited_by_count",
+            "authorships"
         ]
     ]
 
@@ -322,7 +348,14 @@ def process_subfield_data(data: Dict[str, AbstractDataset]) -> pd.DataFrame:
                 k: v
                 for k, v in item.items()
                 if k
-                in ["id", "doi", "publication_date", "mesh_terms", "cited_by_count"]
+                in [
+                    "id",
+                    "doi",
+                    "publication_date",
+                    "mesh_terms",
+                    "cited_by_count",
+                    "authorships",
+                ]
             }
             for item in raw_json_data
         ]
@@ -342,6 +375,29 @@ def process_subfield_data(data: Dict[str, AbstractDataset]) -> pd.DataFrame:
             )
         )
 
+        # break atuhorship nested dictionary jsons, create triplets of authorship
+        df["authorships"] = df["authorships"].apply(
+            lambda x: (
+                [
+                    (
+                        author["author"]["id"].replace("https://openalex.org/", ""),
+                        inst["id"].replace("https://openalex.org/", ""),
+                        author["author_position"],
+                    )
+                    if author["institutions"]
+                    else [
+                        author["author"]["id"].replace("https://openalex.org/", ""),
+                        "",
+                        author["author_position"],
+                    ]
+                    for author in x
+                    for inst in author["institutions"] or [{}]
+                ]
+                if x
+                else None
+            )
+        )
+
         # change doi to remove the url
         df["doi"] = df["doi"].str.replace("https://doi.org/", "")
 
@@ -352,5 +408,5 @@ def process_subfield_data(data: Dict[str, AbstractDataset]) -> pd.DataFrame:
         subfield_df = pd.concat([subfield_df, df])
 
     return subfield_df[
-        ["id", "doi", "publication_date", "mesh_terms", "cited_by_count"]
+        ["id", "doi", "publication_date", "mesh_terms", "cited_by_count", "authorships"]
     ]

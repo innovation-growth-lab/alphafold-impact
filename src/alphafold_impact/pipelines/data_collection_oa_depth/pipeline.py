@@ -4,7 +4,7 @@ This pipeline fetches citation data from OpenAIRE API to a specific depth
 and processes the data to create a network of citations.
 
 To run this pipeline, use the following command:
-    $ kedro run --pipeline=oa_data_collection_depth
+    $ kedro run --pipeline data_collection_oa_depth
 """
 
 from kedro.pipeline import Pipeline, pipeline, node

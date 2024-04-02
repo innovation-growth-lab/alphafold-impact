@@ -36,7 +36,7 @@ def create_pipeline(
         ]
     )
 
-    mesh_levels = [
+    additioal_mesh_levels = [
         pipeline(
             mesh_processing,
             inputs={
@@ -56,7 +56,7 @@ def create_pipeline(
         for level in settings.DYNAMIC_PIPELINES_MAPPING["depth_levels"]
     ]
 
-    no_mesh_levels = [
+    no_additional_mesh_levels = [
         pipeline(
             mesh_processing,
             inputs={
@@ -172,8 +172,8 @@ def create_pipeline(
     ]
 
     return (
-        sum(mesh_levels)
-        + sum(no_mesh_levels)
+        sum(additioal_mesh_levels)
+        + sum(no_additional_mesh_levels)
         + mesh_tagging_pipeline
         + merge_zeroth_level
         + sum(merge_pipelines)
