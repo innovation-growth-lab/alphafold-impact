@@ -49,12 +49,12 @@ DYNAMIC_PIPELINES_MAPPING = {
         "directions": ["cites", "cited_by"],
         "subfields": [
             "structural_biology",
-            "biochemistry",
+            "biochemistry", # removed some due to size constraints
             "bioinformatics",
             "drug_discovery",
-            "molecular_biology",
+            # "molecular_biology",
             "protein_design",
-            "systems_biology",
+            # "systems_biology",
         ],
     },
     "lens": list(
