@@ -95,6 +95,9 @@ def fetch_award_data(
             if response.status_code == 200 and response.content:
                 break
 
+        # print response status
+        logger.info("Received response for %s: %s", award_id, response.status_code)
+
         data = response.json()
         award = data.get("response", {}).get("award", [])
         if award:
@@ -187,13 +190,18 @@ def fetch_nsf_archived_funding_opportunities(
     ]
 
     # add the details to the funding opportunities
-    for i, funding_opp in enumerate(funding_opps):
-        funding_opp.update(details[i])
+    for funding_opp, detail in zip(funding_opps, details):
+        funding_opp.update(detail)
 
     # transform to dataframe with custom column names
-    return pd.DataFrame(
-        funding_opps,
-        columns=["URL", "Title", "Synopsis", "Linked Awards", "Solicitation URL"],
+    return pd.DataFrame(funding_opps).rename(
+        columns={
+            "href": "URL",
+            "title": "Title",
+            "synopsis": "Synopsis",
+            "funded_link_href": "Funded Link",
+            "solicitation_link_href": "Solicitation URL",
+        }
     )
 
 
