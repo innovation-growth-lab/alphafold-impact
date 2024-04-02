@@ -119,10 +119,61 @@ works_for_concepts:
   filepath: s3://alphafold-impact/data/01_raw/oa/works/works_for_concepts.json
   credentials: s3_credentials
 
+# OA depth data
+oa.data_collection.depth.works:
+  <<: *_js_ptd
+  path: s3://alphafold-impact/data/01_raw/oa/works/depth/
+
+oa.data_collection.depth.edges:
+  <<: *_csv_ptd
+  path: s3://alphafold-impact/data/02_intermediate/oa/works/depth/edges/
+
+oa.data_collection.depth.network:
+  <<: *_pkl
+  filepath: s3://alphafold-impact/data/02_intermediate/oa/works/depth/network.pkl
+
+# OA specific depth
+oa.data_collection.depth.level.raw:
+  <<: *_js_ptd
+  path: s3://alphafold-impact/data/01_raw/oa/works/depth/level/
+
+"oa.data_processing.depth.mesh.{level}.intermediate":
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/02_intermediate/oa/works/depth/level/{level}/main.parquet
+
+"oa.data_processing.depth.no_mesh.{level}.intermediate":
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/02_intermediate/oa/works/depth/level/{level}/no_mesh_main.parquet
+
+"oa.data_processing.depth.level.{level}.primary":
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/03_primary/oa/works/depth/level/{level}/main.parquet
+
+"oa.data_collection.subfield.{subfield}.raw":
+  <<: *_js_ptd
+  path: s3://alphafold-impact/data/01_raw/oa/works/subfield/{subfield}/
+
+"oa.data_processing.subfield.{subfield}.primary":
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/03_primary/oa/works/subfield/{subfield}/main.parquet
+  
 # Lens data
 lens.data_collection.{jurisdiction}.{year}.{month}.raw:
   <<: *_js_ptd
-  path: s3://alphafold-impact/data/01_raw/lens/{jurisdiction}/{year}/{month}/# NIH - Clinical Trials
+  path: s3://alphafold-impact/data/01_raw/lens/{jurisdiction}/{year}/{month}/
+  
+lens.data_processing.csv.raw:
+  <<: *_csv_ptd
+  path: s3://alphafold-impact/data/01_raw/lens/
+
+lens.data_processing.primary:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/03_primary/lens/main.parquet
+
+# NIH - Clinical Trials
+nih.data_collection.mesh_terms:
+  <<: *_csv
+  filepath: s3://alphafold-impact/data/01_raw/nih/mesh/gdm_mesh_taxonomy.csv
 
 # NIH data
 nih.data_collection.clinical_trials.raw:
@@ -136,7 +187,6 @@ nih.data_processing.clinical_trials_with_references.intermediate:
 nih.data_processing.clinical_trials_links_to_papers.intermediate:
   <<: *_csv
   filepath: s3://alphafold-impact/data/02_intermediate/nih/clinical_trials/clinical_trials_links_to_papers.csv
-
 
 nih.data_collection.funded_projects.raw:
   <<: *_csv_ptd
@@ -161,19 +211,6 @@ nih.data_processing.funding_opportunities_mesh_tagging_output_text.intermediate:
 nih.data_processing.funding_opportunities_mesh_tagging_output_df.intermediate:
   <<: *_csv
   filepath: s3://alphafold-impact/data/02_intermediate/nih/funding_opportunities/mesh_tagging_output_df.csv
-
-# OA depth data
-oa.data_collection.depth.works:
-  <<: *_js_ptd
-  path: s3://alphafold-impact/data/01_raw/oa/works/depth/
-
-oa.data_collection.depth.edges:
-  <<: *_csv_ptd
-  path: s3://alphafold-impact/data/02_intermediate/oa/works/depth/edges/
-
-oa.data_collection.depth.network:
-  <<: *_pkl
-  filepath: s3://alphafold-impact/data/02_intermediate/oa/works/depth/network.pkl
 
 # Crunchbase data
 _cb_raw: &_cb_raw
