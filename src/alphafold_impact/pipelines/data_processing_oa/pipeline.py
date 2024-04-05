@@ -11,16 +11,15 @@ from ...utils.nih_mesh_tagging import (  # pylint: disable=E0402
     mesh_results_to_df,
 )
 from .nodes import (
-    combine_depth_strength_level_0,
-    combine_depth_strength_other_levels,
     process_subfield_data,
     process_data_by_level,
+    combine_levels_data
 )
 
 
-def create_pipeline(
+def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstring
     **kwargs,
-) -> Pipeline:  # pylint: disable=unused-argument&missing-function-docstring
+) -> Pipeline:
 
     mesh_processing = pipeline(
         [
@@ -76,39 +75,21 @@ def create_pipeline(
         for level in settings.DYNAMIC_PIPELINES_MAPPING["depth_levels"]
     ]
 
-    merge_zeroth_level = pipeline(
+    combine_levels_pipeline = pipeline(
         [
             node(
-                combine_depth_strength_level_0,
+                func=combine_levels_data,
                 inputs={
-                    "depth_data": "oa.data_processing.depth.no_mesh.0.intermediate",
-                    "strength_data": "s2.data_collection.strength.level.0",
+                    "level0": "oa.data_processing.depth.no_mesh.0.intermediate",
+                    "level1": "oa.data_processing.depth.no_mesh.1.intermediate",
+                    "level2": "oa.data_processing.depth.no_mesh.2.intermediate",
+                    "level3": "oa.data_processing.depth.no_mesh.3.intermediate",
                 },
-                outputs="oa.data_processing.depth.level.0.primary",
-                name="merge_zeroth_level",
+                outputs="oa.data_processing.depth.primary.legacy",
             )
         ],
-        tags="oa.data_processing.depth.add_strength",
+        tags="oa.data_processing.depth.combine_levels",
     )
-
-    merge_pipelines = [
-        pipeline(
-            [
-                node(
-                    combine_depth_strength_other_levels,
-                    inputs={
-                        "previous_depth_data": f"oa.data_processing.depth.no_mesh.{level-1}.intermediate",
-                        "depth_data": f"oa.data_processing.depth.no_mesh.{level}.intermediate",
-                        "strength_data": f"s2.data_collection.strength.level.{level}",
-                    },
-                    outputs=f"oa.data_processing.depth.level.{level}.primary",
-                    name=f"merge_level_{level}",
-                )
-            ],
-            tags="oa.data_processing.depth.add_strength",
-        )
-        for level in settings.DYNAMIC_PIPELINES_MAPPING["depth_levels"][1:]
-    ]
 
     mesh_tagging_pipeline = pipeline(
         [
@@ -175,7 +156,6 @@ def create_pipeline(
         sum(additioal_mesh_levels)
         + sum(no_additional_mesh_levels)
         + mesh_tagging_pipeline
-        + merge_zeroth_level
-        + sum(merge_pipelines)
+        + combine_levels_pipeline
         + sum(subfield_pipelines)
     )

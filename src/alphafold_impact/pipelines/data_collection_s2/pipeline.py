@@ -4,74 +4,30 @@ generated using Kedro 0.19.1
 """
 
 from kedro.pipeline import Pipeline, node, pipeline
-from alphafold_impact import settings
 from .nodes import (
-    load_alphafold_citation_ids,
-    get_alphafold_citation_details,
-    fetch_citation_strength,
+    get_citation_intent_from_oa_dataset
 )
 
 
 def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
 
-    references_to_alphafold = pipeline(
+    primary_data_intent_pipeline = pipeline(
         [
             node(
-                func=load_alphafold_citation_ids,
-                inputs={"input_loaders": "cites.input", "work_id": "params:af_paper"},
-                outputs="af_citations",
-            ),
-            node(
-                func=get_alphafold_citation_details,
+                func=get_citation_intent_from_oa_dataset,
                 inputs={
-                    "work_ids": "af_citations",
-                    "af_doi": "params:af_doi",
-                    "base_url": "params:api.base_url",
-                    "direction": "params:api.cited_by",
-                    "fields": "params:api.fields",
-                    "perpage": "params:api.perpage",
+                    "oa_dataset": "oa.data_processing.depth.intermediate",
+                    "base_url": "params:s2.data_collection.strength.api.base_url",
+                    "fields": "params:s2.data_collection.strength.api.fields",
+                    "api_key": "params:s2.data_collection.strength.api.key",
+                    "perpage": "params:s2.data_collection.strength.api.perpage",
                 },
-                outputs=["level.0", "level.0.log.ids.out"],
+                outputs="oa.data_processing.depth.primary",
             ),
         ],
-        tags=["s2.level.0", "strength"],
-        namespace="s2.data_collection.strength",
+        tags=["s2.primary.intent"],
     )
 
-    citation_strength = pipeline(
-        [
-            node(
-                func=fetch_citation_strength,
-                inputs={
-                    "parent_data": "strength.parent.level",
-                    "logs": "log.ids.in",
-                    "base_url": "params:api.base_url",
-                    "direction": "params:api.cites",
-                    "fields": "params:api.fields",
-                    "perpage": "params:api.perpage",
-                },
-                outputs=["raw", "log.ids.out"],
-            ),
-        ],
-    )
 
-    level_pipelines = [
-        pipeline(
-            citation_strength,
-            inputs={
-                "strength.parent.level": f"s2.data_collection.strength.level.{level}",
-                "log.ids.in": f"s2.data_collection.strength.level.{level}.log.ids.in",
-            },
-            parameters={
-                "api.base_url": "params:s2.data_collection.strength.api.base_url",
-                "api.cites": "params:s2.data_collection.strength.api.cites",
-                "api.fields": "params:s2.data_collection.strength.api.fields",
-                "api.perpage": "params:s2.data_collection.strength.api.perpage",
-            },
-            namespace=f"s2.data_collection.strength.level.{level+1}",
-            tags=["s2.levels", "strength"],
-        )
-        for level in settings.DYNAMIC_PIPELINES_MAPPING["s2"]
-    ]
 
-    return references_to_alphafold + sum(level_pipelines)
+    return primary_data_intent_pipeline

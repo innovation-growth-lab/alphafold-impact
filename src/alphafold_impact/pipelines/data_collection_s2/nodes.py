@@ -14,41 +14,17 @@ import re
 import pandas as pd
 import requests
 from requests.adapters import HTTPAdapter, Retry
+from joblib import Parallel, delayed
 from kedro.io import AbstractDataset
 
 logger = logging.getLogger(__name__)
-
-
-def load_alphafold_citation_ids(
-    input_loaders: AbstractDataset, work_id: str
-) -> Sequence[Tuple[str]]:
-    """Loads the citation IDs for the AlphaFold paper. Requires OA pipeline."""
-
-    logger.info("Loading citation IDs for Alphafold")
-    citations = input_loaders[work_id]()
-
-    # iterate over four possible ids (oa, doi, mag, pmid)
-    ids = []
-    for citation in citations:
-        id_dict = citation.get("ids", {})
-        openalex = id_dict.get("openalex", "").replace("https://openalex.org/", "")
-        doi = re.sub(r".*?(10\..*)", "\\1", id_dict.get("doi", ""))
-        mag = id_dict.get("mag", "")
-        pmid = (
-            id_dict.get("pmid", "").split("/")[-1]
-            if "/" in id_dict.get("pmid", "")
-            else id_dict.get("pmid", "")
-        )
-        ids.append((openalex, doi, mag, pmid))
-
-    return ids
-
 
 def fetch_citation_details(
     work_id: str,
     base_url: str,
     direction: str,
     fields: Sequence[str],
+    api_key: str,
     perpage: int = 500,
 ) -> Sequence[Dict[str, str]]:
     """
@@ -71,6 +47,8 @@ def fetch_citation_details(
         f"fields={','.join(fields)}&offset={offset}&limit={perpage}"
     )
 
+    headers = {"X-API-KEY": api_key}
+
     session = requests.Session()
     retries = Retry(
         total=5,
@@ -82,7 +60,7 @@ def fetch_citation_details(
     data_list = []
 
     while True:
-        response = session.get(url)
+        response = session.get(url, headers=headers)
         response.raise_for_status()
         data = response.json().get("data", [])
         data_list.extend(data)
@@ -98,215 +76,29 @@ def fetch_citation_details(
 
     return data_list
 
-
-def get_alphafold_citation_details(
-    work_ids: Sequence[Tuple[str, str, str, str]], af_doi: str, **kwargs
-) -> Tuple[pd.DataFrame, Sequence[Tuple[str, int]]]:
-    """Retrieves citation details for a given list of work IDs and filters
-    them based on the specified AlphaFold DOI.
+# Updated functions
+def process_citations(citation_outputs: Dict[str, Sequence[Dict[str, Any]]]) -> List:
+    """
+    Process citation outputs and extract relevant information.
 
     Args:
-        work_ids (Sequence[Tuple[str, str, str, str]]): A list of work IDs.
-        af_doi (str): The AlphaFold DOI to filter the citation details.
-        **kwargs: Additional keyword arguments to be passed to the
-            fetch_citation_details function.
+        citation_outputs (Dict[str, Sequence[Dict[str, Any]]]): A dictionary
+            containing citation outputs.
 
     Returns:
-        pd.DataFrame: A DataFrame containing the citation details for the
-        specified work IDs, filtered by the AlphaFold DOI. The DataFrame
-        has the following columns:
-        - oa: The work ID.
-        - citedPaper: The details of the cited paper, including the title,
-          authors, and publication information.
-        - otherColumns: Any additional columns present in the citation details.
-
-    """
-    citation_details = {}
-    for work_id_tuple in work_ids:
-        oa, doi, mag, pmid = work_id_tuple
-        logger.info("Fetching citation details for %s", oa)
-        for prefix, id_ in [("DOI:", doi), ("PMID:", pmid), ("MAG:", mag)]:
-            if not id_:
-                logger.warning("No relevant %s id", prefix[:-1])
-                continue
-            work_id = f"{prefix}{id_}"
-            try:
-                data = fetch_citation_details(work_id, **kwargs)
-                for item in data:
-                    if (eids := item["citedPaper"]["externalIds"]) is not None:
-                        if eids.get("DOI", "") == af_doi:
-                            logger.info("Found citation details using %s", work_id)
-                            citation_details[oa] = {
-                                "item": item,
-                                "doi": doi,
-                                "mag": mag,
-                                "pmid": pmid,
-                            }
-                            break
-                else:
-                    logger.warning("No relevant citation found in %s", work_id)
-                    continue
-                break
-            except Exception:  # pylint: disable=broad-except
-                logger.warning("Failed to fetch citation details for %s", work_id)
-
-    # explode multiple citations
-    citation_details = process_citations(citations=citation_details, parent=af_doi)
-    return {af_doi: citation_details}, [tuple([af_doi, 34265844])]
-
-
-def fetch_citation_strength(
-    parent_data: Sequence[Dict[str, AbstractDataset]],
-    logs: Sequence[Tuple[str, str]],
-    **kwargs,
-) -> Generator[Dict[str, List[Dict[str, Any]]], List[List[str]], None]:
-    """
-    Fetches the citation strength for a new level based on the parent data and logs.
-
-    Args:
-        parent_data (Sequence[Dict[str, AbstractDataset]]): The parent data containing
-            the datasets.
-        logs (Sequence[Tuple[str, str]]): The logs containing the paper IDs.
-        **kwargs: Additional keyword arguments.
-
-    Returns:
-        pd.DataFrame: The citation strength data.
-
-    Yields:
-        Dict[str, List[Dict[str, Any]]], List[List[str]]: The citation details for each
-            paper and the processed paper IDs.
-    """
-    logger.info("Fetching citation strength for a new level")
-    processed_paper_ids = set(tuple(log) for log in logs)
-    paper_ids_to_process = set()
-
-    for parid, loader in parent_data.items():
-        logger.info("reading data from %s", parid)
-        data = loader()
-        set_of_papers = (
-            set(zip(data["child_doi"].to_list(), data["child_pmid"].to_list()))
-            - processed_paper_ids
-        )
-        paper_ids_to_process.update(set_of_papers)
-
-    while paper_ids_to_process:
-        current_paper = paper_ids_to_process.pop()
-        logger.info(
-            "Fetching citation details for %s. Papers remaining: %s",
-            current_paper,
-            len(paper_ids_to_process),
-        )
-
-        # fetch citation details with DOI
-        try:
-            citation_details = fetch_citation_details(
-                work_id=f"DOI:{current_paper[0]}", **kwargs
-            )
-        except requests.exceptions.HTTPError:
-            citation_details = []
-
-        if not citation_details and not isnan(current_paper[1]):
-            # if unsuccessful, fetch citation details with PMID
-            try:
-                citation_details = fetch_citation_details(
-                    work_id=f"PMID:{int(current_paper[1])}", **kwargs
-                )
-            except requests.exceptions.HTTPError:
-                citation_details = []
-        # add to processed list
-        processed_paper_ids.add(current_paper)
-
-        if not citation_details:
-            logger.warning("No citation details found for %s", current_paper)
-            continue
-
-        logger.info("Fetched citation details for %s", current_paper)
-        citation_details = process_citations(
-            citations=citation_details, parent=current_paper
-        )
-
-        logger.info("Fetched citation details for %s", current_paper)
-        yield {str(current_paper[0]): citation_details}, [""]
-
-    logger.info(
-        "Finished fetching citation strength for a new level. Flushing IDs list."
-    )
-
-    # back to list of lists
-    processed_paper_ids = [list(log) for log in processed_paper_ids]
-
-    yield pd.DataFrame(), processed_paper_ids
-
-
-def process_citations(
-    citations: Union[Dict[str, Union[str, Sequence[str]]], Sequence],
-    parent: Union[str, Tuple[str, str]],
-) -> pd.DataFrame:
-    """
-    Process the citations data and convert it into a pandas DataFrame.
-
-    Args:
-        citations (Sequence[Dict[str, Union[str, Sequence[str]]]]): A sequence of
-            dictionaries representing the citations data.
-            Each dictionary should have the following keys:
-            - 'intents': A list of strings representing the intents.
-            - 'contexts': A list of strings representing the contexts.
-        parent (str): Parent paper that receives the citation.
-
-    Returns:
-        pd.DataFrame: A pandas DataFrame containing the processed citations data.
-            The DataFrame has the following columns:
-            - 'parent': The parent identifier.
-            - 'child_oa': The child identifier.
-            - 'child_doi': The DOI of the child paper.
-            - 'child_mag': The MAG ID of the child paper.
-            - 'child_pmid': The PMID of the child paper.+
-            - 'influential': Whether the citation is influential or not.
-            - 'intent': The intent of the citation.
-            - 'context': The context of the citation.
+        List: A list of rows containing extracted information from the
+            citation outputs.
     """
     rows = []
-    if isinstance(citations, dict):
-        for child_oa, details in citations.items():
-            nested_details = details.get("item", {})
-            context_intents = nested_details.get("contextsWithIntent", [])
-            influential = nested_details.get("isInfluential", "")
-            child_doi = details.get("doi", "")
-            child_mag = details.get("mag", "")
-            child_pmid = details.get("pmid", "")
-            for item in context_intents:
-                context = item.get("context", "")
-                intents = item.get("intents") or [""]
-                for intent in intents:
-                    rows.append(
-                        [
-                            parent,
-                            "",
-                            child_oa,
-                            child_doi,
-                            child_mag,
-                            child_pmid,
-                            "",
-                            influential,
-                            intent,
-                            context,
-                        ]
-                    )
-
-    elif isinstance(citations, list):
-        for citation in citations:
-            parent_doi = parent[0]
-            parent_pmid = parent[1]
-            context_intents = citation.get("contextsWithIntent", [])
-            influential = citation.get("isInfluential", "")
-            ids = citation.get("citingPaper", {}).get("externalIds", {})
-            if not ids:
-                # skip if no ids
+    for parent_doi, outputs in citation_outputs.items():
+        for output in outputs:
+            context_intents = output.get("contextsWithIntent", [])
+            influential = output.get("isInfluential", "")
+            external_ids = output.get("citingPaper", {}).get("externalIds", {})
+            if not external_ids:
                 continue
-            child_doi = ids.get("DOI", "")
-            child_mag = ids.get("MAG", "")
-            child_pmid = ids.get("PubMed", "")
-            child_cid = ids.get("CorpusId", "")
+            doi = external_ids.get("DOI", "")
+            pmid = external_ids.get("PubMed", "")
             for item in context_intents:
                 context = item.get("context", "")
                 intents = item.get("intents") or [""]
@@ -314,31 +106,318 @@ def process_citations(
                     rows.append(
                         [
                             parent_doi,
-                            parent_pmid,
-                            "",
-                            child_doi,
-                            child_mag,
-                            child_pmid,
-                            child_cid,
+                            pmid,
+                            doi,
                             influential,
                             intent,
                             context,
                         ]
                     )
 
-    # return dataframe
+    return rows
+
+
+def process_references(reference_outputs: Dict[str, Dict[str, Any]]) -> List:
+    """
+    Process the reference outputs and generate a list of rows containing relevant
+        information.
+
+    Args:
+        reference_outputs (Dict[str, Dict[str, Any]]): A dictionary containing the
+            reference outputs.
+
+    Returns:
+        List: A list of rows containing the processed information.
+
+    """
+    rows = []
+    for child_doi, output in reference_outputs.items():
+        context_intents = output.get("contextsWithIntent", [])
+        influential = output.get("isInfluential", "")
+        parent_doi = output.get("citedPaper", {}).get("externalIds", {}).get("DOI", "")
+        parent_pmid = (
+            output.get("citedPaper", {}).get("externalIds", {}).get("PubMed", "")
+        )
+        for item in context_intents:
+            context = item.get("context", "")
+            intents = item.get("intents") or [""]
+            for intent in intents:
+                rows.append(
+                    [
+                        parent_doi,
+                        parent_pmid,
+                        child_doi,
+                        influential,
+                        intent,
+                        context,
+                    ]
+                )
+    return rows
+
+
+def iterate_citation_detail_points(
+    oa: str,
+    parent_doi: str,
+    doi: str,
+    parent_pmid: str,
+    pmid: str,
+    direction: str,
+    **kwargs,
+) -> Dict[str, Union[str, Sequence[Dict[str, Any]]]]:
+    """
+    Iterates over citation detail points and fetches citation details based on the
+        provided parameters.
+
+    Args:
+        oa (str): The OA (Open Access) identifier.
+        parent_doi (str): The DOI (Digital Object Identifier) of the parent paper.
+        doi (str): The DOI of the current paper.
+        parent_pmid (str): The PubMed ID of the parent paper.
+        pmid (str): The PubMed ID of the current paper.
+        direction (str): The direction of the citation details to fetch. Can be
+            "references" or "forward".
+        **kwargs: Additional keyword arguments to pass to the fetch_citation_details
+            function.
+
+    Returns:
+        Dict[str, Union[str, Sequence[Dict[str, Any]]]]: A dictionary containing the fetched
+            citation details.
+
+    """
+    logger.info("Fetching citation details for %s", oa)
+    for prefix, id_ in [("DOI:", doi), ("PMID:", pmid)]:
+        if not id_:
+            logger.warning("No relevant %s id", prefix[:-1])
+            continue
+        work_id = f"{prefix}{id_}"
+        try:
+            data = fetch_citation_details(
+                work_id=work_id, direction=direction, **kwargs
+            )
+
+            # if looking for a relevant backwards citation, subset to parent_oa
+            if direction == "references":
+                for item in data:
+                    if (eids := item["citedPaper"]["externalIds"]) is not None:
+                        if (
+                            eids.get("DOI", "") == parent_doi
+                            or eids.get("PubMed", "") == parent_pmid
+                        ):
+                            logger.info("Found citation details using %s", work_id)
+                            return item
+                logger.warning("No relevant citation found in %s", work_id)
+
+            # otherwise, direction is all forward citations, keep all details
+            else:
+                logger.info("Found citation details using %s", work_id)
+                return data
+        except requests.exceptions.HTTPError as errh:
+            logger.error("HTTP Error: %s", errh)
+            return {}
+        except requests.exceptions.ConnectionError as errc:
+            logger.error("Error Connecting: %s", errc)
+            return {}
+        except requests.exceptions.Timeout as errt:
+            logger.error("Timeout Error: %s", errt)
+            return {}
+        except requests.exceptions.RequestException as err:
+            logger.error("Something went wrong: %s", err)
+            return {}
+        except Exception:  # pylint: disable=broad-except
+            logger.warning("Failed to fetch citation details for %s", work_id)
+            return {}
+    return {}
+
+
+def get_intent_level_0(oa_dataset: pd.DataFrame, **kwargs) -> pd.DataFrame:
+    """
+    Retrieves the intent level 0 data from the given OA dataset. Note that the
+    pipeline is different for level 0. externalIds correspond to the upstream citation
+    (reference), while in subsequent levels it corresponds to downstream citations.
+
+    Args:
+        oa_dataset (pd.DataFrame): The input OA dataset.
+        **kwargs: Additional keyword arguments.
+
+    Returns:
+        pd.DataFrame: The processed intent level 0 data.
+            - parent_doi: The DOI of the parent publication.
+            - parent_pmid: The PMID of the parent publication.
+            - doi: The DOI of the citation.
+            - influential: Indicates whether the citation is influential.
+            - intent: The intent of the citation.
+            - context: The context of the citation.
+
+    """
+    # Let's do level zero separately as the pipeline is different
+    inputs = (
+        oa_dataset[oa_dataset["level"] == 0]
+        .apply(
+            lambda x: (x["id"], x["parent_doi"], x["doi"], x["parent_pmid"], x["pmid"]),
+            axis=1,
+        )
+        .tolist()
+    )
+
+    level_outputs = Parallel(n_jobs=8)(
+        delayed(iterate_citation_detail_points)(
+            *input, direction="references", **kwargs
+        )
+        for input in inputs
+    )
+
+    # zip the child_oa with the outputs
+    level_dict = dict(
+        list(zip(oa_dataset[oa_dataset["level"] == 0]["doi"], level_outputs))
+    )
+
+    processed_references = process_references(level_dict)
+
     return pd.DataFrame(
-        rows,
+        processed_references,
         columns=[
             "parent_doi",
             "parent_pmid",
-            "child_oa",
-            "child_doi",
-            "child_mag",
-            "child_pmid",
-            "child_cid",
+            "doi",
             "influential",
             "intent",
             "context",
         ],
     )
+
+
+def get_intent_level(oa_dataset: pd.DataFrame, level: int, **kwargs) -> pd.DataFrame:
+    """
+    Retrieves the intent level data from the given OA dataset based on the specified level.
+
+    Args:
+        oa_dataset (pd.DataFrame): The input OA dataset.
+        level (int): The intent level to retrieve.
+        **kwargs: Additional keyword arguments.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing the processed intent level citations 
+            with the following columns:
+            - parent_doi: The DOI of the parent publication.
+            - pmid: The PMID of the citation.
+            - doi: The DOI of the citation.
+            - influential: Indicates whether the citation is influential.
+            - intent: The intent of the citation.
+            - context: The context of the citation.
+    """
+
+    inputs = (
+        oa_dataset[oa_dataset["level"] == level]
+        .apply(
+            lambda x: (x["parent_id"], "", x["parent_doi"], "", x["parent_pmid"]),
+            axis=1,
+        )
+        .tolist()
+    )
+
+    # Use joblib to parallelize the function calls
+    level_outputs = Parallel(n_jobs=8)(
+        delayed(iterate_citation_detail_points)(*input, direction="citations", **kwargs)
+        for input in inputs
+    )
+
+    level_dict = dict(
+        list(zip(oa_dataset[oa_dataset["level"] == level]["parent_doi"], level_outputs))
+    )
+
+    processed_level_citations = process_citations(level_dict)
+
+    return pd.DataFrame(
+        processed_level_citations,
+        columns=[
+            "parent_doi",
+            "pmid",
+            "doi",
+            "influential",
+            "intent",
+            "context",
+        ],
+    )
+
+
+def get_citation_intent_from_oa_dataset(
+    oa_dataset: pd.DataFrame,
+    **kwargs,
+) -> pd.DataFrame:
+    """
+    Retrieves citation intent data from an Open Access dataset.
+
+    Args:
+        oa_dataset (pd.DataFrame): The Open Access dataset containing citation 
+            information.
+        **kwargs: Additional keyword arguments.
+
+    Returns:
+        pd.DataFrame: The processed dataset with citation intent information.
+
+    """
+    # Create a mapping from id to doi and pmid for each level
+    oa_dataset["parent_level"] = oa_dataset["level"] - 1
+
+    oa_dataset = pd.merge(
+        oa_dataset,
+        oa_dataset,
+        left_on=["parent_id", "parent_level"],
+        right_on=["id", "level"],
+        how="left",
+        suffixes=("", "_parent"),
+    )
+    oa_dataset.rename(
+        columns={"doi_parent": "parent_doi", "pmid_parent": "parent_pmid"}, inplace=True
+    )
+
+    # drop the other _parent columns
+    oa_dataset.drop(
+        columns=[col for col in oa_dataset.columns if "_parent" in col], inplace=True
+    )
+
+    # manually set the parent_pmid and parent_doi for AlphaFold
+    oa_dataset.loc[oa_dataset["level"] == 0, "parent_doi"] = (
+        "10.1038/s41586-021-03819-2"
+    )
+    oa_dataset.loc[oa_dataset["level"] == 0, "parent_pmid"] = "34265844"
+
+    # get the citation intent for each level
+    level_0 = get_intent_level_0(oa_dataset, **kwargs)
+    level_1 = get_intent_level(oa_dataset, 1, **kwargs)
+    level_2 = get_intent_level(oa_dataset, 2, **kwargs)
+    level_3 = get_intent_level(oa_dataset, 3, **kwargs)
+
+    # concatenate the dataframes
+    processed_df = pd.concat([level_0, level_1, level_2, level_3])
+
+    processed_grouped_data = (
+        processed_df.groupby(["parent_doi", "doi"])[
+            ["influential", "intent", "context"]
+        ]
+        .apply(lambda x: x.to_dict(orient="records"))
+        .reset_index()
+        .rename(columns={0: "strength"})
+    )
+
+    processed_data = pd.merge(
+        oa_dataset, processed_grouped_data, on=["parent_doi", "doi"], how="left"
+    )
+
+    return processed_data[
+        [
+            "parent_id",
+            "parent_doi",
+            "parent_pmid",
+            "id",
+            "doi",
+            "pmid",
+            "level",
+            "publication_date",
+            "mesh_terms",
+            "cited_by_count",
+            "authorships",
+            "parent_level",
+            "strength",
+        ]
+    ]

@@ -51,7 +51,7 @@ DYNAMIC_PIPELINES_MAPPING = {
             "structural_biology",
             "biochemistry", # removed some due to size constraints
             "bioinformatics",
-            "drug_discovery",
+            # "drug_discovery",
             # "molecular_biology",
             "protein_design",
             # "systems_biology",
@@ -64,7 +64,7 @@ DYNAMIC_PIPELINES_MAPPING = {
             [2022, 2023, 2024],
         )
     ),
-    "s2": [0,1,2,3,4,5],
+    "s2": [0,1,2,3],
     "nsf": ["2018", "2019", "2020", "2021", "2022", "2023", "2024"],
-    "depth_levels": [0,1,2,3]
+    "depth_levels": [0,1,2,3],
 }
