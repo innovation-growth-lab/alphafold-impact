@@ -1,10 +1,20 @@
-"""
-This is a boilerplate pipeline 'data_analysis_exploratory'
-generated using Kedro 0.19.1
+"""This module contains functions to process data for the OpenAlex pipeline.
+
+The module contains functions to process data by level, fetch additional mesh terms,
+and combine data from multiple levels.
+
+Functions:
+    - process_data_by_level: Process data by level and return a DataFrame with 
+        selected columns.
+    - fetch_additional_mesh: Fetch additional mesh terms for DOIs in a DataFrame.
+    - combine_levels_data: Combine multiple dataframes into a single dataframe and 
+        remove duplicate rows.
+    - process_subfield_data: Process data by level without enriching the data with 
+        additional mesh terms.
 """
 
 import logging
-from typing import Dict, Callable, Generator
+from typing import Dict, Generator
 import pandas as pd
 from kedro.io import AbstractDataset
 from Bio import Entrez
@@ -179,7 +189,7 @@ def fetch_additional_mesh(df: pd.DataFrame) -> pd.DataFrame:
                 else:
                     descriptors = None
 
-                # update the dataframe with the new mesh terms for the corresponding DOI, removing the [DOI] part
+                # update the dataframe with the new mesh terms for the corresponding DOI
                 df.at[
                     df[df["doi"] == doi.replace("[DOI]", "")].index[0], "mesh_terms"
                 ] = descriptors
@@ -260,6 +270,7 @@ def combine_levels_data(**kwargs) -> pd.DataFrame:
     )
 
     return df
+
 
 def process_subfield_data(data: Dict[str, AbstractDataset]) -> pd.DataFrame:
     """

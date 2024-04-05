@@ -1,6 +1,11 @@
-"""
-This is a boilerplate pipeline 'data_processing_oa'
-generated using Kedro 0.19.1
+"""This module contains the pipeline for data processing for OA data.
+
+The pipeline contains nodes for processing data by level, combining data 
+from different levels, and mesh tagging.
+
+To run this pipeline, use the following command:
+
+    $ kedro run --pipeline oa.data_processing.depth
 """
 
 from kedro.pipeline import Pipeline, node, pipeline
@@ -10,11 +15,7 @@ from ...utils.nih_mesh_tagging import (  # pylint: disable=E0402
     skr_web_python_api_generic_batch,
     mesh_results_to_df,
 )
-from .nodes import (
-    process_subfield_data,
-    process_data_by_level,
-    combine_levels_data
-)
+from .nodes import process_subfield_data, process_data_by_level, combine_levels_data
 
 
 def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstring
@@ -85,7 +86,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                     "level2": "oa.data_processing.depth.no_mesh.2.intermediate",
                     "level3": "oa.data_processing.depth.no_mesh.3.intermediate",
                 },
-                outputs="oa.data_processing.depth.primary.legacy",
+                outputs="oa.data_processing.depth.intermediate",
             )
         ],
         tags="oa.data_processing.depth.combine_levels",
