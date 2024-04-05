@@ -1,6 +1,12 @@
-"""
-This is a boilerplate pipeline 'data_collection_s2'
-generated using Kedro 0.19.1
+"""This module contains the Kedro pipeline for the data collection from Semantic Scholar API.
+
+The pipeline contains a single node that retrieves the citation intent from the OpenAlex
+dataset.
+
+To run this pipeline, use the following command:
+
+    $ kedro run --pipeline s2.primary.intent
+
 """
 
 from kedro.pipeline import Pipeline, node, pipeline

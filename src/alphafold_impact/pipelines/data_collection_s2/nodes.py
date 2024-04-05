@@ -1,21 +1,27 @@
 """Pipeline nodes for the data_collection_s2 pipeline.
 
 Functions:
-    load_alphafold_citation_ids: Loads the citation IDs for the AlphaFold paper.
     fetch_citation_details: Fetches citation details for a given work ID.
-    get_citation_details: Retrieves citation details for a given list of work IDs 
-        and filters them based on a specified AlphaFold DOI.
+    process_citations: Process citation outputs and extract relevant 
+        information.
+    process_references: Process the reference outputs and generate a 
+        list of rows containing relevant information.
+    iterate_citation_detail_points: Iterates over citation detail 
+        points and fetches citation details based on the provided parameters.
+    get_intent_level_0: Retrieves the intent level 0 data from the given 
+        OA dataset.
+    get_intent_level: Retrieves the intent level data from the given 
+        OA dataset based on the specified level.
+    get_citation_intent_from_oa_dataset: Retrieves citation intent data 
+        from an Open Access dataset.
 """
 
 import logging
-from math import isnan
-from typing import Sequence, Dict, Tuple, Union, Generator, List, Any
-import re
+from typing import Sequence, Dict, Union, List, Any
 import pandas as pd
 import requests
 from requests.adapters import HTTPAdapter, Retry
 from joblib import Parallel, delayed
-from kedro.io import AbstractDataset
 
 logger = logging.getLogger(__name__)
 
