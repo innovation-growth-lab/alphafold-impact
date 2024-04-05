@@ -269,6 +269,7 @@ s2:
       af_paper: W3177828909
       af_doi: 10.1038/s41586-021-03819-2
       api:
+        key: 0lnUkuBhBJ8NUT2RxpK9j82yWGfUL2I81UmlwN6b
         base_url: https://api.semanticscholar.org/graph/v1/paper
         cites: citations
         cited_by: references
@@ -329,6 +330,22 @@ nsf:
         max_retries: 5
         backoff_factor: 0.3
       
+labs:
+  data_collection:
+    filter:
+      0: False
+      1: False
+      2: False
+      3: False
+      structural_biology: True
+      protein_design: True
+      biochemistry: True
+      bioinformatics: True
+    from_date: "2010-01-01"
+    api:
+      mailto: data_analytics@nesta.org.uk
+      perpage: "200"
+
 test: False
 
 true_: True
