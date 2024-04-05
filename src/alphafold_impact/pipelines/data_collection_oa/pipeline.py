@@ -177,10 +177,10 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
     subfield_baselines = [
         pipeline(
             subfield_baseline_pipeline,
-            namespace=f"oa.data_collection.subfield.{concept}",
-            tags=[concept, "subfield"],
+            namespace=f"oa.data_collection.subfield.{subfield}",
+            tags=[subfield, "subfield"],
         )
-        for concept in settings.DYNAMIC_PIPELINES_MAPPING["oa"]["subfields"]
+        for subfield in settings.DYNAMIC_PIPELINES_MAPPING["oa"]["subfields"]
     ]
 
     subfield_artificial_intelligence_pipeline = pipeline(

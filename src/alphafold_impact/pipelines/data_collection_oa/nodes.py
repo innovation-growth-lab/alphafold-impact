@@ -53,7 +53,9 @@ def collect_papers(
     eager_loading: bool = False,
     slice_keys: bool = False,
     parallelise: bool = False,
-    concepts: bool = False,
+    bypass: bool = False,
+    skip_preprocess: bool = False,
+    **kwargs,
 ) -> Union[Dict[str, Callable], Dict[str, List[dict]]]:
     """
     Collects papers based on the provided work IDs.
@@ -70,6 +72,7 @@ def collect_papers(
             Defaults to False.
         parallelise (bool, optional): Whether to parallelize the fetching of papers.
             Defaults to False.
+        bypass (bool, optional): Whether the work IDs are concepts. Defaults to False.
 
     Returns:
         Union[Dict[str, Callable], Dict[str, List[dict]]]: A dictionary containing
@@ -78,18 +81,19 @@ def collect_papers(
             If eager_loading is False, the values are Lists of dictionaries representing the
                 fetched papers.
     """
-    # preprocess oa_ids
-    oa_ids = preprocess_oa_ids(oa_ids, group_oa_ids)
+    if not skip_preprocess:
+        # preprocess oa_ids
+        oa_ids = preprocess_oa_ids(oa_ids, group_oa_ids)
 
     # if concepts, simplify code and run direct fetch
-    if concepts:
+    if bypass:
         return yield_papers_for_id(oa_ids, mailto, perpage, filter_criteria)
 
     # fetch papers for each oa_id
     if not parallelise:
         if eager_loading:
             return fetch_papers_eager(
-                oa_ids, mailto, perpage, filter_criteria, slice_keys
+                oa_ids, mailto, perpage, filter_criteria, slice_keys, **kwargs
             )
         return fetch_papers_lazy(oa_ids, mailto, perpage, filter_criteria, slice_keys)
     return fetch_papers_parallel(oa_ids, mailto, perpage, filter_criteria)
@@ -256,7 +260,7 @@ def fetch_subfield_baseline(
         perpage=api_config["perpage"],
         oa_ids=filter_ids,
         filter_criteria=["from_publication_date", "concepts.id"],
-        concepts=True,
+        bypass=True,
     )
 
 
@@ -295,5 +299,5 @@ def fetch_subfield_and_logic(
         perpage=api_config["perpage"],
         oa_ids=filter_ids,
         filter_criteria=["from_publication_date", "concepts.id", "concepts.id"],
-        concepts=True,
+        bypass=True,
     )

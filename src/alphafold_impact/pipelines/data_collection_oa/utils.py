@@ -97,6 +97,7 @@ def _works_generator(
     oa_id: Union[str, List[str]],
     filter_criteria: Union[str, List[str]],
     session: requests.Session,
+    sample_size: int = -1,
 ) -> Iterator[list]:
     """Creates a generator that yields a list of works from the OpenAlex API based on a
     given work ID.
@@ -125,36 +126,69 @@ def _works_generator(
     else:
         filter_string = f"{filter_criteria}:{oa_id}"
 
-    cursor_url = (
-        f"https://api.openalex.org/works?filter={filter_string}"
-        f"&mailto={mailto}&per-page={perpage}&cursor={{}}"
-    )
+    if sample_size == -1:
+        cursor_url = (
+            f"https://api.openalex.org/works?filter={filter_string}"
+            f"&mailto={mailto}&per-page={perpage}&cursor={{}}"
+        )
 
-    try:
-        # make a call to estimate total number of results
-        response = session.get(cursor_url.format(cursor), timeout=20)
-        data = response.json()
-
-        while response.status_code == 429:  # needs testing (try with 200)
-            logger.info("Waiting for 1 hour...")
-            time.sleep(3600)
+        try:
+            # make a call to estimate total number of results
             response = session.get(cursor_url.format(cursor), timeout=20)
             data = response.json()
 
-        logger.info("Fetching data for %s", oa_id[:50])
-        total_results = data["meta"]["count"]
-        num_calls = total_results // int(perpage) + 1
-        logger.info("Total results: %s, in %s calls", total_results, num_calls)
-        while cursor:
-            response = session.get(cursor_url.format(cursor), timeout=20)
-            data = response.json()
-            results = data.get("results")
-            cursor = data["meta"].get("next_cursor", False)
-            yield results
+            while response.status_code == 429:  # needs testing (try with 200)
+                logger.info("Waiting for 1 hour...")
+                time.sleep(3600)
+                response = session.get(cursor_url.format(cursor), timeout=20)
+                data = response.json()
 
-    except Exception as e:  # pylint: disable=broad-except
-        logger.error("Error fetching data for %s: %s", oa_id, e)
-        yield []
+            logger.info("Fetching data for %s", oa_id[:50])
+            total_results = data["meta"]["count"]
+            num_calls = total_results // int(perpage) + 1
+            logger.info("Total results: %s, in %s calls", total_results, num_calls)
+            while cursor:
+                response = session.get(cursor_url.format(cursor), timeout=20)
+                data = response.json()
+                results = data.get("results")
+                cursor = data["meta"].get("next_cursor", False)
+                yield results
+
+        except Exception as e:  # pylint: disable=broad-except
+            logger.error("Error fetching data for %s: %s", oa_id, e)
+            yield []
+    else: # OA does not accept cursor pagination with samples.
+        cursor_url = (
+            f"https://api.openalex.org/works?filter={filter_string}&seed=123"
+            f"&mailto={mailto}&per-page={perpage}&sample={sample_size}&page={{}}"
+        )
+
+        try:
+            # make a call to estimate total number of results
+            response = session.get(cursor_url.format(1), timeout=20)
+            data = response.json()
+
+            while response.status_code == 429:  # needs testing (try with 200)
+                logger.info("Waiting for 1 hour...")
+                time.sleep(3600)
+                response = session.get(cursor_url.format(1), timeout=20)
+                data = response.json()
+
+            logger.info("Fetching data for %s", oa_id[:50])
+            total_results = data["meta"]["count"]
+            num_calls = total_results // int(perpage) + 1
+            logger.info("Total results: %s, in %s calls", total_results, num_calls)
+            for page in range(1, num_calls + 1):
+                response = session.get(cursor_url.format(page), timeout=20)
+                data = response.json()
+                results = data.get("results")
+                yield results
+
+        except Exception as e:  # pylint: disable=broad-except
+            logger.error("Error fetching data for %s: %s", oa_id, e)
+            yield []
+
+   
 
 
 def preprocess_oa_ids(
@@ -181,6 +215,7 @@ def fetch_papers_for_id(
     mailto: str,
     perpage: str,
     filter_criteria: Union[str, List[str]],
+    **kwargs
 ) -> List[dict]:
     """Fetches all papers cited by a specific work ID."""
     assert isinstance(
@@ -191,7 +226,7 @@ def fetch_papers_for_id(
     retries = Retry(total=5, backoff_factor=0.3)
     session.mount("https://", HTTPAdapter(max_retries=retries))
     for page, papers in enumerate(
-        _works_generator(mailto, perpage, oa_id, filter_criteria, session)
+        _works_generator(mailto, perpage, oa_id, filter_criteria, session, **kwargs)
     ):
         papers_for_id.extend(_parse_results(papers))
         logger.info(
@@ -237,14 +272,18 @@ def fetch_papers_eager(
     perpage: int,
     filter_criteria: Union[str, List[str]],
     slice_keys: bool,
+    **kwargs,
 ) -> Dict[str, List[dict]]:
     """Fetches papers eagerly."""
+    if len(processed_ids) == len(filter_criteria):
+        processed_ids = [processed_ids]
     return {
         oa_id if not slice_keys else f"s{str(i)}": fetch_papers_for_id(
             oa_id=oa_id,
             mailto=mailto,
             perpage=perpage,
             filter_criteria=filter_criteria,
+            **kwargs,
         )
         for i, oa_id in enumerate(processed_ids)
     }

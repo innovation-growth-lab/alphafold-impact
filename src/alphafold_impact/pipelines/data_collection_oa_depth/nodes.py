@@ -143,9 +143,10 @@ def fetch_citation_to_specific_depth(
 
     while level < max_depth:
         next_level_papers = set()
-        # outputs = {}
+        batch_num = 0
 
         while papers_to_process:
+            batch_num += 1
             current_batch = {
                 papers_to_process.pop() for _ in range(min(800, len(papers_to_process)))
             }
@@ -173,7 +174,7 @@ def fetch_citation_to_specific_depth(
                 if source["id"] not in processed_papers
             )
             # outputs.update(new_papers)
-            yield {f"{level}/{key}": value for key, value in new_papers.items()}
+            yield {f"{level}/p{batch_num}": new_papers}
 
         papers_to_process = next_level_papers
         level += 1
