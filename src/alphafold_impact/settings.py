@@ -48,6 +48,7 @@ DYNAMIC_PIPELINES_MAPPING = {
     "oa": {
         "directions": ["cites", "cited_by"],
         "subfields": [
+            # "artificial_intelligence",
             "structural_biology",
             "biochemistry", # removed some due to size constraints
             "bioinformatics",
