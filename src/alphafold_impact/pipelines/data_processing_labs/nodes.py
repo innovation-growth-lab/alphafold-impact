@@ -245,3 +245,37 @@ def calculate_lab_determinants(
         logger.info("Finished processing data from %s", key)
 
         yield {key: author_data}
+
+
+def combine_lab_results(
+    dict_loader: AbstractDataset,
+) -> pd.DataFrame:
+    """
+    This node combines the lab determinants for each lab into a single DataFrame.
+
+    Parameters:
+        data (Dict[str, pd.DataFrame]): A dictionary containing the lab determinants
+            for each lab.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing the lab determinants for each lab.
+    """
+    data = []
+    for i, (key, loader) in enumerate(dict_loader.items()):
+        logger.info(
+            "Loading data from %s. Number %s out of %s", key, i + 1, len(dict_loader)
+        )
+        data.append(loader())
+    data = pd.concat(data, ignore_index=True)
+
+    # change column "id" to "publication_count"
+    data = data.rename(columns={"id": "publication_count"})
+
+    # for duplicated author, institution, year triples, get the mean of first, middle, last, apf, cited_by_count, and publication_count
+    data = data.groupby(["author", "institution", "year"]).mean().reset_index()
+
+
+    # 
+
+
+    return data
