@@ -469,3 +469,13 @@ lab.data_collection.publications.raw:
 pdb.entries.raw:
   <<: *_pq
   filepath: s3://alphafold-impact/data/01_raw/pdb/entries.parquet
+  path: s3://alphafold-impact/data/02_intermediate/oa/labs/publications/
+
+# TCC
+tcc.data_analysis:
+  <<: *_csv_ptd
+  path: s3://alphafold-impact/data/04_analysis/tcc/
+
+tcc.reporting.summary_subfields:
+  <<: *_csv_ptd
+  path: s3://alphafold-impact/data/07_reporting/tcc/summary_subfields
