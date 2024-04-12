@@ -29,7 +29,7 @@ OpenAlex - Biopython MeSH tagging:
 """
 
 import logging
-from typing import Dict, List, Tuple, Generator
+from typing import Dict, List, Tuple, Generator, Union
 import pandas as pd
 from joblib import Parallel, delayed
 from ..data_collection_oa.nodes import collect_papers  # pylint: disable=E0402
@@ -125,13 +125,17 @@ def fetch_citation_all_depth(
 
 
 def fetch_citation_to_specific_depth(
-    seed_paper: str, api_config: Dict[str, str], filter_config: str, max_depth: int
+    seed_paper: Union[str, List[str]],
+    api_config: Dict[str, str],
+    filter_config: str,
+    max_depth: int,
 ):
     """
     Fetches citations to a specific depth from a seed paper.
 
     Args:
-        seed_paper (str): The seed paper to start fetching citations from.
+        seed_paper (Union[str, List[str]]): The seed paper to start fetching 
+            citations from.
         api_config (Dict[str, str]): API configuration parameters.
         filter_config (str): Filter configuration for fetching papers.
         max_depth (int): The maximum depth to fetch citations to.
@@ -139,7 +143,7 @@ def fetch_citation_to_specific_depth(
     Yields:
         dict: A dictionary containing the fetched papers at each level of depth.
     """
-    processed_papers, papers_to_process, level = set(), {seed_paper}, 0
+    processed_papers, papers_to_process, level = set(), set(seed_paper), 0
 
     while level < max_depth:
         next_level_papers = set()

@@ -28,7 +28,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                     "api_key": "params:s2.data_collection.strength.api.key",
                     "perpage": "params:s2.data_collection.strength.api.perpage",
                 },
-                outputs="oa.data_processing.depth.primary",
+                outputs="oa.data_processing.depth.all.primary",
             ),
         ],
         tags=["s2.primary.intent"],

@@ -111,10 +111,22 @@ oa.data_processing.gtr.citations.alphafold:
 oa.data_processing.depth.intermediate:
   <<: *_pq
   filepath: s3://alphafold-impact/data/02_intermediate/oa/works/depth/main.parquet
+
+oa.data_processing.depth.duplicated.intermediate:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/02_intermediate/oa/works/depth/main_duplicated.parquet
   
 oa.data_processing.depth.primary:
   <<: *_pq
   filepath: s3://alphafold-impact/data/03_primary/oa/works/depth/main.parquet
+
+oa.data_processing.depth.duplicated.primary:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/03_primary/oa/works/depth/main_duplicated.parquet
+
+oa.data_processing.depth.all.primary:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/03_primary/oa/works/depth/main_all.parquet
   
 # Openalex works - Concepts
 oa_raw_works_for_concepts_and_years:
@@ -144,6 +156,10 @@ oa.data_collection.depth.network:
 oa.data_collection.depth.level.raw:
   <<: *_js_ptd
   path: s3://alphafold-impact/data/01_raw/oa/works/depth/levels/
+
+oa.data_collection.triad.depth.level.raw:
+  <<: *_js_ptd
+  path: s3://alphafold-impact/data/01_raw/oa/works/depth/triad/levels/
 
 "oa.data_processing.depth.mesh.{level}.intermediate":
   <<: *_pq
@@ -219,6 +235,14 @@ nih.data_processing.funding_opportunities_mesh_tagging_output_text.intermediate:
 nih.data_processing.funding_opportunities_mesh_tagging_output_df.intermediate:
   <<: *_csv
   filepath: s3://alphafold-impact/data/02_intermediate/nih/funding_opportunities/mesh_tagging_output_df.csv
+
+pubmed.data_collection.icite.raw:
+  <<: *_csv_ptd
+  path: s3://alphafold-impact/data/01_raw/icite/icite_feb_2024/
+
+pubmed.data_processing.icite.intermediate:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/02_intermediate/pubmed/icite.parquet
 
 # Crunchbase data
 _cb_raw: &_cb_raw

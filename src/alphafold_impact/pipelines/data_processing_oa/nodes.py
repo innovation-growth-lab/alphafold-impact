@@ -252,22 +252,42 @@ def process_data_by_level(
     ]
 
 
-def combine_levels_data(**kwargs) -> pd.DataFrame:
+def combine_levels_data(unique: str = "all", **kwargs) -> pd.DataFrame:
     """
     Combines multiple dataframes into a single dataframe and removes duplicate rows
         based on the 'id' column.
 
     Parameters:
+    unique (str): The method to remove duplicate rows. Options are 'id', 'level', or 'all'.
     **kwargs: keyword arguments representing the dataframes to be combined.
 
     Returns:
     pd.DataFrame: A combined dataframe with duplicate rows removed based
         on the 'id' column.
     """
-    df = pd.concat([level for level in kwargs.values()])
-    df = df.sort_values(["level", "id"], ascending=True).drop_duplicates(
-        ["id"], keep="first"
+    assert unique in [
+        "id",
+        "level",
+        "all",
+    ], (
+        f"unique must be either 'id' or 'level, or 'all'. Instead, got {unique}."
     )
+    df = pd.concat([level for level in kwargs.values()])
+    if unique == "id":
+        logger.info("Removing duplicate rows based on 'id' column.")
+        df = df.sort_values(["level", "id"], ascending=True).drop_duplicates(
+            ["id"], keep="first"
+        )
+    elif unique == "level":
+        logger.info("Keeping duplicate rows based on 'id' column.")
+        # keep only the duplicated ids that are the lowest level, but keep all of those
+        df = df.sort_values(["level", "id"], ascending=True)
+        lowest_levels = df.groupby("id")["level"].min()
+        df = df.merge(lowest_levels, on="id", suffixes=["", "_min"])
+        df = df[df["level"] == df["level_min"]]
+        df = df.drop(columns="level_min")
+    else:
+        logger.info("Removing no duplicate rows.")
 
     return df
 

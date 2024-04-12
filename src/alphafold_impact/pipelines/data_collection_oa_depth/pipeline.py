@@ -8,13 +8,12 @@ To run this pipeline, use the following command:
 """
 
 from kedro.pipeline import Pipeline, pipeline, node
-from .nodes import (
-    fetch_citation_all_depth,
-    fetch_citation_to_specific_depth
-)
+from .nodes import fetch_citation_all_depth, fetch_citation_to_specific_depth
 
 
-def create_pipeline(**kwargs) -> Pipeline:
+def create_pipeline(  # pylint: disable=unused-argument&mising-function-docstring
+    **kwargs,
+) -> Pipeline:
     full_depth_pipeline = pipeline(
         [
             node(
@@ -35,19 +34,15 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=fetch_citation_to_specific_depth,
                 inputs={
-                    "seed_paper": "params:oa.data_collection.depth.get.work_id",
+                    "seed_paper": "params:oa.data_collection.depth.get.work_ids",
                     "api_config": "params:oa.data_collection.depth.api",
                     "filter_config": "params:oa.data_collection.depth.filter",
                     "max_depth": "params:oa.data_collection.depth.max_depth",
                 },
-                outputs="oa.data_collection.depth.level.raw",
+                outputs="oa.data_collection.triad.depth.level.raw",
             )
         ],
         tags="oa.data_collection.depth.level",
     )
 
-
-    return (
-        full_depth_pipeline
-        + fixed_depth_pipeline
-    )
+    return full_depth_pipeline + fixed_depth_pipeline

@@ -8,8 +8,12 @@ oa:
   
     # Data retrieval settings
     get: &get
-      work_id: W3177828909 # AlphaFold
-      # work_id: W2741809807
+      work_id: W3177828909
+      work_ids: 
+        - W2741809807
+        - W3211795435
+        - W3202105508
+
 
     # Retrieval directions
     direction:

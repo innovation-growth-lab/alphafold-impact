@@ -25,6 +25,7 @@ from joblib import Parallel, delayed
 
 logger = logging.getLogger(__name__)
 
+
 def fetch_citation_details(
     work_id: str,
     base_url: str,
@@ -81,6 +82,7 @@ def fetch_citation_details(
         )
 
     return data_list
+
 
 # Updated functions
 def process_citations(citation_outputs: Dict[str, Sequence[Dict[str, Any]]]) -> List:
@@ -302,7 +304,7 @@ def get_intent_level(oa_dataset: pd.DataFrame, level: int, **kwargs) -> pd.DataF
         **kwargs: Additional keyword arguments.
 
     Returns:
-        pd.DataFrame: A DataFrame containing the processed intent level citations 
+        pd.DataFrame: A DataFrame containing the processed intent level citations
             with the following columns:
             - parent_doi: The DOI of the parent publication.
             - pmid: The PMID of the citation.
@@ -312,14 +314,15 @@ def get_intent_level(oa_dataset: pd.DataFrame, level: int, **kwargs) -> pd.DataF
             - context: The context of the citation.
     """
 
-    inputs = (
-        oa_dataset[oa_dataset["level"] == level]
-        .apply(
-            lambda x: (x["parent_id"], "", x["parent_doi"], "", x["parent_pmid"]),
-            axis=1,
-        )
-        .tolist()
-    )
+    level_data = oa_dataset[oa_dataset["level"] == level]
+
+    # Remove duplicate rows based on "parent_id"
+    level_data = level_data.drop_duplicates(subset="parent_id")
+
+    inputs = level_data.apply(
+        lambda x: (x["parent_id"], "", x["parent_doi"], "", x["parent_pmid"]),
+        axis=1,
+    ).tolist()
 
     # Use joblib to parallelize the function calls
     level_outputs = Parallel(n_jobs=8)(
@@ -327,9 +330,7 @@ def get_intent_level(oa_dataset: pd.DataFrame, level: int, **kwargs) -> pd.DataF
         for input in inputs
     )
 
-    level_dict = dict(
-        list(zip(oa_dataset[oa_dataset["level"] == level]["parent_doi"], level_outputs))
-    )
+    level_dict = dict(list(zip(level_data["parent_doi"], level_outputs)))
 
     processed_level_citations = process_citations(level_dict)
 
@@ -354,7 +355,7 @@ def get_citation_intent_from_oa_dataset(
     Retrieves citation intent data from an Open Access dataset.
 
     Args:
-        oa_dataset (pd.DataFrame): The Open Access dataset containing citation 
+        oa_dataset (pd.DataFrame): The Open Access dataset containing citation
             information.
         **kwargs: Additional keyword arguments.
 
@@ -397,7 +398,15 @@ def get_citation_intent_from_oa_dataset(
     # concatenate the dataframes
     processed_df = pd.concat([level_0, level_1, level_2, level_3])
 
-    processed_grouped_data = (
+    # check how often doi is empty and pmid is not
+    logger.info(
+        "Number of rows with empty doi and non-empty pmid: %d",
+        processed_df[(processed_df["doi"] == "") & (processed_df["pmid"] != "")].shape[
+            0
+        ],
+    )
+
+    processed_grouped_data_doi = (
         processed_df.groupby(["parent_doi", "doi"])[
             ["influential", "intent", "context"]
         ]
@@ -406,9 +415,35 @@ def get_citation_intent_from_oa_dataset(
         .rename(columns={0: "strength"})
     )
 
-    processed_data = pd.merge(
-        oa_dataset, processed_grouped_data, on=["parent_doi", "doi"], how="left"
+    processed_grouped_data_pmid = (
+        processed_df.groupby(["parent_doi", "pmid"])[
+            ["influential", "intent", "context"]
+        ]
+        .apply(lambda x: x.to_dict(orient="records"))
+        .reset_index()
+        .rename(columns={0: "strength"})
     )
+
+    processed_data = pd.merge(
+        oa_dataset, processed_grouped_data_doi, on=["parent_doi", "doi"], how="left"
+    )
+
+    processed_data = pd.merge(
+        processed_data,
+        processed_grouped_data_pmid,
+        left_on=["parent_doi", "parent_pmid"],
+        right_on=["parent_doi", "pmid"],
+        how="left",
+    )
+
+    # combine the two strength columns
+    processed_data["strength"] = processed_data["strength_x"].combine_first(
+        processed_data["strength_y"]
+    )
+
+    # rename the pmid columns
+    processed_data.rename(columns={"pmid_x": "pmid"}, inplace=True)
+    processed_data.drop(columns=["strength_x", "strength_y", "pmid_y"], inplace=True)
 
     return processed_data[
         [
