@@ -390,7 +390,15 @@ lab.data_collection.candidates.publications.intermediate:
 lab.data_collection.candidates.scores.intermediate:
   <<: *_pq_ptd
   path: s3://alphafold-impact/data/02_intermediate/oa/labs/scores/
+  
+lab.data_collection.candidates.scores.primary:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/03_primary/oa/labs/main_scores.parquet
 
-lab.data_processing.candidates.labelled_sample:
+lab.data_collection.candidates.nih:
   <<: *_csv
   filepath: s3://alphafold-impact/data/01_raw/nih/principal_investigators/nih_principal_investigators.csv
+
+lab.data_collection.candidates.nih.intermediate:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/02_intermediate/nih/principal_investigators/nih_principal_investigators.parquet

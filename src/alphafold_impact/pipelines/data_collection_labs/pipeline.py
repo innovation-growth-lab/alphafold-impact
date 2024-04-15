@@ -14,6 +14,8 @@ from .nodes import (
     get_candidate_authors,
     merge_candidate_authors,
     fetch_author_publications,
+    get_pi_id
+
 )
 
 
@@ -89,9 +91,22 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
         ],
         tags=["fetch_author_publications"],
     )
+
+    fetch_ground_truth_author_ids = pipeline(
+        [
+            node(
+                func=get_pi_id,
+                inputs={"data": "lab.data_collection.candidates.nih"},
+                outputs="lab.data_collection.candidates.nih.intermediate"
+            )
+        ],
+        tags=["fetch_ground_truth_author_ids"],
+    )
+
     return (
         sum(subfield_candidate_authors_pipelines)
         + sum(level_candidate_authors_pipelines)
         + merge_candidate_authors_pipeline
         + fetch_author_publications_pipeline
+        + fetch_ground_truth_author_ids
     )
