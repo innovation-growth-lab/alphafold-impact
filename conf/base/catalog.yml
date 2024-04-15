@@ -375,3 +375,7 @@ lab.data_collection.candidates.intermediate:
 lab.data_collection.candidates.publications.intermediate:
   <<: *_js_ptd
   path: s3://alphafold-impact/data/02_intermediate/oa/labs/publications/
+
+lab.data_processing.candidates.labelled_sample:
+  <<: *_csv
+  filepath: s3://alphafold-impact/data/01_raw/nih/principal_investigators/nih_principal_investigators.csv
