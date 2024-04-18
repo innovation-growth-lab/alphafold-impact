@@ -383,11 +383,20 @@ def get_citation_intent_from_oa_dataset(
         columns=[col for col in oa_dataset.columns if "_parent" in col], inplace=True
     )
 
-    # manually set the parent_pmid and parent_doi for AlphaFold
-    oa_dataset.loc[oa_dataset["level"] == 0, "parent_doi"] = (
-        "10.1038/s41586-021-03819-2"
-    )
-    oa_dataset.loc[oa_dataset["level"] == 0, "parent_pmid"] = "34265844"
+    # create a dictionary to map parent_id to DOI and PMID
+    parent_info = {
+        "W3177828909": {"doi": "10.1038/s41586-021-03819-2", "pmid": "34265844"},
+        "W3211795435": {"doi": "10.1093/nar/gkab1061", "pmid": "34791371"},
+        "W3202105508": {"doi": "10.1101/2021.10.04.463034", "pmid": None},
+    }
+
+    # replace the values in the 'parent_doi' and 'parent_pmid' columns when level is 0
+    oa_dataset.loc[oa_dataset["level"] == 0, "parent_doi"] = oa_dataset.loc[
+        oa_dataset["level"] == 0, "parent_id"
+    ].map(lambda x: parent_info[str(x)]["doi"])
+    oa_dataset.loc[oa_dataset["level"] == 0, "parent_pmid"] = oa_dataset.loc[
+        oa_dataset["level"] == 0, "parent_id"
+    ].map(lambda x: parent_info[str(x)]["pmid"])
 
     # get the citation intent for each level
     level_0 = get_intent_level_0(oa_dataset, **kwargs)
