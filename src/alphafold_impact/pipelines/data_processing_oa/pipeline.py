@@ -60,7 +60,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
         pipeline(
             mesh_processing,
             inputs={
-                "raw_data": "oa.data_collection.depth.level.raw",
+                "raw_data": "oa.data_collection.triad.depth.level.raw",
                 "level_placeholder": f"params:oa.data_collection.depth.levels.{level}",
                 "extra_mesh_placeholder": "params:false_",
             },

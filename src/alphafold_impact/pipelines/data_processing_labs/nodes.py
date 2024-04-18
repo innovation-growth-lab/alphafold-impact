@@ -6,7 +6,9 @@ generated using Kedro 0.19.1
 import logging
 from typing import Dict, Generator
 import pandas as pd
+import numpy as np
 from kedro.io import AbstractDataset
+from sklearn.preprocessing import MinMaxScaler
 
 logger = logging.getLogger(__name__)
 
@@ -271,11 +273,151 @@ def combine_lab_results(
     # change column "id" to "publication_count"
     data = data.rename(columns={"id": "publication_count"})
 
-    # for duplicated author, institution, year triples, get the mean of first, middle, last, apf, cited_by_count, and publication_count
+    # for duplicated author, institution, year triples, get the mean
     data = data.groupby(["author", "institution", "year"]).mean().reset_index()
 
-
-    # 
-
-
     return data
+
+
+def appears_in_three_consecutive_years(group: pd.DataFrame) -> bool:
+    """
+    Checks if a group of data appears in three consecutive years.
+
+    Args:
+        group (pandas.DataFrame): The group of data to check.
+
+    Returns:
+        bool: True if the group appears in three consecutive years, False otherwise.
+    """
+    years = group["year"].sort_values().diff().eq(1)
+    return years.rolling(3).sum().eq(3).any()
+
+
+def is_likely_pi(group: pd.DataFrame, quantile: float) -> bool:
+    """
+    Determines if a group is likely to be a principal investigator (PI) based 
+        on the given criteria.
+
+    Args:
+        group (pandas.DataFrame): A DataFrame representing a group of data.
+        quantile (float): The quantile threshold for the 'score' column.
+
+    Returns:
+        bool: True if the group is likely to be a PI, False otherwise.
+    """
+    group = group.sort_values("year")
+    above_75 = group["score"] > quantile
+    return (
+        above_75.rolling(3).sum().eq(3).any()
+        or (group["year"].isin([2022, 2023]) & above_75).any()
+    )
+
+
+def assign_lab_label(
+    candidate_data: pd.DataFrame,
+    ground_truth_data: pd.DataFrame,
+) -> pd.DataFrame:
+
+    logger.info("Cleaning NIH PI data")
+    ground_truth_data["pi_id"] = ground_truth_data["pi_id"].str.replace(
+        "https://openalex.org/", ""
+    )
+
+    logger.info("Match author in candidate data")
+    candidate_data["label"] = (
+        candidate_data["author"].isin(ground_truth_data["pi_id"]).astype(int)
+    )
+    # we only match 10 unique researchers
+
+    logger.info("Sorting candidate data")
+    candidate_data = candidate_data.sort_values(by=["author", "year"]).reset_index(
+        drop=True
+    )
+
+    logger.info(
+        "Filtering candidate data based on appearing in three consecutive years"
+    )
+    candidate_data["year"] = candidate_data["year"].astype(int)
+    candidate_data = candidate_data.groupby(["author", "institution"]).filter(
+        appears_in_three_consecutive_years
+    )
+
+    logger.info("Calculating mean APF")
+    candidate_data["mean_apf"] = candidate_data.groupby(["author", "institution"])[
+        "apf"
+    ].transform("mean")
+
+    logger.info("Calculating quantiles")
+    quantiles = candidate_data["mean_apf"].quantile([0.25, 0.5, 0.75])
+
+    logger.info(
+        "Filtering candidate data based on having at least one year above 75th percentile of APF"
+    )
+    candidate_data = candidate_data[
+        candidate_data.groupby(["author", "institution"])["apf"].transform(
+            lambda x: x.max() > quantiles[0.75]
+        )
+    ]
+
+    logger.info("Calculating 3-year average APF")
+    candidate_data["apf_3yr_avg"] = (
+        candidate_data.groupby(["author", "institution"])["apf"]
+        .rolling(3)
+        .mean()
+        .reset_index(level=[0,1],drop=True)
+    )
+
+    logger.info("Filling 1 and 2 year nans")
+    candidate_data["apf_1yr_avg"] = (
+        candidate_data.groupby(["author", "institution"])["apf"]
+        .rolling(1)
+        .mean()
+        .reset_index(level=[0,1],drop=True)
+    )
+    candidate_data["apf_2yr_avg"] = (
+        candidate_data.groupby(["author", "institution"])["apf"]
+        .rolling(2)
+        .mean()
+        .reset_index(level=[0,1],drop=True)
+    )
+
+    # Use 1-year and 2-year averages to fill NaN in 'apf_3yr_avg'
+    candidate_data["apf_3yr_avg"] = (
+        candidate_data["apf_3yr_avg"]
+        .fillna(candidate_data["apf_2yr_avg"])
+        .fillna(candidate_data["apf_1yr_avg"])
+    )
+
+    # Drop temporary columns
+    candidate_data = candidate_data.drop(columns=["apf_1yr_avg", "apf_2yr_avg"])
+
+    logger.info("Normalising data")
+    scaler = MinMaxScaler()
+    candidate_data[["cited_by_count", "publication_count"]] = scaler.fit_transform(
+        candidate_data[["cited_by_count", "publication_count"]]
+    )
+
+    # assign weights
+    weights = {
+        "apf": 0.4,
+        "mean_apf": 0.1,
+        "apf_3yr_avg": 0.2,
+        "publication_count": 0.2,
+        "cited_by_count": 0.1,
+    }
+
+    logger.info("Calculating score")
+    candidate_data["score"] = (
+        candidate_data["apf"] * weights["apf"]
+        + candidate_data["mean_apf"] * weights["mean_apf"]
+        + candidate_data["cited_by_count"] * weights["cited_by_count"]
+        + candidate_data["publication_count"] * weights["publication_count"]
+    )
+
+    logger.info("Make final selection")
+    quantile_75 = candidate_data["score"].quantile(0.75)
+    likely_pis = candidate_data.groupby(["author", "institution"]).filter(
+        is_likely_pi, quantile=quantile_75
+    )
+
+    return likely_pis

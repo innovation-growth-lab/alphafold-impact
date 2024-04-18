@@ -402,3 +402,7 @@ lab.data_collection.candidates.nih:
 lab.data_collection.candidates.nih.intermediate:
   <<: *_pq
   filepath: s3://alphafold-impact/data/02_intermediate/nih/principal_investigators/nih_principal_investigators.parquet
+
+lab.data_collection.assignment.primary:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/03_primary/oa/labs/assignments.parquet
