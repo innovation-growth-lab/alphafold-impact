@@ -14,8 +14,8 @@ from .nodes import (
     get_candidate_authors,
     merge_candidate_authors,
     fetch_author_publications,
-    get_pi_id
-
+    get_pi_id,
+    get_publications_from_labs,
 )
 
 
@@ -97,10 +97,25 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
             node(
                 func=get_pi_id,
                 inputs={"data": "lab.data_collection.candidates.nih"},
-                outputs="lab.data_collection.candidates.nih.intermediate"
+                outputs="lab.data_collection.candidates.nih.intermediate",
             )
         ],
         tags=["fetch_ground_truth_author_ids"],
+    )
+
+    get_publications_from_labs_pipeline = pipeline(
+        [
+            node(
+                func=get_publications_from_labs,
+                inputs={
+                    "data": "lab.data_collection.assignment.primary",
+                    "from_publication_date": "params:labs.data_collection.from_date",
+                    "api_config": "params:labs.data_collection.api",
+                },
+                outputs="lab.data_collection.publications.raw",
+            )
+        ],
+        tags=["get_publications_from_labs"],
     )
 
     return (
@@ -109,4 +124,5 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
         + merge_candidate_authors_pipeline
         + fetch_author_publications_pipeline
         + fetch_ground_truth_author_ids
+        + get_publications_from_labs_pipeline
     )

@@ -385,7 +385,7 @@ lab.data_collection.candidates.intermediate:
 
 lab.data_collection.candidates.publications.intermediate:
   <<: *_js_ptd
-  path: s3://alphafold-impact/data/02_intermediate/oa/labs/publications/
+  path: s3://alphafold-impact/data/02_intermediate/oa/labs/candidate_publications/
 
 lab.data_collection.candidates.scores.intermediate:
   <<: *_pq_ptd
@@ -406,3 +406,7 @@ lab.data_collection.candidates.nih.intermediate:
 lab.data_collection.assignment.primary:
   <<: *_pq
   filepath: s3://alphafold-impact/data/03_primary/oa/labs/assignments.parquet
+
+lab.data_collection.publications.raw:
+  <<: *_pq_ptd
+  path: s3://alphafold-impact/data/01_raw/oa/labs/publications/

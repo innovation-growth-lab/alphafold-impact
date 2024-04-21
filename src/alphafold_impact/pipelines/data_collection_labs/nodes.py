@@ -317,3 +317,170 @@ def get_pi_id(data: pd.DataFrame) -> pd.DataFrame:
     data = data.drop_duplicates(subset=["pi_name"], keep="first")
 
     return data
+
+
+def get_publications_from_labs(
+    data: pd.DataFrame,
+    from_publication_date: str,
+    api_config: Dict[str, str],
+) -> Generator[Tuple[Dict[str, pd.DataFrame], Dict[str, List[dict]]], None, None]:
+    """
+    Fetches publications for a given list of authors.
+
+    Args:
+        data (pd.DataFrame): The input data containing author information.
+        from_publication_date (str): The starting publication date to filter the publications.
+        api_config (Dict[str, str]): Configuration settings for the API.
+
+    Yields:
+        Tuple[Dict[str, pd.DataFrame], Dict[str, List[dict]]]: A generator that yields a tuple of dictionaries.
+            The first dictionary contains slice keys as keys and a list of papers as values.
+            The second dictionary contains slice keys as keys and a list of authors as values.
+
+    Returns:
+        None: This function does not return anything directly. It yields the results using a generator.
+    """
+
+    # get unique authors from data
+    author_ids = data["author"].unique().tolist()
+
+    logger.info("Fetching publications for %d authors", len(author_ids))
+
+    # # create batches of 50 authors
+    # author_batches = [
+    #     "|".join(author_ids[i : i + 50]) for i in range(0, len(author_ids), 50)
+    # ]
+
+    filter_batches = [[from_publication_date, author_id] for author_id in author_ids]
+
+    # slice to create parallel jobs that produce slices
+    slices = [filter_batches[i : i + 250] for i in range(0, len(filter_batches), 250)]
+
+    logger.info("Fetching papers for %d author batches", len(slices))
+
+    for i, slice_ in enumerate(slices):
+
+        logger.info("Processing batch number %d / %d", i + 1, len(slices))
+
+        slice_results = Parallel(n_jobs=8, backend="loky", verbose=10)(
+            delayed(collect_papers)(
+                oa_ids=batch,
+                mailto=api_config["mailto"],
+                perpage=api_config["perpage"],
+                filter_criteria=["from_publication_date", "author.id"],
+                slice_keys=True,
+                eager_loading=True,
+                skip_preprocess=True,
+            )
+            for batch in slice_
+        )
+
+        slice_papers = {
+            author_id: papers
+            for (_, author_id), slice_result in zip(slice_, slice_results)
+            for papers in slice_result.values()
+        }
+
+        logger.info("Processing batch number %d / %d", i + 1, len(slices))
+        output = []
+
+        for author_id, children_list in slice_papers.items():
+
+            json_data = [
+                {
+                    k: v
+                    for k, v in item.items()
+                    if k
+                    in [
+                        "id",
+                        "ids",
+                        "doi",
+                        "display_name",
+                        "publication_date",
+                        "mesh_terms",
+                        "cited_by_count",
+                        "counts_by_year",
+                        "authorships",
+                    ]
+                }
+                for item in children_list
+            ]
+
+            # Check if json_data is not empty
+            if len(json_data) > 0:
+                # Transform to DataFrame and add parent_id
+                df = pd.DataFrame(json_data)
+                df["pi_id"] = author_id
+
+                # Extract pmid from ids
+                df["pmid"] = df["ids"].apply(
+                    lambda x: (
+                        x.get("pmid").replace("https://pubmed.ncbi.nlm.nih.gov/", "")
+                        if x and x.get("pmid")
+                        else None
+                    )
+                )
+
+                # transform to dataframe and add parent_id
+                df = pd.DataFrame(json_data)
+                df["pi_id"] = author_id
+
+                # extract pmid from ids
+                df["pmid"] = df["ids"].apply(
+                    lambda x: (
+                        x.get("pmid").replace("https://pubmed.ncbi.nlm.nih.gov/", "")
+                        if x and x.get("pmid")
+                        else None
+                    )
+                )
+
+                # keep only a list of tuples with "descriptor_ui" and "descriptor_name" for each
+                df["mesh_terms"] = df["mesh_terms"].apply(
+                    lambda x: (
+                        [(c["descriptor_ui"], c["descriptor_name"]) for c in x]
+                        if x
+                        else None
+                    )
+                )
+
+                # break atuhorship nested dictionary jsons, create triplets of authorship
+                df["authorships"] = df["authorships"].apply(
+                    lambda x: (
+                        [
+                            (
+                                (
+                                    author["author"]["id"].replace(
+                                        "https://openalex.org/", ""
+                                    ),
+                                    inst["id"].replace("https://openalex.org/", ""),
+                                    author["author_position"],
+                                )
+                                if author["institutions"]
+                                else [
+                                    author["author"]["id"].replace(
+                                        "https://openalex.org/", ""
+                                    ),
+                                    "",
+                                    author["author_position"],
+                                ]
+                            )
+                            for author in x
+                            for inst in author["institutions"] or [{}]
+                        ]
+                        if x
+                        else None
+                    )
+                )
+
+                # change doi to remove the url
+                df["doi"] = df["doi"].str.replace("https://doi.org/", "")
+
+                # change id to remove the url
+                df["id"] = df["id"].str.replace("https://openalex.org/", "")
+
+                # append to output
+                output.append(df)
+
+        df = pd.concat(output)
+
+        yield {f"s{i}": df}
