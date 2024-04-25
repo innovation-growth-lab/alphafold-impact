@@ -354,3 +354,9 @@ test: False
 
 true_: True
 false_: False
+
+chains:
+  identifier:
+    id: "id"
+    pmid: "pmid"
+    doi: "doi"

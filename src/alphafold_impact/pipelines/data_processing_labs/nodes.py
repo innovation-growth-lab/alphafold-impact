@@ -295,7 +295,7 @@ def appears_in_three_consecutive_years(group: pd.DataFrame) -> bool:
 
 def is_likely_pi(group: pd.DataFrame, quantile: float) -> bool:
     """
-    Determines if a group is likely to be a principal investigator (PI) based 
+    Determines if a group is likely to be a principal investigator (PI) based
         on the given criteria.
 
     Args:
@@ -306,10 +306,10 @@ def is_likely_pi(group: pd.DataFrame, quantile: float) -> bool:
         bool: True if the group is likely to be a PI, False otherwise.
     """
     group = group.sort_values("year")
-    above_75 = group["score"] > quantile
+    above = group["score"] > quantile
     return (
-        above_75.rolling(3).sum().eq(3).any()
-        or (group["year"].isin([2022, 2023]) & above_75).any()
+        above.rolling(3).sum().eq(3).any()
+        or (group["year"].isin([2022, 2023]) & above).any()
     )
 
 
@@ -364,7 +364,7 @@ def assign_lab_label(
         candidate_data.groupby(["author", "institution"])["apf"]
         .rolling(3)
         .mean()
-        .reset_index(level=[0,1],drop=True)
+        .reset_index(level=[0, 1], drop=True)
     )
 
     logger.info("Filling 1 and 2 year nans")
@@ -372,13 +372,13 @@ def assign_lab_label(
         candidate_data.groupby(["author", "institution"])["apf"]
         .rolling(1)
         .mean()
-        .reset_index(level=[0,1],drop=True)
+        .reset_index(level=[0, 1], drop=True)
     )
     candidate_data["apf_2yr_avg"] = (
         candidate_data.groupby(["author", "institution"])["apf"]
         .rolling(2)
         .mean()
-        .reset_index(level=[0,1],drop=True)
+        .reset_index(level=[0, 1], drop=True)
     )
 
     # Use 1-year and 2-year averages to fill NaN in 'apf_3yr_avg'
@@ -415,9 +415,9 @@ def assign_lab_label(
     )
 
     logger.info("Make final selection")
-    quantile_75 = candidate_data["score"].quantile(0.75)
+    quantile_90 = candidate_data["score"].quantile(0.90)
     likely_pis = candidate_data.groupby(["author", "institution"]).filter(
-        is_likely_pi, quantile=quantile_75
+        is_likely_pi, quantile=quantile_90
     )
 
     return likely_pis

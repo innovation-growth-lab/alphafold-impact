@@ -269,9 +269,7 @@ def combine_levels_data(unique: str = "all", **kwargs) -> pd.DataFrame:
         "id",
         "level",
         "all",
-    ], (
-        f"unique must be either 'id' or 'level, or 'all'. Instead, got {unique}."
-    )
+    ], f"unique must be either 'id' or 'level, or 'all'. Instead, got {unique}."
     df = pd.concat([level for level in kwargs.values()])
     if unique == "id":
         logger.info("Removing duplicate rows based on 'id' column.")
@@ -287,7 +285,14 @@ def combine_levels_data(unique: str = "all", **kwargs) -> pd.DataFrame:
         df = df[df["level"] == df["level_min"]]
         df = df.drop(columns="level_min")
     else:
-        logger.info("Removing no duplicate rows.")
+        logger.info("Removing only full duplicate rows.")
+        df = df.drop_duplicates(
+            subset=[
+                col
+                for col in df.columns
+                if col not in ["strength", "mesh_terms", "authorships"]
+            ]
+        )
 
     return df
 

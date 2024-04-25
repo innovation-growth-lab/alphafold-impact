@@ -139,6 +139,10 @@ oa.data_processing.depth.all.primary:
   <<: *_pq
   filepath: s3://alphafold-impact/data/03_primary/oa/works/depth/main_all.parquet
   
+oa.chain_labels.id.primary:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/03_primary/oa/works/chain_labels.parquet
+
 # Openalex works - Concepts
 oa_raw_works_for_concepts_and_years:
   type: kedro_datasets.pandas.JSONDataset
@@ -410,3 +414,15 @@ lab.data_collection.assignment.primary:
 lab.data_collection.publications.raw:
   <<: *_pq_ptd
   path: s3://alphafold-impact/data/01_raw/oa/labs/publications/
+
+"chains.complete_links.{identifier}.primary":
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/03_primary/oa/works/chains/{identifier}/complete_links.parquet
+
+"chains.complete_strong_links.{identifier}.primary":
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/03_primary/oa/works/chains/{identifier}/complete_strong_links.parquet
+
+"chains.complete_strong_links_with_ca.{identifier}.primary":
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/03_primary/oa/works/chains/{identifier}/complete_strong_links_with_ca.parquet
