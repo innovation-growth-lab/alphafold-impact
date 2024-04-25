@@ -317,7 +317,17 @@ def assign_lab_label(
     candidate_data: pd.DataFrame,
     ground_truth_data: pd.DataFrame,
 ) -> pd.DataFrame:
+    """
+    Assigns lab labels to candidate data based on matching with ground truth data.
 
+    Args:
+        candidate_data (pd.DataFrame): The candidate data containing author information.
+        ground_truth_data (pd.DataFrame): The ground truth data containing PI IDs.
+
+    Returns:
+        pd.DataFrame: The candidate data with lab labels assigned.
+
+    """
     logger.info("Cleaning NIH PI data")
     ground_truth_data["pi_id"] = ground_truth_data["pi_id"].str.replace(
         "https://openalex.org/", ""
