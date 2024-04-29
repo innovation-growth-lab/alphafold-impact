@@ -13,6 +13,42 @@ from sklearn.preprocessing import MinMaxScaler
 logger = logging.getLogger(__name__)
 
 
+def get_discipline_map(
+    dict_loader: AbstractDataset,
+) -> pd.DataFrame:
+    """
+    Returns a DataFrame that maps authors and institutions to their respective disciplines.
+
+    Args:
+        dict_loader (AbstractDataset): An abstract dataset object used to load data.
+
+    Returns:
+        pd.DataFrame: A DataFrame with columns 'author', 'institution', and 'group'.
+            The 'group' column represents the discipline of the author and institution.
+    """
+    keys = [
+        "0",
+        "1",
+        "2",
+        "3",
+        "biochemistry",
+        "bioinformatics",
+        "protein_design",
+        "structural_biology",
+    ]
+
+    df = pd.DataFrame()
+    for key in keys:
+        data = dict_loader[key]()
+        temp_df = pd.DataFrame(data, columns=["author", "institution"])
+        temp_df["group"] = key
+        df = pd.concat([df, temp_df])
+
+    df_pivot = pd.get_dummies(df, columns=["group"])
+
+    return df_pivot.groupby(["author", "institution"]).any().reset_index()
+
+
 def _explode_author_data(data: pd.DataFrame) -> pd.DataFrame:
     """
     Explodes the author data in the given DataFrame and returns a new DataFrame
@@ -122,6 +158,7 @@ def _compute_avg_citation_count(author_data: pd.DataFrame) -> pd.DataFrame:
     avg_citation_count = (
         author_data.groupby(["author", "institution", "year"])["cited_by_count"]
         .mean()
+        .apply(np.log1p)
         .reset_index()
     )
 
@@ -146,6 +183,7 @@ def _compute_sample_publication_count(author_data: pd.DataFrame) -> pd.DataFrame
     sample_publication_count = (
         author_data.groupby(["author", "institution", "year"])["id"]
         .nunique()
+        .apply(np.log1p)
         .reset_index()
     )
 
@@ -153,7 +191,7 @@ def _compute_sample_publication_count(author_data: pd.DataFrame) -> pd.DataFrame
 
 
 def calculate_lab_determinants(
-    dict_loader: AbstractDataset,
+    dict_loader: AbstractDataset, candidate_map: pd.DataFrame
 ) -> Generator[Dict[str, pd.DataFrame], None, None]:
     """
     This node calculates the lab determinants for each lab based on the given data.
@@ -170,6 +208,8 @@ def calculate_lab_determinants(
         logger.info(
             "Processing data from %s. Number %s out of %s", key, i + 1, len(dict_loader)
         )
+        if i < 87:
+            continue
 
         article_list = loader()
 
@@ -219,6 +259,11 @@ def calculate_lab_determinants(
 
         # for each dictionary, only preserve
         author_data = _explode_author_data(data)
+
+        # keep if author, institution pair is in candidate_map author institution columns
+        author_data = author_data.merge(
+            candidate_map[["author", "institution"]], on=["author", "institution"], how="inner"
+        )
 
         # lets drop authors whose row count is less than 10 (reduces chances of reassessment)
         author_data = author_data.groupby(["author", "institution"]).filter(

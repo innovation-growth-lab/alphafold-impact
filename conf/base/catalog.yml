@@ -407,6 +407,10 @@ lab.data_collection.candidates.nih.intermediate:
   <<: *_pq
   filepath: s3://alphafold-impact/data/02_intermediate/nih/principal_investigators/nih_principal_investigators.parquet
 
+lab.data_collection.candidates.map.intermediate:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/02_intermediate/oa/labs/candidates_map.parquet
+
 lab.data_collection.assignment.primary:
   <<: *_pq
   filepath: s3://alphafold-impact/data/03_primary/oa/labs/assignments.parquet
@@ -414,6 +418,7 @@ lab.data_collection.assignment.primary:
 lab.data_collection.publications.raw:
   <<: *_pq_ptd
   path: s3://alphafold-impact/data/01_raw/oa/labs/publications/
+
 
 "chains.complete_links.{identifier}.primary":
   <<: *_pq
