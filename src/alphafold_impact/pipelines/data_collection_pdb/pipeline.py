@@ -7,7 +7,9 @@ from kedro.pipeline import Pipeline, pipeline, node
 from .nodes import fetch_pbd_details
 
 
-def create_pipeline(**kwargs) -> Pipeline:
+def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstring
+    **kwargs,
+) -> Pipeline:
     return pipeline(
         [
             node(
