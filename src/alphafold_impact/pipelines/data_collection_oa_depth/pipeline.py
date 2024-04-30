@@ -8,10 +8,14 @@ To run this pipeline, use the following command:
 """
 
 from kedro.pipeline import Pipeline, pipeline, node
-from .nodes import fetch_citation_all_depth, fetch_citation_to_specific_depth
+from .nodes import (
+    fetch_citation_all_depth,
+    fetch_citation_to_specific_depth,
+    preprocess_baseline_data,
+)
 
 
-def create_pipeline(  # pylint: disable=unused-argument&mising-function-docstring
+def create_pipeline(  # pylint: disable=C0116,W0613
     **kwargs,
 ) -> Pipeline:
     full_depth_pipeline = pipeline(
@@ -45,4 +49,28 @@ def create_pipeline(  # pylint: disable=unused-argument&mising-function-docstrin
         tags="oa.data_collection.depth.level",
     )
 
-    return full_depth_pipeline + fixed_depth_pipeline
+    fixed_depth_baseline_pipeline = pipeline(
+        [
+            node(
+                func=preprocess_baseline_data,
+                inputs={
+                    "data": "oa.data_collection.subfield.structural_biology.raw",
+                    "alphafold_papers": "params:oa.data_collection.depth.get.work_ids",
+                },
+                outputs="oa.structural_biology.seed_papers",
+            ),
+            node(
+                func=fetch_citation_to_specific_depth,
+                inputs={
+                    "seed_paper": "oa.structural_biology.seed_papers",
+                    "api_config": "params:oa.data_collection.depth.api",
+                    "filter_config": "params:oa.data_collection.depth.filter",
+                    "max_depth": "params:oa.data_collection.depth.max_depth",
+                },
+                outputs="oa.data_collection.subfield.structural_biology.depth.raw",
+            ),
+        ],
+        tags="oa.data_collection.depth.structural_biology",
+    )
+
+    return full_depth_pipeline + fixed_depth_pipeline + fixed_depth_baseline_pipeline

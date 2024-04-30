@@ -360,3 +360,8 @@ chains:
     id: "id"
     pmid: "pmid"
     doi: "doi"
+  
+pdb:
+  config:
+    max_retries: 5
+    backoff_factor: 0.3

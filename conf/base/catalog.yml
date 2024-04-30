@@ -176,6 +176,12 @@ oa.data_collection.triad.depth.level.raw:
   <<: *_js_ptd
   path: s3://alphafold-impact/data/01_raw/oa/works/depth/triad/levels/
 
+
+oa.data_collection.subfield.structural_biology.depth.raw:
+  <<: *_js_ptd
+  path: s3://alphafold-impact/data/01_raw/oa/works/depth/subfield/structural_biology/levels/
+
+
 "oa.data_processing.depth.mesh.{level}.intermediate":
   <<: *_pq
   filepath: s3://alphafold-impact/data/02_intermediate/oa/works/depth/level/{level}/main.parquet
@@ -431,3 +437,7 @@ lab.data_collection.publications.raw:
 "chains.complete_strong_links_with_ca.{identifier}.primary":
   <<: *_pq
   filepath: s3://alphafold-impact/data/03_primary/oa/works/chains/{identifier}/complete_strong_links_with_ca.parquet
+
+pdb.entries.raw:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/01_raw/pdb/entries.parquet

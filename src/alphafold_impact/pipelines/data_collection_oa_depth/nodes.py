@@ -33,6 +33,7 @@ from typing import Dict, List, Tuple, Generator, Union
 import pandas as pd
 from joblib import Parallel, delayed
 from ..data_collection_oa.nodes import collect_papers  # pylint: disable=E0402
+from kedro.io import AbstractDataset
 
 logger = logging.getLogger(__name__)
 
@@ -134,7 +135,7 @@ def fetch_citation_to_specific_depth(
     Fetches citations to a specific depth from a seed paper.
 
     Args:
-        seed_paper (Union[str, List[str]]): The seed paper to start fetching 
+        seed_paper (Union[str, List[str]]): The seed paper to start fetching
             citations from.
         api_config (Dict[str, str]): API configuration parameters.
         filter_config (str): Filter configuration for fetching papers.
@@ -182,6 +183,31 @@ def fetch_citation_to_specific_depth(
 
         papers_to_process = next_level_papers
         level += 1
+
+
+def preprocess_baseline_data(
+    data: AbstractDataset, alphafold_papers: List[str]
+) -> List[str]:
+    """
+    Preprocesses the baseline data by extracting the paper IDs from the given dataset
+    and removing the IDs that are present in the `alphafold_papers` list.
+
+    Args:
+        data (AbstractDataset): The dataset containing the JSON data.
+        alphafold_papers (List[str]): The list of paper IDs to be excluded.
+
+    Returns:
+        List[str]: The list of paper IDs after preprocessing.
+
+    """
+    seed_papers = set()
+    for loader in data.values():
+        json_data = loader()
+        for record in json_data:
+            paper = record.get("id", "").replace("https://openalex.org/", "")
+            seed_papers.add(paper)
+    seed_papers -= set(alphafold_papers)
+    return list(seed_papers)
 
 
 def _process_flatten_dict(child_papers_dict: Dict[str, any]) -> Dict[str, any]:
