@@ -42,7 +42,7 @@ def _query(ids: list) -> str:
     """
 
 
-def fetch_pbd_details(config: Dict[str, str]) -> Dict[str, Union[str, List[str]]]:
+def fetch_pbd_details(config: Dict[str, str]) -> pd.DataFrame:
     """Fetch the details of a PDB id"""
 
     pbd_ids = _fetch_pbd_ids()
