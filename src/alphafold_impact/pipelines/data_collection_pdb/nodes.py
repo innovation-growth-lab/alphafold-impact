@@ -88,4 +88,11 @@ def fetch_pbd_details(config: Dict[str, str]) -> Dict[str, Union[str, List[str]]
         outputs.append(data)
 
     # concatenate
-    return pd.concat(outputs)
+    outputs = pd.concat(outputs)
+
+    # make sure ids are strings
+    outputs["rcsb_id"] = outputs["rcsb_id"].astype(str)
+    outputs["pmid"] = outputs["pmid"].astype(str)
+    outputs["doi"] = outputs["doi"].astype(str)
+
+    return outputs
