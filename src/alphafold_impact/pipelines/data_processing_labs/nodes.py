@@ -208,8 +208,6 @@ def calculate_lab_determinants(
         logger.info(
             "Processing data from %s. Number %s out of %s", key, i + 1, len(dict_loader)
         )
-        if i < 87:
-            continue
 
         article_list = loader()
 

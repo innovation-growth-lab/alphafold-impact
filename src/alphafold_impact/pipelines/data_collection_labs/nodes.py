@@ -128,7 +128,7 @@ def fetch_author_publications(
 
     # create batches of 50 authors
     author_batches = [
-        "|".join(author_ids[i : i + 50]) for i in range(0, len(author_ids), 50)
+        "|".join(author_ids[i : i + 25]) for i in range(0, len(author_ids), 25)
     ]
 
     filter_batches = [[from_publication_date, batch] for batch in author_batches]
@@ -142,7 +142,7 @@ def fetch_author_publications(
 
         logger.info("Processing batch number %d / %d", i + 1, len(slices))
 
-        slice_results = Parallel(n_jobs=6, backend="loky", verbose=10)(
+        slice_results = Parallel(n_jobs=8, backend="loky", verbose=10)(
             delayed(collect_papers)(
                 oa_ids=batch,
                 mailto=api_config["mailto"],
@@ -151,7 +151,7 @@ def fetch_author_publications(
                 slice_keys=True,
                 eager_loading=True,
                 skip_preprocess=True,
-                sample_size=100 * len(batch[1].split("|")),
+                sample_size=200 * len(batch[1].split("|")),
             )
             for batch in slice_
         )
