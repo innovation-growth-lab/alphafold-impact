@@ -154,10 +154,29 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
         for subfield in settings.DYNAMIC_PIPELINES_MAPPING["oa"]["subfields"]
     ]
 
+    baseline_level0_pipeline = pipeline(
+        [
+            node(
+                func=process_data_by_level,
+                inputs={
+                    "data": "oa.data_collection.subfield.structural_biology.depth.raw",
+                    "level": "params:oa.data_collection.depth.levels.0",
+                    "extra_mesh": "params:false_",
+                },
+                outputs="oa.data_collection.subfield.structural_biology.depth.0.intermediate",
+            )
+        ],
+        tags=[
+            "oa.data_processing.structural_biology.depth.level.0",
+            "oa.data_processing.structural_biology.depth.levels",
+        ],
+    )
+
     return (
         sum(additioal_mesh_levels)
         + sum(no_additional_mesh_levels)
         + mesh_tagging_pipeline
         + combine_levels_pipeline
         + sum(subfield_pipelines)
+        + baseline_level0_pipeline
     )

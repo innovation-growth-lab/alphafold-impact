@@ -73,6 +73,8 @@ def _json_loader(
                     "mesh_terms",
                     "cited_by_count",
                     "authorships",
+                    "topics",
+                    "concepts",
                 ]
             }
             for item in children_list
@@ -126,6 +128,42 @@ def _json_loader(
 
         # change doi to remove the url
         df["doi"] = df["doi"].str.replace("https://doi.org/", "")
+
+        # create a list of topics, with id (replacing openalex.org), display_name, subfield id (replacing openalex), display_name, field, and domain (same)
+        df["topics"] = df["topics"].apply(
+            lambda x: (
+                [
+                    (
+                        topic["id"].replace("https://openalex.org/", ""),
+                        topic["display_name"],
+                        topic["subfield"]["id"].replace("https://openalex.org/", ""),
+                        topic["subfield"]["display_name"],
+                        topic["field"]["id"].replace("https://openalex.org/", ""),
+                        topic["field"]["display_name"],
+                        topic["domain"]["id"].replace("https://openalex.org/", ""),
+                        topic["domain"]["display_name"],
+                    )
+                    for topic in x
+                ]
+                if x
+                else None
+            )
+        )
+
+        # extract concepts, ie. for each element in the list of jsons, get id, replace openalex.org, get display_name
+        df["concepts"] = df["concepts"].apply(
+            lambda x: (
+                [
+                    (
+                        concept["id"].replace("https://openalex.org/", ""),
+                        concept["display_name"],
+                    )
+                    for concept in x
+                ]
+                if x
+                else None
+            )
+        )
 
         # append to output
         output.append(df)
@@ -248,6 +286,8 @@ def process_data_by_level(
             "mesh_terms",
             "cited_by_count",
             "authorships",
+            "topics",
+            "concepts",
         ]
     ]
 
@@ -330,6 +370,8 @@ def process_subfield_data(data: Dict[str, AbstractDataset]) -> pd.DataFrame:
                     "mesh_terms",
                     "cited_by_count",
                     "authorships",
+                    "topics",
+                    "concepts",
                 ]
             }
             for item in raw_json_data
@@ -384,6 +426,42 @@ def process_subfield_data(data: Dict[str, AbstractDataset]) -> pd.DataFrame:
             )
         )
 
+        # create a list of topics, with id (replacing openalex.org), display_name, subfield id (replacing openalex), display_name, field, and domain (same)
+        df["topics"] = df["topics"].apply(
+            lambda x: (
+                [
+                    (
+                        topic["id"].replace("https://openalex.org/", ""),
+                        topic["display_name"],
+                        topic["subfield"]["id"].replace("https://openalex.org/", ""),
+                        topic["subfield"]["display_name"],
+                        topic["field"]["id"].replace("https://openalex.org/", ""),
+                        topic["field"]["display_name"],
+                        topic["domain"]["id"].replace("https://openalex.org/", ""),
+                        topic["domain"]["display_name"],
+                    )
+                    for topic in x
+                ]
+                if x
+                else None
+            )
+        )
+
+        # extract concepts, ie. for each element in the list of jsons, get id, replace openalex.org, get display_name
+        df["concepts"] = df["concepts"].apply(
+            lambda x: (
+                [
+                    (
+                        concept["id"].replace("https://openalex.org/", ""),
+                        concept["display_name"],
+                    )
+                    for concept in x
+                ]
+                if x
+                else None
+            )
+        )
+
         # change doi to remove the url
         df["doi"] = df["doi"].str.replace("https://doi.org/", "")
 
@@ -402,5 +480,7 @@ def process_subfield_data(data: Dict[str, AbstractDataset]) -> pd.DataFrame:
             "mesh_terms",
             "cited_by_count",
             "authorships",
+            "concepts",
+            "topics",
         ]
     ]
