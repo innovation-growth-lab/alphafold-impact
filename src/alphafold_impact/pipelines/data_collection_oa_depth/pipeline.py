@@ -12,6 +12,7 @@ from .nodes import (
     fetch_citation_all_depth,
     fetch_citation_to_specific_depth,
     preprocess_baseline_data,
+    preprocess_restart_data
 )
 
 
@@ -73,4 +74,30 @@ def create_pipeline(  # pylint: disable=C0116,W0613
         tags="oa.data_collection.depth.structural_biology",
     )
 
-    return full_depth_pipeline + fixed_depth_pipeline + fixed_depth_baseline_pipeline
+    restart_depth_from_level_pipeline = pipeline(
+        [
+            node(
+                func=preprocess_restart_data,
+                inputs={
+                    "data": "oa.data_collection.subfield.structural_biology.depth.raw",
+                    "start_level": "params:start_level",
+                },
+                outputs=["seen_papers", "papers_to_process", "level"],
+            ),
+            node(
+                func=fetch_citation_to_specific_depth,
+                inputs={
+                    "seed_paper": "papers_to_process",
+                    "api_config": "params:oa.data_collection.depth.api",
+                    "filter_config": "params:oa.data_collection.depth.filter",
+                    "max_depth": "params:max_level",
+                    "start_level": "level",
+                    "papers_seen": "seen_papers",
+                },
+                outputs="oa.data_collection.subfield.structural_biology.depth.restarted.raw",
+            ),
+        ],
+        tags="oa.data_processing.depth.structural_biology.restart",
+    )
+
+    return full_depth_pipeline + fixed_depth_pipeline + fixed_depth_baseline_pipeline + restart_depth_from_level_pipeline

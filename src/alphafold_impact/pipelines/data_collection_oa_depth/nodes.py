@@ -70,7 +70,7 @@ def fetch_citation_all_depth(
         logger.info("Processing the following papers: %s", current_batch)
 
         # parallel fetching of papers
-        child_papers = Parallel(n_jobs=6, backend="loky", verbose=10)(
+        child_papers = Parallel(n_jobs=10, backend="loky", verbose=10)(
             delayed(collect_papers)(
                 oa_ids=paper,
                 mailto=api_config["mailto"],
@@ -130,6 +130,8 @@ def fetch_citation_to_specific_depth(
     api_config: Dict[str, str],
     filter_config: str,
     max_depth: int,
+    start_level: int = 0,
+    papers_seen: set = None,
 ):
     """
     Fetches citations to a specific depth from a seed paper.
@@ -144,7 +146,13 @@ def fetch_citation_to_specific_depth(
     Yields:
         dict: A dictionary containing the fetched papers at each level of depth.
     """
-    processed_papers, papers_to_process, level = set(), set(seed_paper), 0
+    if papers_seen is None:
+        papers_seen = set()
+    processed_papers, papers_to_process, level = (
+        papers_seen,
+        set(seed_paper),
+        start_level,
+    )
 
     while level < max_depth:
         next_level_papers = set()
@@ -208,6 +216,57 @@ def preprocess_baseline_data(
             seed_papers.add(paper)
     seed_papers -= set(alphafold_papers)
     return list(seed_papers)
+
+
+def preprocess_restart_data(
+    data: AbstractDataset, start_level: int
+) -> Tuple[List[str], set]:
+    """
+    Preprocesses the restart data by extracting the paper IDs, and parent IDs, of
+    the previous level data.
+
+    Args:
+        data (AbstractDataset): The dataset containing the JSON data.
+        start_level (int): The level to start fetching data from.
+
+    Returns:
+        Tuple[List[str], set]: A tuple containing the list of paper IDs to process and the set of
+        parent IDs that have been seen.
+    """
+
+    keys = [key for key in data.keys() if key.startswith(str(start_level))][:24]
+
+
+
+    def process_key(key):
+        seen_papers, papers_to_process = set(), []
+        raw_json_data = data[key]()
+
+        for parent_id, children_list in raw_json_data.items():
+            json_data = [
+                {
+                    k: v
+                    for k, v in item.items()
+                    if k
+                    in [
+                        "id",
+                    ]
+                }
+                for item in children_list
+            ]
+            df = pd.DataFrame(json_data)
+            papers_to_process.extend(df["id"].tolist())
+            seen_papers.add(parent_id)
+        return seen_papers, papers_to_process
+
+    keys = [key for key in data.keys() if key.startswith(str(start_level))]
+
+    results = Parallel(n_jobs=8, backend="loky", verbose=10)(delayed(process_key)(key) for key in keys)
+
+    seen_papers = set().union(*[result[0] for result in results])
+    papers_to_process = [item for sublist in [result[1] for result in results] for item in sublist]
+
+    return seen_papers, papers_to_process, start_level+1
 
 
 def _process_flatten_dict(child_papers_dict: Dict[str, any]) -> Dict[str, any]:
