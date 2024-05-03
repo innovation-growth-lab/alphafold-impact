@@ -421,7 +421,7 @@ labs:
       protein_design: True
       biochemistry: True
       bioinformatics: True
-    from_date: "2010-01-01"
+    from_date: "2015-01-01"
     api:
       mailto: data_analytics@nesta.org.uk
       perpage: "200"
@@ -454,3 +454,6 @@ pdb:
   config:
     max_retries: 5
     backoff_factor: 0.3
+
+start_level: 1
+max_level: 3

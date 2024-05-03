@@ -471,3 +471,48 @@ def get_citation_intent_from_oa_dataset(
             "strength",
         ]
     ]
+
+
+def get_baseline_seed_intent(oa_dataset: pd.DataFrame, **kwargs) -> pd.DataFrame:
+    """
+    Retrieves the seed intent data from the given baseline OA dataset.
+
+    Args:
+        oa_dataset (pd.DataFrame): The input OA dataset.
+        **kwargs: Additional keyword arguments.
+
+    Returns:
+        pd.DataFrame: The processed seed intent data.
+    """
+
+    # remove duplicate rows based on "id"
+    oa_dataset = oa_dataset.drop_duplicates(subset="id")
+
+    inputs = oa_dataset.apply(
+        lambda x: (x["id"], "", x["doi"], "", x["pmid"]),
+        axis=1,
+    ).tolist()
+
+    # use joblib to parallelize the function calls
+    level_outputs = Parallel(n_jobs=4)(
+        delayed(iterate_citation_detail_points)(*input, direction="citations", **kwargs)
+        for input in inputs
+    )
+
+    # change oa_dataset "doi" to "parent_doi"
+    oa_dataset.rename(columns={"doi": "parent_doi"}, inplace=True)
+    level_dict = dict(list(zip(oa_dataset["parent_doi"], level_outputs)))
+
+    processed_level_citations = process_citations(level_dict)
+
+    return pd.DataFrame(
+        processed_level_citations,
+        columns=[
+            "parent_doi",
+            "pmid",
+            "doi",
+            "influential",
+            "intent",
+            "context",
+        ],
+    )

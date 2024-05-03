@@ -11,7 +11,8 @@ To run this pipeline, use the following command:
 
 from kedro.pipeline import Pipeline, node, pipeline
 from .nodes import (
-    get_citation_intent_from_oa_dataset
+    get_citation_intent_from_oa_dataset,
+    get_baseline_seed_intent
 )
 
 
@@ -34,6 +35,21 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
         tags=["s2.intent.primary"],
     )
 
+    baseline_seed_pipeline = pipeline(
+        [
+            node(
+                func=get_baseline_seed_intent,
+                inputs={
+                    "oa_dataset": "oa.data_processing.subfield.structural_biology.primary",
+                    "base_url": "params:s2.data_collection.strength.api.base_url",
+                    "fields": "params:s2.data_collection.strength.api.fields",
+                    "api_key": "params:s2.data_collection.strength.api.key",
+                    "perpage": "params:s2.data_collection.strength.api.perpage",
+                },
+                outputs="oa.data_processing.depth.level.0.baseline.primary",
+            ),
+        ],
+        tags=["s2.intent.baseline"],
+    )
 
-
-    return primary_data_intent_pipeline
+    return primary_data_intent_pipeline + baseline_seed_pipeline
