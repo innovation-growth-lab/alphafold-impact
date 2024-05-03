@@ -4,7 +4,7 @@ generated using Kedro 0.19.1
 """
 
 import logging
-from typing import Dict, List, Union
+from typing import Dict, List
 import requests
 from requests.adapters import HTTPAdapter, Retry
 import pandas as pd
@@ -32,6 +32,12 @@ def _query(ids: list) -> str:
             }}
             audit_author {{
             name
+            }}
+            refine {{
+            ls_R_factor_R_free
+            }}
+            rcsb_entry_info {{
+            resolution_combined
             }}
             rcsb_primary_citation {{
             pdbx_database_id_PubMed
@@ -84,6 +90,21 @@ def fetch_pbd_details(config: Dict[str, str]) -> pd.DataFrame:
             lambda x: x.get("pdbx_database_id_DOI", "") if x is not None else ""
         )
 
+        # extract resolution
+        data["resolution"] = data["rcsb_entry_info"].apply(
+            lambda x: (
+                x.get("resolution_combined", [""])[0]
+                if x.get("resolution_combined")
+                else ""
+            )
+        )
+        # extract R-free factor
+        data["R_free"] = data["refine"].apply(
+            lambda x: (
+                x[0].get("ls_R_factor_R_free", "") if isinstance(x, list) else None
+            )
+        )
+
         # append
         outputs.append(data)
 
@@ -94,5 +115,7 @@ def fetch_pbd_details(config: Dict[str, str]) -> pd.DataFrame:
     outputs["rcsb_id"] = outputs["rcsb_id"].astype(str)
     outputs["pmid"] = outputs["pmid"].astype(str)
     outputs["doi"] = outputs["doi"].astype(str)
+    outputs["resolution"] = outputs["resolution"].astype(str)
+    outputs["R_free"] = outputs["R_free"].astype(str)
 
     return outputs
