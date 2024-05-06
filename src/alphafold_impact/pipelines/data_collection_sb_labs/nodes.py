@@ -73,6 +73,7 @@ def separate_ct_from_seed(
     seed_baseline_data,
     ct_data,
 ):
+    """Separate the CT data from the seed data."""
     # subset the baseline data for rows that have the parent_id in ct_data
     ct_level_0_papers = baseline_data[
         baseline_data["parent_id"].isin(ct_data["parent_id"])
