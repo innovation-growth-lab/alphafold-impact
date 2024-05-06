@@ -192,6 +192,10 @@ oa.data_collection.subfield.structural_biology.depth.restarted.raw:
   <<: *_pq
   filepath: s3://alphafold-impact/data/02_intermediate/oa/works/depth/subfield/structural_biology/level/{level}/main.parquet
 
+"oa.data_collection.subfield.structural_biology.depth.{level}.ptd.intermediate":
+  <<: *_pq_ptd
+  path: s3://alphafold-impact/data/02_intermediate/oa/works/depth/subfield/structural_biology/level/{level}/ptd/
+
 "oa.data_processing.depth.mesh.{level}.intermediate":
   <<: *_pq
   filepath: s3://alphafold-impact/data/02_intermediate/oa/works/depth/level/{level}/main.parquet
@@ -491,6 +495,10 @@ chains.seed_technologies.intermediate:
 sb_lab.data_collection.candidates.publications.intermediate:
   <<: *_js_ptd
   path: s3://alphafold-impact/data/02_intermediate/oa/sb_labs/candidate_publications/
+
+sb_lab.data_collection.candidates.map:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/02_intermediate/oa/sb_labs/candidates_map.parquet
 
 sb_lab.data_collection.candidates.scores.intermediate:
   <<: *_pq_ptd
