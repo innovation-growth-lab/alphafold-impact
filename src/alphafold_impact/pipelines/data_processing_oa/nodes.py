@@ -490,7 +490,7 @@ def process_subfield_data(data: Dict[str, AbstractDataset]) -> pd.DataFrame:
 
 def process_data_by_level_ptd(
     data: Dict[str, AbstractDataset], level: int, extra_mesh: str = True
-) -> pd.DataFrame:
+) -> Generator[Dict[str, pd.DataFrame], None, None]:
     """
     Process data by level and return a DataFrame with selected columns.
 
@@ -617,5 +617,9 @@ def reassign_ct_levels(
     data_other["level"] = (
         data_other["level"].map(level_mapping).fillna(data_other["level"])
     )
+
+    # drop columns
+    data_ct = data_ct.drop(columns=["ct_seed", "ct_l0", "ct_l1"])
+    data_other = data_other.drop(columns=["ct_seed", "ct_l0", "ct_l1"])
 
     return data_ct, data_other
