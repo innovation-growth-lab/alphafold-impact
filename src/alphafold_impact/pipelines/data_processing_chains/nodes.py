@@ -396,7 +396,7 @@ def _transform_long_pairs(data, intents):
         df_ids = pd.concat([df_ids, df_level])
 
     df_ids["paper_id"] = df_ids["paper_id"].astype(str)
-    df_ids.drop_duplicates(subset=["paper_id"], inplace=True)
+    df_ids.drop_duplicates(subset=["parent_paper_id", "paper_id", "level"], inplace=True)
 
     return df_ids
 

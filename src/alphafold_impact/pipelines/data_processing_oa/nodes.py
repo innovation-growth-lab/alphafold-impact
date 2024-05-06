@@ -484,3 +484,77 @@ def process_subfield_data(data: Dict[str, AbstractDataset]) -> pd.DataFrame:
             "topics",
         ]
     ]
+
+
+def process_data_by_level_ptd(
+    data: Dict[str, AbstractDataset], level: int, extra_mesh: str = True
+) -> pd.DataFrame:
+    """
+    Process data by level and return a DataFrame with selected columns.
+
+    Args:
+        data (Dict[str, AbstractDataset]): A dictionary containing the input data.
+        level (int): The level to process the data for.
+        extra_mesh (bool): Whether to enrich the data with additional mesh terms.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing the processed data with selected columns.
+    """
+
+    logger.info("Processing data for level %s", level)
+
+    # Generate data for current level
+    data_gen = _data_generator(data, level)
+
+    # Iterate over data batches in current level
+    for i, df_batch in enumerate(data_gen):
+
+        if extra_mesh:
+            logger.info("Processing parent IDs: %s", df_batch["parent_id"].iloc[0])
+            # Fetch additional mesh terms for current batch
+            df_batch = fetch_additional_mesh(df_batch)
+
+        yield {
+            f"s{i}": df_batch[
+                [
+                    "parent_id",
+                    "id",
+                    "pmid",
+                    "level",
+                    "doi",
+                    "publication_date",
+                    "mesh_terms",
+                    "cited_by_count",
+                    "authorships",
+                    "topics",
+                    "concepts",
+                ]
+            ]
+        }
+
+
+def concat_pq_ptd(
+    data: Dict[str, pd.DataFrame],
+) -> pd.DataFrame:
+    """
+    Concatenate dataframes from multiple levels into a single dataframe.
+
+    Args:
+        data (Dict[str, pd.DataFrame]): A dictionary containing the input data.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing the concatenated data.
+    """
+    output = []
+    for i, loader in enumerate(data.values()):
+        logger.info("Processing data partition: %s / %s", i + 1, len(data))
+        data_pt = loader()
+        output.append(data_pt)
+    return pd.concat(output)
+
+
+def reassign_ct_levels(
+    data: pd.DataFrame,
+    ct_data: pd.DataFrame,
+):
+    return data

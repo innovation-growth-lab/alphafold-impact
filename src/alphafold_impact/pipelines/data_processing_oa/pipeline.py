@@ -15,7 +15,14 @@ from ...utils.nih_mesh_tagging import (  # pylint: disable=E0402
     skr_web_python_api_generic_batch,
     mesh_results_to_df,
 )
-from .nodes import process_subfield_data, process_data_by_level, combine_levels_data
+from .nodes import (
+    process_subfield_data,
+    process_data_by_level,
+    combine_levels_data,
+    reassign_ct_levels,
+    process_data_by_level_ptd,
+    concat_pq_ptd
+)
 
 
 def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstring
@@ -172,6 +179,56 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
         ],
     )
 
+    baseline_level1_pipeline = pipeline(
+        [
+            node(
+                func=process_data_by_level_ptd,
+                inputs={
+                    "data": "oa.data_collection.subfield.structural_biology.depth.raw",
+                    "level": "params:oa.data_collection.depth.levels.1",
+                    "extra_mesh": "params:false_",
+                },
+                outputs="oa.data_collection.subfield.structural_biology.depth.1.ptd.intermediate",
+            ),
+            node(
+                func=concat_pq_ptd,
+                inputs={
+                    "data": "oa.data_collection.subfield.structural_biology.depth.1.ptd.intermediate",
+                },
+                outputs="oa.data_collection.subfield.structural_biology.depth.1.intermediate",
+                tags="concat_pq_ptd"
+            )
+        ],
+        tags=[
+            "oa.data_processing.structural_biology.depth.level.1",
+            "oa.data_processing.structural_biology.depth.levels",
+        ],
+    )
+
+
+    combine_baseline_levels_pipeline = pipeline(
+        [
+            node(
+                func=combine_levels_data,
+                inputs={
+                    "level_seed": "oa.data_processing.subfield.structural_biology.primary",
+                    "level0": "oa.data_collection.subfield.structural_biology.depth.0.intermediate",
+                    "level1": "oa.data_collection.subfield.structural_biology.depth.1.intermediate",
+                },
+                outputs="oa.data_processing.structural_biology.depth.intermediate",
+            ),
+            node(
+                func=reassign_ct_levels,
+                inputs={
+                    "data": "oa.data_processing.structural_biology.depth.intermediate",
+                    "ct_data": "chains.seed_technologies.intermediate",
+                },
+                outputs="oa.data_processing.structural_biology.depth.reassigned",
+            )
+        ],
+        tags="oa.data_processing.depth.combine_levels",
+    )
+
     return (
         sum(additioal_mesh_levels)
         + sum(no_additional_mesh_levels)
@@ -179,4 +236,6 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
         + combine_levels_pipeline
         + sum(subfield_pipelines)
         + baseline_level0_pipeline
+        + baseline_level1_pipeline
+        + combine_baseline_levels_pipeline
     )
