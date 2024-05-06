@@ -7,11 +7,14 @@ import logging
 from typing import Dict, List, Tuple, Generator
 from kedro.io import AbstractDataset
 import pandas as pd
+from sklearn.preprocessing import MinMaxScaler
 from ..data_processing_labs.nodes import (  # pylint: disable=E0402
     _explode_author_data,
     _compute_avg_citation_count,
     _compute_sample_publication_count,
     _compute_apf,
+    appears_in_three_consecutive_years,
+    is_likely_pi,
 )
 
 logger = logging.getLogger(__name__)
@@ -65,7 +68,7 @@ def _get_sb_candidate_authors(data: pd.DataFrame) -> List[Tuple[str, str]]:
     return list(alphafold_authors.index)
 
 
-def _separate_ct_from_seed(
+def separate_ct_from_seed(
     baseline_data,
     seed_baseline_data,
     ct_data,
@@ -105,7 +108,7 @@ def get_candidate_authors(
     alphafold_authors = _get_sb_candidate_authors(alphafold_data)
 
     # separate the CT data from the seed data
-    ct_data, other_data = _separate_ct_from_seed(baseline_data, seed_data, ct_data)
+    ct_data, other_data = separate_ct_from_seed(baseline_data, seed_data, ct_data)
 
     # get the last authors from the CT data
     ct_authors = _get_sb_candidate_authors(ct_data)
@@ -119,7 +122,7 @@ def get_candidate_authors(
     return authors, alphafold_authors, ct_authors, other_authors
 
 
-def _create_candidates_map(
+def create_candidates_map(
     alphafold_authors: List,
     ct_authors: List,
     other_authors: List,
@@ -252,7 +255,7 @@ def calculate_lab_determinants(
         author_data = _explode_author_data(data)
 
         # get mapping between candidates and chain seeds
-        candidate_map = _create_candidates_map(
+        candidate_map = create_candidates_map(
             alphafold_authors, ct_authors, other_authors
         )
 
@@ -290,3 +293,111 @@ def calculate_lab_determinants(
         logger.info("Finished processing data from %s", key)
 
         yield {key: author_data}
+
+
+def assign_lab_label(
+    candidate_data: pd.DataFrame,
+) -> pd.DataFrame:
+    """
+    Assigns lab labels to candidate data based on matching with ground truth data.
+
+    Args:
+        candidate_data (pd.DataFrame): The candidate data containing author information.
+
+    Returns:
+        pd.DataFrame: The candidate data with lab labels assigned.
+
+    """
+
+    logger.info("Sorting candidate data")
+    candidate_data = candidate_data.sort_values(by=["author", "year"]).reset_index(
+        drop=True
+    )
+
+    logger.info(
+        "Filtering candidate data based on appearing in three consecutive years"
+    )
+    candidate_data["year"] = candidate_data["year"].astype(int)
+    candidate_data = candidate_data.groupby(["author", "institution"]).filter(
+        appears_in_three_consecutive_years
+    )
+
+    logger.info("Calculating mean APF")
+    candidate_data["mean_apf"] = candidate_data.groupby(["author", "institution"])[
+        "apf"
+    ].transform("mean")
+
+    logger.info("Calculating quantiles")
+    quantiles = candidate_data["mean_apf"].quantile([0.25, 0.5, 0.75])
+
+    logger.info(
+        "Filtering candidate data based on having at least one year above 75th percentile of APF"
+    )
+    candidate_data = candidate_data[
+        candidate_data.groupby(["author", "institution"])["apf"].transform(
+            lambda x: x.max() > quantiles[0.75]
+        )
+    ]
+
+    logger.info("Calculating 3-year average APF")
+    candidate_data["apf_3yr_avg"] = (
+        candidate_data.groupby(["author", "institution"])["apf"]
+        .rolling(3)
+        .mean()
+        .reset_index(level=[0, 1], drop=True)
+    )
+
+    logger.info("Filling 1 and 2 year nans")
+    candidate_data["apf_1yr_avg"] = (
+        candidate_data.groupby(["author", "institution"])["apf"]
+        .rolling(1)
+        .mean()
+        .reset_index(level=[0, 1], drop=True)
+    )
+    candidate_data["apf_2yr_avg"] = (
+        candidate_data.groupby(["author", "institution"])["apf"]
+        .rolling(2)
+        .mean()
+        .reset_index(level=[0, 1], drop=True)
+    )
+
+    # Use 1-year and 2-year averages to fill NaN in 'apf_3yr_avg'
+    candidate_data["apf_3yr_avg"] = (
+        candidate_data["apf_3yr_avg"]
+        .fillna(candidate_data["apf_2yr_avg"])
+        .fillna(candidate_data["apf_1yr_avg"])
+    )
+
+    # Drop temporary columns
+    candidate_data = candidate_data.drop(columns=["apf_1yr_avg", "apf_2yr_avg"])
+
+    logger.info("Normalising data")
+    scaler = MinMaxScaler()
+    candidate_data[["cited_by_count", "publication_count"]] = scaler.fit_transform(
+        candidate_data[["cited_by_count", "publication_count"]]
+    )
+
+    # assign weights
+    weights = {
+        "apf": 0.4,
+        "mean_apf": 0.1,
+        "apf_3yr_avg": 0.2,
+        "publication_count": 0.2,
+        "cited_by_count": 0.1,
+    }
+
+    logger.info("Calculating score")
+    candidate_data["score"] = (
+        candidate_data["apf"] * weights["apf"]
+        + candidate_data["mean_apf"] * weights["mean_apf"]
+        + candidate_data["cited_by_count"] * weights["cited_by_count"]
+        + candidate_data["publication_count"] * weights["publication_count"]
+    )
+
+    logger.info("Make final selection")
+    quantile_75 = candidate_data["score"].quantile(0.75)
+    likely_pis = candidate_data.groupby(["author", "institution"]).filter(
+        is_likely_pi, quantile=quantile_75
+    )
+
+    return likely_pis

@@ -504,7 +504,17 @@ sb_lab.data_collection.candidates.scores.intermediate:
   <<: *_pq_ptd
   path: s3://alphafold-impact/data/02_intermediate/oa/sb_labs/scores/
 
-# TCC
+sb_lab.data_collection.candidates.scores.primary:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/03_primary/oa/sb_labs/main_scores.parquet
+
+sb_lab.data_collection.assignment.primary:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/03_primary/oa/sb_labs/assignments.parquet
+
+sb_lab.data_collection.publications.raw:
+  <<: *_pq_ptd
+  path: s3://alphafold-impact/data/01_raw/oa/sb_labs/publications/# TCC
 tcc.data_analysis:
   <<: *_csv_ptd
   path: s3://alphafold-impact/data/04_analysis/tcc/

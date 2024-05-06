@@ -24,7 +24,6 @@ from .nodes import (
     concat_pq_ptd
 )
 
-
 def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstring
     **kwargs,
 ) -> Pipeline:

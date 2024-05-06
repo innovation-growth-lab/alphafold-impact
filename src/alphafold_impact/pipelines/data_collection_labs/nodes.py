@@ -333,12 +333,14 @@ def get_publications_from_labs(
         api_config (Dict[str, str]): Configuration settings for the API.
 
     Yields:
-        Tuple[Dict[str, pd.DataFrame], Dict[str, List[dict]]]: A generator that yields a tuple of dictionaries.
-            The first dictionary contains slice keys as keys and a list of papers as values.
-            The second dictionary contains slice keys as keys and a list of authors as values.
+        Tuple[Dict[str, pd.DataFrame], Dict[str, List[dict]]]: A generator that yields a tuple 
+            of dictionaries. The first dictionary contains slice keys as keys and a list of papers 
+            as values. The second dictionary contains slice keys as keys and a list of authors as 
+            values.
 
     Returns:
-        None: This function does not return anything directly. It yields the results using a generator.
+        None: This function does not return anything directly. It yields the results using a 
+            generator.
     """
 
     # get unique authors from data
@@ -401,6 +403,8 @@ def get_publications_from_labs(
                         "cited_by_count",
                         "counts_by_year",
                         "authorships",
+                        "concepts",
+                        "topics",
                     ]
                 }
                 for item in children_list
@@ -466,6 +470,48 @@ def get_publications_from_labs(
                             )
                             for author in x
                             for inst in author["institutions"] or [{}]
+                        ]
+                        if x
+                        else None
+                    )
+                )
+
+                # create a list of topics
+                df["topics"] = df["topics"].apply(
+                    lambda x: (
+                        [
+                            (
+                                topic["id"].replace("https://openalex.org/", ""),
+                                topic["display_name"],
+                                topic["subfield"]["id"].replace(
+                                    "https://openalex.org/", ""
+                                ),
+                                topic["subfield"]["display_name"],
+                                topic["field"]["id"].replace(
+                                    "https://openalex.org/", ""
+                                ),
+                                topic["field"]["display_name"],
+                                topic["domain"]["id"].replace(
+                                    "https://openalex.org/", ""
+                                ),
+                                topic["domain"]["display_name"],
+                            )
+                            for topic in x
+                        ]
+                        if x
+                        else None
+                    )
+                )
+
+                # extract concepts
+                df["concepts"] = df["concepts"].apply(
+                    lambda x: (
+                        [
+                            (
+                                concept["id"].replace("https://openalex.org/", ""),
+                                concept["display_name"],
+                            )
+                            for concept in x
                         ]
                         if x
                         else None
