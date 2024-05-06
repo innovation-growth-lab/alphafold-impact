@@ -532,7 +532,11 @@ sb_lab.data_collection.publications.raw:
 
 analysis.descriptive.level0_data:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/03_primary/oa/works/analysis/descriptive/level0_data.parquet# TCC
+  filepath: s3://alphafold-impact/data/03_primary/oa/works/analysis/descriptive/level0_data.parquet
+
+analysis.descriptive.level0_data_with_cc_counts:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/04_output/analysis/descriptive/level0_data_with_cc_counts.parquet# TCC
 tcc.data_analysis:
   <<: *_csv_ptd
   path: s3://alphafold-impact/data/04_analysis/tcc/
