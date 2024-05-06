@@ -205,7 +205,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
     )
 
 
-    combine_baseline_levels_pipeline = pipeline(
+    reassign_baseline_levels_pipeline = pipeline(
         [
             node(
                 func=combine_levels_data,
@@ -222,10 +222,10 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                     "data": "oa.data_processing.structural_biology.depth.intermediate",
                     "ct_data": "chains.seed_technologies.intermediate",
                 },
-                outputs="oa.data_processing.structural_biology.depth.reassigned",
+                outputs=["oa.data_processing.structural_biology.depth.reassigned.ct.intermediate", "oa.data_processing.structural_biology.depth.reassigned.other.intermediate"],
             )
         ],
-        tags="oa.data_processing.depth.combine_levels",
+        tags="oa.data_processing.depth.reassign_ct",
     )
 
     return (
@@ -236,5 +236,5 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
         + sum(subfield_pipelines)
         + baseline_level0_pipeline
         + baseline_level1_pipeline
-        + combine_baseline_levels_pipeline
+        + reassign_baseline_levels_pipeline
     )

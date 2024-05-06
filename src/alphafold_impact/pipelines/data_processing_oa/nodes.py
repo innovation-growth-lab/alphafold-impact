@@ -14,11 +14,11 @@ Functions:
 """
 
 import logging
-from typing import Dict, Generator
+from typing import Dict, Generator, Tuple
 import pandas as pd
+import numpy as np
 from kedro.io import AbstractDataset
 from Bio import Entrez
-
 logger = logging.getLogger(__name__)
 
 
@@ -330,7 +330,7 @@ def combine_levels_data(unique: str = "all", **kwargs) -> pd.DataFrame:
             subset=[
                 col
                 for col in df.columns
-                if col not in ["strength", "mesh_terms", "authorships"]
+                if col not in ["strength", "mesh_terms", "authorships", "topics", "concepts"]
             ]
         )
 
@@ -556,5 +556,44 @@ def concat_pq_ptd(
 def reassign_ct_levels(
     data: pd.DataFrame,
     ct_data: pd.DataFrame,
-):
-    return data
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Reassigns the ct levels in the given data based on the provided ct_data.
+
+    Args:
+        data (pd.DataFrame): The input data containing the levels to be reassigned.
+        ct_data (pd.DataFrame): The ct data used for reassigning the levels.
+
+    Returns:
+        Tuple[pd.DataFrame, pd.DataFrame]: A tuple containing two dataframes:
+            - data_ct: The data with reassigned ct levels.
+            - data_other: The remaining data with reassigned levels.
+
+    """
+    # drop any rows with id or parent_id W3177828909, W3211795435, W3202105508
+    data = data[~(data["id"].isin(["W3177828909", "W3211795435", "W3202105508"]) | data["parent_id"].isin(["W3177828909", "W3211795435", "W3202105508"]))]
+
+    data_cp = data.copy()
+
+    logger.info("Seed - Identify the ct_data ids that appear as ids")
+    data_cp['ct_seed'] = data_cp.apply(lambda row: row['id'] in ct_data["parent_id"].to_list() and pd.isna(row['level']), axis=1)
+
+    logger.info("Level 0 - Identify the ct_data ids that appear as parent_id")
+    data_cp["ct_l0"] = np.where((data_cp["level"] == 0.0) & (data_cp["parent_id"].isin(ct_data["parent_id"])), True, False)
+
+    logger.info("Level 1 - Identify the level 1 ids associated to a CT whose parent_id is in the level 0 CT ids")
+    data_cp["ct_l1"] = np.where((data_cp["level"] == 1.0) & (data_cp["parent_id"].isin(data_cp[data_cp["ct_l0"]]["id"])), True, False)
+
+    logger.info("Reassigning the ct levels")
+    data_ct = data_cp[data_cp["ct_seed"] | data_cp["ct_l0"] | data_cp["ct_l1"]]
+    data_other = data_cp[~(data_cp["ct_seed"] | data_cp["ct_l0"] | data_cp["ct_l1"])]
+
+    logger.info("Reassign levels in CT (seed, 0, 1)")
+    level_mapping = {np.nan: "seed", 0.0: "0", 1.0: "1"}
+    data_ct['level'] = data_ct['level'].map(level_mapping).fillna(data_ct['level'])
+
+    logger.info("Reassign levels in Other (0, 1, 2)")
+    level_mapping = {np.nan: "0", 0.0: "1", 1.0: "2"}
+    data_other['level'] = data_other['level'].map(level_mapping).fillna(data_other['level'])
+
+    return data_ct, data_other
