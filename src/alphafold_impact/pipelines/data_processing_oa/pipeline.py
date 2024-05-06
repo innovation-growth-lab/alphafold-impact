@@ -21,8 +21,9 @@ from .nodes import (
     combine_levels_data,
     reassign_ct_levels,
     process_data_by_level_ptd,
-    concat_pq_ptd
+    concat_pq_ptd,
 )
+
 
 def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstring
     **kwargs,
@@ -195,15 +196,14 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                     "data": "oa.data_collection.subfield.structural_biology.depth.1.ptd.intermediate",
                 },
                 outputs="oa.data_collection.subfield.structural_biology.depth.1.intermediate",
-                tags="concat_pq_ptd"
-            )
+                tags="concat_pq_ptd",
+            ),
         ],
         tags=[
             "oa.data_processing.structural_biology.depth.level.1",
             "oa.data_processing.structural_biology.depth.levels",
         ],
     )
-
 
     reassign_baseline_levels_pipeline = pipeline(
         [
@@ -222,8 +222,11 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                     "data": "oa.data_processing.structural_biology.depth.intermediate",
                     "ct_data": "chains.seed_technologies.intermediate",
                 },
-                outputs=["oa.data_processing.structural_biology.depth.reassigned.ct.intermediate", "oa.data_processing.structural_biology.depth.reassigned.other.intermediate"],
-            )
+                outputs=[
+                    "oa.data_processing.structural_biology.depth.reassigned.ct.intermediate",
+                    "oa.data_processing.structural_biology.depth.reassigned.other.intermediate",
+                ],
+            ),
         ],
         tags="oa.data_processing.depth.reassign_ct",
     )

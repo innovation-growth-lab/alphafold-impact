@@ -19,6 +19,7 @@ import pandas as pd
 import numpy as np
 from kedro.io import AbstractDataset
 from Bio import Entrez
+
 logger = logging.getLogger(__name__)
 
 
@@ -129,7 +130,7 @@ def _json_loader(
         # change doi to remove the url
         df["doi"] = df["doi"].str.replace("https://doi.org/", "")
 
-        # create a list of topics, with id (replacing openalex.org), display_name, subfield id (replacing openalex), display_name, field, and domain (same)
+        # create a list of topics
         df["topics"] = df["topics"].apply(
             lambda x: (
                 [
@@ -150,7 +151,7 @@ def _json_loader(
             )
         )
 
-        # extract concepts, ie. for each element in the list of jsons, get id, replace openalex.org, get display_name
+        # extract concepts
         df["concepts"] = df["concepts"].apply(
             lambda x: (
                 [
@@ -330,7 +331,8 @@ def combine_levels_data(unique: str = "all", **kwargs) -> pd.DataFrame:
             subset=[
                 col
                 for col in df.columns
-                if col not in ["strength", "mesh_terms", "authorships", "topics", "concepts"]
+                if col
+                not in ["strength", "mesh_terms", "authorships", "topics", "concepts"]
             ]
         )
 
@@ -426,7 +428,7 @@ def process_subfield_data(data: Dict[str, AbstractDataset]) -> pd.DataFrame:
             )
         )
 
-        # create a list of topics, with id (replacing openalex.org), display_name, subfield id (replacing openalex), display_name, field, and domain (same)
+        # create a list of topics
         df["topics"] = df["topics"].apply(
             lambda x: (
                 [
@@ -447,7 +449,7 @@ def process_subfield_data(data: Dict[str, AbstractDataset]) -> pd.DataFrame:
             )
         )
 
-        # extract concepts, ie. for each element in the list of jsons, get id, replace openalex.org, get display_name
+        # extract concepts
         df["concepts"] = df["concepts"].apply(
             lambda x: (
                 [
@@ -571,18 +573,38 @@ def reassign_ct_levels(
 
     """
     # drop any rows with id or parent_id W3177828909, W3211795435, W3202105508
-    data = data[~(data["id"].isin(["W3177828909", "W3211795435", "W3202105508"]) | data["parent_id"].isin(["W3177828909", "W3211795435", "W3202105508"]))]
+    data = data[
+        ~(
+            data["id"].isin(["W3177828909", "W3211795435", "W3202105508"])
+            | data["parent_id"].isin(["W3177828909", "W3211795435", "W3202105508"])
+        )
+    ]
 
     data_cp = data.copy()
 
     logger.info("Seed - Identify the ct_data ids that appear as ids")
-    data_cp['ct_seed'] = data_cp.apply(lambda row: row['id'] in ct_data["parent_id"].to_list() and pd.isna(row['level']), axis=1)
+    data_cp["ct_seed"] = data_cp.apply(
+        lambda row: row["id"] in ct_data["parent_id"].to_list()
+        and pd.isna(row["level"]),
+        axis=1,
+    )
 
     logger.info("Level 0 - Identify the ct_data ids that appear as parent_id")
-    data_cp["ct_l0"] = np.where((data_cp["level"] == 0.0) & (data_cp["parent_id"].isin(ct_data["parent_id"])), True, False)
+    data_cp["ct_l0"] = np.where(
+        (data_cp["level"] == 0.0) & (data_cp["parent_id"].isin(ct_data["parent_id"])),
+        True,
+        False,
+    )
 
-    logger.info("Level 1 - Identify the level 1 ids associated to a CT whose parent_id is in the level 0 CT ids")
-    data_cp["ct_l1"] = np.where((data_cp["level"] == 1.0) & (data_cp["parent_id"].isin(data_cp[data_cp["ct_l0"]]["id"])), True, False)
+    logger.info(
+        "Level 1 - Identify the level 1 ids associated to a CT"
+    )
+    data_cp["ct_l1"] = np.where(
+        (data_cp["level"] == 1.0)
+        & (data_cp["parent_id"].isin(data_cp[data_cp["ct_l0"]]["id"])),
+        True,
+        False,
+    )
 
     logger.info("Reassigning the ct levels")
     data_ct = data_cp[data_cp["ct_seed"] | data_cp["ct_l0"] | data_cp["ct_l1"]]
@@ -590,10 +612,12 @@ def reassign_ct_levels(
 
     logger.info("Reassign levels in CT (seed, 0, 1)")
     level_mapping = {np.nan: "seed", 0.0: "0", 1.0: "1"}
-    data_ct['level'] = data_ct['level'].map(level_mapping).fillna(data_ct['level'])
+    data_ct["level"] = data_ct["level"].map(level_mapping).fillna(data_ct["level"])
 
     logger.info("Reassign levels in Other (0, 1, 2)")
     level_mapping = {np.nan: "0", 0.0: "1", 1.0: "2"}
-    data_other['level'] = data_other['level'].map(level_mapping).fillna(data_other['level'])
+    data_other["level"] = (
+        data_other["level"].map(level_mapping).fillna(data_other["level"])
+    )
 
     return data_ct, data_other
