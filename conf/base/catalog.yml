@@ -188,6 +188,10 @@ oa.data_collection.subfield.structural_biology.depth.restarted.raw:
   <<: *_js_ptd
   path: s3://alphafold-impact/data/01_raw/oa/works/depth/subfield/structural_biology/levels/
 
+oa.data_collection.subfield.structural_biology.depth.level.2.raw:
+  <<: *_js_ptd
+  path: s3://alphafold-impact/data/01_raw/oa/works/depth/subfield/structural_biology/level/2/
+
 "oa.data_collection.subfield.structural_biology.depth.{level}.intermediate":
   <<: *_pq
   filepath: s3://alphafold-impact/data/02_intermediate/oa/works/depth/subfield/structural_biology/level/{level}/main.parquet

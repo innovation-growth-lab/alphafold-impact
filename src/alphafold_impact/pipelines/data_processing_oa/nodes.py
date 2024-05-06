@@ -596,9 +596,7 @@ def reassign_ct_levels(
         False,
     )
 
-    logger.info(
-        "Level 1 - Identify the level 1 ids associated to a CT"
-    )
+    logger.info("Level 1 - Identify the level 1 ids associated to a CT")
     data_cp["ct_l1"] = np.where(
         (data_cp["level"] == 1.0)
         & (data_cp["parent_id"].isin(data_cp[data_cp["ct_l0"]]["id"])),

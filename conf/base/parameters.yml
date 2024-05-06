@@ -426,6 +426,12 @@ labs:
       mailto: data_analytics@nesta.org.uk
       perpage: "200"
 
+sb_labs:
+  data_collection:
+    depth:
+      ct_start_level: 2
+      max_depth: 3
+
 tcc:
   "af_label": "Papers that cite AF levels 0-3"
   "biochemistry_label": "Biochemistry"

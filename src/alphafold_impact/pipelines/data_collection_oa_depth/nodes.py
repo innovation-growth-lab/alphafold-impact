@@ -32,8 +32,11 @@ import logging
 from typing import Dict, List, Tuple, Generator, Union
 import pandas as pd
 from joblib import Parallel, delayed
-from ..data_collection_oa.nodes import collect_papers  # pylint: disable=E0402
 from kedro.io import AbstractDataset
+from ..data_collection_oa.nodes import collect_papers  # pylint: disable=E0402
+from ..data_collection_sb_labs.nodes import (  # pylint: disable=E0402
+    separate_ct_from_seed,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -234,11 +237,8 @@ def preprocess_restart_data(
         parent IDs that have been seen.
     """
 
-    keys = [key for key in data.keys() if key.startswith(str(start_level))][:24]
-
-
-
-    def process_key(key):
+    def _process_key(key):
+        """Process the key and extract the paper IDs and parent IDs."""
         seen_papers, papers_to_process = set(), []
         raw_json_data = data[key]()
 
@@ -261,12 +261,23 @@ def preprocess_restart_data(
 
     keys = [key for key in data.keys() if key.startswith(str(start_level))]
 
-    results = Parallel(n_jobs=8, backend="loky", verbose=10)(delayed(process_key)(key) for key in keys)
+    results = Parallel(n_jobs=8, backend="loky", verbose=10)(
+        delayed(_process_key)(key) for key in keys
+    )
 
     seen_papers = set().union(*[result[0] for result in results])
-    papers_to_process = [item for sublist in [result[1] for result in results] for item in sublist]
+    papers_to_process = [
+        item for sublist in [result[1] for result in results] for item in sublist
+    ]
 
-    return seen_papers, papers_to_process, start_level+1
+    return seen_papers, papers_to_process, start_level + 1
+
+
+def fetch_level_2_ct_papers(
+    ct_data: pd.DataFrame,
+) -> set:
+    """Fetch the level 2 parent CT papers."""
+    return set(ct_data[ct_data["level"]=="1"]["id"].tolist())
 
 
 def _process_flatten_dict(child_papers_dict: Dict[str, any]) -> Dict[str, any]:

@@ -12,7 +12,8 @@ from .nodes import (
     fetch_citation_all_depth,
     fetch_citation_to_specific_depth,
     preprocess_baseline_data,
-    preprocess_restart_data
+    preprocess_restart_data,
+    fetch_level_2_ct_papers
 )
 
 
@@ -66,7 +67,7 @@ def create_pipeline(  # pylint: disable=C0116,W0613
                     "seed_paper": "oa.structural_biology.seed_papers",
                     "api_config": "params:oa.data_collection.depth.api",
                     "filter_config": "params:oa.data_collection.depth.filter",
-                    "max_depth": "params:oa.data_collection.depth.max_depth",
+                    "max_depth": "params:sb_labs.data_collection.depth.max_depth",
                 },
                 outputs="oa.data_collection.subfield.structural_biology.depth.raw",
             ),
@@ -100,4 +101,28 @@ def create_pipeline(  # pylint: disable=C0116,W0613
         tags="oa.data_processing.depth.structural_biology.restart",
     )
 
-    return full_depth_pipeline + fixed_depth_pipeline + fixed_depth_baseline_pipeline + restart_depth_from_level_pipeline
+    fetch_level_2_ct_papers_pipeline = pipeline(
+        [
+            node(
+                func=fetch_level_2_ct_papers,
+                inputs={
+                    "ct_data": "oa.data_processing.structural_biology.depth.reassigned.ct.intermediate",
+                },
+                outputs="ct_level_1_seeds",
+            ),
+            node(
+                func=fetch_citation_to_specific_depth,
+                inputs={
+                    "seed_paper": "ct_level_1_seeds",
+                    "start_level": "params:sb_labs.data_collection.depth.ct_start_level",
+                    "api_config": "params:oa.data_collection.depth.api",
+                    "filter_config": "params:oa.data_collection.depth.filter",
+                    "max_depth": "params:sb_labs.data_collection.depth.max_depth",
+                },
+                outputs="oa.data_collection.subfield.structural_biology.depth.level.2.raw",
+            ),
+        ],
+        tags="oa.data_collection.depth.level_2",
+    )
+
+    return full_depth_pipeline + fixed_depth_pipeline + fixed_depth_baseline_pipeline + restart_depth_from_level_pipeline + fetch_level_2_ct_papers_pipeline
