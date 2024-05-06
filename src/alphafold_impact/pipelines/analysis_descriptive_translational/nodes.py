@@ -8,22 +8,20 @@ import pandas as pd
 logger = logging.getLogger(__name__)
 
 def load_input_data(
-    alphafold_data: pd.DataFrame,
-    ct_data: pd.DataFrame,
-    other_data: pd.DataFrame,
+    data: pd.DataFrame,
+    source: str,
 ):
-    
-    logger.info("Filtering data by level 0")
-    af_sb_data = alphafold_data[alphafold_data["level"]==0]
-    ct_sb_data = ct_data[ct_data["level"]=="0"]
-    other_sb_data = other_data[other_data["level"]=="0"]
+    data["level"] = data["level"].astype(str)
+
+    logger.info("Filter for level 0")
+    data = data[data["level"] == "0"]
 
     logger.info("Create columns with source")
-    af_sb_data["source"] = "alphafold"
-    ct_sb_data["source"] = "ct"
-    other_sb_data["source"] = "other"
+    data["source"] = source
 
-    logger.info("Concatenating data")
-    level0_data = pd.concat([af_sb_data, ct_sb_data, other_sb_data])
+    return data
 
-    return level0_data
+def merge_inputs(**kwargs):
+    return pd.concat(
+        [kwargs["alphafold_data"], kwargs["ct_data"], kwargs["other_data"]]
+    )
