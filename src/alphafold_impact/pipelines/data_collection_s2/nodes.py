@@ -363,6 +363,11 @@ def get_citation_intent_from_oa_dataset(
         pd.DataFrame: The processed dataset with citation intent information.
 
     """
+    # if level is str, convert to int with "seed" as -1
+    oa_dataset["level"] = oa_dataset["level"].apply(
+        lambda x: -1 if x == "seed" else int(x)
+    )
+    
     # Create a mapping from id to doi and pmid for each level
     oa_dataset["parent_level"] = oa_dataset["level"] - 1
 

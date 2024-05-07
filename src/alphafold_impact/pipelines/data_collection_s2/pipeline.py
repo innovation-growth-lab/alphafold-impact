@@ -52,6 +52,23 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
         tags=["s2.intent.baseline"],
     )
 
+    ct_sb_data_intent_pipeline = pipeline(
+        [
+            node(
+                func=get_citation_intent_from_oa_dataset,
+                inputs={
+                    "oa_dataset": "oa.data_processing.structural_biology.depth.ct.intermediate",
+                    "base_url": "params:s2.data_collection.strength.api.base_url",
+                    "fields": "params:s2.data_collection.strength.api.fields",
+                    "api_key": "params:s2.data_collection.strength.api.key",
+                    "perpage": "params:s2.data_collection.strength.api.perpage",
+                },
+                outputs="oa.data_processing.depth.other.primary",
+            ),
+        ],
+        tags=["s2_intent_other_sb"],
+    )
+
     other_sb_data_intent_pipeline = pipeline(
         [
             node(
@@ -69,4 +86,4 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
         tags=["s2_intent_other_sb"],
     )
 
-    return primary_data_intent_pipeline + baseline_seed_pipeline + other_sb_data_intent_pipeline
+    return primary_data_intent_pipeline + baseline_seed_pipeline + ct_sb_data_intent_pipeline + other_sb_data_intent_pipeline
