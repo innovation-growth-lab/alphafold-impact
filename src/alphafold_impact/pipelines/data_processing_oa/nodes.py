@@ -554,6 +554,13 @@ def concat_pq_ptd(
     for i, loader in enumerate(data.values()):
         logger.info("Processing data partition: %s / %s", i + 1, len(data))
         data_pt = loader()
+        # drop rows with id or parent id W3177828909, W3211795435, W3202105508
+        data_pt = data_pt[
+            ~(
+                data_pt["id"].isin(["W3177828909", "W3211795435", "W3202105508"])
+                | data_pt["parent_id"].isin(["W3177828909", "W3211795435", "W3202105508"])
+            )
+        ]
         output.append(data_pt)
     return pd.concat(output)
 

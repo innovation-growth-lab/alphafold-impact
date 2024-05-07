@@ -248,7 +248,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                     "data": "oa.data_collection.subfield.structural_biology.depth.2.ptd.intermediate",
                 },
                 outputs="oa.data_collection.subfield.structural_biology.depth.2.intermediate",
-                tags="concat_pq_ptd",
+                tags=["concat_pq_ptd", "concat_and_combine_ct"],
             ),
             node(
                 func=combine_levels_data,
@@ -257,7 +257,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                     "level2": "oa.data_collection.subfield.structural_biology.depth.2.intermediate",
                 },
                 outputs="oa.data_processing.structural_biology.depth.ct.intermediate",
-                tags="combine_ct"
+                tags=["combine_ct", "concat_and_combine_ct"]
             ),
         ],
         tags="oa.data_processing.depth.post_level2_dw",
