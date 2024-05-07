@@ -66,7 +66,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                 outputs="oa.data_processing.depth.ct.primary",
             ),
         ],
-        tags=["s2_intent_other_sb"],
+        tags=["s2_intent_ct_sb"],
     )
 
     other_sb_data_intent_pipeline = pipeline(
