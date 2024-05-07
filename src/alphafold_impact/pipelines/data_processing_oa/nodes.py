@@ -336,6 +336,9 @@ def combine_levels_data(unique: str = "all", **kwargs) -> pd.DataFrame:
             ]
         )
 
+        df.reset_index(drop=True, inplace=True)
+        df["level"] = df["level"].astype(str)
+
     return df
 
 
