@@ -237,7 +237,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 func=process_data_by_level_ptd,
                 inputs={
                     "data": "oa.data_collection.subfield.structural_biology.depth.raw",
-                    "level": "params:oa.data_collection.depth.levels.1",
+                    "level": "params:oa.data_collection.depth.levels.2",
                     "extra_mesh": "params:false_",
                 },
                 outputs="oa.data_collection.subfield.structural_biology.depth.2.ptd.intermediate",
@@ -258,7 +258,8 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 },
                 outputs="oa.data_processing.structural_biology.depth.ct.intermediate",
             ),
-        ]
+        ],
+        tags="oa.data_processing.depth.post_level2_dw",
     )
 
     return (
@@ -270,4 +271,5 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
         + baseline_level0_pipeline
         + baseline_level1_pipeline
         + reassign_baseline_levels_pipeline
+        + post_level2_dw_pipeline
     )
