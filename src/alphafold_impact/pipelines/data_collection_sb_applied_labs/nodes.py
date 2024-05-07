@@ -32,7 +32,13 @@ def _get_applied_candidate_authors(data: pd.DataFrame) -> List[Tuple[str, str]]:
         List[Tuple[str, str]]: The list of last authors.
     """
     # filter data to only consider levels 1 and 2
-    data = data[data["level"].astype(str).isin(["1", "2"])]
+    applied_ids = data[data["level"].astype(str).isin(["1", "2"])]['id'].unique()
+
+    # Identify the 'id' values in 'data' where 'level' is in the other levels ("0", "seed")
+    sb_ids = data[~data["level"].astype(str).isin(["1", "2"])]['id'].unique()
+
+    # Select the rows in 'applied_ids' that are not in 'other_ids'
+    data = data[data['id'].isin(applied_ids) & ~data['id'].isin(sb_ids)]
 
     # get the author whose third element is the last author
     author_data = (
