@@ -265,6 +265,14 @@ pubmed.data_processing.icite.intermediate:
   <<: *_pq
   filepath: s3://alphafold-impact/data/02_intermediate/pubmed/icite.parquet
 
+nih.data_analysis.funding_opportunities.structural_biology:
+  <<: *_csv
+  filepath: s3://alphafold-impact/data/04_analysis/nih/funding_opportunities/structural_biology.csv
+
+nih.data_analysis.funding_opportunities.experimental_biology:
+  <<: *_csv
+  filepath: s3://alphafold-impact/data/04_analysis/nih/funding_opportunities/experimental_biology.csv
+
 # Crunchbase data
 _cb_raw: &_cb_raw
   type: pandas.CSVDataset
