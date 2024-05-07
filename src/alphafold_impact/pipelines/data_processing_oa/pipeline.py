@@ -231,6 +231,36 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
         tags="oa.data_processing.depth.reassign_ct",
     )
 
+    post_level2_dw_pipeline = pipeline(
+        [
+            node(
+                func=process_data_by_level_ptd,
+                inputs={
+                    "data": "oa.data_collection.subfield.structural_biology.depth.raw",
+                    "level": "params:oa.data_collection.depth.levels.1",
+                    "extra_mesh": "params:false_",
+                },
+                outputs="oa.data_collection.subfield.structural_biology.depth.2.ptd.intermediate",
+            ),
+            node(
+                func=concat_pq_ptd,
+                inputs={
+                    "data": "oa.data_collection.subfield.structural_biology.depth.2.ptd.intermediate",
+                },
+                outputs="oa.data_collection.subfield.structural_biology.depth.2.intermediate",
+                tags="concat_pq_ptd",
+            ),
+            node(
+                func=combine_levels_data,
+                inputs={
+                    "level1": "oa.data_processing.structural_biology.depth.reassigned.ct.intermediate",
+                    "level2": "oa.data_collection.subfield.structural_biology.depth.2.intermediate",
+                },
+                outputs="oa.data_processing.structural_biology.depth.ct.intermediate",
+            ),
+        ]
+    )
+
     return (
         sum(additioal_mesh_levels)
         + sum(no_additional_mesh_levels)
