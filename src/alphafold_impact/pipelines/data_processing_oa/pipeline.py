@@ -224,7 +224,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 },
                 outputs=[
                     "oa.data_processing.structural_biology.depth.reassigned.ct.intermediate",
-                    "oa.data_processing.structural_biology.depth.reassigned.other.intermediate",
+                    "oa.data_processing.structural_biology.depth.other.intermediate",
                 ],
             ),
         ],

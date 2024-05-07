@@ -205,7 +205,7 @@ oa.data_processing.structural_biology.depth.reassigned.ct.intermediate:
   <<: *_pq
   filepath: s3://alphafold-impact/data/02_intermediate/oa/works/depth/subfield/structural_biology/reassigned_ct.parquet
 
-oa.data_processing.structural_biology.depth.reassigned.other.intermediate:
+oa.data_processing.structural_biology.depth.other.intermediate:
   <<: *_pq
   filepath: s3://alphafold-impact/data/02_intermediate/oa/works/depth/subfield/structural_biology/reassigned_other.parquet
   
@@ -540,6 +540,31 @@ sb_lab.data_collection.assignment.primary:
 sb_lab.data_collection.publications.raw:
   <<: *_pq_ptd
   path: s3://alphafold-impact/data/01_raw/oa/sb_labs/publications/
+
+other_lab.data_collection.candidates.publications.intermediate:
+  <<: *_js_ptd
+  path: s3://alphafold-impact/data/02_intermediate/oa/other_labs/candidate_publications/
+
+other_lab.data_collection.candidates.map:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/02_intermediate/oa/other_labs/candidates_map.parquet
+
+other_lab.data_collection.candidates.scores.intermediate:
+  <<: *_pq_ptd
+  path: s3://alphafold-impact/data/02_intermediate/oa/other_labs/scores/
+
+other_lab.data_collection.candidates.scores.primary:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/03_primary/oa/other_labs/main_scores.parquet
+
+other_lab.data_collection.assignment.primary:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/03_primary/oa/other_labs/assignments.parquet
+
+other_lab.data_collection.publications.raw:
+  <<: *_pq_ptd
+  path: s3://alphafold-impact/data/01_raw/oa/other_labs/publications/
+
 
 ### ANALYSIS ###
 

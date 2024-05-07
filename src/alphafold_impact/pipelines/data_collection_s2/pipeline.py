@@ -57,7 +57,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
             node(
                 func=get_citation_intent_from_oa_dataset,
                 inputs={
-                    "oa_dataset": "oa.data_processing.structural_biology.depth.reassigned.other.intermediate",
+                    "oa_dataset": "oa.data_processing.structural_biology.depth.other.intermediate",
                     "base_url": "params:s2.data_collection.strength.api.base_url",
                     "fields": "params:s2.data_collection.strength.api.fields",
                     "api_key": "params:s2.data_collection.strength.api.key",
