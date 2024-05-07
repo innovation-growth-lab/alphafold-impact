@@ -29,13 +29,13 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                     "ct_data": "oa.data_processing.structural_biology.depth.ct.intermediate",
                     "other_data": "oa.data_processing.structural_biology.depth.other.intermediate",
                 },
-                outputs=["authors", "alphafold_authors", "ct_authors", "other_authors"],
+                outputs=["applied_authors", "applied_alphafold_authors", "applied_ct_authors", "applied_other_authors"],
                 tags=["process_other_candidates", "other_candidate_authors.get_map"],
             ),
             node(
                 func=fetch_author_publications,
                 inputs={
-                    "author_ids": "authors",
+                    "author_ids": "applied_authors",
                     "from_publication_date": "params:labs.data_collection.from_date",
                     "api_config": "params:labs.data_collection.api",
                 },
@@ -45,9 +45,9 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                 func=calculate_lab_determinants,
                 inputs={
                     "dict_loader": "other_lab.data_collection.candidates.publications.intermediate",
-                    "alphafold_authors": "alphafold_authors",
-                    "ct_authors": "ct_authors",
-                    "other_authors": "other_authors",
+                    "alphafold_authors": "applied_alphafold_authors",
+                    "ct_authors": "applied_ct_authors",
+                    "other_authors": "applied_other_authors",
                 },
                 outputs="other_lab.data_collection.candidates.scores.intermediate",
                 tags="process_other_candidates",
@@ -87,9 +87,9 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
             node(
                 func=create_candidates_map,
                 inputs={
-                    "alphafold_authors": "alphafold_authors",
-                    "ct_authors": "ct_authors",
-                    "other_authors": "other_authors",
+                    "alphafold_authors": "applied_alphafold_authors",
+                    "ct_authors": "applied_ct_authors",
+                    "other_authors": "applied_other_authors",
                 },
                 outputs="other_lab.data_collection.candidates.map",
             ),
