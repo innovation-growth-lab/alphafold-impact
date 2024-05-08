@@ -27,6 +27,10 @@ _txt: &_txt
   type: text.TextDataset
   credentials: s3_credentials
 
+_image: &_image
+  type: pillow.ImageDataset
+  credentials: s3_credentials
+
 _pkl: &_pkl
   type: pickle.PickleDataset
   credentials: s3_credentials
@@ -272,6 +276,22 @@ nih.data_analysis.funding_opportunities.structural_biology:
 nih.data_analysis.funding_opportunities.experimental_biology:
   <<: *_csv
   filepath: s3://alphafold-impact/data/04_analysis/nih/funding_opportunities/experimental_biology.csv
+
+nih.reporting.funding_opportunities.sb_eb:
+  <<: *_image
+  filepath: s3://alphafold-impact/data/07_analysis/nih/funding_opportunities/sb_eb_funding_opportunities.png
+
+nih.reporting.funding_opportunity_amounts.sb_eb:
+  <<: *_image
+  filepath: s3://alphafold-impact/data/07_analysis/nih/funding_opportunities/sb_eb_funding_opportunity_amounts.png
+
+nih.reporting.funding_opportunities.total:
+  <<: *_image
+  filepath: s3://alphafold-impact/data/07_analysis/nih/funding_opportunities/total_funding_opportunities.png
+
+nih.reporting.funding_opportunity_amounts.total:
+  <<: *_image
+  filepath: s3://alphafold-impact/data/07_analysis/nih/funding_opportunities/total_funding_opportunity_amounts.png
 
 # Crunchbase data
 _cb_raw: &_cb_raw
