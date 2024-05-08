@@ -595,20 +595,20 @@ def reassign_ct_levels(
     logger.info("Seed - Identify the ct_data ids that appear as ids")
     data_cp["ct_seed"] = data_cp.apply(
         lambda row: row["id"] in ct_data["parent_id"].to_list()
-        and pd.isna(row["level"]),
+        and ((pd.isna(row["level"]))|(row["level"]=="nan")),
         axis=1,
     )
 
     logger.info("Level 0 - Identify the ct_data ids that appear as parent_id")
     data_cp["ct_l0"] = np.where(
-        (data_cp["level"] == 0.0) & (data_cp["parent_id"].isin(ct_data["parent_id"])),
+        (data_cp["level"] == "0.0") & (data_cp["parent_id"].isin(ct_data["parent_id"])),
         True,
         False,
     )
 
     logger.info("Level 1 - Identify the level 1 ids associated to a CT")
     data_cp["ct_l1"] = np.where(
-        (data_cp["level"] == 1.0)
+        (data_cp["level"] == "1.0")
         & (data_cp["parent_id"].isin(data_cp[data_cp["ct_l0"]]["id"])),
         True,
         False,
@@ -619,11 +619,11 @@ def reassign_ct_levels(
     data_other = data_cp[~(data_cp["ct_seed"] | data_cp["ct_l0"] | data_cp["ct_l1"])]
 
     logger.info("Reassign levels in CT (seed, 0, 1)")
-    level_mapping = {np.nan: "seed", 0.0: "0", 1.0: "1"}
+    level_mapping = {"nan": "seed", "0.0": "0", "1.0": "1"}
     data_ct["level"] = data_ct["level"].map(level_mapping).fillna(data_ct["level"])
 
     logger.info("Reassign levels in Other (0, 1, 2)")
-    level_mapping = {np.nan: "0", 0.0: "1", 1.0: "2"}
+    level_mapping = {"nan": "0", "0.0": "1", "1.0": "2"}
     data_other["level"] = (
         data_other["level"].map(level_mapping).fillna(data_other["level"])
     )
@@ -639,7 +639,7 @@ def reassign_ct_levels(
     level_1_data = data_other[(data_other['level'] == '1') & data_other['parent_id'].isin(level_0_data['id'])]
 
     # Get level 2 data
-    level_2_data = data_other[(data_other['level'] == '1') & data_other['parent_id'].isin(level_1_data['id'])]
+    level_2_data = data_other[(data_other['level'] == '2') & data_other['parent_id'].isin(level_1_data['id'])]
 
     # Concatenate the data
     data_other = pd.concat([level_0_data, level_1_data, level_2_data])
