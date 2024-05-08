@@ -632,4 +632,17 @@ def reassign_ct_levels(
     data_ct = data_ct.drop(columns=["ct_seed", "ct_l0", "ct_l1"])
     data_other = data_other.drop(columns=["ct_seed", "ct_l0", "ct_l1"])
 
+    # filter out publications older than 2017 for data_other level 0
+    level_0_data = data_other[(data_other['level'] == '0') & (data_other['publication_date'] >= "2017-01-01")]
+
+    # Get level 1 data where parent_id is in level 0 ids
+    level_1_data = data_other[(data_other['level'] == '1') & data_other['parent_id'].isin(level_0_data['id'])]
+
+    # Get level 2 data
+    level_2_data = data_other[(data_other['level'] == '1') & data_other['parent_id'].isin(level_1_data['id'])]
+
+    # Concatenate the data
+    data_other = pd.concat([level_0_data, level_1_data, level_2_data])
+    
+
     return data_ct, data_other
