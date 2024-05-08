@@ -12,6 +12,7 @@ To run this pipeline, use the following command:
 from kedro.pipeline import Pipeline, node, pipeline
 from .nodes import (
     get_citation_intent_from_oa_dataset,
+    get_baseline_citation_intent_from_oa_dataset,
     get_baseline_seed_intent
 )
 
@@ -55,7 +56,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
     ct_sb_data_intent_pipeline = pipeline(
         [
             node(
-                func=get_citation_intent_from_oa_dataset,
+                func=get_baseline_citation_intent_from_oa_dataset,
                 inputs={
                     "oa_dataset": "oa.data_processing.structural_biology.depth.ct.intermediate",
                     "base_url": "params:s2.data_collection.strength.api.base_url",
@@ -72,7 +73,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
     other_sb_data_intent_pipeline = pipeline(
         [
             node(
-                func=get_citation_intent_from_oa_dataset,
+                func=get_baseline_citation_intent_from_oa_dataset,
                 inputs={
                     "oa_dataset": "oa.data_processing.structural_biology.depth.other.intermediate",
                     "base_url": "params:s2.data_collection.strength.api.base_url",

@@ -346,6 +346,55 @@ def get_intent_level(oa_dataset: pd.DataFrame, level: int, **kwargs) -> pd.DataF
         ],
     )
 
+def get_intent(oa_dataset: pd.DataFrame, **kwargs) -> pd.DataFrame:
+    """
+    Retrieves the intent data from the given OA dataset
+
+    Args:
+        oa_dataset (pd.DataFrame): The input OA dataset.
+        **kwargs: Additional keyword arguments.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing the processed intent citations
+            with the following columns:
+            - parent_doi: The DOI of the parent publication.
+            - pmid: The PMID of the citation.
+            - doi: The DOI of the citation.
+            - influential: Indicates whether the citation is influential.
+            - intent: The intent of the citation.
+            - context: The context of the citation.
+    """
+
+    # Remove duplicate rows based on "parent_id"
+    oa_dataset = oa_dataset.drop_duplicates(subset="parent_id")
+
+    inputs = oa_dataset.apply(
+        lambda x: (x["parent_id"], "", x["parent_doi"], "", x["parent_pmid"]),
+        axis=1,
+    ).tolist()
+
+    # Use joblib to parallelize the function calls
+    level_outputs = Parallel(n_jobs=8)(
+        delayed(iterate_citation_detail_points)(*input, direction="citations", **kwargs)
+        for input in inputs
+    )
+
+    level_dict = dict(list(zip(oa_dataset["parent_doi"], level_outputs)))
+
+    processed_level_citations = process_citations(level_dict)
+
+    return pd.DataFrame(
+        processed_level_citations,
+        columns=[
+            "parent_doi",
+            "pmid",
+            "doi",
+            "influential",
+            "intent",
+            "context",
+        ],
+    )
+
 
 def get_citation_intent_from_oa_dataset(
     oa_dataset: pd.DataFrame,
@@ -521,3 +570,117 @@ def get_baseline_seed_intent(oa_dataset: pd.DataFrame, **kwargs) -> pd.DataFrame
             "context",
         ],
     )
+
+
+
+
+def get_baseline_citation_intent_from_oa_dataset(
+    oa_dataset: pd.DataFrame,
+    **kwargs,
+) -> pd.DataFrame:
+    """
+    Retrieves citation intent data from an Open Access dataset.
+
+    Args:
+        oa_dataset (pd.DataFrame): The Open Access dataset containing citation
+            information.
+        **kwargs: Additional keyword arguments.
+
+    Returns:
+        pd.DataFrame: The processed dataset with citation intent information.
+
+    """
+    # if level is str, convert to int with "seed" as -1
+    oa_dataset["level"] = oa_dataset["level"].apply(
+        lambda x: -1 if x == "seed" else int(x)
+    )
+    
+    # Create a mapping from id to doi and pmid for each level
+    oa_dataset["parent_level"] = oa_dataset["level"] - 1
+
+    oa_dataset = pd.merge(
+        oa_dataset,
+        oa_dataset,
+        left_on=["parent_id", "parent_level"],
+        right_on=["id", "level"],
+        how="left",
+        suffixes=("", "_parent"),
+    )
+    oa_dataset.rename(
+        columns={"doi_parent": "parent_doi", "pmid_parent": "parent_pmid"}, inplace=True
+    )
+
+    # drop the other _parent columns
+    oa_dataset.drop(
+        columns=[col for col in oa_dataset.columns if "_parent" in col], inplace=True
+    )
+
+    # get the citation intent for each level
+    processed_df = get_intent(oa_dataset, **kwargs)
+
+    # check how often doi is empty and pmid is not
+    logger.info(
+        "Number of rows with empty doi and non-empty pmid: %d",
+        processed_df[(processed_df["doi"] == "") & (processed_df["pmid"] != "")].shape[
+            0
+        ],
+    )
+
+    processed_grouped_data_doi = (
+        processed_df.groupby(["parent_doi", "doi"])[
+            ["influential", "intent", "context"]
+        ]
+        .apply(lambda x: x.to_dict(orient="records"))
+        .reset_index()
+        .rename(columns={0: "strength"})
+    )
+
+    processed_grouped_data_pmid = (
+        processed_df.groupby(["parent_doi", "pmid"])[
+            ["influential", "intent", "context"]
+        ]
+        .apply(lambda x: x.to_dict(orient="records"))
+        .reset_index()
+        .rename(columns={0: "strength"})
+    )
+
+    processed_data = pd.merge(
+        oa_dataset, processed_grouped_data_doi, on=["parent_doi", "doi"], how="left"
+    )
+
+    processed_data = pd.merge(
+        processed_data,
+        processed_grouped_data_pmid,
+        left_on=["parent_doi", "parent_pmid"],
+        right_on=["parent_doi", "pmid"],
+        how="left",
+    )
+
+    # combine the two strength columns
+    processed_data["strength"] = processed_data["strength_x"].combine_first(
+        processed_data["strength_y"]
+    )
+
+    # rename the pmid columns
+    processed_data.rename(columns={"pmid_x": "pmid"}, inplace=True)
+    processed_data.drop(columns=["strength_x", "strength_y", "pmid_y"], inplace=True)
+
+    return processed_data[
+        [
+            "parent_id",
+            "parent_doi",
+            "parent_pmid",
+            "id",
+            "doi",
+            "pmid",
+            "level",
+            "publication_date",
+            "mesh_terms",
+            "cited_by_count",
+            "authorships",
+            "parent_level",
+            "strength",
+            "topics",
+            "concepts"
+        ]
+    ]
