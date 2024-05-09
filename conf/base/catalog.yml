@@ -517,6 +517,18 @@ chains.seed_technologies.intermediate:
   <<: *_pq
   filepath: s3://alphafold-impact/data/02_intermediate/oa/works/chains/baseline/seed_technologies.parquet
 
+"chains.complete_links.{identifier}.ct.primary":
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/03_primary/oa/works/chains/ct/{identifier}/complete_links.parquet
+
+"chains.complete_strong_links.{identifier}.ct.primary":
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/03_primary/oa/works/chains/ct/{identifier}/complete_strong_links.parquet
+
+"chains.complete_strong_links_with_ca.{identifier}.ct.primary":
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/03_primary/oa/works/chains/ct/{identifier}/complete_strong_links_with_ca.parquet
+
 sb_lab.data_collection.candidates.publications.intermediate:
   <<: *_js_ptd
   path: s3://alphafold-impact/data/02_intermediate/oa/sb_labs/candidate_publications/

@@ -302,7 +302,7 @@ def _transform_long(data: pd.DataFrame, intents: list) -> pd.DataFrame:
     return df_ids
 
 
-def _get_entrez_ptype_pmid(pmid: str) -> str:
+def get_entrez_ptype_pmid(pmid: str) -> str:
     stream = Entrez.efetch(db="pubmed", id=pmid, retmax="1")
     record = Entrez.read(stream)
     return str(
@@ -365,7 +365,7 @@ def get_papers_with_clinical_article_citations(
 
     if identifier == "pmid":
         data_ids["publication_type"] = data_ids["cited_by_clin"].apply(
-            _get_entrez_ptype_pmid
+            get_entrez_ptype_pmid
         )
 
     return data_ids
@@ -396,7 +396,9 @@ def _transform_long_pairs(data, intents):
         df_ids = pd.concat([df_ids, df_level])
 
     df_ids["paper_id"] = df_ids["paper_id"].astype(str)
-    df_ids.drop_duplicates(subset=["parent_paper_id", "paper_id", "level"], inplace=True)
+    df_ids.drop_duplicates(
+        subset=["parent_paper_id", "paper_id", "level"], inplace=True
+    )
 
     return df_ids
 

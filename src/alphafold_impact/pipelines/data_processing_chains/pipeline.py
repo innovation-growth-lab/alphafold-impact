@@ -126,9 +126,124 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
         tags="label_dataset",
     )
 
+    filter_citation_links_ct = pipeline(
+        [
+            node(
+                filter_relevant_citation_links,
+                inputs={
+                    "alphafold_data": "oa.data_processing.depth.ct.primary",
+                    "identifier": "params:chains.identifier.id",
+                },
+                outputs="chains.complete_links.id.ct.primary",
+                tags="chains.id",
+            ),
+            node(
+                filter_relevant_citation_links,
+                inputs={
+                    "alphafold_data": "oa.data_processing.depth.ct.primary",
+                    "identifier": "params:chains.identifier.pmid",
+                },
+                outputs="chains.complete_links.pmid.ct.primary",
+                tags="chains.pmid",
+            ),
+            node(
+                filter_relevant_citation_links,
+                inputs={
+                    "alphafold_data": "oa.data_processing.depth.ct.primary",
+                    "identifier": "params:chains.identifier.doi",
+                },
+                outputs="chains.complete_links.doi.ct.primary",
+                tags="chains.doi",
+            ),
+        ],
+        tags="complete_chains_ct.primary",
+    )
+
+    strong_citation_links_ct = pipeline(
+        [
+            node(
+                get_papers_with_full_chain,
+                inputs={
+                    "chains": "chains.complete_links.id.ct.primary",
+                    "alphafold_data": "oa.data_processing.depth.ct.primary",
+                    "identifier": "params:chains.identifier.id",
+                },
+                outputs="chains.complete_strong_links.id.ct.primary",
+                tags="chains.id",
+            ),
+            node(
+                get_papers_with_full_chain,
+                inputs={
+                    "chains": "chains.complete_links.pmid.ct.primary",
+                    "alphafold_data": "oa.data_processing.depth.ct.primary",
+                    "identifier": "params:chains.identifier.pmid",
+                },
+                outputs="chains.complete_strong_links.pmid.ct.primary",
+                tags="chains.pmid",
+            ),
+            node(
+                get_papers_with_full_chain,
+                inputs={
+                    "chains": "chains.complete_links.doi.ct.primary",
+                    "alphafold_data": "oa.data_processing.depth.ct.primary",
+                    "identifier": "params:chains.identifier.doi",
+                },
+                outputs="chains.complete_strong_links.doi.ct.primary",
+                tags="chains.doi",
+            ),
+        ],
+        tags="strong_paper_chains_ct.primary",
+    )
+
+    clinical_article_citations_ct = pipeline(
+        [
+            node(
+                get_papers_with_clinical_article_citations,
+                inputs={
+                    "chains": "chains.complete_links.pmid.ct.primary",
+                    "icite_data": "pubmed.data_processing.icite.intermediate",
+                    "identifier": "params:chains.identifier.pmid",
+                },
+                outputs="chains.complete_strong_links_with_ca.pmid.ct.primary",
+                tags="chains.pmid",
+            ),
+            node(
+                get_papers_with_clinical_article_citations,
+                inputs={
+                    "chains": "chains.complete_links.doi.ct.primary",
+                    "icite_data": "pubmed.data_processing.icite.intermediate",
+                    "identifier": "params:chains.identifier.doi",
+                },
+                outputs="chains.complete_strong_links_with_ca.doi.ct.primary",
+                tags="chains.doi",
+            ),
+        ],
+        tags="clinical_chains_ct.primary",
+    )
+
+    label_dataset_ct = pipeline(
+        [
+            node(
+                get_chain_label_papers,
+                inputs={
+                    "chains": "chains.complete_links.id.ct.primary",
+                    "alphafold_data": "oa.data_processing.depth.ct.primary",
+                    "identifier": "params:chains.identifier.id",
+                },
+                outputs="oa.chain_labels.id.ct.primary",
+                tags="label.id",
+            )
+        ],
+        tags="label_dataset_ct.primary",
+    )
+
     return (
         filter_citation_links
         + strong_citation_links
         + clinical_article_citations
         + label_dataset
+        + filter_citation_links_ct
+        + strong_citation_links_ct
+        + clinical_article_citations_ct
+        + label_dataset_ct
     )
