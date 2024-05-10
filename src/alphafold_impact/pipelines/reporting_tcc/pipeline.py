@@ -7,7 +7,11 @@ To run this pipeline, use the following command:
 """
 
 from kedro.pipeline import Pipeline, pipeline, node
-from .nodes import save_tcc_summary_subfields
+from .nodes import (
+    save_tcc_summary_subfields,
+    plot_tcc_each_quarter_subfields,
+    plot_tcc_each_quarter_af_levels,
+)
 
 
 def aggregate_datasets(*datasets):
@@ -37,6 +41,20 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "partition_order": "params:tcc.partition_order",
                 },
                 outputs="tcc.reporting.summary_subfields",
+            ),
+            node(
+                func=plot_tcc_each_quarter_subfields,
+                inputs={
+                    "tcc_subfield_partitions": "tcc.data_analysis",
+                },
+                outputs="tcc.reporting.tcc_by_publication_quarter_subfields",
+            ),
+            node(
+                func=plot_tcc_each_quarter_af_levels,
+                inputs={
+                    "tcc_subfield_partitions": "tcc.data_analysis",
+                },
+                outputs="tcc.reporting.tcc_by_publication_quarter_af_levels",
             ),
         ],
     )
