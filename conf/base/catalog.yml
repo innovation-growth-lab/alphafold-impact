@@ -279,19 +279,19 @@ nih.data_analysis.funding_opportunities.experimental_biology:
 
 nih.reporting.funding_opportunities.sb_eb:
   <<: *_image
-  filepath: s3://alphafold-impact/data/07_analysis/nih/funding_opportunities/sb_eb_funding_opportunities.png
+  filepath: s3://alphafold-impact/data/07_reporting/nih/funding_opportunities/sb_eb_funding_opportunities.png
 
 nih.reporting.funding_opportunity_amounts.sb_eb:
   <<: *_image
-  filepath: s3://alphafold-impact/data/07_analysis/nih/funding_opportunities/sb_eb_funding_opportunity_amounts.png
+  filepath: s3://alphafold-impact/data/07_reporting/nih/funding_opportunities/sb_eb_funding_opportunity_amounts.png
 
 nih.reporting.funding_opportunities.total:
   <<: *_image
-  filepath: s3://alphafold-impact/data/07_analysis/nih/funding_opportunities/total_funding_opportunities.png
+  filepath: s3://alphafold-impact/data/07_reporting/nih/funding_opportunities/total_funding_opportunities.png
 
 nih.reporting.funding_opportunity_amounts.total:
   <<: *_image
-  filepath: s3://alphafold-impact/data/07_analysis/nih/funding_opportunities/total_funding_opportunity_amounts.png
+  filepath: s3://alphafold-impact/data/07_reporting/nih/funding_opportunities/total_funding_opportunity_amounts.png
 
 # Crunchbase data
 _cb_raw: &_cb_raw
