@@ -233,6 +233,82 @@ nih:
         batch_name: funding_opps
         cmd: MTI
         cmdargs: -MoD_PP
+  data_analysis:
+    funding_opportunities:
+      mesh_tree_structural_bio:
+        "Protein Conformation":
+          - "G02.111.570.820.709"
+        "Databases, Protein":
+          - "L01.313.500.750.300.188.400.300.750"
+          - "L01.313.500.750.300.188.400.325.710"
+          - "L01.470.750.750.300.750"
+          - "L01.470.750.750.325.710"
+        "Protein Folding":
+          - "G01.154.651"
+          - "G02.111.688"
+        "Models, Molecular":
+          - "E05.599.595"
+        "Molecular Docking Simulation":
+          - "E05.599.595.249"
+          - "L01.224.160.249"
+        "Protein Structure, Secondary":
+          - "G02.111.570.820.709.600"
+        "Protein Structure, Tertiary":
+          - "G02.111.570.820.709.610"
+        "Protein Structure, Quaternary":
+          - "G02.111.570.820.709.550"
+        "Protein Subunits":
+          - "D12.776.813"
+        "Protein Strucutal Elements":
+          - "G02.111.570.820.709.275"
+        "Protein Multimerization":
+          - "G02.111.694"
+        "Protein Engineering":
+          - "E05.393.420.601"
+      mesh_tree_experimental_bio:
+        "Crystallography, X-Ray":
+          - "E05.196.309.742.225"
+        "Cryoelectron Microscopy":
+          - "E05.595.402.150"
+          - "E01.370.350.515.402.150"
+        "Nuclear Magnetic Resonance, Biomolecular":
+          - "E05.196.867.519.550"
+      search_terms_structural_bio:
+        - "protein folding"
+        - "structural biology"
+        - "structural bioinformatics"
+        - "protein structure"
+        - "protein structure prediction"
+        - "protein tertiary structure"
+        - "protein subunit"
+        - "protein structure database"
+        - "protein sequencing"
+        - "protein secondary structure"
+        - "protein ligand"
+        - "protein function prediction"
+        - "protein function"
+        - "protein data bank"
+        - "intrinsically disordered proteins"
+        - "protein multimerization"
+        - "protein engineering"
+        - "protein conformation"
+        - "molecular models"
+        - "molecular docking simulation"
+      search_terms_experimental_bio:
+        - "x-ray crystallography"
+        - "xray crystallography"
+        - "cryoelectron microscopy"
+        - "cryoem"
+        - "cryo-em"
+        - "biomolecular nuclear magnetic resonance"
+        - "nuclear magnetic resonance"
+      search_cols:
+        - "title"
+        - "purpose"
+        - "doctext"
+      subfield_label_structural_bio: "Structural Biology"
+      subfield_label_experimental_bio: "Experimental Biology"
+
 mesh_tagging:
   # email: ${oc.env:UMLS_EMAIL}
   # api_key: ${oc.env:UMLS_API_KEY}
