@@ -147,6 +147,10 @@ oa.chain_labels.id.primary:
   <<: *_pq
   filepath: s3://alphafold-impact/data/03_primary/oa/works/chain_labels.parquet
 
+oa.chain_labels.id.ct.primary:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/03_primary/oa/works/ct/chain_labels.parquet
+
 # Openalex works - Concepts
 oa_raw_works_for_concepts_and_years:
   type: kedro_datasets.pandas.JSONDataset
