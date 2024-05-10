@@ -70,17 +70,15 @@ def _search_text_in_multiple_cols(
         pd.DataFrame: A DataFrame containing the rows where any text is found
             in any column, case-insensitively.
     """
-    matching_rows = pd.DataFrame()
+    matching_rows = []
     for column in columns:
         if column in df.columns:
             for search_term in search_terms:
                 current_matches = df[
                     df[column].str.contains(search_term, case=False, na=False)
                 ]
-                matching_rows = pd.concat(
-                    [matching_rows, current_matches]
-                ).drop_duplicates()
-    return matching_rows
+                matching_rows.append(current_matches)
+    return pd.concat(matching_rows).drop_duplicates()
 
 
 def find_relevant_funding_opps(
