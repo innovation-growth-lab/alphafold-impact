@@ -7,11 +7,9 @@ import logging
 from typing import Dict
 import pandas as pd
 import numpy as np
+from Bio import Entrez
 
 pd.options.mode.copy_on_write = True
-
-# from kedro.io import AbstractDataset
-from Bio import Entrez
 
 Entrez.email = "david.ampudia@nesta.org.uk"
 logger = logging.getLogger(__name__)
@@ -66,8 +64,8 @@ def _build_chain_dict(df, identifier, parent, level):
     Returns:
         dict: A dictionary representing the chain of data processing nodes.
     """
-    # base case: if level is greater than 3, return an empty dictionary
-    if level > 3:
+    # base case: if level is greater than 2, return an empty dictionary
+    if level > 2:
         return {}
 
     # find all rows in the current level with the relevant parent id
@@ -113,7 +111,7 @@ def _flatten_dict(d: Dict, parent_keys: list = None, sep: str = "_"):
 
 
 def _breaks_chain(row):
-    intents = ["intent_0", "intent_1", "intent_2", "intent_3"]
+    intents = ["intent_0", "intent_1", "intent_2"]
     for i in range(len(intents) - 1):
         if (
             (pd.isna(row[intents[i]]) or row[intents[i]] == "N/A")
@@ -197,7 +195,6 @@ def filter_relevant_citation_links(
                 "level_0",
                 "level_1",
                 "level_2",
-                "level_3",
             ]
         ]
         output.append(seed_df)
@@ -241,7 +238,7 @@ def filter_relevant_citation_links(
 
     # drop rows that have all four intent as nan or N/A
     complete_chains_df = complete_chains_df[
-        ~complete_chains_df[["intent_0", "intent_1", "intent_2", "intent_3"]]
+        ~complete_chains_df[["intent_0", "intent_1", "intent_2"]]
         .applymap(lambda x: x == "N/A" or pd.isna(x))
         .all(axis=1)
     ]
@@ -276,21 +273,11 @@ def _transform_long(data: pd.DataFrame, intents: list) -> pd.DataFrame:
 
     level_2_ids = list(set(level_2["level_2"].to_list()))
 
-    # do the same for level_3 if level_2 is result and methodology
-    level_3 = level_2.loc[level_2["intent_3"].isin(intents)]
-
-    level_3_ids = list(set(level_3["level_3"].to_list()))
-
     # concatenate the lists of ids
-    ids = level_0_ids + level_1_ids + level_2_ids + level_3_ids
+    ids = level_0_ids + level_1_ids + level_2_ids
 
     # create a list of levels
-    levels = (
-        [0] * len(level_0_ids)
-        + [1] * len(level_1_ids)
-        + [2] * len(level_2_ids)
-        + [3] * len(level_3_ids)
-    )
+    levels = [0] * len(level_0_ids) + [1] * len(level_1_ids) + [2] * len(level_2_ids)
 
     # create a dataframe from the lists of ids and levels
     df_ids = pd.DataFrame({"paper_id": ids, "level": levels})
@@ -303,6 +290,15 @@ def _transform_long(data: pd.DataFrame, intents: list) -> pd.DataFrame:
 
 
 def get_entrez_ptype_pmid(pmid: str) -> str:
+    """
+    Retrieves the publication type for a given PubMed ID (PMID).
+
+    Args:
+        pmid (str): The PubMed ID (PMID) of the publication.
+
+    Returns:
+        str: The publication type of the specified publication.
+    """
     stream = Entrez.efetch(db="pubmed", id=pmid, retmax="1")
     record = Entrez.read(stream)
     return str(
@@ -435,7 +431,8 @@ def get_chain_label_papers(
     identifier: str,
 ) -> pd.DataFrame:
     """
-    Identifies and labels chains in the alphafold_data DataFrame based on the information in the chains DataFrame.
+    Identifies and labels chains in the alphafold_data DataFrame based on the information
+    in the chains DataFrame.
 
     Args:
         chains (pd.DataFrame): DataFrame containing information about chains.
