@@ -399,7 +399,7 @@ def _transform_long_pairs(data, intents):
     return df_ids
 
 
-def get_papers_with_full_chain(
+def get_papers_with_strong_chain(
     chains: pd.DataFrame,
     alphafold_data: pd.DataFrame,
     identifier: str,
@@ -419,10 +419,10 @@ def get_papers_with_full_chain(
     data_ids = _transform_long(chains, ["strong"])
 
     logger.info("Merging chains with AlphaFold data")
-    alphafold_data = alphafold_data.merge(
-        data_ids, how="inner", left_on=identifier, right_on="paper_id"
+    alphafold_data = alphafold_data.merge(       
+        data_ids, how="inner", left_on=[identifier, "level"], right_on=["paper_id", "level"]
     )
-    return alphafold_data
+    return alphafold_data  
 
 
 def get_chain_label_papers(

@@ -346,6 +346,7 @@ def get_intent_level(oa_dataset: pd.DataFrame, level: int, **kwargs) -> pd.DataF
         ],
     )
 
+
 def get_intent(oa_dataset: pd.DataFrame, **kwargs) -> pd.DataFrame:
     """
     Retrieves the intent data from the given OA dataset
@@ -374,7 +375,7 @@ def get_intent(oa_dataset: pd.DataFrame, **kwargs) -> pd.DataFrame:
     ).tolist()
 
     # Use joblib to parallelize the function calls
-    level_outputs = Parallel(n_jobs=8)(
+    level_outputs = Parallel(n_jobs=8, verbose=10)(
         delayed(iterate_citation_detail_points)(*input, direction="citations", **kwargs)
         for input in inputs
     )
@@ -416,7 +417,7 @@ def get_citation_intent_from_oa_dataset(
     oa_dataset["level"] = oa_dataset["level"].apply(
         lambda x: -1 if x == "seed" else int(x)
     )
-    
+
     # Create a mapping from id to doi and pmid for each level
     oa_dataset["parent_level"] = oa_dataset["level"] - 1
 
@@ -572,8 +573,6 @@ def get_baseline_seed_intent(oa_dataset: pd.DataFrame, **kwargs) -> pd.DataFrame
     )
 
 
-
-
 def get_baseline_citation_intent_from_oa_dataset(
     oa_dataset: pd.DataFrame,
     **kwargs,
@@ -594,7 +593,7 @@ def get_baseline_citation_intent_from_oa_dataset(
     oa_dataset["level"] = oa_dataset["level"].apply(
         lambda x: -1 if x == "seed" else int(x)
     )
-    
+
     # Create a mapping from id to doi and pmid for each level
     oa_dataset["parent_level"] = oa_dataset["level"] - 1
 
@@ -681,6 +680,6 @@ def get_baseline_citation_intent_from_oa_dataset(
             "parent_level",
             "strength",
             "topics",
-            "concepts"
+            "concepts",
         ]
     ]

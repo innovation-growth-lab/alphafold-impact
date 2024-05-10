@@ -6,7 +6,7 @@ generated using Kedro 0.19.1
 from kedro.pipeline import Pipeline, pipeline, node
 from .nodes import (
     filter_relevant_citation_links,
-    get_papers_with_full_chain,
+    get_papers_with_strong_chain,
     get_papers_with_clinical_article_citations,
     get_chain_label_papers,
 )
@@ -51,7 +51,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
     strong_citation_links = pipeline(
         [
             node(
-                get_papers_with_full_chain,
+                get_papers_with_strong_chain,
                 inputs={
                     "chains": "chains.complete_links.id.primary",
                     "alphafold_data": "oa.data_processing.depth.all.primary",
@@ -61,7 +61,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 tags="chains.id",
             ),
             node(
-                get_papers_with_full_chain,
+                get_papers_with_strong_chain,
                 inputs={
                     "chains": "chains.complete_links.pmid.primary",
                     "alphafold_data": "oa.data_processing.depth.all.primary",
@@ -71,7 +71,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 tags="chains.pmid",
             ),
             node(
-                get_papers_with_full_chain,
+                get_papers_with_strong_chain,
                 inputs={
                     "chains": "chains.complete_links.doi.primary",
                     "alphafold_data": "oa.data_processing.depth.all.primary",
@@ -162,17 +162,17 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
     strong_citation_links_ct = pipeline(
         [
             node(
-                get_papers_with_full_chain,
+                get_papers_with_strong_chain,
                 inputs={
                     "chains": "chains.complete_links.id.ct.primary",
                     "alphafold_data": "oa.data_processing.depth.ct.primary",
                     "identifier": "params:chains.identifier.id",
                 },
                 outputs="chains.complete_strong_links.id.ct.primary",
-                tags="chains.id",
+                tags=["chains.id", "test_ct"],
             ),
             node(
-                get_papers_with_full_chain,
+                get_papers_with_strong_chain,
                 inputs={
                     "chains": "chains.complete_links.pmid.ct.primary",
                     "alphafold_data": "oa.data_processing.depth.ct.primary",
@@ -182,7 +182,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 tags="chains.pmid",
             ),
             node(
-                get_papers_with_full_chain,
+                get_papers_with_strong_chain,
                 inputs={
                     "chains": "chains.complete_links.doi.ct.primary",
                     "alphafold_data": "oa.data_processing.depth.ct.primary",
