@@ -24,7 +24,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                     "identifier": "params:chains.identifier.id",
                 },
                 outputs="chains.complete_links.id.primary",
-                tags="chains.id",
+                tags=["chains.pmid", "test_af"],
             ),
             node(
                 filter_relevant_citation_links,
@@ -68,7 +68,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                     "identifier": "params:chains.identifier.pmid",
                 },
                 outputs="chains.complete_strong_links.pmid.primary",
-                tags="chains.pmid",
+                tags=["chains.pmid", "test_af"],
             ),
             node(
                 get_papers_with_strong_chain,
@@ -237,6 +237,120 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
         tags="label_dataset_ct.primary",
     )
 
+    filter_citation_links_other = pipeline(
+        [
+            node(
+                filter_relevant_citation_links,
+                inputs={
+                    "alphafold_data": "oa.data_processing.depth.other.primary",
+                    "identifier": "params:chains.identifier.id",
+                    "num_levels": "params:chains.num_levels.other"
+                },
+                outputs="chains.complete_links.id.other.primary",
+                tags="chains.id",
+            ),
+            node(
+                filter_relevant_citation_links,
+                inputs={
+                    "alphafold_data": "oa.data_processing.depth.other.primary",
+                    "identifier": "params:chains.identifier.pmid",
+                    "num_levels": "params:chains.num_levels.other"
+                },
+                outputs="chains.complete_links.pmid.other.primary",
+                tags="chains.pmid",
+            ),
+            node(
+                filter_relevant_citation_links,
+                inputs={
+                    "alphafold_data": "oa.data_processing.depth.other.primary",
+                    "identifier": "params:chains.identifier.doi",
+                    "num_levels": "params:chains.num_levels.other"
+                },
+                outputs="chains.complete_links.doi.other.primary",
+                tags="chains.doi",
+            ),
+        ],
+        tags=["complete_chains_other.primary", "chains_other"],
+    )
+
+    strong_citation_links_other = pipeline(
+        [
+            node(
+                get_papers_with_strong_chain,
+                inputs={
+                    "chains": "chains.complete_links.id.other.primary",
+                    "alphafold_data": "oa.data_processing.depth.other.primary",
+                    "identifier": "params:chains.identifier.id"
+                },
+                outputs="chains.complete_strong_links.id.other.primary",
+                tags=["chains.id", "test_other"],
+            ),
+            node(
+                get_papers_with_strong_chain,
+                inputs={
+                    "chains": "chains.complete_links.pmid.other.primary",
+                    "alphafold_data": "oa.data_processing.depth.other.primary",
+                    "identifier": "params:chains.identifier.pmid",
+                },
+                outputs="chains.complete_strong_links.pmid.other.primary",
+                tags="chains.pmid",
+            ),
+            node(
+                get_papers_with_strong_chain,
+                inputs={
+                    "chains": "chains.complete_links.doi.other.primary",
+                    "alphafold_data": "oa.data_processing.depth.other.primary",
+                    "identifier": "params:chains.identifier.doi",
+                },
+                outputs="chains.complete_strong_links.doi.other.primary",
+                tags="chains.doi",
+            ),
+        ],
+        tags=["strong_paper_chains_other.primary", "chains_other"],
+    )
+
+    clinical_article_citations_other = pipeline(
+        [
+            node(
+                get_papers_with_clinical_article_citations,
+                inputs={
+                    "chains": "chains.complete_links.pmid.other.primary",
+                    "icite_data": "pubmed.data_processing.icite.intermediate",
+                    "identifier": "params:chains.identifier.pmid",
+                },
+                outputs="chains.complete_strong_links_with_ca.pmid.other.primary",
+                tags="chains.pmid",
+            ),
+            node(
+                get_papers_with_clinical_article_citations,
+                inputs={
+                    "chains": "chains.complete_links.doi.other.primary",
+                    "icite_data": "pubmed.data_processing.icite.intermediate",
+                    "identifier": "params:chains.identifier.doi",
+                },
+                outputs="chains.complete_strong_links_with_ca.doi.other.primary",
+                tags="chains.doi",
+            ),
+        ],
+        tags=["clinical_chains_other.primary", "chains_other"],
+    )
+
+    label_dataset_other = pipeline(
+        [
+            node(
+                get_chain_label_papers,
+                inputs={
+                    "chains": "chains.complete_links.id.other.primary",
+                    "alphafold_data": "oa.data_processing.depth.other.primary",
+                    "identifier": "params:chains.identifier.id",
+                },
+                outputs="oa.chain_labels.id.other.primary",
+                tags="label.id",
+            )
+        ],
+        tags=["label_dataset_other.primary", "chains_other"],
+    )
+
     return (
         filter_citation_links
         + strong_citation_links
@@ -246,4 +360,8 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
         + strong_citation_links_ct
         + clinical_article_citations_ct
         + label_dataset_ct
+        + filter_citation_links_other
+        + strong_citation_links_other
+        + clinical_article_citations_other
+        + label_dataset_other
     )

@@ -455,6 +455,10 @@ chains:
     id: "id"
     pmid: "pmid"
     doi: "doi"
+  num_levels:
+    af: 3
+    ct: 3
+    other: 2
   
 pdb:
   config:

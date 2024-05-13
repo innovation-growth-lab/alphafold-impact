@@ -4,7 +4,7 @@ generated using Kedro 0.19.1
 """
 
 from kedro.pipeline import Pipeline, pipeline, node
-from .nodes import (
+from .nodes import (  # pylint: disable=E0402
     get_candidate_authors,
     calculate_lab_determinants,
     create_candidates_map,

@@ -38,7 +38,12 @@ def _sort_and_drop(
     # data = data[~data["intent"].isin(["", None])]
 
     # keep the first row of every parent_{identifier}, identifier
-    data = data.groupby(["parent_id", "id"]).first().reset_index()
+    data = (
+        data.sort_values("sort_order")
+        .groupby(["parent_id", "id"])
+        .first()
+        .reset_index()
+    )
 
     if unique:
         logger.info("Dropping duplicate citation links")
@@ -51,7 +56,7 @@ def _sort_and_drop(
     return data
 
 
-def _build_chain_dict(df, identifier, parent, level):
+def _build_chain_dict(df, identifier, parent, level, num_levels):
     """
     Recursively builds a dictionary representing a chain of data processing nodes.
 
@@ -65,7 +70,7 @@ def _build_chain_dict(df, identifier, parent, level):
         dict: A dictionary representing the chain of data processing nodes.
     """
     # base case: if level is greater than 2, return an empty dictionary
-    if level > 2:
+    if level >= num_levels:
         return {}
 
     # find all rows in the current level with the relevant parent id
@@ -76,7 +81,7 @@ def _build_chain_dict(df, identifier, parent, level):
 
     # for each match, recursively build the dictionary for the next level
     for item in matches:
-        dict_[item] = _build_chain_dict(df, identifier, item, level + 1)
+        dict_[item] = _build_chain_dict(df, identifier, item, level + 1, num_levels)
 
     return dict_
 
@@ -110,8 +115,10 @@ def _flatten_dict(d: Dict, parent_keys: list = None, sep: str = "_"):
     return rows
 
 
-def _breaks_chain(row):
-    intents = ["intent_0", "intent_1", "intent_2"]
+def _breaks_chain(row, num_levels: int = 2):
+    intents = ["intent_0", "intent_1"]
+    if num_levels > 2:
+        intents.append("intent_2")
     for i in range(len(intents) - 1):
         if (
             (pd.isna(row[intents[i]]) or row[intents[i]] == "N/A")
@@ -122,9 +129,18 @@ def _breaks_chain(row):
     return False
 
 
+def _ensure_levels(df: pd.DataFrame, num_levels: int) -> pd.DataFrame:
+    """Ensure that the DataFrame has the specified number of levels."""
+    for i in range(num_levels):
+        if f"level_{i}" not in df.columns:
+            df[f"level_{i}"] = np.nan
+    return df
+
+
 def filter_relevant_citation_links(
     alphafold_data: pd.DataFrame,
     identifier: str,
+    num_levels: int = 2,
     **kwargs,
 ) -> pd.DataFrame:
     """
@@ -175,34 +191,42 @@ def filter_relevant_citation_links(
     logger.info("Filter nulls for relevant identifier %s", identifier)
     alphafold_data = alphafold_data[alphafold_data[identifier].notnull()]
 
-    logger.info("Drop duplicates of parent_id, identifier, level, and intent")
+    logger.info("Drop duplicates of parent_id, identifier, and intent")
     alphafold_data.drop_duplicates(
         subset=["parent_id", identifier, "intent"], inplace=True
     )
 
     output = []
+    seeds = alphafold_data[alphafold_data["level"] == 0][
+        f"parent_{identifier}"
+    ].unique()
+    if len(seeds) == 0:
+        # move level up by 1
+        alphafold_data["level"] = alphafold_data["level"] - 1
+
     for seed_id in list(
         alphafold_data[alphafold_data["level"] == 0][f"parent_{identifier}"].unique()
     ):
         logger.info("Building citation chain for seed %s", seed_id)
-        data_dict = _build_chain_dict(alphafold_data, identifier, seed_id, 0)
+        data_dict = _build_chain_dict(
+            alphafold_data, identifier, seed_id, 0, num_levels
+        )
         flat_rows = _flatten_dict(data_dict)
         seed_df = pd.DataFrame(flat_rows)
         seed_df["seed_id"] = seed_id
+        seed_df = _ensure_levels(seed_df, num_levels)
         seed_df = seed_df[
             [
                 "seed_id",
-                "level_0",
-                "level_1",
-                "level_2",
             ]
+            + [f"level_{i}" for i in range(num_levels)]
         ]
         output.append(seed_df)
 
     chains_df = pd.concat(output)
 
     # for each level, merge chains with paper intent data
-    for i in range(4):
+    for i in range(num_levels):
         if i == 0:
             chains_df = chains_df.merge(
                 alphafold_data[[f"parent_{identifier}", identifier, "intent"]],
@@ -224,13 +248,13 @@ def filter_relevant_citation_links(
         chains_df.drop(columns=[f"parent_{identifier}", identifier], inplace=True)
 
     # substitute empty string in intent for None
-    for i in range(4):
+    for i in range(num_levels):
         chains_df[f"intent_{i}"] = chains_df[f"intent_{i}"].apply(
             lambda x: x if x != "" else None
         )
 
     # in the intent columns, replace NaN with 'N/A'
-    for i in range(4):
+    for i in range(num_levels):
         chains_df[f"intent_{i}"] = chains_df[f"intent_{i}"].apply(
             lambda x: "N/A" if x is np.nan else x
         )
@@ -238,7 +262,13 @@ def filter_relevant_citation_links(
 
     # drop rows that have all four intent as nan or N/A
     complete_chains_df = complete_chains_df[
-        ~complete_chains_df[["intent_0", "intent_1", "intent_2"]]
+        ~complete_chains_df[
+            (
+                ["intent_0", "intent_1", "intent_2"]
+                if num_levels > 2
+                else ["intent_0", "intent_1"]
+            )
+        ]
         .applymap(lambda x: x == "N/A" or pd.isna(x))
         .all(axis=1)
     ]
@@ -246,7 +276,9 @@ def filter_relevant_citation_links(
     return complete_chains_df
 
 
-def _transform_long(data: pd.DataFrame, intents: list) -> pd.DataFrame:
+def _transform_long(
+    data: pd.DataFrame, intents: list, num_levels: int = 2
+) -> pd.DataFrame:
     """
     Transforms the given data by selecting specific levels and intents.
 
@@ -268,16 +300,22 @@ def _transform_long(data: pd.DataFrame, intents: list) -> pd.DataFrame:
 
     level_1_ids = list(set(level_1["level_1"].to_list()))
 
-    # do the same for level_2 if level_1 is result and methodology
-    level_2 = level_1.loc[level_1["intent_2"].isin(intents)]
+    if num_levels > 2:
+        # do the same for level_2 if level_1 is result and methodology
+        level_2 = level_1.loc[level_1["intent_2"].isin(intents)]
 
-    level_2_ids = list(set(level_2["level_2"].to_list()))
+        level_2_ids = list(set(level_2["level_2"].to_list()))
 
     # concatenate the lists of ids
-    ids = level_0_ids + level_1_ids + level_2_ids
+    ids = level_0_ids + level_1_ids
+    if num_levels > 2:
+        ids += level_2_ids
 
     # create a list of levels
-    levels = [0] * len(level_0_ids) + [1] * len(level_1_ids) + [2] * len(level_2_ids)
+    levels = [0] * len(level_0_ids) + [1] * len(level_1_ids)
+
+    if num_levels > 2:
+        levels += [2] * len(level_2_ids)
 
     # create a dataframe from the lists of ids and levels
     df_ids = pd.DataFrame({"paper_id": ids, "level": levels})
@@ -299,13 +337,16 @@ def get_entrez_ptype_pmid(pmid: str) -> str:
     Returns:
         str: The publication type of the specified publication.
     """
-    stream = Entrez.efetch(db="pubmed", id=pmid, retmax="1")
-    record = Entrez.read(stream)
-    return str(
-        record["PubmedArticle"][0]["MedlineCitation"]["Article"].get(
-            "PublicationTypeList"
-        )[0]
-    )
+    try:
+        stream = Entrez.efetch(db="pubmed", id=pmid, retmax="1")
+        record = Entrez.read(stream)
+        return str(
+            record["PubmedArticle"][0]["MedlineCitation"]["Article"].get(
+                "PublicationTypeList"
+            )[0]
+        )
+    except Exception:  # pylint: disable=broad-except
+        return "Unknown"
 
 
 def get_papers_with_clinical_article_citations(
@@ -367,11 +408,11 @@ def get_papers_with_clinical_article_citations(
     return data_ids
 
 
-def _transform_long_pairs(data, intents):
+def _transform_long_pairs(data, intents, num_levels: int = 2):
     df_ids = pd.DataFrame(columns=["paper_id", "parent_paper_id", "intent", "level"])
     data_cp = data.copy()
 
-    for i in range(4):
+    for i in range(num_levels):
         level = data_cp.loc[data_cp[f"intent_{i}"].isin(intents)]
         level_ids = level[f"level_{i}"].tolist()
         parent_ids = (
@@ -419,10 +460,13 @@ def get_papers_with_strong_chain(
     data_ids = _transform_long(chains, ["strong"])
 
     logger.info("Merging chains with AlphaFold data")
-    alphafold_data = alphafold_data.merge(       
-        data_ids, how="inner", left_on=[identifier, "level"], right_on=["paper_id", "level"]
+    alphafold_data = alphafold_data.merge(
+        data_ids,
+        how="inner",
+        left_on=[identifier, "level"],
+        right_on=["paper_id", "level"],
     )
-    return alphafold_data  
+    return alphafold_data
 
 
 def get_chain_label_papers(

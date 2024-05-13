@@ -151,6 +151,10 @@ oa.chain_labels.id.ct.primary:
   <<: *_pq
   filepath: s3://alphafold-impact/data/03_primary/oa/works/ct/chain_labels.parquet
 
+oa.chain_labels.id.other.primary:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/03_primary/oa/works/other/chain_labels.parquet
+
 # Openalex works - Concepts
 oa_raw_works_for_concepts_and_years:
   type: kedro_datasets.pandas.JSONDataset
@@ -532,6 +536,18 @@ chains.seed_technologies.intermediate:
 "chains.complete_strong_links_with_ca.{identifier}.ct.primary":
   <<: *_pq
   filepath: s3://alphafold-impact/data/03_primary/oa/works/chains/ct/{identifier}/complete_strong_links_with_ca.parquet
+
+"chains.complete_links.{identifier}.other.primary":
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/03_primary/oa/works/chains/other/{identifier}/complete_links.parquet
+
+"chains.complete_strong_links.{identifier}.other.primary":
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/03_primary/oa/works/chains/other/{identifier}/complete_strong_links.parquet
+
+"chains.complete_strong_links_with_ca.{identifier}.other.primary":
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/03_primary/oa/works/chains/other/{identifier}/complete_strong_links_with_ca.parquet
 
 sb_lab.data_collection.candidates.publications.intermediate:
   <<: *_js_ptd
