@@ -599,6 +599,17 @@ other_lab.data_collection.publications.raw:
 
 
 ### ANALYSIS ###
+analysis.af.level0_data:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/03_primary/oa/works/analysis/af/level0_data.parquet
+
+analysis.ct.level0_data:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/03_primary/oa/works/analysis/ct/level0_data.parquet
+
+analysis.other.level0_data:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/03_primary/oa/works/analysis/other/level0_data.parquet
 
 analysis.descriptive.level0_data:
   <<: *_pq
