@@ -48,6 +48,11 @@ def merge_inputs(**kwargs):
 
     merged_data["dataset"] = merged_data.groupby("id")["source"].transform(",".join)
 
+    # remove repeated "af", "ct", or "other" statements in dataset
+    merged_data["dataset"] = merged_data["dataset"].apply(
+        lambda x: ",".join(sorted(list(set(x.split(",")))))
+    )
+
     merged_data = merged_data.drop_duplicates(subset="id", keep="first")
 
     return merged_data

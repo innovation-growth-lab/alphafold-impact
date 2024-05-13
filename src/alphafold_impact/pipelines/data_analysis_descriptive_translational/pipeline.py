@@ -13,10 +13,20 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 load_input_data,
                 inputs={
+                    "data": "oa.data_processing.depth.other.primary",
+                    "source": "params:analysis.source.other",
+                },
+                outputs="analysis.other.level0_data",
+                tags=["other_descriptive"]
+            ),
+            node(
+                load_input_data,
+                inputs={
                     "data": "oa.data_processing.depth.primary",
                     "source": "params:analysis.source.af",
                 },
-                outputs="af.level0_data",
+                outputs="analysis.af.level0_data",
+                tags=["af_descriptive"]
             ),
             node(
                 load_input_data,
@@ -24,24 +34,18 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "data": "oa.data_processing.depth.ct.primary",
                     "source": "params:analysis.source.ct",
                 },
-                outputs="ct.level0_data",
-            ),
-            node(
-                load_input_data,
-                inputs={
-                    "data": "oa.data_processing.depth.other.primary",
-                    "source": "params:analysis.source.other",
-                },
-                outputs="other.level0_data",
+                outputs="analysis.ct.level0_data",
+                tags=["ct_descriptive"]
             ),
             node(
                 merge_inputs,
                 inputs={
-                    "alphafold_data": "af.level0_data",
-                    "ct_data": "ct.level0_data",
-                    "other_data": "other.level0_data",
+                    "alphafold_data": "analysis.af.level0_data",
+                    "ct_data": "analysis.ct.level0_data",
+                    "other_data": "analysis.other.level0_data",
                 },
                 outputs="analysis.descriptive.level0_data",
+                tags="descriptive_merge"
             ),
             node(
                 preprocess_sb_data,
