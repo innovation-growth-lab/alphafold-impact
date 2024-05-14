@@ -200,12 +200,20 @@ def get_event_study_strength(data, sc_data_af, sc_data_ct, output_type):
             .size()
             .reset_index(name="count")
         )
+        # drop authors with seed other & strong True
+        final_data = final_data[
+            ~((final_data["seed"] == "other") & (final_data["strong"] == True))
+        ]
+        
     elif output_type == "citations":
         final_data = (
             data.groupby(["pi_id", "time", "seed", "strong"])["cited_by_count"]
             .sum()
             .reset_index(name="count")
         )
+        final_data = final_data[
+            ~((final_data["seed"] == "other") & (final_data["strong"] == True))
+        ]
 
     return final_data
 
