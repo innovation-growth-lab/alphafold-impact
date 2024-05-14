@@ -45,7 +45,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "sb_lab.data_analysis.outputs.primary",
                     "sb_lab.data_analysis.outputs.event_study",
                 ],
-                tags=["event_study_outputs"],
+                tags=["event_study_outputs", "event_study"],
             ),
             node(
                 get_event_study_strength,
@@ -56,7 +56,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "output_type": "params:analysis.output_type.publications",
                 },
                 outputs="sb_lab.data_analysis.outputs.event_study_strength",
-                tags=["event_study_strength"],
+                tags=["event_study_strength", "event_study"],
             ),
             node(
                 get_event_study_pdb_submissions,
@@ -66,7 +66,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "output_type": "params:analysis.output_type.publications",
                 },
                 outputs="sb_lab.data_analysis.outputs.event_study_pdb_submissions",
-                tags=["event_study_pdb_submissions"],
+                tags=["event_study_pdb_submissions", "event_study"],
             ),
         ]
     )

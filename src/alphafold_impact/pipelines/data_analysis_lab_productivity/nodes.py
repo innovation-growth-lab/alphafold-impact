@@ -51,6 +51,7 @@ def get_sb_lab_outputs(
     data = pd.concat(outputs)
 
     logger.info("Merging data with mapping information")
+    mapping_df.drop_duplicates(subset="author", inplace=True)
     data = data.merge(
         mapping_df[["author", "seed"]], left_on="pi_id", right_on="author", how="left"
     )
@@ -182,10 +183,16 @@ def get_event_study_strength(data, sc_data_af, sc_data_ct, output_type):
     """
     sc_data = pd.concat([sc_data_af, sc_data_ct])
 
+    # drop none in strength
+    sc_data = sc_data.dropna(subset=["strength"])
     # drop duplicates
-    sc_data = sc_data.drop_duplicates(subset=["id", "strength"], keep="first")
+    sc_data = sc_data.drop_duplicates(subset=["id"], keep="first")
 
     data["strong"] = data["id"].isin(sc_data["id"])
+
+    # for PI with at least a strong link, set all papers to strong
+    pi_strong = data[data["strong"]]["pi_id"].unique()
+    data.loc[data["pi_id"].isin(pi_strong), "strong"] = True
 
     if output_type == "publications":
         final_data = (
