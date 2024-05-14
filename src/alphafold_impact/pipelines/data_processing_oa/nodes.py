@@ -635,6 +635,9 @@ def reassign_ct_levels(
     # filter out publications older than 2017 for data_other level 0
     level_0_data = data_other[(data_other['level'] == '0') & (data_other['publication_date'] >= "2017-01-01")]
 
+    # keep 50% of the level_0_data
+    level_0_data = level_0_data.sample(frac=0.75, random_state=42)
+
     # Get level 1 data where parent_id is in level 0 ids
     level_1_data = data_other[(data_other['level'] == '1') & data_other['parent_id'].isin(level_0_data['id'])]
 
