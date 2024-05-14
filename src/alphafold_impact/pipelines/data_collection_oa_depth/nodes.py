@@ -168,7 +168,7 @@ def fetch_citation_to_specific_depth(
             }
             logger.info("Processing %d papers", len(current_batch))
 
-            child_papers = Parallel(n_jobs=8, backend="loky", verbose=10)(
+            child_papers = Parallel(n_jobs=6, backend="loky", verbose=10)(
                 delayed(collect_papers)(
                     oa_ids=paper,
                     mailto=api_config["mailto"],
