@@ -457,10 +457,16 @@ def get_citation_intent_from_oa_dataset(
     level_0 = get_intent_level_0(oa_dataset, **kwargs)
     level_1 = get_intent_level(oa_dataset, 1, **kwargs)
     level_2 = get_intent_level(oa_dataset, 2, **kwargs)
-    level_3 = get_intent_level(oa_dataset, 3, **kwargs)
+    # level_3 = get_intent_level(oa_dataset, 3, **kwargs)
 
     # concatenate the dataframes
-    processed_df = pd.concat([level_0, level_1, level_2, level_3])
+    processed_df = pd.concat(
+        [
+            level_0,
+            level_1,
+            level_2,
+        ]
+    )  # level_3
 
     # check how often doi is empty and pmid is not
     logger.info(
@@ -524,6 +530,8 @@ def get_citation_intent_from_oa_dataset(
             "authorships",
             "parent_level",
             "strength",
+            "topics",
+            "concepts",
         ]
     ]
 
