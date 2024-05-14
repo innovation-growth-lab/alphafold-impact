@@ -133,7 +133,7 @@ oa.data_processing.depth.duplicated.intermediate:
   
 oa.data_processing.depth.primary:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/03_primary/oa/works/depth/main.parquet
+  filepath: s3://alphafold-impact/data/03_primary/oa/works/depth/main_all.parquet # [HACK] ensure everything points to dups
 
 oa.data_processing.depth.duplicated.primary:
   <<: *_pq
@@ -573,6 +573,34 @@ sb_lab.data_collection.publications.raw:
   <<: *_pq_ptd
   path: s3://alphafold-impact/data/01_raw/oa/sb_labs/publications/
 
+# sb_lab.data_analysis.outputs.input:
+#   <<: *_pq
+#   filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/outputs.parquet
+
+sb_lab.data_analysis.monthly_outputs:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/monthly_outputs.parquet
+
+sb_lab.data_analysis.yearly_outputs:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/yearly_outputs.parquet
+
+# sb_lab.data_analysis.outputs.primary:
+#   <<: *_pq
+#   filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/outputs_w_parents.parquet
+
+sb_lab.data_analysis.outputs.event_study:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/outputs_event_study.parquet
+
+sb_lab.data_analysis.outputs.event_study_strength:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/outputs_event_study_strength.parquet
+
+sb_lab.data_analysis.outputs.event_study_pdb_submissions:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/outputs_event_study_pdb_submissions.parquet
+
 other_lab.data_collection.candidates.publications.intermediate:
   <<: *_js_ptd
   path: s3://alphafold-impact/data/02_intermediate/oa/other_labs/candidate_publications/
@@ -619,9 +647,21 @@ analysis.descriptive.level0_data.processed:
   <<: *_pq
   filepath: s3://alphafold-impact/data/03_primary/oa/works/analysis/descriptive/level0_data_processed.parquet
 
-analysis.descriptive.level0_data_with_cc_counts:
+analysis.descriptive.level0_data_with_cc:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/descriptive/level0_data_with_cc_counts.parquet# TCC
+  filepath: s3://alphafold-impact/data/04_output/analysis/descriptive/level0_data_with_cc.parquet
+
+analysis.descriptive.level0_data_with_moderators_cc:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/04_output/analysis/descriptive/level0_data_with_strong_cc.parquet
+
+analysis.descriptive.level0_data_with_patents:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/04_output/analysis/descriptive/level0_data_with_patents.parquet
+
+analysis.descriptive.level0_data_with_moderators_pc:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/04_output/analysis/descriptive/level0_data_with_strong_pc.parquet# TCC
 tcc.data_analysis:
   <<: *_csv_ptd
   path: s3://alphafold-impact/data/04_analysis/tcc/

@@ -473,3 +473,6 @@ analysis:
     af: "af"
     ct: "ct"
     other: "other"
+  output_type:
+    publications: "publications"
+    citations: "citations"
