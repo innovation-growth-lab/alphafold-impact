@@ -32,7 +32,20 @@ def get_sb_lab_outputs(
         data_batch = loader()
 
         # drop "display_name", "authorships"
-        data_batch = data_batch.drop(columns=["display_name", "authorships"])
+        data_batch = data_batch.drop(
+            columns=["display_name", "authorships", "counts_by_year", "ids"]
+        )
+
+        # transform mesh, concepts, topics to be a list of the ids (ie first item in sublists)
+        data_batch["mesh_terms"] = data_batch["mesh_terms"].apply(
+            lambda x: [y[0] for y in x] if x is not None else []
+        )
+        data_batch["concepts"] = data_batch["concepts"].apply(
+            lambda x: [y[0] for y in x] if x is not None else []
+        )
+        data_batch["topics"] = data_batch["topics"].apply(
+            lambda x: [y[0] for y in x] if x is not None else []
+        )
 
         outputs.append(data_batch)
     data = pd.concat(outputs)
@@ -139,7 +152,9 @@ def get_event_study_outputs(data: pd.DataFrame, level0: pd.DataFrame, output_typ
     final_data["time"] = final_data["time"].astype(int)
     if output_type == "publications":
         final_data = (
-            final_data.groupby(["pi_id", "time", "seed"]).size().reset_index(name="count")
+            final_data.groupby(["pi_id", "time", "seed"])
+            .size()
+            .reset_index(name="count")
         )
     elif output_type == "citations":
         final_data = (
