@@ -41,12 +41,16 @@ def create_and_explode_manual_data(
         # Keep only the necessary columns
         df = df[
             [
+                "Jurisdiction",
+                "Kind",
                 "Publication Date",
                 "Title",
-                "Abstract",
                 "Cites Patent Count",
                 "Cited by Patent Count",
                 "NPL Resolved External ID(s)",
+                "CPC Classifications",
+                "IPCR Classifications",
+                "Legal Status"
             ]
         ]
 
