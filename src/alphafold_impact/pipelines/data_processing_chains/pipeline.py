@@ -45,7 +45,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 tags="chains.doi",
             ),
         ],
-        tags="complete_chains",
+        tags=["complete_chains", "af_chains"],
     )
 
     strong_citation_links = pipeline(
@@ -81,7 +81,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 tags="chains.doi",
             ),
         ],
-        tags="strong_paper_chains",
+        tags=["strong_paper_chains", "af_chains"],
     )
 
     clinical_article_citations = pipeline(
@@ -107,7 +107,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 tags="chains.doi",
             ),
         ],
-        tags="clinical_chains",
+        tags=["clinical_chains", "af_chains"],
     )
 
     label_dataset = pipeline(
@@ -123,7 +123,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 tags="label.id",
             )
         ],
-        tags="label_dataset",
+        tags=["label_dataset", "af_chains"],
     )
 
     filter_citation_links_ct = pipeline(

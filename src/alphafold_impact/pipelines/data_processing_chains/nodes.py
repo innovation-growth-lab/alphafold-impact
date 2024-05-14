@@ -45,6 +45,22 @@ def _sort_and_drop(
         .reset_index()
     )
 
+    # drop W31
+    # drop rows with id W3177828909, W3211795435, W3202105508
+    data = data[
+        ~data["id"].isin(
+            ["W3177828909", "W3211795435", "W3202105508", "W3202105508"]
+        )
+    ]
+
+    # drop rows with parent_id W3177828909, W3211795435, W3202105508 except in level 0
+    data = data[
+        ~(
+            (data["parent_id"].isin(["W3177828909", "W3211795435", "W3202105508"]))
+            & (data["level"] != 0)
+        )
+    ]
+
     if unique:
         logger.info("Dropping duplicate citation links")
         data.sort_values("sort_order").drop_duplicates(subset="id", inplace=True)
