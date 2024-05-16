@@ -666,21 +666,54 @@ sb_lab.data_analysis.yearly_outputs:
   <<: *_pq
   filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/yearly_outputs.parquet
 
-sb_lab.data_analysis.outputs.primary:
-  <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/outputs_primary.parquet
+# sb_lab.data_analysis.outputs.primary:
+#   <<: *_pq
+#   filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/outputs_primary.parquet
 
-sb_lab.data_analysis.outputs.event_study:
+sb_lab.data_analysis.outputs.counts.event_study:
   <<: *_pq
   filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/outputs_event_study.parquet
 
-sb_lab.data_analysis.outputs.event_study_strength:
+sb_lab.data_analysis.outputs.citations.event_study:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/outputs_event_study_citations.parquet
+
+
+sb_lab.data_analysis.outputs.counts.event_study_strength:
   <<: *_pq
   filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/outputs_event_study_strength.parquet
 
-sb_lab.data_analysis.outputs.event_study_pdb_submissions:
+sb_lab.data_analysis.outputs.citations.event_study_strength:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/outputs_event_study_strength_citations.parquet
+
+sb_lab.data_analysis.outputs.counts.event_study_pdb_submissions:
   <<: *_pq
   filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/outputs_event_study_pdb_submissions.parquet
+
+sb_lab.data_analysis.outputs.citations.event_study_pdb_submissions:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/outputs_event_study_pdb_submissions_citations.parquet
+
+sb_lab.data_analysis.outputs.counts.event_study_predictive:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/outputs_event_study_predictive.parquet
+
+sb_lab.data_analysis.outputs.citations.event_study_predictive:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/outputs_event_study_predictive_citations.parquet
+
+sb_lab.data_analysis.outputs.papers_with_ccs:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/outputs_papers_with_ccs.parquet
+  
+sb_lab.data_analysis.outputs.counts.event_study_cc:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/outputs_event_study_cc.parquet
+
+sb_lab.data_analysis.outputs.citations.event_study_cc:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/outputs_event_study_cc_citations.parquet
 
 os.data_analysis.outputs.trends:
   <<: *_pq

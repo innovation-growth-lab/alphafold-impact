@@ -5,9 +5,14 @@ generated using Kedro 0.19.1
 
 import logging
 import pandas as pd
-import numpy as np
 from kedro.io import AbstractDataset
+from ..data_analysis_descriptive_translational.nodes import (  # pylint: disable=relative-beyond-top-level
+    get_entrez_ptype_pmid,
+)
+from Bio import Entrez
 
+
+Entrez.email = "david.ampudia@nesta.org.uk"
 logger = logging.getLogger(__name__)
 
 
@@ -86,19 +91,20 @@ def compute_publication_production(data: pd.DataFrame):
     return monthly_publications, yearly_publications
 
 
-def get_event_study_outputs(data: pd.DataFrame, level0: pd.DataFrame, output_type: str):
+def preprocess_for_event_study(
+    data: pd.DataFrame, level0: pd.DataFrame
+) -> pd.DataFrame:
     """
-    Compute event study outputs based on the provided data and level0 data.
+    Preprocesses the data for event study analysis.
 
     Args:
-        data (pd.DataFrame): The input data.
-        level0 (pd.DataFrame): The level0 data.
+        data (pd.DataFrame): The input data to be preprocessed.
+        level0 (pd.DataFrame): The level0 data used for merging.
 
     Returns:
-        pd.DataFrame: The computed event study outputs.
+        pd.DataFrame: The preprocessed data.
 
     """
-    # convert level0 publication_date and parent_publication_date to datetime
     level0["publication_date"] = pd.to_datetime(level0["publication_date"])
     level0["parent_publication_date"] = pd.to_datetime(
         level0["parent_publication_date"]
@@ -151,23 +157,38 @@ def get_event_study_outputs(data: pd.DataFrame, level0: pd.DataFrame, output_typ
     final_data = data.copy()
     final_data.dropna(subset=["time"], inplace=True)
     final_data["time"] = final_data["time"].astype(int)
-    if output_type == "publications":
-        final_data = (
-            final_data.groupby(["pi_id", "time", "seed"])
-            .size()
-            .reset_index(name="count")
-        )
-    elif output_type == "citations":
-        final_data = (
-            final_data.groupby(["pi_id", "time", "seed"])["cited_by_count"]
-            .sum()
-            .reset_index(name="count")
-        )
 
-    return data, final_data
+    return final_data
 
 
-def get_event_study_strength(data, sc_data_af, sc_data_ct, output_type):
+def get_event_study_outputs(data: pd.DataFrame) -> tuple:
+    """
+    Compute event study outputs based on the provided data and level0 data.
+
+    Args:
+        data (pd.DataFrame): The input data.
+        level0 (pd.DataFrame): The level0 data.
+
+    Returns:
+        pd.DataFrame: Primary data.
+        pd.DataFrame: The computed event study outputs.
+        pd.DataFrame: The computed event study citations.
+
+
+    """
+    final_data_counts = (
+        data.groupby(["pi_id", "time", "seed"]).size().reset_index(name="count")
+    )
+    final_data_citations = (
+        data.groupby(["pi_id", "time", "seed"])["cited_by_count"]
+        .sum()
+        .reset_index(name="count")
+    )
+
+    return final_data_counts, final_data_citations
+
+
+def get_event_study_strength(data, sc_data_af, sc_data_ct):
     """
     Compute event study strength based on the provided data and strong links data.
 
@@ -175,11 +196,10 @@ def get_event_study_strength(data, sc_data_af, sc_data_ct, output_type):
         data (pd.DataFrame): The input data.
         sc_data_af (pd.DataFrame): The strong links data for AlphaFold.
         sc_data_ct (pd.DataFrame): The strong links data for counterfactual papers.
-        output_type (str): The output type.
 
     Returns:
-        pd.DataFrame: The computed event study strength.
-
+        pd.DataFrame: The computed event study outputs.
+        pd.DataFrame: The computed event study citations.
     """
     sc_data = pd.concat([sc_data_af, sc_data_ct])
 
@@ -194,43 +214,46 @@ def get_event_study_strength(data, sc_data_af, sc_data_ct, output_type):
     pi_strong = data[data["strong"]]["pi_id"].unique()
     data.loc[data["pi_id"].isin(pi_strong), "strong"] = True
 
-    if output_type == "publications":
-        final_data = (
-            data.groupby(["pi_id", "time", "seed", "strong"])
-            .size()
-            .reset_index(name="count")
-        )
-        # drop authors with seed other & strong True
-        final_data = final_data[
-            ~((final_data["seed"] == "other") & (final_data["strong"] == True))
-        ]
-        
-    elif output_type == "citations":
-        final_data = (
-            data.groupby(["pi_id", "time", "seed", "strong"])["cited_by_count"]
-            .sum()
-            .reset_index(name="count")
-        )
-        final_data = final_data[
-            ~((final_data["seed"] == "other") & (final_data["strong"] == True))
-        ]
+    final_data = data.copy()
+    final_data.dropna(subset=["time"], inplace=True)
+    final_data["time"] = final_data["time"].astype(int)
 
-    return final_data
+    final_data_counts = (
+        final_data.groupby(["pi_id", "time", "seed", "strong"])
+        .size()
+        .reset_index(name="count")
+    )
+    # drop authors with seed other & strong True → these are authors not above the AF
+    # threshold who nonetheless cited it, and above the threshold in other SB papers.
+    final_data_counts = final_data_counts[
+        ~((final_data_counts["seed"] == "other") & (final_data_counts["strong"]))
+    ]
+
+    final_data_citations = (
+        final_data.groupby(["pi_id", "time", "seed", "strong"])["cited_by_count"]
+        .sum()
+        .reset_index(name="count")
+    )
+    final_data_citations = final_data_citations[
+        ~((final_data_citations["seed"] == "other") & (final_data_citations["strong"]))
+    ]
+
+    return final_data_counts, final_data_citations
 
 
 def get_event_study_pdb_submissions(
-    data: pd.DataFrame, pdb_data: pd.DataFrame, output_type: str
-):
+    data: pd.DataFrame, pdb_data: pd.DataFrame
+) -> tuple:
     """
     Compute event study outputs based on the provided data and pdb_data.
 
     Args:
         data (pd.DataFrame): The input data.
         pdb_data (pd.DataFrame): The pdb data.
-        output_type (str): The output type.
 
     Returns:
         pd.DataFrame: The computed event study outputs.
+        pd.DataFrame: The computed event study citations.
     """
 
     logger.info("Merging data with pdb_data data")
@@ -242,14 +265,128 @@ def get_event_study_pdb_submissions(
         how="inner",
     )
 
-    if output_type == "publications":
-        final_data = (
-            data.groupby(["pi_id", "time", "seed"]).size().reset_index(name="count")
+    final_data = data.copy()
+    final_data.dropna(subset=["time"], inplace=True)
+    final_data["time"] = final_data["time"].astype(int)
+
+    final_data_counts = (
+        final_data.groupby(["pi_id", "time", "seed", "resolution", "R_free"])
+        .size()
+        .reset_index(name="count")
+    )
+    final_data_citations = (
+        final_data.groupby(["pi_id", "time", "seed", "resolution", "R_free"])[
+            "cited_by_count"
+        ]
+        .sum()
+        .reset_index(name="count")
+    )
+    return final_data_counts, final_data_citations
+
+
+def get_event_study_predictive_outputs(data: pd.DataFrame) -> tuple:
+    """
+    Calculate the counts and citations of event study predictive outputs.
+
+    Args:
+        data (pd.DataFrame): The input DataFrame containing the data.
+
+    Returns:
+        tuple: A tuple containing two DataFrames:
+            - final_data_counts: DataFrame with counts of event study predictive outputs.
+            - final_data_citations: DataFrame with citations of event study predictive outputs.
+    """
+
+    data["protein_concept"] = data["concepts"].apply(
+        lambda x: (
+            any(element == "C18051474" or element == "C47701112" for element in x)
         )
-    elif output_type == "citations":
-        final_data = (
-            data.groupby(["pi_id", "time", "seed"])["cited_by_count"]
-            .sum()
-            .reset_index(name="count")
-        )
-    return final_data
+    )
+
+    final_data = data.copy()
+    final_data.dropna(subset=["time"], inplace=True)
+    final_data["time"] = final_data["time"].astype(int)
+
+    final_data_counts = (
+        final_data.groupby(["pi_id", "time", "seed", "protein_concept"])
+        .size()
+        .reset_index(name="count")
+    )
+    final_data_citations = (
+        final_data.groupby(["pi_id", "time", "seed", "protein_concept"])[
+            "cited_by_count"
+        ]
+        .sum()
+        .reset_index(name="count")
+    )
+    return final_data_counts, final_data_citations
+
+
+def get_event_study_cc(data: pd.DataFrame, icite_data: pd.DataFrame):
+    """
+    Get event study for clinical citations.
+
+    Args:
+        data (pd.DataFrame): The input data containing information about articles.
+        icite_data (pd.DataFrame): The input data containing iCite information.
+
+    Returns:
+        Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]: A tuple containing three DataFrames:
+            - data_pmid: The merged data with iCite information.
+            - final_data_counts: The counts of clinical citations grouped by various attributes.
+            - final_data_citations: The sum of cited_by_count grouped by various attributes.
+    """
+
+    # preprocess icite data
+    icite_data["pmid"] = icite_data["pmid"].astype(str)
+
+    logger.info("Merging chains with iCite data")
+
+    # merge on 'pmid'
+    data_pmid = data.merge(icite_data[["pmid", "cited_by_clin"]], how="left", on="pmid")
+    data_pmid = data_pmid.drop_duplicates(subset=["id"])
+
+    logger.info("Exploding cited_by_clin")
+    data_pmid = data_pmid[data_pmid["cited_by_clin"].astype(str) != "nan"]
+
+    # drop if cited_by_clin is None
+    data_pmid = data_pmid[data_pmid["cited_by_clin"].notnull()]
+
+    data_pmid["cited_by_clin"] = data_pmid["cited_by_clin"].apply(
+        lambda x: x.split(" ")
+    )
+    data_pmid = data_pmid.explode("cited_by_clin")
+
+    logger.info("Creating clinical article links")
+    data_pmid["ca_link"] = data_pmid["cited_by_clin"].apply(
+        lambda x: f"https://pubmed.ncbi.nlm.nih.gov/{x}"
+    )
+
+    # reindex
+    data_pmid.reset_index(inplace=True, drop=True)
+
+    # drop dup
+    data_pmid.drop_duplicates(subset=["id", "cited_by_clin"], inplace=True)
+
+    data_pmid[["ca_publication_type", "ca_publication_date"]] = data_pmid[
+        "cited_by_clin"
+    ].apply(get_entrez_ptype_pmid)
+
+    logger.info("Collected clinical citation PMIDs")
+    final_data = data_pmid.copy()
+    final_data.dropna(subset=["time"], inplace=True)
+    final_data["time"] = final_data["time"].astype(int)
+
+    final_data_counts = (
+        final_data.groupby(["pi_id", "time", "seed", "ca_publication_type"])
+        .size()
+        .reset_index(name="count")
+    )
+    final_data_citations = (
+        final_data.groupby(["pi_id", "time", "seed", "ca_publication_type"])[
+            "cited_by_count"
+        ]
+        .sum()
+        .reset_index(name="count")
+    )
+    return data_pmid, final_data_counts, final_data_citations

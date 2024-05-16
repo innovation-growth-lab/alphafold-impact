@@ -134,13 +134,11 @@ def fetch_author_publications(
     filter_batches = [[from_publication_date, batch] for batch in author_batches]
 
     # slice to create parallel jobs that produce slices
-    slices = [filter_batches[i : i + 25] for i in range(0, len(filter_batches), 25)]
+    slices = [filter_batches[i : i + 250] for i in range(0, len(filter_batches), 250)]
 
     logger.info("Fetching papers for %d author batches", len(slices))
 
     for i, slice_ in enumerate(slices):
-        if i < 245:
-            continue # [HACK] stopped at 245 (applied labs), to avoid running while working.
         logger.info("Processing batch number %d / %d", i + 1, len(slices))
 
         slice_results = Parallel(n_jobs=8, backend="loky", verbose=10)(
