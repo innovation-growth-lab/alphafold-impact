@@ -674,7 +674,14 @@ sb_lab.data_analysis.outputs.event_study_strength:
 sb_lab.data_analysis.outputs.event_study_pdb_submissions:
   <<: *_pq
   filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/outputs_event_study_pdb_submissions.parquet
-# TCC
+
+os.data_analysis.outputs.trends:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/04_output/analysis/os/outputs_trends.parquet
+
+os.data_analysis.outputs.regional_trends:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/04_output/analysis/os/outputs_regional_trends.parquet# TCC
 tcc.data_analysis:
   <<: *_csv_ptd
   path: s3://alphafold-impact/data/04_analysis/tcc/
