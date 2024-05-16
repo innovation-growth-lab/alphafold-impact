@@ -609,6 +609,13 @@ os.labelled_biology_courses.primary:
   <<: *_pq
   filepath: s3://alphafold-impact/data/03_primary/os/labelled_biology_courses.parquet
 
+ecr.authors.raw:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/01_raw/ecr/authors.parquet
+
+ecr.authors.publications.raw:
+  <<: *_pq_ptd
+  path: s3://alphafold-impact/data/01_raw/ecr/publications/
 
 ### ANALYSIS ###
 analysis.af.level0_data:

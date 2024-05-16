@@ -422,6 +422,7 @@ labs:
       biochemistry: True
       bioinformatics: True
     from_date: "2015-01-01"
+    from_author_date: "2018-01-01"
     api:
       mailto: data_analytics@nesta.org.uk
       perpage: "200"
