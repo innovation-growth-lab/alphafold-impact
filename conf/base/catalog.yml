@@ -706,7 +706,7 @@ sb_lab.data_analysis.outputs.citations.event_study_predictive:
 sb_lab.data_analysis.outputs.papers_with_ccs:
   <<: *_pq
   filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/outputs_papers_with_ccs.parquet
-  
+
 sb_lab.data_analysis.outputs.counts.event_study_cc:
   <<: *_pq
   filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/outputs_event_study_cc.parquet
@@ -714,6 +714,18 @@ sb_lab.data_analysis.outputs.counts.event_study_cc:
 sb_lab.data_analysis.outputs.citations.event_study_cc:
   <<: *_pq
   filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/outputs_event_study_cc_citations.parquet
+
+sb_lab.data_analysis.outputs.papers_with_pcs:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/outputs_papers_with_pcs.parquet
+
+sb_lab.data_analysis.outputs.counts.event_study_pc:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/outputs_event_study_pc.parquet
+
+sb_lab.data_analysis.outputs.citations.event_study_pc:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/outputs_event_study_pc_citations.parquet
 
 os.data_analysis.outputs.trends:
   <<: *_pq

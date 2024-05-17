@@ -390,3 +390,44 @@ def get_event_study_cc(data: pd.DataFrame, icite_data: pd.DataFrame):
         .reset_index(name="count")
     )
     return data_pmid, final_data_counts, final_data_citations
+
+def get_event_study_pc(
+    data: pd.DataFrame, patent_data: pd.DataFrame
+):
+    """
+    Get event study data for protein concepts.
+
+    Args:
+        data (pd.DataFrame): The input data containing information about events.
+        patent_data (pd.DataFrame): The patent data to be merged with the input data.
+
+    Returns:
+        tuple: A tuple containing three elements:
+            - data (pd.DataFrame): The merged data.
+            - final_data_counts (pd.DataFrame): The final data grouped by various columns and the count of occurrences.
+            - final_data_citations (pd.DataFrame): The final data grouped by various columns and the sum of citations.
+    """
+    
+    # merge patent_data on data
+    data = data.merge(
+        patent_data, how="inner", left_on="doi", right_on="NPL Resolved External ID(s)"
+    )
+
+    final_data = data.copy()
+    final_data.dropna(subset=["time"], inplace=True)
+    final_data["time"] = final_data["time"].astype(int)
+
+    final_data_counts = (
+        final_data.groupby(["pi_id", "time", "seed", "protein_concept"])
+        .size()
+        .reset_index(name="count")
+    )
+    final_data_citations = ( # TODO This should be patent citations, not article 
+        final_data.groupby(["pi_id", "time", "seed", "protein_concept"])[
+            "cited_by_count"
+        ]
+        .sum()
+        .reset_index(name="count")
+    )
+
+    return data, final_data_counts, final_data_citations

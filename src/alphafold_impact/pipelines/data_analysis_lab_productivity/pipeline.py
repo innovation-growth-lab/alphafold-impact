@@ -12,7 +12,8 @@ from .nodes import (
     get_event_study_strength,
     get_event_study_pdb_submissions,
     get_event_study_predictive_outputs,
-    get_event_study_cc
+    get_event_study_cc,
+    get_event_study_pc
 )
 
 
@@ -105,6 +106,19 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "sb_lab.data_analysis.outputs.citations.event_study_cc",
                 ],
                 tags=["event_study_cc", "event_study", "cc"],
+            ),
+            node(
+                get_event_study_pc,
+                inputs={
+                    "data": "sb_lab.data_analysis.outputs.primary",
+                    "patent_data": "lens.data_processing.primary",
+                },
+                outputs=[
+                    "sb_lab.data_analysis.outputs.papers_with_pcs"
+                    "sb_lab.data_analysis.outputs.counts.event_study_pc",
+                    "sb_lab.data_analysis.outputs.citations.event_study_pc",
+                ],
+                tags=["event_study_pc", "event_study", "pc"],
             ),
         ]
     )
