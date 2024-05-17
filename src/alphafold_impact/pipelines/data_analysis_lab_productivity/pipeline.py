@@ -101,7 +101,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "icite_data": "pubmed.data_processing.icite.intermediate",
                 },
                 outputs=[
-                    "sb_lab.data_analysis.outputs.papers_with_ccs"
+                    "sb_lab.data_analysis.outputs.papers_with_ccs",
                     "sb_lab.data_analysis.outputs.counts.event_study_cc",
                     "sb_lab.data_analysis.outputs.citations.event_study_cc",
                 ],
@@ -114,7 +114,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "patent_data": "lens.data_processing.primary",
                 },
                 outputs=[
-                    "sb_lab.data_analysis.outputs.papers_with_pcs"
+                    "sb_lab.data_analysis.outputs.papers_with_pcs",
                     "sb_lab.data_analysis.outputs.counts.event_study_pc",
                     "sb_lab.data_analysis.outputs.citations.event_study_pc",
                 ],
