@@ -733,7 +733,39 @@ os.data_analysis.outputs.trends:
 
 os.data_analysis.outputs.regional_trends:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/os/outputs_regional_trends.parquet# TCC
+  filepath: s3://alphafold-impact/data/04_output/analysis/os/outputs_regional_trends.parquet
+
+ecr.data_analysis.subfield.af:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/04_output/analysis/ecr/outputs_af.parquet
+
+ecr.data_analysis.subfield.no_af:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/04_output/analysis/ecr/outputs_no_af.parquet
+
+ecr.data_analysis.field.af:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/04_output/analysis/ecr/outputs_field_af.parquet
+
+ecr.data_analysis.field.no_af:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/04_output/analysis/ecr/outputs_field_no_af.parquet
+
+ecr.data_analysis.counts.af:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/04_output/analysis/ecr/outputs_counts_af.parquet
+
+ecr.data_analysis.counts.no_af:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/04_output/analysis/ecr/outputs_counts_no_af.parquet
+
+ecr.data_analysis.citations.af:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/04_output/analysis/ecr/outputs_citations_af.parquet
+
+ecr.data_analysis.citations.no_af:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/04_output/analysis/ecr/outputs_citations_no_af.parquet# TCC
 tcc.data_analysis:
   <<: *_csv_ptd
   path: s3://alphafold-impact/data/04_analysis/tcc/
