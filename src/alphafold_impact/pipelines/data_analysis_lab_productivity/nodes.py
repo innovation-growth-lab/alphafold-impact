@@ -371,16 +371,12 @@ def get_event_study_cc(data: pd.DataFrame, icite_data: pd.DataFrame):
 
     def apply_func(row):
         return get_entrez_ptype_pmid(row)
-    
+
     results = Parallel(n_jobs=8, verbose=10)(
         delayed(apply_func)(row) for row in data_pmid["cited_by_clin"]
     )
 
     data_pmid[["ca_publication_type", "ca_publication_date"]] = pd.DataFrame(results)
-
-    # data_pmid[["ca_publication_type", "ca_publication_date"]] = data_pmid[
-    #     "cited_by_clin"
-    # ].apply(get_entrez_ptype_pmid)
 
     logger.info("Collected clinical citation PMIDs")
     final_data = data_pmid.copy()
@@ -401,9 +397,8 @@ def get_event_study_cc(data: pd.DataFrame, icite_data: pd.DataFrame):
     )
     return data_pmid, final_data_counts, final_data_citations
 
-def get_event_study_pc(
-    data: pd.DataFrame, patent_data: pd.DataFrame
-):
+
+def get_event_study_pc(data: pd.DataFrame, patent_data: pd.DataFrame):
     """
     Get event study data for protein concepts.
 
@@ -414,10 +409,12 @@ def get_event_study_pc(
     Returns:
         tuple: A tuple containing three elements:
             - data (pd.DataFrame): The merged data.
-            - final_data_counts (pd.DataFrame): The final data grouped by various columns and the count of occurrences.
-            - final_data_citations (pd.DataFrame): The final data grouped by various columns and the sum of citations.
+            - final_data_counts (pd.DataFrame): The final data grouped by various columns 
+                and the count of occurrences.
+            - final_data_citations (pd.DataFrame): The final data grouped by various columns
+                and the sum of citations.
     """
-    
+
     # merge patent_data on data
     data = data.merge(
         patent_data, how="inner", left_on="doi", right_on="NPL Resolved External ID(s)"
@@ -428,14 +425,10 @@ def get_event_study_pc(
     final_data["time"] = final_data["time"].astype(int)
 
     final_data_counts = (
-        final_data.groupby(["pi_id", "time", "seed"])
-        .size()
-        .reset_index(name="count")
+        final_data.groupby(["pi_id", "time", "seed"]).size().reset_index(name="count")
     )
-    final_data_citations = ( # TODO This should be patent citations, not article 
-        final_data.groupby(["pi_id", "time", "seed"])[
-            "cited_by_count"
-        ]
+    final_data_citations = (
+        final_data.groupby(["pi_id", "time", "seed"])["Cited by Patent Count"]
         .sum()
         .reset_index(name="count")
     )
