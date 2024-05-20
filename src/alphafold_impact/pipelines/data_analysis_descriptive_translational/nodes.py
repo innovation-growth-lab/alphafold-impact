@@ -100,7 +100,18 @@ def load_input_applied_data(
     ]
 
     data = data[
-        ["id", "doi", "pmid", "parent_id", "publication_date", "parent_level", "level", "concepts", "mesh_terms", "topics"]
+        [
+            "id",
+            "doi",
+            "pmid",
+            "parent_id",
+            "publication_date",
+            "parent_level",
+            "level",
+            "concepts",
+            "mesh_terms",
+            "topics",
+        ]
     ]
 
     # create a dictionary mapping id to publication_date
@@ -230,7 +241,9 @@ def get_cc_papers(data: pd.DataFrame, icite_data: pd.DataFrame):
         delayed(apply_func)(row) for row in combined_data["cited_by_clin"]
     )
 
-    combined_data[["ca_publication_type", "ca_publication_date"]] = pd.DataFrame(results)
+    combined_data[["ca_publication_type", "ca_publication_date"]] = pd.DataFrame(
+        results
+    )
 
     return combined_data
 
@@ -316,20 +329,20 @@ def get_patent_classifications(
     cpc_codes: pd.DataFrame,
 ):
     """
-    Retrieves patent classifications from the given patent_data DataFrame and merges them 
+    Retrieves patent classifications from the given patent_data DataFrame and merges them
         with the cpc_codes DataFrame.
 
     Args:
-        patent_data (pd.DataFrame): DataFrame containing patent data with columns 
+        patent_data (pd.DataFrame): DataFrame containing patent data with columns
             'CPC Classifications' and 'IPCR Classifications'.
         cpc_codes (pd.DataFrame): DataFrame containing CPC codes and their corresponding
             titles.
 
     Returns:
-        pd.DataFrame: DataFrame with patent classifications merged with cpc_codes, including 
+        pd.DataFrame: DataFrame with patent classifications merged with cpc_codes, including
             additional columns 'parent_class_title' and 'class_title'.
     """
-    
+
     # break CPC Classifications and IPCR Classifications based on ";;"
     patent_data["CPC Classifications"] = patent_data["CPC Classifications"].str.split(
         ";;"
@@ -358,9 +371,7 @@ def get_patent_classifications(
     )
 
     # create column for parent classes (ie. before /)
-    patent_data["parent_class"] = patent_data["classifications"].apply(
-        lambda x: x[:4]
-    )
+    patent_data["parent_class"] = patent_data["classifications"].apply(lambda x: x[:4])
 
     # merge with cpc_codes
     cpc_codes["sort-key"] = cpc_codes["sort-key"].astype(str)
@@ -383,10 +394,10 @@ def get_patent_classifications(
 
     return patent_data
 
+
 def create_tcc_sb_papers(
     data: pd.DataFrame,
 ):
-    # Ensure that 'publication_date' is of datetime type
     data["publication_date"] = pd.to_datetime(data["publication_date"])
 
     # Compute the number of days difference between 'publication_date' and 'ca_publication_date'
@@ -394,51 +405,46 @@ def create_tcc_sb_papers(
         pd.to_datetime(data["ca_publication_date"]) - data["publication_date"]
     ).dt.days
 
-    important_categories = ['Clinical Trial', 'Randomized Controlled Trial', 'Observational Study', 'Other']
-
-    data["publication_type"] = data["ca_publication_type"].apply(
-        lambda x: x if x in important_categories else 'Other'
-    )
-
-    # Get the tcc average for each source, ca_publication_type, and publication_date quarter
-    tcc_med = (
-        data.groupby(["source", "publication_type", pd.Grouper(key="publication_date", freq="Q")])["tcc"]
-        .median()
-        .reset_index()
-    )
-
     # change format of publication_date
-    tcc_med["publication_date"] = tcc_med["publication_date"].dt.to_period("Q").astype(str)
+    data["publication_date"] = data["publication_date"].dt.to_period("Q").astype(str)
 
+    data = data[["publication_date", "source", "tcc"]]
+
+    data = data[
+        (data["publication_date"] >= "2021Q3") & (data["publication_date"] <= "2022Q4")
+    ]
     chart = (
-        alt.Chart(tcc_med)
-        .mark_line()
-        .encode(
-            x=alt.X(
-                "publication_date:O", title="Publication quarter", axis=alt.Axis(labelAngle=0)
-            ),
-            y=alt.Y(
-                "tcc:Q",
-                title="Median days to clinical citation",
-                scale=alt.Scale(zero=True),
-            ),
-            color=alt.Color(
-                "source:N",
-                title="Source",
-                legend=alt.Legend(orient="top-right", offset=10),
-            ),
+        (
+            alt.Chart(data)
+            .mark_boxplot()
+            .encode(
+                x=alt.X(
+                    "source:O",
+                    title=None,
+                    axis=alt.Axis(labels=False, ticks=False),
+                    scale=alt.Scale(padding=1),
+                ),
+                y=alt.Y(
+                    "tcc:Q",
+                    title="Median days to clinical citation",
+                    scale=alt.Scale(zero=True),
+                ),
+                color=alt.Color(
+                    "source:N",
+                    title="Source",
+                    # legend=alt.Legend(orient="top-right", offset=10),
+                ),
+                column=alt.Column(
+                    "publication_date:N",
+                    title="Source",
+                ),
+            )
         )
-        .properties(
-            title="Median days to clinical citation by publication quarter",
-            width=200,
-            height=200,
-        )
-        .facet(
-            facet='publication_type:N',
-            columns=2
-        )
+        .properties(width=100)
+        .configure_facet(spacing=0)
+        .configure_view(stroke=None)
     )
 
     chart = altair_to_png(chart)
-    
-    return tcc_med, chart
+
+    return data, chart
