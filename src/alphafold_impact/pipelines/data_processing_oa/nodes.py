@@ -76,6 +76,7 @@ def _json_loader(
                     "authorships",
                     "topics",
                     "concepts",
+                    "grants",
                 ]
             }
             for item in children_list
@@ -160,6 +161,24 @@ def _json_loader(
                         concept["display_name"],
                     )
                     for concept in x
+                ]
+                if x
+                else None
+            )
+        )
+
+        # process grants, getting triplets out of "funder", "funder_display_name", and "award_id"
+        df["grants"] = df["grants"].apply(
+            lambda x: (
+                [
+                    (
+                        grant.get("funder", {})
+                        .get("id", "")
+                        .replace("https://openalex.org/", ""),
+                        grant.get("funder", {}).get("display_name"),
+                        grant.get("award_id"),
+                    )
+                    for grant in x
                 ]
                 if x
                 else None
@@ -289,6 +308,7 @@ def process_data_by_level(
             "authorships",
             "topics",
             "concepts",
+            "grants",
         ]
     ]
 
@@ -377,6 +397,7 @@ def process_subfield_data(data: Dict[str, AbstractDataset]) -> pd.DataFrame:
                     "authorships",
                     "topics",
                     "concepts",
+                    "grants",
                 ]
             }
             for item in raw_json_data
@@ -467,6 +488,23 @@ def process_subfield_data(data: Dict[str, AbstractDataset]) -> pd.DataFrame:
             )
         )
 
+        # process grants, getting triplets out of "funder", "funder_display_name", and "award_id"
+        df["grants"] = df["grants"].apply(
+            lambda x: (
+                [
+                    (
+                        grant.get("funder", {})
+                        .get("id", "")
+                        .replace("https://openalex.org/", ""),
+                        grant.get("funder", {}).get("display_name"),
+                        grant.get("award_id"),
+                    )
+                    for grant in x
+                ]
+                if x
+                else None
+            )
+        )
         # change doi to remove the url
         df["doi"] = df["doi"].str.replace("https://doi.org/", "")
 
@@ -533,6 +571,7 @@ def process_data_by_level_ptd(
                     "authorships",
                     "topics",
                     "concepts",
+                    "grants",
                 ]
             ]
         }
@@ -558,7 +597,9 @@ def concat_pq_ptd(
         data_pt = data_pt[
             ~(
                 data_pt["id"].isin(["W3177828909", "W3211795435", "W3202105508"])
-                | data_pt["parent_id"].isin(["W3177828909", "W3211795435", "W3202105508"])
+                | data_pt["parent_id"].isin(
+                    ["W3177828909", "W3211795435", "W3202105508"]
+                )
             )
         ]
         output.append(data_pt)
@@ -595,7 +636,7 @@ def reassign_ct_levels(
     logger.info("Seed - Identify the ct_data ids that appear as ids")
     data_cp["ct_seed"] = data_cp.apply(
         lambda row: row["id"] in ct_data["parent_id"].to_list()
-        and ((pd.isna(row["level"]))|(row["level"]=="nan")),
+        and ((pd.isna(row["level"])) | (row["level"] == "nan")),
         axis=1,
     )
 
@@ -633,19 +674,84 @@ def reassign_ct_levels(
     data_other = data_other.drop(columns=["ct_seed", "ct_l0", "ct_l1"])
 
     # filter out publications older than 2017 for data_other level 0
-    level_0_data = data_other[(data_other['level'] == '0') & (data_other['publication_date'] >= "2017-01-01")]
+    level_0_data = data_other[
+        (data_other["level"] == "0") & (data_other["publication_date"] >= "2017-01-01")
+    ]
 
     # keep 25% of the level_0_data for other SB papers
     level_0_data = level_0_data.sample(frac=0.25, random_state=42)
 
     # Get level 1 data where parent_id is in level 0 ids
-    level_1_data = data_other[(data_other['level'] == '1') & data_other['parent_id'].isin(level_0_data['id'])]
+    level_1_data = data_other[
+        (data_other["level"] == "1") & data_other["parent_id"].isin(level_0_data["id"])
+    ]
 
     # Get level 2 data
-    level_2_data = data_other[(data_other['level'] == '2') & data_other['parent_id'].isin(level_1_data['id'])]
+    level_2_data = data_other[
+        (data_other["level"] == "2") & data_other["parent_id"].isin(level_1_data["id"])
+    ]
 
     # Concatenate the data
     data_other = pd.concat([level_0_data, level_1_data, level_2_data])
-    
 
     return data_ct, data_other
+
+
+def collect_grants_info(**kwargs):
+
+    def _inner_load(dt):
+        json_data = [
+            {k: v for k, v in item.items() if k in ["id", "grants"]} for item in dt
+        ]
+
+        df = pd.DataFrame(json_data)
+
+        df["grants"] = df["grants"].apply(
+            lambda x: (
+                [
+                    (
+                        grant.get("funder", "").replace("https://openalex.org/", ""),
+                        grant.get("funder_display_name", ""),
+                        grant.get("award_id", ""),
+                    )
+                    for grant in x
+                ]
+                if x
+                else None
+            )
+        )
+
+        # explode grants
+        df = df.explode("grants")
+
+        # dropna grants
+        df.dropna(subset=["grants"], inplace=True)
+
+        # if empty, skip
+        if df.empty:
+            return df
+
+        # separate the tuples into columns
+        df[["funder", "funder_display_name", "award_id"]] = pd.DataFrame(
+            df["grants"].tolist(), index=df.index
+        )
+
+        # drop grants column
+        df = df.drop(columns=["grants"])
+
+        return df
+
+    grants_list = []
+
+    for dataset in kwargs.values():
+        logger.info("Processing dataset: %s", dataset)
+        for i, data_loader in enumerate(dataset.values()):
+            logger.info("Processing data loader: %s / %s", i + 1, len(dataset))
+            dta = data_loader()
+            for _, children_list in dta.items():
+                inner_df = _inner_load(children_list)
+                grants_list.append(inner_df)
+
+    grants_df = pd.concat(grants_list)
+
+    return grants_df

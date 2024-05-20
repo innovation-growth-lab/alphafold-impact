@@ -22,6 +22,7 @@ from .nodes import (
     reassign_ct_levels,
     process_data_by_level_ptd,
     concat_pq_ptd,
+    collect_grants_info
 )
 
 
@@ -263,6 +264,20 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
         tags="oa.data_processing.depth.post_level2_dw",
     )
 
+    grants_pipeline = pipeline(
+        [
+            node(
+                func=collect_grants_info,
+                inputs={
+                    "af_data": "oa.data_collection.depth.level.raw",
+                    "sb_data": "oa.data_collection.subfield.structural_biology.depth.raw",
+                },
+                outputs="oa.data_processing.depth.grants.primary",
+            ),
+        ],
+        tags="oa.data_processing.depth.grants",
+    )
+
     return (
         sum(additioal_mesh_levels)
         + sum(no_additional_mesh_levels)
@@ -273,4 +288,5 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
         + baseline_level1_pipeline
         + reassign_baseline_levels_pipeline
         + post_level2_dw_pipeline
+        + grants_pipeline
     )
