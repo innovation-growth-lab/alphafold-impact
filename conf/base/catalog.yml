@@ -654,6 +654,26 @@ analysis.descriptive.level0_data_with_moderators_pc:
   <<: *_pq
   filepath: s3://alphafold-impact/data/04_output/analysis/descriptive/level0_data_with_strong_pc.parquet
 
+analysis.descriptive.applied_data:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/03_primary/oa/works/analysis/descriptive/applied_data.parquet
+
+analysis.descriptive.applied_data_with_cc:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/04_output/analysis/descriptive/applied_data_with_cc.parquet
+
+analysis.descriptive.applied_data_with_moderators_cc:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/04_output/analysis/descriptive/applied_data_with_strong_cc.parquet
+
+analysis.descriptive.applied_data_with_patents:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/04_output/analysis/descriptive/applied_data_with_patents.parquet
+
+analysis.descriptive.applied_data_with_moderators_pc:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/04_output/analysis/descriptive/applied_data_with_strong_pc.parquet
+
 # sb_lab.data_analysis.outputs.input:
 #   <<: *_pq
 #   filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/outputs.parquet

@@ -73,6 +73,42 @@ def load_input_data(
 
     return data
 
+def load_input_applied_data(
+    data: pd.DataFrame,
+    source: str,
+):
+    """
+    Load input data and perform necessary transformations.
+
+    Args:
+        data (pd.DataFrame): The input data to be loaded.
+        source (str): The source of the data.
+
+    Returns:
+        pd.DataFrame: The loaded data with additional columns.
+
+    """
+    data["level"] = data["level"].astype(str)
+
+    logger.info("Filter for level 1 and 2")
+    data = data[(data["level"] == "0") |(data["level"] == "1") | (data["level"] == "2")]
+
+    data = data[["id", "doi", "pmid", "parent_id", "publication_date", "parent_level", "level"]]
+
+    # create a dictionary mapping id to publication_date
+    id_date_dict = data.set_index("id")["publication_date"].to_dict()
+
+    # create a new column 'parent_publication_date' by mapping the 'parent_id' column to the dictionary
+    data["parent_publication_date"] = data["parent_id"].map(id_date_dict)
+
+    # force level and parent_level to be str
+    data["level"] = data["level"].astype(str)
+    data["parent_level"] = data["parent_level"].astype(str)
+
+    logger.info("Create columns with source")
+    data["source"] = source
+
+    return data
 
 def merge_inputs(**kwargs):
     """Merge inputs."""

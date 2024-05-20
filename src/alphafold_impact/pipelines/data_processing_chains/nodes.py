@@ -131,7 +131,7 @@ def _flatten_dict(d: Dict, parent_keys: list = None, sep: str = "_"):
     return rows
 
 
-def _breaks_chain(row, num_levels: int = 2):
+def _breaks_chain(row, num_levels: int = 3):
     intents = ["intent_0", "intent_1"]
     if num_levels > 2:
         intents.append("intent_2")
@@ -156,7 +156,7 @@ def _ensure_levels(df: pd.DataFrame, num_levels: int) -> pd.DataFrame:
 def filter_relevant_citation_links(
     alphafold_data: pd.DataFrame,
     identifier: str,
-    num_levels: int = 2,
+    num_levels: int = 3,
     **kwargs,
 ) -> pd.DataFrame:
     """
@@ -293,7 +293,7 @@ def filter_relevant_citation_links(
 
 
 def _transform_long(
-    data: pd.DataFrame, intents: list, num_levels: int = 2
+    data: pd.DataFrame, intents: list, num_levels: int = 3
 ) -> pd.DataFrame:
     """
     Transforms the given data by selecting specific levels and intents.
@@ -424,7 +424,7 @@ def get_papers_with_clinical_article_citations(
     return data_ids
 
 
-def _transform_long_pairs(data, intents, num_levels: int = 2):
+def _transform_long_pairs(data, intents, num_levels: int = 3):
     df_ids = pd.DataFrame(columns=["paper_id", "parent_paper_id", "intent", "level"])
     data_cp = data.copy()
 

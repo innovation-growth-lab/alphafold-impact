@@ -9,6 +9,7 @@ from kedro.io import AbstractDataset
 from ..data_analysis_descriptive_translational.nodes import (  # pylint: disable=relative-beyond-top-level
     get_entrez_ptype_pmid,
 )
+from joblib import Parallel, delayed
 from Bio import Entrez
 
 
@@ -368,9 +369,18 @@ def get_event_study_cc(data: pd.DataFrame, icite_data: pd.DataFrame):
     # drop dup
     data_pmid.drop_duplicates(subset=["id", "cited_by_clin"], inplace=True)
 
-    data_pmid[["ca_publication_type", "ca_publication_date"]] = data_pmid[
-        "cited_by_clin"
-    ].apply(get_entrez_ptype_pmid)
+    def apply_func(row):
+        return get_entrez_ptype_pmid(row)
+    
+    results = Parallel(n_jobs=8, verbose=10)(
+        delayed(apply_func)(row) for row in data_pmid["cited_by_clin"]
+    )
+
+    data_pmid[["ca_publication_type", "ca_publication_date"]] = pd.DataFrame(results)
+
+    # data_pmid[["ca_publication_type", "ca_publication_date"]] = data_pmid[
+    #     "cited_by_clin"
+    # ].apply(get_entrez_ptype_pmid)
 
     logger.info("Collected clinical citation PMIDs")
     final_data = data_pmid.copy()
