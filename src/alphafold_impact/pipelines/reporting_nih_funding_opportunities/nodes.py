@@ -1,10 +1,9 @@
 """This module contains functions to generate charts for NIH funding opportunities."""
 
-from io import BytesIO
 import pandas as pd
 import altair as alt
 from PIL import Image
-import vl_convert as vlc
+from alphafold_impact.utils.altair import altair_to_png
 
 
 def _prepare_fadirectcosts(df: pd.DataFrame) -> pd.DataFrame:
@@ -19,12 +18,6 @@ def _prepare_fadirectcosts(df: pd.DataFrame) -> pd.DataFrame:
     """
     df["fadirectcosts"] = pd.to_numeric(df["fadirectcosts"], errors="coerce")
     return df.dropna(subset=["fadirectcosts"])
-
-
-def _altair_to_png(altair_chart: alt.Chart) -> Image.Image:
-    """Convert Altair chart to PNG file"""
-    png_data = vlc.vegalite_to_png(altair_chart.to_json(), scale=2)
-    return Image.open(BytesIO(png_data))
 
 
 def plot_eb_sb_funding_opportunities(
@@ -71,7 +64,7 @@ def plot_eb_sb_funding_opportunities(
         )
         .properties(title="SB and EB NIH Funding Opportunities per Year", width=600)
     )
-    return _altair_to_png(eb_sb_funding_opportunities)
+    return altair_to_png(eb_sb_funding_opportunities)
 
 
 def plot_eb_sb_funding_opportunity_amounts(
@@ -127,7 +120,7 @@ def plot_eb_sb_funding_opportunity_amounts(
             title="SB and EB NIH Funding Opportunity Amounts per Year", width=600
         )
     )
-    return _altair_to_png(eb_sb_funding_opportunity_amounts)
+    return altair_to_png(eb_sb_funding_opportunity_amounts)
 
 
 def plot_total_funding_opportunities(
@@ -159,7 +152,7 @@ def plot_total_funding_opportunities(
         )
         .properties(title="Total NIH Funding Opportunities", width=600)
     )
-    return _altair_to_png(total_funding_opps)
+    return altair_to_png(total_funding_opps)
 
 
 def plot_total_funding_opportunity_amounts(
@@ -198,4 +191,4 @@ def plot_total_funding_opportunity_amounts(
         )
         .properties(title="Total NIH Funding Opportunity Amounts", width=600)
     )
-    return _altair_to_png(total_funding_opp_amounts_per_year)
+    return altair_to_png(total_funding_opp_amounts_per_year)

@@ -426,6 +426,19 @@ labs:
       mailto: data_analytics@nesta.org.uk
       perpage: "200"
 
+tcc:
+  "af_label": "Papers that cite AF levels 0-3"
+  "biochemistry_label": "Biochemistry"
+  "bioinformatics_label": "Bioinformatics"
+  "protein_design_label": "Protein Design"
+  "structural_biology_label": "Structural Biology"
+  partition_order:
+    - "Papers that cite AF levels 0-3"
+    - "Biochemistry"
+    - "Bioinformatics"
+    - "Protein Design"
+    - "Structural Biology"
+
 test: False
 
 true_: True
