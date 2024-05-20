@@ -51,7 +51,8 @@ def _get_sb_candidate_authors(data: pd.DataFrame) -> pd.DataFrame:
     author_data = author_data[~(author_data["author"] == "A9999999999")]
 
     # groupby counts of author rows
-    author_data = author_data.groupby(["author"]).size().reset_index(name="counts")
+    author_data = author_data.groupby(
+        ["author"]).size().reset_index(name="counts")
 
     return author_data
 
@@ -68,7 +69,8 @@ def get_unique_authors(
     """
     logger.info("Getting unique authors")
     alphafold_authors = _get_sb_candidate_authors(alphafold_data)
-    ct_data, other_data = separate_ct_from_seed(baseline_data, seed_data, ct_data)
+    ct_data, other_data = separate_ct_from_seed(
+        baseline_data, seed_data, ct_data)
     ct_authors = _get_sb_candidate_authors(ct_data)
     other_authors = _get_sb_candidate_authors(other_data)
 
@@ -101,17 +103,22 @@ def fetch_author_outputs(
 
     # create batches of 50 authors
     author_batches = [
-        "|".join(author_ids[i : i + 25]) for i in range(0, len(author_ids), 25)
+        "|".join(author_ids[i: i + 25]) for i in range(0, len(author_ids), 25)
     ]
 
-    filter_batches = [[from_publication_date, batch] for batch in author_batches]
+    filter_batches = [[from_publication_date, batch]
+                      for batch in author_batches]
 
     # slice to create parallel jobs that produce slices
-    slices = [filter_batches[i : i + 100] for i in range(0, len(filter_batches), 100)]
+    slices = [filter_batches[i: i + 100]
+              for i in range(0, len(filter_batches), 100)]
 
     logger.info("Fetching papers for %d author batches", len(slices))
 
     for i, slice_ in enumerate(slices):
+        # if i < 21:
+        #     logger.info("Skipping batch number %d / %d", i + 1, len(slices))
+        #     continue
         logger.info("Processing batch number %d / %d", i + 1, len(slices))
 
         slice_results = Parallel(n_jobs=8, backend="loky", verbose=10)(
@@ -142,7 +149,8 @@ def fetch_author_outputs(
         slice_papers["authorships"] = slice_papers["authorships"].apply(
             lambda x: (
                 [
-                    author["author"].get("id", "").replace("https://openalex.org/", "")
+                    author["author"].get("id", "").replace(
+                        "https://openalex.org/", "")
                     for author in x
                 ]
                 if x
@@ -155,16 +163,19 @@ def fetch_author_outputs(
             lambda x: (
                 [
                     (
-                        topic["id"].replace("https://openalex.org/", ""),
-                        topic["display_name"],
-                        topic["subfield"]["id"].replace("https://openalex.org/", ""),
-                        topic["subfield"]["display_name"],
-                        topic["field"]["id"].replace("https://openalex.org/", ""),
-                        topic["field"]["display_name"],
-                        topic["domain"]["id"].replace("https://openalex.org/", ""),
-                        topic["domain"]["display_name"],
-                    )
-                    for topic in x
+                        topic.get("id", "").replace(
+                            "https://openalex.org/", ""),
+                        topic.get("display_name", ""),
+                        topic.get("subfield", {}).get("id", "").replace(
+                            "https://openalex.org/", ""),
+                        topic.get("subfield", {}).get("display_name", ""),
+                        topic.get("field", {}).get("id", "").replace(
+                            "https://openalex.org/", ""),
+                        topic.get("field", {}).get("display_name", ""),
+                        topic.get("domain", {}).get("id", "").replace(
+                            "https://openalex.org/", ""),
+                        topic.get("domain", {}).get("display_name", ""),
+                    ) for topic in x
                 ]
                 if x
                 else None
@@ -221,7 +232,8 @@ def _normalise_citation_counts(data: pd.DataFrame):
     ).dt.year
 
     # calculate the 't' value
-    data_exploded["t"] = data_exploded["year"] - data_exploded["publication_date"]
+    data_exploded["t"] = data_exploded["year"] - \
+        data_exploded["publication_date"]
 
     # drop the rows with NaN values in the 't' column
     data_exploded.dropna(subset=["t"], inplace=True)
