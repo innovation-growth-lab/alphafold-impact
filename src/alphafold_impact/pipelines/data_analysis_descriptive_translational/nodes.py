@@ -6,7 +6,9 @@ generated using Kedro 0.19.1
 import logging
 import pandas as pd
 from joblib import Parallel, delayed
+import altair as alt
 from Bio import Entrez
+from alphafold_impact.utils.altair import altair_to_png
 
 
 Entrez.email = "david.ampudia@nesta.org.uk"
@@ -380,3 +382,63 @@ def get_patent_classifications(
     patent_data.drop(columns="sort-key", inplace=True)
 
     return patent_data
+
+def create_tcc_sb_papers(
+    data: pd.DataFrame,
+):
+    # Ensure that 'publication_date' is of datetime type
+    data["publication_date"] = pd.to_datetime(data["publication_date"])
+
+    # Compute the number of days difference between 'publication_date' and 'ca_publication_date'
+    data["tcc"] = (
+        pd.to_datetime(data["ca_publication_date"]) - data["publication_date"]
+    ).dt.days
+
+    important_categories = ['Clinical Trial', 'Randomized Controlled Trial', 'Observational Study', 'Other']
+
+    data["publication_type"] = data["ca_publication_type"].apply(
+        lambda x: x if x in important_categories else 'Other'
+    )
+
+    # Get the tcc average for each source, ca_publication_type, and publication_date quarter
+    tcc_med = (
+        data.groupby(["source", "publication_type", pd.Grouper(key="publication_date", freq="Q")])["tcc"]
+        .median()
+        .reset_index()
+    )
+
+    # change format of publication_date
+    tcc_med["publication_date"] = tcc_med["publication_date"].dt.to_period("Q").astype(str)
+
+    chart = (
+        alt.Chart(tcc_med)
+        .mark_line()
+        .encode(
+            x=alt.X(
+                "publication_date:O", title="Publication quarter", axis=alt.Axis(labelAngle=0)
+            ),
+            y=alt.Y(
+                "tcc:Q",
+                title="Median days to clinical citation",
+                scale=alt.Scale(zero=True),
+            ),
+            color=alt.Color(
+                "source:N",
+                title="Source",
+                legend=alt.Legend(orient="top-right", offset=10),
+            ),
+        )
+        .properties(
+            title="Median days to clinical citation by publication quarter",
+            width=200,
+            height=200,
+        )
+        .facet(
+            facet='publication_type:N',
+            columns=2
+        )
+    )
+
+    chart = altair_to_png(chart)
+    
+    return tcc_med, chart

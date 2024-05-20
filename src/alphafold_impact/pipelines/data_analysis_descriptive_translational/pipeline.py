@@ -14,6 +14,7 @@ from .nodes import (
     get_patent_papers,
     get_patent_moderators,
     get_patent_classifications,
+    create_tcc_sb_papers
 )
 
 
@@ -205,4 +206,18 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
         tags=["analysis_descriptive_translational_patent_cpc"],
     )
 
-    return level0_pipeline + applied_pipeline + patent_cpc_pipeline
+    tcc_sb_papers = pipeline(
+        [
+            node(
+                create_tcc_sb_papers,
+                inputs={
+                    "data": "analysis.descriptive.level0_data_with_cc",
+                },
+                outputs=["analysis.descriptive.tcc_sb_papers", "reporting.tcc_sb_papers"],
+                tags=["tcc_sb_papers"],
+            ),
+        ],
+        tags=["analysis_descriptive_translational_tcc_sb_papers"],
+    )
+
+    return level0_pipeline + applied_pipeline + patent_cpc_pipeline + tcc_sb_papers
