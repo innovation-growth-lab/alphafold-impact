@@ -13,10 +13,11 @@ from .nodes import (
     get_cc_moderators,
     get_patent_papers,
     get_patent_moderators,
+    get_patent_classifications,
 )
 
 
-def create_pipeline(**kwargs) -> Pipeline:
+def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
     level0_pipeline = pipeline(
         [
             node(
@@ -107,7 +108,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     )
 
     applied_pipeline = pipeline(
-                [
+        [
             node(
                 load_input_applied_data,
                 inputs={
@@ -189,4 +190,19 @@ def create_pipeline(**kwargs) -> Pipeline:
         tags=["analysis_descriptive_translational_applied"],
     )
 
-    return level0_pipeline + applied_pipeline
+    patent_cpc_pipeline = pipeline(
+        [
+            node(
+                get_patent_classifications,
+                inputs={
+                    "patent_data": "analysis.descriptive.level0_data_with_patents",
+                    "cpc_codes": "cpc.codes",
+                },
+                outputs="analysis.descriptive.level0_data_with_patents_cpc",
+                tags=["patent_cpc"],
+            ),
+        ],
+        tags=["analysis_descriptive_translational_patent_cpc"],
+    )
+
+    return level0_pipeline + applied_pipeline + patent_cpc_pipeline

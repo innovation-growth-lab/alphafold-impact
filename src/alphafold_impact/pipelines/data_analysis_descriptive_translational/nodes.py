@@ -73,6 +73,7 @@ def load_input_data(
 
     return data
 
+
 def load_input_applied_data(
     data: pd.DataFrame,
     source: str,
@@ -91,9 +92,13 @@ def load_input_applied_data(
     data["level"] = data["level"].astype(str)
 
     logger.info("Filter for level 1 and 2")
-    data = data[(data["level"] == "0") |(data["level"] == "1") | (data["level"] == "2")]
+    data = data[
+        (data["level"] == "0") | (data["level"] == "1") | (data["level"] == "2")
+    ]
 
-    data = data[["id", "doi", "pmid", "parent_id", "publication_date", "parent_level", "level"]]
+    data = data[
+        ["id", "doi", "pmid", "parent_id", "publication_date", "parent_level", "level"]
+    ]
 
     # create a dictionary mapping id to publication_date
     id_date_dict = data.set_index("id")["publication_date"].to_dict()
@@ -109,6 +114,7 @@ def load_input_applied_data(
     data["source"] = source
 
     return data
+
 
 def merge_inputs(**kwargs):
     """Merge inputs."""
@@ -244,7 +250,6 @@ def get_cc_moderators(
         how="left",
     )
 
-
     # check if cited_by_clin is in pdb_data
     cc_data["cited_by_clin_in_pdb_data"] = cc_data["cited_by_clin"].isin(
         pdb_data["pmid"]
@@ -296,3 +301,76 @@ def get_patent_moderators(
     pc_data["id_in_pdb_data"] = pc_data["id"].isin(pdb_data["id"])
 
     return pc_data
+
+
+def get_patent_classifications(
+    patent_data: pd.DataFrame,
+    cpc_codes: pd.DataFrame,
+):
+    """
+    Retrieves patent classifications from the given patent_data DataFrame and merges them 
+        with the cpc_codes DataFrame.
+
+    Args:
+        patent_data (pd.DataFrame): DataFrame containing patent data with columns 
+            'CPC Classifications' and 'IPCR Classifications'.
+        cpc_codes (pd.DataFrame): DataFrame containing CPC codes and their corresponding
+            titles.
+
+    Returns:
+        pd.DataFrame: DataFrame with patent classifications merged with cpc_codes, including 
+            additional columns 'parent_class_title' and 'class_title'.
+    """
+    
+    # break CPC Classifications and IPCR Classifications based on ";;"
+    patent_data["CPC Classifications"] = patent_data["CPC Classifications"].str.split(
+        ";;"
+    )
+    patent_data["IPCR Classifications"] = patent_data["IPCR Classifications"].str.split(
+        ";;"
+    )
+
+    # join them in a single list, removing duplicates
+    patent_data["classifications"] = (
+        patent_data["CPC Classifications"] + patent_data["IPCR Classifications"]
+    )
+
+    # drop the original columns
+    patent_data.drop(
+        columns=["CPC Classifications", "IPCR Classifications"], inplace=True
+    )
+
+    # explode the list
+    patent_data = patent_data.explode("classifications")
+    patent_data["classifications"] = patent_data["classifications"].astype(str)
+
+    # drop parent_id, id, Title, classifications duplicates
+    patent_data.drop_duplicates(
+        subset=["parent_id", "id", "Title", "classifications"], inplace=True
+    )
+
+    # create column for parent classes (ie. before /)
+    patent_data["parent_class"] = patent_data["classifications"].apply(
+        lambda x: x[:4]
+    )
+
+    # merge with cpc_codes
+    cpc_codes["sort-key"] = cpc_codes["sort-key"].astype(str)
+    patent_data = patent_data.merge(
+        cpc_codes, left_on="parent_class", right_on="sort-key", how="left"
+    )
+
+    # rename columns
+    patent_data.rename(columns={"text": "parent_class_title"}, inplace=True)
+    patent_data.drop(columns="sort-key", inplace=True)
+
+    # repeat for the full classification
+    patent_data = patent_data.merge(
+        cpc_codes, left_on="classifications", right_on="sort-key", how="left"
+    )
+
+    # rename columns
+    patent_data.rename(columns={"text": "class_title"}, inplace=True)
+    patent_data.drop(columns="sort-key", inplace=True)
+
+    return patent_data

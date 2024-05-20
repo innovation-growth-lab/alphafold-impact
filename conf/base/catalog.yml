@@ -266,6 +266,10 @@ lens.data_processing.primary:
   <<: *_pq
   filepath: s3://alphafold-impact/data/03_primary/lens/main.parquet
 
+cpc.codes:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/03_primary/lens/cpc_codes.parquet
+
 # NIH - Clinical Trials
 nih.data_collection.mesh_terms:
   <<: *_csv
@@ -673,6 +677,10 @@ analysis.descriptive.applied_data_with_patents:
 analysis.descriptive.applied_data_with_moderators_pc:
   <<: *_pq
   filepath: s3://alphafold-impact/data/04_output/analysis/descriptive/applied_data_with_strong_pc.parquet
+
+analysis.descriptive.level0_data_with_patents_cpc:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/04_output/analysis/descriptive/level0_data_with_patents_cpc.parquet
 
 # sb_lab.data_analysis.outputs.input:
 #   <<: *_pq

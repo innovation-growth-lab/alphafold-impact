@@ -428,12 +428,12 @@ def get_event_study_pc(
     final_data["time"] = final_data["time"].astype(int)
 
     final_data_counts = (
-        final_data.groupby(["pi_id", "time", "seed", "protein_concept"])
+        final_data.groupby(["pi_id", "time", "seed"])
         .size()
         .reset_index(name="count")
     )
     final_data_citations = ( # TODO This should be patent citations, not article 
-        final_data.groupby(["pi_id", "time", "seed", "protein_concept"])[
+        final_data.groupby(["pi_id", "time", "seed"])[
             "cited_by_count"
         ]
         .sum()
