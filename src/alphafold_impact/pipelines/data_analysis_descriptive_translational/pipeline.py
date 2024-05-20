@@ -119,7 +119,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                 tags=["af_descriptive"],
             ),
             node(
-                load_input_data,
+                load_input_applied_data,
                 inputs={
                     "data": "oa.data_processing.depth.ct.primary",
                     "source": "params:analysis.source.ct",
@@ -128,7 +128,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                 tags=["ct_descriptive"],
             ),
             node(
-                load_input_data,
+                load_input_applied_data,
                 inputs={
                     "data": "oa.data_processing.depth.other.primary",
                     "source": "params:analysis.source.other",

@@ -5,6 +5,7 @@ generated using Kedro 0.19.1
 
 import logging
 import pandas as pd
+from joblib import Parallel, delayed
 from Bio import Entrez
 
 
@@ -97,7 +98,7 @@ def load_input_applied_data(
     ]
 
     data = data[
-        ["id", "doi", "pmid", "parent_id", "publication_date", "parent_level", "level"]
+        ["id", "doi", "pmid", "parent_id", "publication_date", "parent_level", "level", "concepts", "mesh_terms", "topics"]
     ]
 
     # create a dictionary mapping id to publication_date
@@ -220,9 +221,14 @@ def get_cc_papers(data: pd.DataFrame, icite_data: pd.DataFrame):
     # drop dup
     combined_data.drop_duplicates(subset=["id", "cited_by_clin"], inplace=True)
 
-    combined_data[["ca_publication_type", "ca_publication_date"]] = combined_data[
-        "cited_by_clin"
-    ].apply(get_entrez_ptype_pmid)
+    def apply_func(row):
+        return get_entrez_ptype_pmid(row)
+
+    results = Parallel(n_jobs=8, verbose=10)(
+        delayed(apply_func)(row) for row in combined_data["cited_by_clin"]
+    )
+
+    combined_data[["ca_publication_type", "ca_publication_date"]] = pd.DataFrame(results)
 
     return combined_data
 
