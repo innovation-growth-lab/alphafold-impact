@@ -186,7 +186,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 tags=["pc_moderators", "moderators"],
             ),
         ],
-        tags=["analysis_descriptive_translational"],
+        tags=["analysis_descriptive_translational_applied"],
     )
 
     return level0_pipeline + applied_pipeline
