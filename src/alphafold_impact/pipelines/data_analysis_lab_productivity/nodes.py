@@ -6,11 +6,11 @@ generated using Kedro 0.19.1
 import logging
 import pandas as pd
 from kedro.io import AbstractDataset
+from joblib import Parallel, delayed
+from Bio import Entrez
 from ..data_analysis_descriptive_translational.nodes import (  # pylint: disable=relative-beyond-top-level
     get_entrez_ptype_pmid,
 )
-from joblib import Parallel, delayed
-from Bio import Entrez
 
 
 Entrez.email = "david.ampudia@nesta.org.uk"
@@ -409,7 +409,7 @@ def get_event_study_pc(data: pd.DataFrame, patent_data: pd.DataFrame):
     Returns:
         tuple: A tuple containing three elements:
             - data (pd.DataFrame): The merged data.
-            - final_data_counts (pd.DataFrame): The final data grouped by various columns 
+            - final_data_counts (pd.DataFrame): The final data grouped by various columns
                 and the count of occurrences.
             - final_data_citations (pd.DataFrame): The final data grouped by various columns
                 and the sum of citations.
