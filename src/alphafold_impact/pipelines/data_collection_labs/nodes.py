@@ -355,7 +355,7 @@ def get_publications_from_labs(
     filter_batches = [[from_publication_date, author_id] for author_id in author_ids]
 
     # slice to create parallel jobs that produce slices
-    slices = [filter_batches[i : i + 250] for i in range(0, len(filter_batches), 250)]
+    slices = [filter_batches[i : i + 150] for i in range(0, len(filter_batches), 150)]
 
     logger.info("Fetching papers for %d author batches", len(slices))
 
@@ -396,7 +396,6 @@ def get_publications_from_labs(
                         "id",
                         "ids",
                         "doi",
-                        "display_name",
                         "publication_date",
                         "mesh_terms",
                         "cited_by_count",
@@ -404,6 +403,7 @@ def get_publications_from_labs(
                         "authorships",
                         "concepts",
                         "topics",
+                        "grants"
                     ]
                 }
                 for item in children_list
@@ -511,6 +511,22 @@ def get_publications_from_labs(
                                 concept["display_name"],
                             )
                             for concept in x
+                        ]
+                        if x
+                        else None
+                    )
+                )
+
+                # process grants, getting triplets out of "funder", "funder_display_name", and "award_id"
+                df["grants"] = df["grants"].apply(
+                    lambda x: (
+                        [
+                            (
+                                grant.get("funder", "").replace("https://openalex.org/", ""),
+                                grant.get("funder_display_name", ""),
+                                grant.get("award_id", ""),
+                            )
+                            for grant in x
                         ]
                         if x
                         else None
