@@ -17,6 +17,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "af_data": "analysis.af.level0_data",
                 },
                 outputs=[
+                    "ecr.data_analysis.yearly_counts",
                     "ecr.data_analysis.subfield.af",
                     "ecr.data_analysis.subfield.no_af",
                     "ecr.data_analysis.field.af",

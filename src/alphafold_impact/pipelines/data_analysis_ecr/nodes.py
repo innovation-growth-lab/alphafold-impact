@@ -25,6 +25,7 @@ def run_analysis(data_loaders: AbstractDataset, af_data: pd.DataFrame) -> Genera
     """
     af_data = af_data[af_data["level"] == "0"]
 
+    yearly = []
     af_sf = []
     no_af_sf = []
     af_f = []
@@ -59,6 +60,9 @@ def run_analysis(data_loaders: AbstractDataset, af_data: pd.DataFrame) -> Genera
         # preprocess data
         dta = _preprocess(dta)
 
+        # create yearly counts
+        yearly_counts = _compute_yearly_counts(dta)
+        
         logger.info("Creating data with and without AlphaFold data")
         authors_with_af, authors_with_no_af = _create_af_and_no_af_data(dta, af_data)
 
@@ -80,6 +84,7 @@ def run_analysis(data_loaders: AbstractDataset, af_data: pd.DataFrame) -> Genera
         af_citations_dta = _compute_average_citations(authors_with_af)
         no_citations_dta = _compute_average_citations(authors_with_no_af)
 
+        yearly.append(yearly_counts)
         af_sf.append(af_sf_dta)
         no_af_sf.append(no_sf_dta)
         af_f.append(af_f_dta)
@@ -89,6 +94,7 @@ def run_analysis(data_loaders: AbstractDataset, af_data: pd.DataFrame) -> Genera
         af_citations.append(af_citations_dta)
         no_citations.append(no_citations_dta)
 
+    yearly = pd.concat(yearly, ignore_index=True)
     af_sf = pd.concat(af_sf, ignore_index=True)
     no_af_sf = pd.concat(no_af_sf, ignore_index=True)
     af_f = pd.concat(af_f, ignore_index=True)
@@ -99,6 +105,7 @@ def run_analysis(data_loaders: AbstractDataset, af_data: pd.DataFrame) -> Genera
     no_citations = pd.concat(no_citations, ignore_index=True)
 
     return (
+        yearly,
         af_sf,
         no_af_sf,
         af_f,
@@ -131,7 +138,31 @@ def _preprocess(data: pd.DataFrame):
     data["fields"] = data["topics"].apply(
         lambda x: [y[5] for y in x] if x is not None and len(x) > 0 else []
     )
+
     return data
+
+
+def _compute_yearly_counts(data):
+    dta = data.copy()
+    # Compute yearly counts of publications
+    dta["year"] = pd.to_datetime(dta["publication_date"]).dt.year
+
+    yearly_counts = dta.groupby(["author", "year"]).size().reset_index(name="counts")
+
+    # Pivot the data to fill missing years
+    yearly_counts_pivot = yearly_counts.pivot_table(
+        index="author", columns="year", values="counts"
+    ).reset_index()
+
+    # Fill NA values with zero
+    yearly_counts_pivot.fillna(0, inplace=True)
+
+    # make year counts as int, excluding "author" column
+    yearly_counts_pivot = yearly_counts_pivot.astype(
+        {col: "int" for col in yearly_counts_pivot.columns if col != "author"}
+    )
+
+    return yearly_counts_pivot
 
 
 def _create_af_and_no_af_data(data: pd.DataFrame, af_data: pd.DataFrame):
@@ -309,7 +340,7 @@ def _compute_average_citations(df):
 
     # group by author and status, and calculate the mean number of t0 and t1 citations
     average_citations = (
-        df.groupby(["author", "status"])[["t0", "t1"]].mean().reset_index()
+        df.groupby(["author", "status"])[["t0", "t1", "t2"]].mean().reset_index()
     )
 
     # create a MultiIndex with all combinations of authors and periods
