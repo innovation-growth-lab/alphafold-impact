@@ -7,6 +7,8 @@ import logging
 from typing import Dict, List, Tuple, Generator
 from kedro.io import AbstractDataset
 import pandas as pd
+from joblib import Parallel, delayed
+import requests
 from sklearn.preprocessing import MinMaxScaler
 from ..data_processing_labs.nodes import (  # pylint: disable=E0402
     _explode_author_data,
@@ -402,3 +404,83 @@ def assign_lab_label(
     )
 
     return likely_pis
+
+
+def get_institution_info(
+    author_ids: pd.DataFrame,
+) -> pd.DataFrame:
+    """
+    Fetches institution information for authors.
+
+    Args:
+        author_ids (pd.DataFrame): DataFrame containing author IDs and institution information.
+
+    Returns:
+        pd.DataFrame: DataFrame containing institution data.
+
+    """
+    institutions = author_ids["institution"].unique().tolist()
+
+    logger.info("Fetching publications for %d authors", len(institutions))
+
+    # slice to create parallel jobs that produce slices
+    slices = [institutions[i : i + 150] for i in range(0, len(institutions), 150)]
+
+    logger.info("Slicing authors into %d slices", len(slices))
+    institution_data_list = Parallel(n_jobs=8, verbose=10)(
+        delayed(_fetch_institution_data)(institution)
+        for slice_ in slices
+        for institution in slice_
+    )
+
+    # filter out None values
+    institution_data_list = [data for data in institution_data_list if data is not None]
+
+    # convert the list of dictionaries to a DataFrame
+    data = pd.DataFrame(institution_data_list)
+
+    # merge back on author_ids
+    data = author_ids[["author", "institution"]].merge(data, on="institution", how="left")
+
+    return data
+
+
+def _fetch_institution_data(institution):
+    """
+    Fetches data for a given institution from the OpenAlex API.
+
+    Args:
+        institution (str): The name of the institution.
+
+    Returns:
+        dict: A dictionary containing the fetched institution data, including the institution name, country code,
+              type, works count, cited by count, 2-year mean citedness, h-index, and i10-index.
+
+        If the request fails or the institution data is not found, None is returned.
+    """
+    url = f"https://api.openalex.org/institutions/{institution}"
+    while True:
+        try:
+            response = requests.get(url, timeout=40)
+
+            # Process the response if the request was successful
+            institution_data = response.json()
+
+            # extract country_code, type, works_count, cited_by_count, summary_stats
+            institution_data = {
+                "institution": institution,
+                "country_code": institution_data.get("country_code"),
+                "type": institution_data.get("type"),
+                "works_count": institution_data.get("works_count"),
+                "cited_by_count": institution_data.get("cited_by_count"),
+                "2yr_mean_citedness": institution_data.get("summary_stats", {}).get(
+                    "2yr_mean_citedness"
+                ),
+                "h_index": institution_data.get("summary_stats", {}).get("h_index"),
+                "i10_index": institution_data.get("summary_stats", {}).get("i10_index"),
+            }
+            break
+        except: # pylint: disable=bare-except
+            logger.info("Trying again for institution %s", institution)
+            continue
+    return institution_data

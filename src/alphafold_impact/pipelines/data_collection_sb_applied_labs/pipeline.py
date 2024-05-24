@@ -14,6 +14,9 @@ from ..data_collection_labs.nodes import (  # pylint: disable=E0402
     fetch_author_publications,
     get_publications_from_labs,
 )
+from ..data_collection_sb_labs.nodes import (  # pylint: disable=E0402
+    get_institution_info
+)
 from ..data_processing_labs.nodes import combine_lab_results  # pylint: disable=E0402
 
 
@@ -76,7 +79,7 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                     "api_config": "params:labs.data_collection.api",
                 },
                 outputs="other_lab.data_collection.publications.raw",
-                tags=["get_publications_from_labs"],
+                tags=["get_publications_from_applied_labs"],
             ),
         ],
         tags="candidate_authors.other_labs",
@@ -96,4 +99,18 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
         ],
         tags="other_candidate_authors.get_map",
     )
-    return other_candidate_authors_pipeline + create_map_pipeline
+
+    collect_institution_info = pipeline(
+        [
+            node(
+                func=get_institution_info,
+                inputs={
+                    "author_ids": "other_lab.data_collection.assignment.primary",
+                },
+                outputs="other_lab.data_collection.institution_info.primary",
+            ),
+        ],
+        tags="get_institution_info",
+    )
+
+    return other_candidate_authors_pipeline + create_map_pipeline + collect_institution_info
