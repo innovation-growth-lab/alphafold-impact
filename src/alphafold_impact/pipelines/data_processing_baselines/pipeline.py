@@ -25,6 +25,7 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                 process_af_data,
                 inputs={"alphafold_data": "oa.data_processing.depth.all.primary"},
                 outputs="alphafold_target",
+                tags="alphafold_targert_obs",
             ),
             node(
                 assign_focal_label,

@@ -269,8 +269,8 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
             node(
                 func=collect_grants_info,
                 inputs={
-                    "af_data": "oa.data_collection.depth.level.raw",
-                    "sb_data": "oa.data_collection.subfield.structural_biology.depth.raw",
+                    "sb_data": "sb_lab.data_collection.publications.raw",
+                    # "applied_data": "other_lab.data_collection.publications.raw",
                 },
                 outputs="oa.data_processing.depth.grants.primary",
             ),
