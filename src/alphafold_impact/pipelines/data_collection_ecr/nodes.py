@@ -16,7 +16,9 @@ from ..data_collection_sb_labs.nodes import (  # pylint: disable=E0402
 logger = logging.getLogger(__name__)
 
 
-def _get_sb_candidate_authors(data: pd.DataFrame) -> pd.DataFrame:
+def _get_sb_candidate_authors(
+    data: pd.DataFrame, add_institution: bool = False
+) -> pd.DataFrame:
     """
     Get the candidate authors from the given DataFrame.
 
@@ -51,8 +53,14 @@ def _get_sb_candidate_authors(data: pd.DataFrame) -> pd.DataFrame:
     author_data = author_data[~(author_data["author"] == "A9999999999")]
 
     # groupby counts of author rows
-    author_data = author_data.groupby(
-        ["author"]).size().reset_index(name="counts")
+    if add_institution:
+        author_data = (
+            author_data.groupby(["author", "institution"])
+            .size()
+            .reset_index(name="counts")
+        )
+    else:
+        author_data = author_data.groupby(["author"]).size().reset_index(name="counts")
 
     return author_data
 
@@ -68,11 +76,10 @@ def get_unique_authors(
     and returns the unique authors in the dataframes.
     """
     logger.info("Getting unique authors")
-    alphafold_authors = _get_sb_candidate_authors(alphafold_data)
-    ct_data, other_data = separate_ct_from_seed(
-        baseline_data, seed_data, ct_data)
-    ct_authors = _get_sb_candidate_authors(ct_data)
-    other_authors = _get_sb_candidate_authors(other_data)
+    alphafold_authors = _get_sb_candidate_authors(alphafold_data, add_institution=True)
+    ct_data, other_data = separate_ct_from_seed(baseline_data, seed_data, ct_data)
+    ct_authors = _get_sb_candidate_authors(ct_data, add_institution=True)
+    other_authors = _get_sb_candidate_authors(other_data, add_institution=True)
 
     alphafold_authors["source"] = "alphafold"
     ct_authors["source"] = "ct"
@@ -83,35 +90,46 @@ def get_unique_authors(
         [alphafold_authors, ct_authors, other_authors], ignore_index=True
     )
 
+    # # if an author has at least one row with source "alphafold", assign "alphafold" to all rows for that author
+    # alphafold_authors_mask = authors['author'].isin(alphafold_authors['author'])
+    # authors.loc[alphafold_authors_mask, 'source'] = 'alphafold'
+
+    # # do the same for ct (wrt other)
+    # ct_authors_mask = authors['author'].isin(ct_authors['author'])
+    # authors.loc[ct_authors_mask & ~alphafold_authors_mask, 'source'] = 'ct'
+
+    # Find the institution with the highest count for each author
+    top_institutions = authors.loc[authors.groupby("author")["counts"].idxmax()][
+        ["author", "institution"]
+    ]
+    authors = authors.drop("institution", axis=1).merge(top_institutions, on="author")
+
+    # groupby author, institution and sum
+    authors = authors.groupby(["author", "institution", "source"]).sum().reset_index()
+
     # pivot the data
     authors = authors.pivot_table(
-        index="author", columns="source", values="counts", fill_value=0
+        index=["author", "institution"], columns="source", values="counts", fill_value=0
     ).reset_index()
 
     return authors
-
-
-# I'm ignoring for now first publication, or strength, as I expect to retrieve these merging
-
 
 def fetch_author_outputs(
     author_ids: List[str],
     from_publication_date: str,
     api_config: Dict[str, str],
 ):
-    author_ids = author_ids.author.tolist()
+    author_ids = list(set(author_ids.author.tolist()))  # Remove duplicates
 
     # create batches of 50 authors
     author_batches = [
-        "|".join(author_ids[i: i + 25]) for i in range(0, len(author_ids), 25)
+        "|".join(author_ids[i : i + 25]) for i in range(0, len(author_ids), 25)
     ]
 
-    filter_batches = [[from_publication_date, batch]
-                      for batch in author_batches]
+    filter_batches = [[from_publication_date, batch] for batch in author_batches]
 
     # slice to create parallel jobs that produce slices
-    slices = [filter_batches[i: i + 100]
-              for i in range(0, len(filter_batches), 100)]
+    slices = [filter_batches[i : i + 100] for i in range(0, len(filter_batches), 100)]
 
     logger.info("Fetching papers for %d author batches", len(slices))
 
@@ -149,8 +167,7 @@ def fetch_author_outputs(
         slice_papers["authorships"] = slice_papers["authorships"].apply(
             lambda x: (
                 [
-                    author["author"].get("id", "").replace(
-                        "https://openalex.org/", "")
+                    author["author"].get("id", "").replace("https://openalex.org/", "")
                     for author in x
                 ]
                 if x
@@ -163,19 +180,22 @@ def fetch_author_outputs(
             lambda x: (
                 [
                     (
-                        topic.get("id", "").replace(
-                            "https://openalex.org/", ""),
+                        topic.get("id", "").replace("https://openalex.org/", ""),
                         topic.get("display_name", ""),
-                        topic.get("subfield", {}).get("id", "").replace(
-                            "https://openalex.org/", ""),
+                        topic.get("subfield", {})
+                        .get("id", "")
+                        .replace("https://openalex.org/", ""),
                         topic.get("subfield", {}).get("display_name", ""),
-                        topic.get("field", {}).get("id", "").replace(
-                            "https://openalex.org/", ""),
+                        topic.get("field", {})
+                        .get("id", "")
+                        .replace("https://openalex.org/", ""),
                         topic.get("field", {}).get("display_name", ""),
-                        topic.get("domain", {}).get("id", "").replace(
-                            "https://openalex.org/", ""),
+                        topic.get("domain", {})
+                        .get("id", "")
+                        .replace("https://openalex.org/", ""),
                         topic.get("domain", {}).get("display_name", ""),
-                    ) for topic in x
+                    )
+                    for topic in x
                 ]
                 if x
                 else None
@@ -232,8 +252,7 @@ def _normalise_citation_counts(data: pd.DataFrame):
     ).dt.year
 
     # calculate the 't' value
-    data_exploded["t"] = data_exploded["year"] - \
-        data_exploded["publication_date"]
+    data_exploded["t"] = data_exploded["year"] - data_exploded["publication_date"]
 
     # drop the rows with NaN values in the 't' column
     data_exploded.dropna(subset=["t"], inplace=True)

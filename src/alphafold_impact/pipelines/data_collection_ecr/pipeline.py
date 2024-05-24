@@ -5,6 +5,9 @@ generated using Kedro 0.19.1
 
 from kedro.pipeline import Pipeline, pipeline, node
 from .nodes import get_unique_authors, fetch_author_outputs
+from ..data_collection_sb_labs.nodes import (  # pylint: disable=E0402
+    get_institution_info,
+)
 
 
 def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstring
@@ -32,6 +35,14 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                 },
                 outputs="ecr.authors.publications.raw",
                 tags=["collect_ecr_pubs"],
+            ),
+            node(
+                func=get_institution_info,
+                inputs={
+                    "author_ids": "ecr.authors.raw",
+                },
+                outputs="ecr.authors.institutions.raw",
+                tags="ecr_institutions",
             ),
         ]
     )
