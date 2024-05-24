@@ -6,7 +6,8 @@ generated using Kedro 0.19.1
 from kedro.pipeline import Pipeline, pipeline, node
 from .nodes import (
     get_applied_lab_outputs,
-    preprocess_for_event_study
+    preprocess_for_event_study,
+    get_applied_lab_staggered_outputs,
 )
 from ..data_analysis_lab_productivity.nodes import (  # pylint: disable=E0402
     compute_publication_production,
@@ -19,8 +20,9 @@ from ..data_analysis_lab_productivity.nodes import (  # pylint: disable=E0402
     get_event_study_pc,
 )
 
+
 def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
-    return pipeline(
+    basic_pipeline = pipeline(
         [
             node(
                 get_applied_lab_outputs,
@@ -124,3 +126,33 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
             ),
         ]
     )
+
+    staggered_pipeline = pipeline(
+        [
+            node(
+                get_applied_lab_staggered_outputs,
+                inputs={
+                    "data_loaders": "other_lab.data_collection.publications.raw",
+                    "mapping_df": "other_lab.data_collection.candidates.map",
+                    "sb_mapping_df": "sb_lab.data_collection.candidates.map",
+                    "levels": "analysis.descriptive.applied_data",
+                    "pdb_submissions": "pdb.entries.intermediate",
+                    "strength_es": "applied_lab.data_analysis.outputs.counts.event_study_strength",
+                    "patents_data": "lens.data_processing.primary",
+                    "clinical_citations": "applied_lab.data_analysis.outputs.papers_with_ccs",
+                    "grants_data": "oa.data_processing.depth.grants.primary",
+                    "mesh_terms": "nih.data_collection.mesh_terms",
+                    "institutional_data": "other_lab.data_collection.institution_info.primary"
+                },
+                outputs=[
+                    # "applied_lab.data_analysis.staggered.outputs.primary",
+                    "applied_lab.data_analysis.staggered.outputs.quarterly.primary",
+                    "applied_lab.data_analysis.staggered.outputs.collapsed.primary",
+                ],
+                tags=["applied_lab_outputs"],
+            ),
+        ],
+        tags=["staggered_applied", "staggered"],
+    )
+
+    return basic_pipeline + staggered_pipeline

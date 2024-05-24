@@ -13,12 +13,13 @@ from .nodes import (
     get_event_study_pdb_submissions,
     get_event_study_predictive_outputs,
     get_event_study_cc,
-    get_event_study_pc
+    get_event_study_pc,
+    get_sb_lab_staggered_outputs,
 )
 
 
 def create_pipeline(**kwargs) -> Pipeline:
-    return pipeline(
+    basic_pipeline = pipeline(
         [
             node(
                 get_sb_lab_outputs,
@@ -122,3 +123,32 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
         ]
     )
+
+    staggered_pipeline = pipeline(
+        [
+            node(
+                get_sb_lab_staggered_outputs,
+                inputs={
+                    "data_loaders": "sb_lab.data_collection.publications.raw",
+                    "mapping_df": "sb_lab.data_collection.candidates.map",
+                    "level0": "analysis.descriptive.level0_data.processed",
+                    "pdb_submissions": "pdb.entries.intermediate",
+                    "strength_es": "sb_lab.data_analysis.outputs.counts.event_study_strength",
+                    "patents_data": "lens.data_processing.primary",
+                    "clinical_citations": "sb_lab.data_analysis.outputs.papers_with_ccs",
+                    "grants_data": "oa.data_processing.depth.grants.primary",
+                    "mesh_terms": "nih.data_collection.mesh_terms",
+                    "institutional_data": "sb_lab.data_collection.institution_info.primary"
+                },
+                outputs=[
+                    # "sb_lab.data_analysis.staggered.outputs.primary",
+                    "sb_lab.data_analysis.staggered.outputs.quarterly.primary",
+                    "sb_lab.data_analysis.staggered.outputs.collapsed.primary",
+                ],
+                tags=["sb_lab_outputs", "event_study", "cc"],
+            ),
+        ],
+        tags=["staggered_sb", "staggered"],
+    )
+
+    return basic_pipeline + staggered_pipeline
