@@ -630,6 +630,10 @@ ecr.authors.publications.raw:
   <<: *_pq_ptd
   path: s3://alphafold-impact/data/01_raw/ecr/publications/
 
+ecr.authors.institutions.raw:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/01_raw/ecr/institutions.parquet
+
 oa.data_processing.depth.grants.primary:
   <<: *_pq
   filepath: s3://alphafold-impact/data/03_primary/oa/works/depth/grants.parquet
