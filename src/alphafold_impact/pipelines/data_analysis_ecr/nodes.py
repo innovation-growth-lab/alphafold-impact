@@ -70,6 +70,7 @@ def run_analysis(data_loaders: AbstractDataset, af_data: pd.DataFrame) -> Genera
         af_sf_dta, no_sf_dta = _compute_topic_shares(
             authors_with_af, authors_with_no_af, "subfields"
         )
+        
 
         logger.info("Computing field shares")
         af_f_dta, no_f_dta = _compute_topic_shares(
@@ -204,6 +205,10 @@ def _compute_topic_shares(authors_with_af, authors_with_no_af, column):
 
     af_using_shares = _topic_shares(authors_with_af, column=column)
     no_af_using_shares = _topic_shares(authors_with_no_af, column=column)
+
+    # reset index
+    af_using_shares.reset_index(inplace=True)
+    no_af_using_shares.reset_index(inplace=True)
 
     return af_using_shares, no_af_using_shares
 
