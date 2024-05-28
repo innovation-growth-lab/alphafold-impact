@@ -73,7 +73,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                     "applied_lab.data_analysis.outputs.counts.event_study_strength",
                     "applied_lab.data_analysis.outputs.citations.event_study_strength",
                 ],
-                tags=["event_study_strength", "event_study"],
+                tags=["event_study_strength_applied", "event_study"],
             ),
             node(
                 get_event_study_pdb_submissions,
@@ -124,7 +124,8 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                 ],
                 tags=["event_study_pc", "event_study", "pc"],
             ),
-        ]
+        ],
+        tags="applied_lab_productivity" 
     )
 
     staggered_pipeline = pipeline(

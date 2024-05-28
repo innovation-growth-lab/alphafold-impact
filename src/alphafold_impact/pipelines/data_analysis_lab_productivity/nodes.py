@@ -488,7 +488,6 @@ def get_sb_lab_staggered_outputs(
         for col in institutional_data.columns
     ]
 
-    outputs = []
     agg_outputs = []
     collapsed_outputs = []
     for i, loader in enumerate(data_loaders.values()):
@@ -587,15 +586,13 @@ def get_sb_lab_staggered_outputs(
         data_processed = data_processed.drop(columns=["institution_author"])
 
         quarterly, collapsed = _get_quarterly_aggregate_outputs(data_processed)
-        # outputs.append(data_processed)
         agg_outputs.append(quarterly)
         collapsed_outputs.append(collapsed)
 
-    # data = pd.concat(outputs)
     agg_data = pd.concat(agg_outputs)
     collapsed_data = pd.concat(collapsed_outputs)
 
-    return agg_data, collapsed_data  # data
+    return agg_data, collapsed_data
 
 
 def _preprocess_for_staggered_design(

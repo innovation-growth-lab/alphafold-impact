@@ -89,9 +89,9 @@ def get_applied_lab_outputs(
         logger.info("Loading data batch %d / %d", i + 1, len(data_loaders))
         data_batch = loader()
 
-        # drop "display_name", "authorships"
+        # drop superfluous vars
         data_batch = data_batch.drop(
-            columns=["display_name", "authorships", "counts_by_year", "ids"]
+            columns=["authorships", "counts_by_year", "ids"]
         )
 
         # transform mesh, concepts, topics to be a list of the ids (ie first item in sublists)
@@ -106,8 +106,7 @@ def get_applied_lab_outputs(
         )
 
         outputs.append(data_batch)
-        if i > 2:
-            break
+
     data = pd.concat(outputs)
 
     logger.info("Merging data with mapping information")
@@ -505,7 +504,6 @@ def get_applied_lab_staggered_outputs(
 
     mapping_df = mapping_df.loc[~mapping_df["author"].isin(sb_mapping_df["author"])]
 
-    outputs = []
     agg_outputs = []
     collapsed_outputs = []
     for i, loader in enumerate(data_loaders.values()):
@@ -606,7 +604,6 @@ def get_applied_lab_staggered_outputs(
         data_processed = data_processed.drop(columns=["institution_author"])
 
         quarterly, collapsed = _get_quarterly_aggregate_outputs(data_processed)
-        # outputs.append(data_processed)
         agg_outputs.append(quarterly)
         collapsed_outputs.append(collapsed)
 
@@ -614,7 +611,7 @@ def get_applied_lab_staggered_outputs(
     agg_data = pd.concat(agg_outputs)
     collapsed_data = pd.concat(collapsed_outputs)
 
-    return agg_data, collapsed_data # TODO add bAack data
+    return agg_data, collapsed_data
 
 
 def _preprocess_for_staggered_design(
