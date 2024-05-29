@@ -799,9 +799,9 @@ applied_lab.data_analysis.yearly_outputs:
   <<: *_pq
   filepath: s3://alphafold-impact/data/04_output/analysis/applied_labs/yearly_outputs.parquet
 
-applied_lab.data_analysis.outputs.primary:
-  <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/applied_labs/outputs_primary.parquet
+# applied_lab.data_analysis.outputs.primary:
+#   <<: *_pq
+#   filepath: s3://alphafold-impact/data/04_output/analysis/applied_labs/outputs_primary.parquet
 
 applied_lab.data_analysis.outputs.counts.event_study:
   <<: *_pq
@@ -939,3 +939,7 @@ reporting.tcc_sb_papers:
 reporting.cc_sb_labs:
   <<: *_image
   filepath: s3://alphafold-impact/data/07_reporting/tcc/cc_sb_labs.png
+
+analysis.descriptive.data.outputs:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/04_output/analysis/descriptive/data_outputs.parquet

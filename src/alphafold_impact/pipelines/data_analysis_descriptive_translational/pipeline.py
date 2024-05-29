@@ -14,7 +14,9 @@ from .nodes import (
     get_patent_papers,
     get_patent_moderators,
     get_patent_classifications,
-    create_tcc_sb_papers
+    create_tcc_sb_papers,
+    create_publications_data,
+    merge_individual_data
 )
 
 
@@ -117,7 +119,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                     "source": "params:analysis.source.af",
                 },
                 outputs="analysis.af.applied_data",
-                tags=["af_descriptive"],
+                tags=["af_descriptive", "applied_strength_descriptive"],
             ),
             node(
                 load_input_applied_data,
@@ -126,7 +128,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                     "source": "params:analysis.source.ct",
                 },
                 outputs="analysis.ct.applied_data",
-                tags=["ct_descriptive"],
+                tags=["ct_descriptive", "applied_strength_descriptive"],
             ),
             node(
                 load_input_applied_data,
@@ -135,7 +137,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                     "source": "params:analysis.source.other",
                 },
                 outputs="analysis.other.applied_data",
-                tags=["other_descriptive"],
+                tags=["other_descriptive", "applied_strength_descriptive"],
             ),
             node(
                 merge_inputs,
@@ -145,7 +147,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                     "other_data": "analysis.other.applied_data",
                 },
                 outputs="analysis.descriptive.applied_data",
-                tags="descriptive_merge",
+                tags=["descriptive_merge", "applied_strength_descriptive"],
             ),
             node(
                 get_cc_papers,
@@ -174,7 +176,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                     "patent_data": "lens.data_processing.primary",
                 },
                 outputs="analysis.descriptive.applied_data_with_patents",
-                tags=["patent_counts"],
+                tags=["patent_counts", "applied_strength_descriptive"],
             ),
             node(
                 get_patent_moderators,
@@ -220,4 +222,59 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
         tags=["analysis_descriptive_translational_tcc_sb_papers"],
     )
 
-    return level0_pipeline + applied_pipeline + patent_cpc_pipeline + tcc_sb_papers
+    create_publications_data_pipeline = pipeline(
+        [
+            node(
+                create_publications_data,
+                inputs={
+                    "data": "oa.chain_labels.id.primary",
+                    "source": "params:analysis.source.af",
+                    "mesh_terms": "nih.data_collection.mesh_terms",
+                    "patents_data": "lens.data_processing.primary",
+                    "grants_data": "oa.data_processing.depth.grants.primary",
+                    "pdb_submissions": "pdb.entries.intermediate",
+                },
+                outputs="analysis.descriptive.data.af",
+                tags=["publications_data"],
+            ),
+            node(
+                create_publications_data,
+                inputs={
+                    "data": "oa.chain_labels.id.ct.primary",
+                    "source": "params:analysis.source.ct",
+                    "mesh_terms": "nih.data_collection.mesh_terms",
+                    "patents_data": "lens.data_processing.primary",
+                    "grants_data": "oa.data_processing.depth.grants.primary",
+                    "pdb_submissions": "pdb.entries.intermediate",
+                },
+                outputs="analysis.descriptive.data.ct",
+                tags=["publications_data"],
+            ),
+            node(
+                create_publications_data,
+                inputs={
+                    "data": "oa.data_processing.structural_biology.depth.other.intermediate",
+                    "source": "params:analysis.source.other",
+                    "mesh_terms": "nih.data_collection.mesh_terms",
+                    "patents_data": "lens.data_processing.primary",
+                    "grants_data": "oa.data_processing.depth.grants.primary",
+                    "pdb_submissions": "pdb.entries.intermediate",
+                },
+                outputs="analysis.descriptive.data.other",
+                tags=["publications_data"],
+            ),
+            node(
+                merge_individual_data,
+                inputs={
+                    "data_af": "analysis.descriptive.data.af",
+                    "data_ct": "analysis.descriptive.data.ct",
+                    "data_other": "analysis.descriptive.data.other",
+                },
+                outputs="analysis.descriptive.data.outputs",
+                tags=["publications_data"],
+            ),
+        ],
+        tags=["create_individual_data"],
+    )
+
+    return level0_pipeline + applied_pipeline + patent_cpc_pipeline + tcc_sb_papers + create_publications_data_pipeline
