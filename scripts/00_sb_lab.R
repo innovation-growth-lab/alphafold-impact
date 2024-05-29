@@ -1,7 +1,7 @@
 # Clean out the workspace
 rm(list = ls())
 options(max.print = 1000)
-source("r_scripts/utils.R")
+source("scripts/utils.R")
 
 # Check installation & LOAD PACKAGES
 list_of_packages <- c(
