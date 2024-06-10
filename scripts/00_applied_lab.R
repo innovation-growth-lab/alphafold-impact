@@ -92,7 +92,7 @@ sb_data_qtly <- sb_data_qtly %>%
 
 # Replace NA values in all columns that start with "mesh_" with 0
 sb_data_qtly <- sb_data_qtly %>%
-  mutate_at(vars(starts_with("mesh_")), ~replace_na(., 0))
+  mutate_at(vars(starts_with("mesh_")), ~ replace_na(., 0))
 
 
 sb_data_qtly <- sb_data_qtly %>%
@@ -165,7 +165,7 @@ avg_pdb_share <- sb_data_qtly_2018_2020 %>%
   summarise(avg_pdb_share = mean(pdb_share, na.rm = TRUE))
 
 # calculate the 75th percentile of the averages
-percentile_75_pdb  <- quantile(avg_pdb_share$avg_pdb_share, 0.75, na.rm = TRUE)
+percentile_75_pdb <- quantile(avg_pdb_share$avg_pdb_share, 0.75, na.rm = TRUE)
 
 ### preparing field_biochemistry_genetics_and_molecular_biology subset
 sb_data_qtly_2018_2020 <- sb_data_qtly %>%
@@ -198,7 +198,7 @@ avg_protein_share <- sb_data_qtly_2018_2020 %>%
   summarise(avg_protein_share = mean(protein_share, na.rm = TRUE))
 
 # calculate the 75th percentile of the averages
-percentile_75_prot  <- quantile(avg_protein_share$avg_protein_share, 0.75, na.rm = TRUE) # nolint
+percentile_75_prot <- quantile(avg_protein_share$avg_protein_share, 0.75, na.rm = TRUE) # nolint
 
 ### preparing the experimental_share subset
 sb_data_qtly_2018_2020 <- sb_data_qtly %>%
@@ -247,7 +247,7 @@ sub_samples <- list(
 
 # get na per column in sub_samples[["af_ct"]], export as excel
 sub_samples[["af_ct"]] %>%
-  summarise_all(~sum(is.na(.))) %>%
+  summarise_all(~ sum(is.na(.))) %>%
   write_csv("data/05_model_output/tables/na_af_ct.csv")
 
 ################################################################################
@@ -341,8 +341,14 @@ fes[["fe2"]] <- c(fes$fe1, "time_qtly", "country")
 
 # List of dependent variables
 dep_vars <- c(
-  "num_publications", "tcc", "ct0", "ct1",
-  "ca_count", "patent_count", "patent_citation", "cited_by_count_std"
+  "num_publications",
+  # "tcc",
+  "ct0",
+  "ct1",
+  # "ca_count",
+  # "patent_count",
+  # "patent_citation",
+  "cited_by_count_std"
 )
 
 # List of covariate sets
@@ -354,8 +360,8 @@ fe_list <- c("fe2")
 # List of treatment variables
 treat_vars <- c(
   "treatment_af_dyn",
-  "treatment_af_dyn + treatment_af_dyn:strong:protein_share + treatment_af_dyn:strong + treatment_af_dyn:protein_share", # nolint
-  "treatment_af_dyn + protein_share + experimental_share + strong + treatment_af_dyn:strong + treatment_af_dyn:protein_share + treatment_af_dyn:experimental_share" # nolint
+  "treatment_af_dyn + treatment_af_dyn:strong:pdb_share + treatment_af_dyn:strong + treatment_af_dyn:pdb_share", # nolint
+  "treatment_af_dyn + pdb_share + experimental_share + strong + treatment_af_dyn:strong + treatment_af_dyn:pdb_share + treatment_af_dyn:experimental_share" # nolint
 )
 
 form_list <- list()
@@ -413,9 +419,9 @@ for (sub in names(sub_samples)) {
 }
 
 variable_interest <- c(
-  "treatment_af_dyn", "strong", "protein_share",
-  "treatment_af_dyn:strong", "treatment_af_dyn:protein_share",
-  "treatment_af_dyn:strong:protein_share"
+  "treatment_af_dyn", "strong", "pdb_share",
+  "treatment_af_dyn:strong", "treatment_af_dyn:pdb_share",
+  "treatment_af_dyn:strong:pdb_share"
 )
 variable_extended_interest <- c(
   "treatment_af_dyn", "strong", "protein_share",
@@ -510,7 +516,7 @@ reg <- feols(
 )
 
 # print full row 82 of sub_files[["af_ct"]]
-print(sub_samples[["af_ct"]][26693:26694, ], width=Inf)
+print(sub_samples[["af_ct"]][26693:26694, ], width = Inf)
 
 summary(reg)
 treat_vars <- c(
@@ -524,7 +530,7 @@ rsb_data_qtly <- read_parquet(
 )
 
 # print rows in rsb_data_qtly where pi_id is A5005264477, show column time and strong
-print(rsb_data_qtly %>% filter(pi_id == "A5005264477")  %>% select(time, strong), n = 30)
+print(rsb_data_qtly %>% filter(pi_id == "A5005264477") %>% select(time, strong), n = 30)
 
 # get size of rsb_data_qtly
 dim(rsb_data_qtly)

@@ -7,7 +7,7 @@ source("scripts/utils.R")
 list_of_packages <- c(
   "arrow", "tidyverse", "ggplot2", "data.table", "bacondecomp",
   "fixest", "broom", "stargazer", "kableExtra", "patchwork",
-  "extrafont", "RColorBrewer", "plotrix", "MatchIt", "cem"
+  "extrafont", "RColorBrewer", "plotrix", "MatchIt", "cem", "scales"
 )
 new_packages <- list_of_packages[
   !(list_of_packages %in% installed.packages()[, "Package"])
@@ -84,7 +84,10 @@ sb_data_qtly <- sb_data_qtly %>%
     pdb_share = 0,
     resolution = 0,
     R_free = 0,
-    covid_share_2020 = 0
+    covid_share_2020 = 0,
+    ext_af = 0,
+    ext_ct = 0,
+    ext_other = 0
   )) %>%
   ungroup()
 
@@ -142,6 +145,9 @@ sb_data_qtly <- sb_data_qtly %>%
     cited_by_count_std = scale(cited_by_count, center = TRUE, scale = TRUE)
   ) %>%
   ungroup()
+
+# Scale 'pdb_share' between 0 and 1
+sb_data_qtly$pdb_share <- rescale(sb_data_qtly$pdb_share, to = c(0, 1))
 
 ################################################################################
 ################################################################################
@@ -345,7 +351,7 @@ fe_list <- c("fe2")
 treat_vars <- c(
   "treatment_af_dyn",
   "treatment_af_dyn + treatment_af_dyn:strong:pdb_share + treatment_af_dyn:strong + treatment_af_dyn:pdb_share", # nolint
-  "treatment_af_dyn + pdb_share + protein_share + experimental_share + strong + treatment_af_dyn:strong:pdb_share + treatment_af_dyn:strong + treatment_af_dyn:pdb_share + treatment_af_dyn:protein_share + treatment_af_dyn:experimental_share" # nolint
+  "treatment_af_dyn + treatment_af_dyn:strong:pdb_share + treatment_af_dyn:strong + treatment_af_dyn:pdb_share + treatment_af_dyn:strong:ext_af + treatment_af_dyn:strong + treatment_af_dyn:ext_af + pdb_share:ext_af" # nolint
 )
 
 form_list <- list()
@@ -402,82 +408,85 @@ for (sub in names(sub_samples)) {
   }
 }
 
+variable_interest_basic <- c(
+  "treatment_af_dyn", "strong", "pdb_share",
+  "treatment_af_dyn:strong", "treatment_af_dyn:pdb_share",
+  "treatment_af_dyn:strong:pdb_share", 
+)
+
 variable_interest <- c(
   "treatment_af_dyn", "strong", "pdb_share",
   "treatment_af_dyn:strong", "treatment_af_dyn:pdb_share",
-  "treatment_af_dyn:strong:pdb_share"
+  "treatment_af_dyn:strong:pdb_share", 
+  "treatment_af_dyn", "strong", "ext_af", "treatment_af_dyn:strong",
+  "treatment_af_dyn:ext_af", "treatment_af_dyn:strong:ext_af"
 )
-variable_extended_interest <- c(
-  "treatment_af_dyn", "strong", "protein_share",
-  "experimental_share", "treatment_af_dyn:strong",
-  "treatment_af_dyn:protein_share", "treatment_af_dyn:experimental_share"
-)
+
 
 ### Clinical Article Citations
 etable(results[c(
   "all_ca_count_base3_fe2_treatment_af_dyn",
-  "all_ca_count_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
-  "af_ct_ca_count_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
-  "af_ct_w_high_pdb_ca_count_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share" # nolint
+  "all_ca_count_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share_+_treatment_af_dyn:strong:ext_af_+_treatment_af_dyn:strong_+_treatment_af_dyn:ext_af_+_pdb_share:ext_af", # nolint
+  "af_ct_ca_count_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share_+_treatment_af_dyn:strong:ext_af_+_treatment_af_dyn:strong_+_treatment_af_dyn:ext_af_+_pdb_share:ext_af", # nolint
+  "af_ct_w_high_pdb_ca_count_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share_+_treatment_af_dyn:strong:ext_af_+_treatment_af_dyn:strong_+_treatment_af_dyn:ext_af_+_pdb_share:ext_af" # nolint
 )], keep = variable_interest, file = paste0(tables, "00_sb/01_ca_translational.tex")) # nolint
-
 ### Time to Clinical Citation
 etable(results[c(
   "all_tcc_base3_fe2_treatment_af_dyn",
-  "all_tcc_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
-  "af_ct_tcc_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share" # nolint
+  "all_tcc_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share_+_treatment_af_dyn:strong:ext_af_+_treatment_af_dyn:strong_+_treatment_af_dyn:ext_af_+_pdb_share:ext_af", # nolint
+  "af_ct_tcc_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share_+_treatment_af_dyn:strong:ext_af_+_treatment_af_dyn:strong_+_treatment_af_dyn:ext_af_+_pdb_share:ext_af", # nolint
+  "af_ct_w_high_pdb_tcc_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share_+_treatment_af_dyn:strong:ext_af_+_treatment_af_dyn:strong_+_treatment_af_dyn:ext_af_+_pdb_share:ext_af" # nolint
 )], keep = variable_interest, file = paste0(tables, "00_sb/02_tcc_translational.tex")) # nolint
 
 ### Patents
 etable(results[c(
   "all_patent_count_base3_fe2_treatment_af_dyn",
-  "all_patent_count_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
-  "af_ct_patent_count_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
-  "af_ct_w_high_pdb_patent_count_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share" # nolint
+  "all_patent_count_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share_+_treatment_af_dyn:strong:ext_af_+_treatment_af_dyn:strong_+_treatment_af_dyn:ext_af_+_pdb_share:ext_af", # nolint
+  "af_ct_patent_count_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share_+_treatment_af_dyn:strong:ext_af_+_treatment_af_dyn:strong_+_treatment_af_dyn:ext_af_+_pdb_share:ext_af", # nolint
+  "af_ct_w_high_pdb_patent_count_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share_+_treatment_af_dyn:strong:ext_af_+_treatment_af_dyn:strong_+_treatment_af_dyn:ext_af_+_pdb_share:ext_af" # nolint
 )], keep = variable_interest, file = paste0(tables, "00_sb/03_patent_count_translational.tex")) # nolint
 
 etable(results[c(
   "all_patent_citation_base3_fe2_treatment_af_dyn",
-  "all_patent_citation_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
-  "af_ct_patent_citation_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
-  "af_ct_w_high_pdb_patent_citation_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share" # nolint
+  "all_patent_citation_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share_+_treatment_af_dyn:strong:ext_af_+_treatment_af_dyn:strong_+_treatment_af_dyn:ext_af_+_pdb_share:ext_af", # nolint
+  "af_ct_patent_citation_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share_+_treatment_af_dyn:strong:ext_af_+_treatment_af_dyn:strong_+_treatment_af_dyn:ext_af_+_pdb_share:ext_af", # nolint
+  "af_ct_w_high_pdb_patent_citation_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share_+_treatment_af_dyn:strong:ext_af_+_treatment_af_dyn:strong_+_treatment_af_dyn:ext_af_+_pdb_share:ext_af" # nolint
 )], keep = variable_interest, file = paste0(tables, "00_sb/04_patent_citation_translational.tex")) # nolint
 
 ### Productivity
 etable(results[c(
   "all_ct0_base3_fe2_treatment_af_dyn",
-  "all_ct0_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
-  "af_ct_ct0_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
-  "af_ct_w_high_pdb_ct0_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share" # nolint
-)], keep = variable_extended_interest, file = paste0(tables, "00_sb/05_ct0_productivity.tex")) # nolint
-
+  "all_ct0_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share_+_treatment_af_dyn:strong:ext_af_+_treatment_af_dyn:strong_+_treatment_af_dyn:ext_af_+_pdb_share:ext_af", # nolint
+  "af_ct_ct0_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share_+_treatment_af_dyn:strong:ext_af_+_treatment_af_dyn:strong_+_treatment_af_dyn:ext_af_+_pdb_share:ext_af", # nolint
+  "af_ct_w_high_pdb_ct0_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share_+_treatment_af_dyn:strong:ext_af_+_treatment_af_dyn:strong_+_treatment_af_dyn:ext_af_+_pdb_share:ext_af" # nolint
+)], keep = variable_interest, file = paste0(tables, "00_sb/05_ct0_productivity.tex")) # nolint
 
 etable(results[c(
   "all_ct1_base3_fe2_treatment_af_dyn",
-  "all_ct1_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
-  "af_ct_ct1_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
-  "af_ct_w_high_pdb_ct1_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share" # nolint
-)], keep = variable_extended_interest, file = paste0(tables, "00_sb/06_ct1_productivity.tex")) # nolint
+  "all_ct1_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share_+_treatment_af_dyn:strong:ext_af_+_treatment_af_dyn:strong_+_treatment_af_dyn:ext_af_+_pdb_share:ext_af", # nolint
+  "af_ct_ct1_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share_+_treatment_af_dyn:strong:ext_af_+_treatment_af_dyn:strong_+_treatment_af_dyn:ext_af_+_pdb_share:ext_af", # nolint
+  "af_ct_w_high_pdb_ct1_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share_+_treatment_af_dyn:strong:ext_af_+_treatment_af_dyn:strong_+_treatment_af_dyn:ext_af_+_pdb_share:ext_af" # nolint
+)], keep = variable_interest, file = paste0(tables, "00_sb/06_ct1_productivity.tex")) # nolint
 
 etable(results[c(
   "all_num_publications_base3_fe2_treatment_af_dyn",
-  "all_num_publications_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
-  "af_ct_num_publications_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
-  "af_ct_w_high_pdb_num_publications_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share" # nolint
-)], keep = variable_extended_interest, file = paste0(tables, "00_sb/07_num_publications_productivity.tex")) # nolint
+  "all_num_publications_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share_+_treatment_af_dyn:strong:ext_af_+_treatment_af_dyn:strong_+_treatment_af_dyn:ext_af_+_pdb_share:ext_af", # nolint
+  "af_ct_num_publications_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share_+_treatment_af_dyn:strong:ext_af_+_treatment_af_dyn:strong_+_treatment_af_dyn:ext_af_+_pdb_share:ext_af", # nolint
+  "af_ct_w_high_pdb_num_publications_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share_+_treatment_af_dyn:strong:ext_af_+_treatment_af_dyn:strong_+_treatment_af_dyn:ext_af_+_pdb_share:ext_af" # nolint
+)], keep = variable_interest, file = paste0(tables, "00_sb/07_num_publications_productivity.tex")) # nolint
 
 
 etable(results[c(
   "all_cited_by_count_std_base3_fe2_treatment_af_dyn",
-  "all_cited_by_count_std_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
-  "af_ct_cited_by_count_std_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
-  "af_ct_w_high_pdb_cited_by_count_std_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share" # nolint
-)], keep = variable_extended_interest, file = paste0(tables, "00_sb/08_cited_by_count_std_productivity.tex")) # nolint
+  "all_cited_by_count_std_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share_+_treatment_af_dyn:strong:ext_af_+_treatment_af_dyn:strong_+_treatment_af_dyn:ext_af_+_pdb_share:ext_af", # nolint
+  "af_ct_cited_by_count_std_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share_+_treatment_af_dyn:strong:ext_af_+_treatment_af_dyn:strong_+_treatment_af_dyn:ext_af_+_pdb_share:ext_af", # nolint
+  "af_ct_w_high_pdb_cited_by_count_std_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share_+_treatment_af_dyn:strong:ext_af_+_treatment_af_dyn:strong_+_treatment_af_dyn:ext_af_+_pdb_share:ext_af" # nolint
+)], keep = variable_interest, file = paste0(tables, "00_sb/08_cited_by_count_std_productivity.tex")) # nolint
 
 ### Grants
 etable(results[c(
   "all_grant_count_std_base3_fe2_treatment_af_dyn",
-  "all_grant_count_std_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
-  "af_ct_grant_count_std_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
-  "af_ct_w_high_pdb_grant_count_std_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share" # nolint
+  "all_grant_count_std_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share_+_treatment_af_dyn:strong:ext_af_+_treatment_af_dyn:strong_+_treatment_af_dyn:ext_af_+_pdb_share:ext_af", # nolint
+  "af_ct_grant_count_std_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share_+_treatment_af_dyn:strong:ext_af_+_treatment_af_dyn:strong_+_treatment_af_dyn:ext_af_+_pdb_share:ext_af", # nolint
+  "af_ct_w_high_pdb_grant_count_std_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share_+_treatment_af_dyn:strong:ext_af_+_treatment_af_dyn:strong_+_treatment_af_dyn:ext_af_+_pdb_share:ext_af" # nolint
 )], keep = variable_interest, file = paste0(tables, "00_sb/09_grant_count_std_productivity.tex")) # nolint
