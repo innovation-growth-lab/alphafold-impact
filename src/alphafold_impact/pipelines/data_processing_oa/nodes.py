@@ -173,9 +173,9 @@ def _json_loader(
                 [
                     (
                         grant.get("funder", {})
-                        .get("id", "")
+                        # .get("id", "")
                         .replace("https://openalex.org/", ""),
-                        grant.get("funder", {}).get("display_name"),
+                        grant.get("funder_display_name"),
                         grant.get("award_id"),
                     )
                     for grant in x
@@ -678,7 +678,7 @@ def reassign_ct_levels(
         (data_other["level"] == "0") & (data_other["publication_date"] >= "2017-01-01")
     ]
 
-    # keep 25% of the level_0_data for other SB papers
+    # HACK: keep 25% of the level_0_data for other SB papers
     level_0_data = level_0_data.sample(frac=0.25, random_state=42)
 
     # Get level 1 data where parent_id is in level 0 ids
