@@ -361,6 +361,47 @@ def combine_levels_data(unique: str = "all", **kwargs) -> pd.DataFrame:
 
     return df
 
+def combine_levels_data_connect_parents(unique: str = "all", **kwargs) -> pd.DataFrame:
+    """
+    Combines multiple dataframes into a single dataframe and removes duplicate rows
+        based on the 'id' column. It connects id to parent_ids.
+
+    Parameters:
+    unique (str): The method to remove duplicate rows. Options are 'id', 'level', or 'all'.
+    **kwargs: keyword arguments representing the dataframes to be combined.
+
+    Returns:
+    pd.DataFrame: A combined dataframe with duplicate rows removed based
+        on the 'id' column.
+    """
+    assert unique in [
+        "id",
+        "level",
+        "all",
+    ], f"unique must be either 'id' or 'level, or 'all'. Instead, got {unique}."
+    
+    # filter out rows in level t+1 if their parent_id is not in level t
+    levels = [level for level in kwargs.values()]
+    for i in range(len(levels)-1):
+        levels[i+1] = levels[i+1][levels[i+1]["parent_id"].isin(levels[i]["id"])]
+
+    df = pd.concat([level for level in levels])
+    
+    logger.info("Removing only full duplicate rows.")
+    df = df.drop_duplicates(
+        subset=[
+            col
+            for col in df.columns
+            if col
+            not in ["strength", "mesh_terms", "authorships", "topics", "concepts"]
+        ]
+    )
+
+    df.reset_index(drop=True, inplace=True)
+    df["level"] = df["level"].astype(str)
+
+    return df
+
 
 def process_subfield_data(data: Dict[str, AbstractDataset]) -> pd.DataFrame:
     """

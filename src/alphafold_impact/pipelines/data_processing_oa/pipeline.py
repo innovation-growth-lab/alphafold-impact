@@ -19,6 +19,7 @@ from .nodes import (
     process_subfield_data,
     process_data_by_level,
     combine_levels_data,
+    combine_levels_data_connect_parents,
     reassign_ct_levels,
     process_data_by_level_ptd,
     concat_pq_ptd,
@@ -252,7 +253,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 tags=["concat_pq_ptd", "concat_and_combine_ct"],
             ),
             node(
-                func=combine_levels_data,
+                func=combine_levels_data_connect_parents,
                 inputs={
                     "level1": "oa.data_processing.structural_biology.depth.reassigned.ct.intermediate",
                     "level2": "oa.data_collection.subfield.structural_biology.depth.2.intermediate",
