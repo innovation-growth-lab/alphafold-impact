@@ -183,7 +183,8 @@ def process_baseline_data(
 
     # select only if parent_publication_date >= 2020
     processed_data = processed_data[
-        processed_data["parent_publication_date"] >= "2020-01-01"
+        (processed_data["parent_publication_date"] >= "2019-01-01") &
+        (processed_data["parent_publication_date"] <= "2021-06-15")
     ]
 
     logger.info("Creating aggregated baseline data")
@@ -211,6 +212,21 @@ def process_baseline_data(
 
     # get candidates: more than 50 num_citations
     baseline_candidates = baseline_agg[baseline_agg["num_citations"] > 50]
+
+    # manually remove past matches deemed not suitable W2973523639, W2984761660, W2999044305, W3104537585, W3110645309, W3199799076
+    baseline_candidates = baseline_candidates[
+        ~baseline_candidates["parent_id"].isin(
+            [
+                "W2973523639",
+                "W2984761660",
+                "W2999044305",
+                "W3104537585",
+                "W3110645309",
+                "W3199799076",
+                "W2944959599",
+            ]
+        )
+    ]
 
     return baseline_candidates
 
