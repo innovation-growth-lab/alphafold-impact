@@ -305,6 +305,7 @@ sb_data_qtly_cem <- sb_data_qtly %>%
 
 # add to sublists
 sub_samples[["af_ct_cem"]] <- sb_data_qtly_cem
+
 ################################################################################
 ################################################################################
 ############################## REGRESSIONS #####################################
@@ -411,13 +412,13 @@ for (sub in names(sub_samples)) {
 variable_interest_basic <- c(
   "treatment_af_dyn", "strong", "pdb_share",
   "treatment_af_dyn:strong", "treatment_af_dyn:pdb_share",
-  "treatment_af_dyn:strong:pdb_share", 
+  "treatment_af_dyn:strong:pdb_share",
 )
 
 variable_interest <- c(
   "treatment_af_dyn", "strong", "pdb_share",
   "treatment_af_dyn:strong", "treatment_af_dyn:pdb_share",
-  "treatment_af_dyn:strong:pdb_share", 
+  "treatment_af_dyn:strong:pdb_share",
   "treatment_af_dyn", "strong", "ext_af", "treatment_af_dyn:strong",
   "treatment_af_dyn:ext_af", "treatment_af_dyn:strong:ext_af"
 )
