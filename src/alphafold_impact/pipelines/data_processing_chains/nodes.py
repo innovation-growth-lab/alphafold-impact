@@ -13,6 +13,7 @@ pd.options.mode.copy_on_write = True
 
 Entrez.email = "david.ampudia@nesta.org.uk"
 logger = logging.getLogger(__name__)
+NUM_LEVELS = 2
 
 
 def _sort_and_drop(
@@ -131,7 +132,7 @@ def _flatten_dict(d: Dict, parent_keys: list = None, sep: str = "_"):
     return rows
 
 
-def _breaks_chain(row, num_levels: int = 3):
+def _breaks_chain(row, num_levels: int = NUM_LEVELS):
     intents = ["intent_0", "intent_1"]
     if num_levels > 2:
         intents.append("intent_2")
@@ -156,7 +157,7 @@ def _ensure_levels(df: pd.DataFrame, num_levels: int) -> pd.DataFrame:
 def filter_relevant_citation_links(
     alphafold_data: pd.DataFrame,
     identifier: str,
-    num_levels: int = 3,
+    num_levels: int = NUM_LEVELS,
     **kwargs,
 ) -> pd.DataFrame:
     """
@@ -293,7 +294,7 @@ def filter_relevant_citation_links(
 
 
 def _transform_long(
-    data: pd.DataFrame, intents: list, num_levels: int = 3
+    data: pd.DataFrame, intents: list, num_levels: int = NUM_LEVELS
 ) -> pd.DataFrame:
     """
     Transforms the given data by selecting specific levels and intents.
@@ -424,7 +425,7 @@ def get_papers_with_clinical_article_citations(
     return data_ids
 
 
-def _transform_long_pairs(data, intents, num_levels: int = 3):
+def _transform_long_pairs(data, intents, num_levels: int = NUM_LEVELS):
     df_ids = pd.DataFrame(columns=["paper_id", "parent_paper_id", "intent", "level"])
     data_cp = data.copy()
 
