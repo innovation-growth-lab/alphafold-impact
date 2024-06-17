@@ -393,7 +393,7 @@ def combine_levels_data_connect_parents(unique: str = "all", **kwargs) -> pd.Dat
             col
             for col in df.columns
             if col
-            not in ["strength", "mesh_terms", "authorships", "topics", "concepts"]
+            not in ["strength", "mesh_terms", "authorships", "topics", "concepts", "grants"]
         ]
     )
 
