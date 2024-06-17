@@ -59,8 +59,7 @@ def get_sb_lab_outputs(
         )
 
         outputs.append(data_batch)
-        if i > 2:
-            break
+        
     data = pd.concat(outputs)
 
     logger.info("Merging data with mapping information")
@@ -488,6 +487,25 @@ def get_sb_lab_staggered_outputs(
         for col in institutional_data.columns
     ]
 
+    # extract author id (first item in each sublist in authorships)
+    level0_authors = level0.copy()
+    level0_authors["authorships"] = level0["authorships"].apply(
+        lambda x: [y[0] for y in x] if x is not None else []
+    )
+    level0_authors = level0_authors.explode("authorships")
+    level0_authors.drop_duplicates(subset=["id", "authorships"], inplace=True)
+
+    # create a dictionary for each author, with "af", "ct", "other" counts (the values in column source)
+    author_counts = (
+        level0_authors.groupby(["authorships", "source"])
+        .size()
+        .unstack(fill_value=0)
+        .reset_index()
+    )
+    author_counts.columns = [
+        "ext_" + col if col != "authorships" else col for col in author_counts.columns
+    ]
+
     agg_outputs = []
     collapsed_outputs = []
     for i, loader in enumerate(data_loaders.values()):
@@ -568,6 +586,11 @@ def get_sb_lab_staggered_outputs(
 
         logger.info("Merging data with grants data")
         data_processed = _get_awards(data_processed, grants_data)
+
+        # add extensive margin
+        data_processed = data_processed.merge(
+            author_counts, left_on="pi_id", right_on="authorships", how="left"
+        )
 
         # drop topics, mesh_terms, concepts
         data_processed = data_processed.drop(
@@ -1126,6 +1149,7 @@ def _get_quarterly_aggregate_outputs(data):
             column.startswith("field_")
             or column.startswith("mesh_")
             or column.startswith("institution_")
+            or column.startswith("ext_")
         ):
             agg_funcs[column] = "first"
 

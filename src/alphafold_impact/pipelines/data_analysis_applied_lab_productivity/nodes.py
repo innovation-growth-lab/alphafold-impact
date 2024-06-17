@@ -51,7 +51,7 @@ def load_input_data(
         (data["level"] == "0") | (data["level"] == "1") | (data["level"] == "2")
     ]
 
-    data = data[["id", "parent_id", "publication_date", "parent_level", "level"]]
+    data = data[["id", "parent_id", "publication_date", "parent_level", "level", "pmid"]]
 
     # create a dictionary mapping id to publication_date
     id_date_dict = data.set_index("id")["publication_date"].to_dict()
@@ -89,21 +89,23 @@ def get_applied_lab_outputs(
         logger.info("Loading data batch %d / %d", i + 1, len(data_loaders))
         data_batch = loader()
 
-        # drop superfluous vars
-        data_batch = data_batch.drop(
-            columns=["authorships", "counts_by_year", "ids"]
-        )
+        data_batch = data_batch[["pmid", "id", "publication_date", "cited_by_count", "pi_id"]]
 
-        # transform mesh, concepts, topics to be a list of the ids (ie first item in sublists)
-        data_batch["mesh_terms"] = data_batch["mesh_terms"].apply(
-            lambda x: [y[0] for y in x] if x is not None else []
-        )
-        data_batch["concepts"] = data_batch["concepts"].apply(
-            lambda x: [y[0] for y in x] if x is not None else []
-        )
-        data_batch["topics"] = data_batch["topics"].apply(
-            lambda x: [y[0] for y in x] if x is not None else []
-        )
+        # # drop superfluous vars
+        # data_batch = data_batch.drop(
+        #     columns=["authorships", "counts_by_year", "ids", "grants"]
+        # )
+
+        # # transform mesh, concepts, topics to be a list of the ids (ie first item in sublists)
+        # data_batch["mesh_terms"] = data_batch["mesh_terms"].apply(
+        #     lambda x: [y[0] for y in x] if x is not None else []
+        # )
+        # data_batch["concepts"] = data_batch["concepts"].apply(
+        #     lambda x: [y[0] for y in x] if x is not None else []
+        # )
+        # data_batch["topics"] = data_batch["topics"].apply(
+        #     lambda x: [y[0] for y in x] if x is not None else []
+        # )
 
         outputs.append(data_batch)
 
@@ -343,76 +345,6 @@ def get_event_study_predictive_outputs(data: pd.DataFrame) -> tuple:
     return final_data_counts, final_data_citations
 
 
-def get_event_study_cc(data: pd.DataFrame, icite_data: pd.DataFrame):
-    """
-    Get event study for clinical citations.
-
-    Args:
-        data (pd.DataFrame): The input data containing information about articles.
-        icite_data (pd.DataFrame): The input data containing iCite information.
-
-    Returns:
-        Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]: A tuple containing three DataFrames:
-            - data_pmid: The merged data with iCite information.
-            - final_data_counts: The counts of clinical citations grouped by various attributes.
-            - final_data_citations: The sum of cited_by_count grouped by various attributes.
-    """
-
-    # preprocess icite data
-    icite_data["pmid"] = icite_data["pmid"].astype(str)
-
-    logger.info("Merging chains with iCite data")
-
-    # merge on 'pmid'
-    data_pmid = data.merge(icite_data[["pmid", "cited_by_clin"]], how="left", on="pmid")
-    data_pmid = data_pmid.drop_duplicates(subset=["id"])
-
-    logger.info("Exploding cited_by_clin")
-    data_pmid = data_pmid[data_pmid["cited_by_clin"].astype(str) != "nan"]
-
-    # drop if cited_by_clin is None
-    data_pmid = data_pmid[data_pmid["cited_by_clin"].notnull()]
-
-    data_pmid["cited_by_clin"] = data_pmid["cited_by_clin"].apply(
-        lambda x: x.split(" ")
-    )
-    data_pmid = data_pmid.explode("cited_by_clin")
-
-    logger.info("Creating clinical article links")
-    data_pmid["ca_link"] = data_pmid["cited_by_clin"].apply(
-        lambda x: f"https://pubmed.ncbi.nlm.nih.gov/{x}"
-    )
-
-    # reindex
-    data_pmid.reset_index(inplace=True, drop=True)
-
-    # drop dup
-    data_pmid.drop_duplicates(subset=["id", "cited_by_clin"], inplace=True)
-
-    data_pmid[["ca_publication_type", "ca_publication_date"]] = data_pmid[
-        "cited_by_clin"
-    ].apply(get_entrez_ptype_pmid)
-
-    logger.info("Collected clinical citation PMIDs")
-    final_data = data_pmid.copy()
-    final_data.dropna(subset=["time"], inplace=True)
-    final_data["time"] = final_data["time"].astype(int)
-
-    final_data_counts = (
-        final_data.groupby(["pi_id", "time", "seed", "ca_publication_type"])
-        .size()
-        .reset_index(name="count")
-    )
-    final_data_citations = (
-        final_data.groupby(["pi_id", "time", "seed", "ca_publication_type"])[
-            "cited_by_count"
-        ]
-        .sum()
-        .reset_index(name="count")
-    )
-    return data_pmid, final_data_counts, final_data_citations
-
-
 def get_event_study_pc(data: pd.DataFrame, patent_data: pd.DataFrame):
     """
     Get event study data for protein concepts.
@@ -504,6 +436,7 @@ def get_applied_lab_staggered_outputs(
 
     mapping_df = mapping_df.loc[~mapping_df["author"].isin(sb_mapping_df["author"])]
 
+    outputs = []
     agg_outputs = []
     collapsed_outputs = []
     for i, loader in enumerate(data_loaders.values()):
@@ -603,15 +536,16 @@ def get_applied_lab_staggered_outputs(
         # drop institution_author
         data_processed = data_processed.drop(columns=["institution_author"])
 
+        outputs.append(data_processed)
         quarterly, collapsed = _get_quarterly_aggregate_outputs(data_processed)
         agg_outputs.append(quarterly)
         collapsed_outputs.append(collapsed)
 
-    # data = pd.concat(outputs)
+    data = pd.concat(outputs)
     agg_data = pd.concat(agg_outputs)
     collapsed_data = pd.concat(collapsed_outputs)
 
-    return agg_data, collapsed_data
+    return data, agg_data, collapsed_data
 
 
 def _preprocess_for_staggered_design(

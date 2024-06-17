@@ -18,7 +18,9 @@ from .nodes import (
 )
 
 
-def create_pipeline(**kwargs) -> Pipeline:
+def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstring
+    **kwargs,
+) -> Pipeline:
     basic_pipeline = pipeline(
         [
             node(
@@ -138,7 +140,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "clinical_citations": "sb_lab.data_analysis.outputs.papers_with_ccs",
                     "grants_data": "oa.data_processing.depth.grants.primary",
                     "mesh_terms": "nih.data_collection.mesh_terms",
-                    "institutional_data": "sb_lab.data_collection.institution_info.primary"
+                    "institutional_data": "sb_lab.data_collection.institution_info.primary",
                 },
                 outputs=[
                     # "sb_lab.data_analysis.staggered.outputs.primary",

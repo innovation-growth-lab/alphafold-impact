@@ -31,7 +31,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                     "mapping_df": "other_lab.data_collection.candidates.map",
                 },
                 outputs="applied_lab.data_analysis.outputs.input",
-                tags=["applied_lab_outputs", "event_study", "cc"],
+                tags=["applied_lab_outputs", "event_study", "applied_cc", "event_study_strength_applied"],
             ),
             node(
                 compute_publication_production,
@@ -49,7 +49,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                     "applied_levels": "analysis.descriptive.applied_data",
                 },
                 outputs="applied_lab.data_analysis.outputs.primary",
-                tags=["preprocess_for_event_study", "event_study", "cc"],
+                tags=["preprocess_for_event_study", "event_study", "applied_cc", "event_study_strength_applied"],
             ),
             node(
                 get_event_study_outputs,
@@ -109,7 +109,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                     "applied_lab.data_analysis.outputs.counts.event_study_cc",
                     "applied_lab.data_analysis.outputs.citations.event_study_cc",
                 ],
-                tags=["event_study_cc", "event_study", "cc"],
+                tags=["event_study_cc", "event_study", "applied_cc"],
             ),
             node(
                 get_event_study_pc,
@@ -145,8 +145,8 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                     "mesh_terms": "nih.data_collection.mesh_terms",
                     "institutional_data": "other_lab.data_collection.institution_info.primary"
                 },
-                outputs=[
-                    # "applied_lab.data_analysis.staggered.outputs.primary",
+                outputs= [
+                    "applied_lab.data_analysis.staggered.outputs.primary",
                     "applied_lab.data_analysis.staggered.outputs.quarterly.primary",
                     "applied_lab.data_analysis.staggered.outputs.collapsed.primary",
                 ],
