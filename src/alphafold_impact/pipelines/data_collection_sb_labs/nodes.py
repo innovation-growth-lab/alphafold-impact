@@ -76,9 +76,14 @@ def separate_ct_from_seed(
     ct_data,
 ):
     """Separate the CT data from the seed data."""
-    # subset the baseline data for rows that have the parent_id in ct_data
-    ct_level_0_papers = baseline_data[
-        baseline_data["parent_id"].isin(ct_data["parent_id"])
+    # create ct_level_0_ai_papers
+    ct_level_0_ai_papers = baseline_data[
+        baseline_data["parent_id"].isin(ct_data[ct_data["label"].str.contains("ai")]["parent_id"])
+    ]
+
+    # create ct_level_0_noai_papers
+    ct_level_0_noai_papers = baseline_data[
+        baseline_data["parent_id"].isin(ct_data[~ct_data["label"].str.contains("ai")]["parent_id"])
     ]
 
     # subset the seed data for rows that do not have the id in ct_data (as parent_id)
@@ -86,7 +91,7 @@ def separate_ct_from_seed(
         ~seed_baseline_data["id"].isin(ct_data["parent_id"])
     ]
 
-    return ct_level_0_papers, other_level_0_papers
+    return ct_level_0_ai_papers, ct_level_0_noai_papers, other_level_0_papers
 
 
 def get_candidate_authors(
@@ -111,10 +116,14 @@ def get_candidate_authors(
     alphafold_authors = _get_sb_candidate_authors(alphafold_data)
 
     # separate the CT data from the seed data
-    ct_data, other_data = separate_ct_from_seed(baseline_data, seed_data, ct_data)
+    ct_long_ai_data, ct_long_noai_data, other_data = separate_ct_from_seed(baseline_data, seed_data, ct_data)
 
     # get the last authors from the CT data
-    ct_authors = _get_sb_candidate_authors(ct_data)
+    ct_ai_authors = _get_sb_candidate_authors(ct_long_ai_data)
+    ct_noai_authors = _get_sb_candidate_authors(ct_long_noai_data)
+
+    # add the CT authors
+    ct_authors = ct_ai_authors + ct_noai_authors
 
     # get the last authors from the other SB data
     other_authors = _get_sb_candidate_authors(other_data)
@@ -122,12 +131,13 @@ def get_candidate_authors(
     # create a unique list of authors
     authors = list(set(alphafold_authors + ct_authors + other_authors))
 
-    return authors, alphafold_authors, ct_authors, other_authors
+    return authors, alphafold_authors, ct_ai_authors, ct_noai_authors, ct_authors, other_authors
 
 
 def create_candidates_map(
     alphafold_authors: List,
-    ct_authors: List,
+    ct_ai_authors: List,
+    ct_noai_authors: List,
     other_authors: List,
 ) -> pd.DataFrame:
     """
@@ -147,8 +157,13 @@ def create_candidates_map(
     alphafold_df = pd.DataFrame(alphafold_authors, columns=["author", "institution"])
     alphafold_df["seed"] = "alphafold"
 
-    ct_df = pd.DataFrame(ct_authors, columns=["author", "institution"])
-    ct_df["seed"] = "ct"
+    ct_ai_df = pd.DataFrame(ct_ai_authors, columns=["author", "institution"])
+    ct_ai_df["seed"] = "ct_ai"
+
+    ct_noai_df = pd.DataFrame(ct_noai_authors, columns=["author", "institution"])
+    ct_noai_df["seed"] = "ct_noai"
+
+    ct_df = pd.concat([ct_ai_df, ct_noai_df])
 
     other_df = pd.DataFrame(other_authors, columns=["author", "institution"])
     other_df["seed"] = "other"
@@ -172,12 +187,25 @@ def create_candidates_map(
 
     # if "seed" is alphafold,ct,other let's go to alphafold,ct
     candidate_data["seed"] = candidate_data["seed"].apply(
-        lambda x: "alphafold,ct" if x == "alphafold,ct,other" else x
+        lambda x: "alphafold,ct_ai" if x == "alphafold,ct_ai,other" else x
+    )
+    candidate_data["seed"] = candidate_data["seed"].apply(
+        lambda x: "alphafold,ct_noai" if x == "alphafold,ct_noai,other" else x
     )
 
-    # if ct,other let's go back to ct
+    # if seed contains alphafold, go to alphafold
     candidate_data["seed"] = candidate_data["seed"].apply(
-        lambda x: "ct" if x == "ct,other" else x
+        lambda x: "alphafold" if "alphafold" in x else x
+    )
+
+    # if seed contains ct_ai, go to ct_ai
+    candidate_data["seed"] = candidate_data["seed"].apply(
+        lambda x: "ct_ai" if "ct_ai" in x else x
+    )
+
+    # if seed contains ct_noai, go to ct_noai
+    candidate_data["seed"] = candidate_data["seed"].apply(
+        lambda x: "ct_noai" if "ct_noai" in x else x
     )
 
     return candidate_data
@@ -186,7 +214,8 @@ def create_candidates_map(
 def calculate_lab_determinants(
     dict_loader: AbstractDataset,
     alphafold_authors: List,
-    ct_authors: List,
+    ct_ai_authors: List,
+    ct_noai_authors: List,
     other_authors: List,
 ) -> Generator[Dict[str, pd.DataFrame], None, None]:
     """
@@ -195,7 +224,8 @@ def calculate_lab_determinants(
     Parameters:
         dict_loader (AbstractDataset): The input data loader containing the lab data.
         alphafold_authors (List): The list of AlphaFold authors.
-        ct_authors (List): The list of CT authors.
+        ct_ai_authors (List): The list of CT authors.
+        ct_noai_authors (List): The list of no-AI CT authors.
         other_authors (List): The list of other authors.
 
     Yields:
@@ -259,7 +289,7 @@ def calculate_lab_determinants(
 
         # get mapping between candidates and chain seeds
         candidate_map = create_candidates_map(
-            alphafold_authors, ct_authors, other_authors
+            alphafold_authors, ct_ai_authors, ct_noai_authors, other_authors
         )
 
         # keep if author, institution pair is in candidate_map author institution columns

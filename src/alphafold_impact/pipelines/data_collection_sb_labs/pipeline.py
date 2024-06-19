@@ -31,7 +31,7 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                     "seed_data": "oa.data_processing.subfield.structural_biology.primary",
                     "ct_data": "chains.seed_technologies.intermediate",
                 },
-                outputs=["authors", "alphafold_authors", "ct_authors", "other_authors"],
+                outputs=["authors", "alphafold_authors", "ct_ai_authors", "ct_noai_authors", "ct_authors", "other_authors"],
                 tags=["process_sb_candidates", "candidate_authors.get_map"],
             ),
             node(
@@ -48,7 +48,8 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                 inputs={
                     "dict_loader": "sb_lab.data_collection.candidates.publications.intermediate",
                     "alphafold_authors": "alphafold_authors",
-                    "ct_authors": "ct_authors",
+                    "ct_ai_authors": "ct_ai_authors",
+                    "ct_noai_authors": "ct_noai_authors",
                     "other_authors": "other_authors",
                 },
                 outputs="sb_lab.data_collection.candidates.scores.intermediate",
@@ -90,7 +91,8 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                 func=create_candidates_map,
                 inputs={
                     "alphafold_authors": "alphafold_authors",
-                    "ct_authors": "ct_authors",
+                    "ct_ai_authors": "ct_ai_authors",
+                    "ct_noai_authors": "ct_noai_authors",
                     "other_authors": "other_authors",
                 },
                 outputs="sb_lab.data_collection.candidates.map",

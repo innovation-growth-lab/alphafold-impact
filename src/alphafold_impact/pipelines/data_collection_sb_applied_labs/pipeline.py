@@ -15,7 +15,7 @@ from ..data_collection_labs.nodes import (  # pylint: disable=E0402
     get_publications_from_labs,
 )
 from ..data_collection_sb_labs.nodes import (  # pylint: disable=E0402
-    get_institution_info
+    get_institution_info,
 )
 from ..data_processing_labs.nodes import combine_lab_results  # pylint: disable=E0402
 
@@ -31,8 +31,16 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                     "alphafold_data": "oa.data_processing.depth.primary",
                     "ct_data": "oa.data_processing.structural_biology.depth.ct.intermediate",
                     "other_data": "oa.data_processing.structural_biology.depth.other.intermediate",
+                    "seed_papers": "chains.seed_technologies.intermediate"
                 },
-                outputs=["applied_authors", "applied_alphafold_authors", "applied_ct_authors", "applied_other_authors"],
+                outputs=[
+                    "applied_authors",
+                    "applied_alphafold_authors",
+                    "applied_ct_authors",
+                    "applied_ct_ai_authors",
+                    "applied_ct_noai_authors",
+                    "applied_other_authors",
+                ],
                 tags=["process_other_candidates", "other_candidate_authors.get_map"],
             ),
             node(
@@ -49,7 +57,8 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                 inputs={
                     "dict_loader": "other_lab.data_collection.candidates.publications.intermediate",
                     "alphafold_authors": "applied_alphafold_authors",
-                    "ct_authors": "applied_ct_authors",
+                    "ct_ai_authors": "applied_ct_ai_authors",
+                    "ct_noai_authors": "applied_ct_noai_authors",
                     "other_authors": "applied_other_authors",
                 },
                 outputs="other_lab.data_collection.candidates.scores.intermediate",
@@ -91,7 +100,8 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                 func=create_candidates_map,
                 inputs={
                     "alphafold_authors": "applied_alphafold_authors",
-                    "ct_authors": "applied_ct_authors",
+                    "ct_ai_authors": "applied_ct_ai_authors",
+                    "ct_noai_authors": "applied_ct_noai_authors",
                     "other_authors": "applied_other_authors",
                 },
                 outputs="other_lab.data_collection.candidates.map",
@@ -113,4 +123,8 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
         tags="get_institution_info",
     )
 
-    return other_candidate_authors_pipeline + create_map_pipeline + collect_institution_info
+    return (
+        other_candidate_authors_pipeline
+        + create_map_pipeline
+        + collect_institution_info
+    )

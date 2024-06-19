@@ -32,13 +32,13 @@ def _get_applied_candidate_authors(data: pd.DataFrame) -> List[Tuple[str, str]]:
         List[Tuple[str, str]]: The list of last authors.
     """
     # filter data to only consider levels 1 and 2
-    applied_ids = data[data["level"].astype(str).isin(["1", "2"])]['id'].unique()
+    applied_ids = data[data["level"].astype(str).isin(["1", "2"])]["id"].unique()
 
     # Identify the 'id' values in 'data' where 'level' is in the other levels ("0", "seed")
-    sb_ids = data[~data["level"].astype(str).isin(["1", "2"])]['id'].unique()
+    sb_ids = data[~data["level"].astype(str).isin(["1", "2"])]["id"].unique()
 
     # Select the rows in 'applied_ids' that are not in 'other_ids'
-    data = data[data['id'].isin(applied_ids) & ~data['id'].isin(sb_ids)]
+    data = data[data["id"].isin(applied_ids) & ~data["id"].isin(sb_ids)]
 
     # get the author whose third element is the last author
     author_data = (
@@ -82,10 +82,79 @@ def _get_applied_candidate_authors(data: pd.DataFrame) -> List[Tuple[str, str]]:
     return list(alphafold_authors.index)
 
 
+def get_ai_noai_div(ct_data, seed_papers):
+    """
+    Get AI and non-AI papers division based on the given ct_data and seed_papers.
+
+    Args:
+        ct_data (pd.DataFrame): The DataFrame containing the citation data.
+        seed_papers (pd.DataFrame): The DataFrame containing the seed papers.
+
+    Returns:
+        tuple: A tuple containing two DataFrames - ct_ai_papers and ct_noai_papers.
+            - ct_ai_papers: The DataFrame containing AI papers.
+            - ct_noai_papers: The DataFrame containing non-AI papers.
+    """
+
+    def create_df(ct_data, ct_data_previous, level):
+        """
+        Create a DataFrame based on the given ct_data, ct_data_previous, and level.
+
+        Args:
+            ct_data (pd.DataFrame): The DataFrame containing the citation data.
+            ct_data_previous (pd.DataFrame): The DataFrame containing the previous level.
+            level (int): The level of the DataFrame.
+
+        Returns:
+            pd.DataFrame: The DataFrame filtered based on the level and parent_id.
+        """
+        # Filter ct_data based on level and parent_id
+        ct_level_df = ct_data[
+            (ct_data["level"] == str(level))
+            & (ct_data["parent_id"].isin(ct_data_previous["id"]))
+        ]
+
+        return ct_level_df
+
+    ct_level_0_ai_papers = ct_data[
+        ct_data["parent_id"].isin(
+            seed_papers[seed_papers["label"].str.contains("ai")]["parent_id"]
+        )
+    ]
+
+    # create ct_level_0_noai_papers
+    ct_level_0_noai_papers = ct_data[
+        ct_data["parent_id"].isin(
+            seed_papers[~seed_papers["label"].str.contains("ai")]["parent_id"]
+        )
+    ]
+
+    ct_level_1_ai_papers = create_df(ct_data, ct_level_0_ai_papers, 1)
+    ct_level_1_noai_papers = create_df(ct_data, ct_level_0_noai_papers, 1)
+
+    ct_level_2_ai_papers = create_df(ct_data, ct_level_1_ai_papers, 2)
+    ct_level_2_noai_papers = create_df(ct_data, ct_level_1_noai_papers, 2)
+
+    # Concatenate the "ai" and "noai" dataframes
+    ct_ai_papers = pd.concat(
+        [ct_level_0_ai_papers, ct_level_1_ai_papers, ct_level_2_ai_papers]
+    )
+    ct_noai_papers = pd.concat(
+        [ct_level_0_noai_papers, ct_level_1_noai_papers, ct_level_2_noai_papers]
+    )
+
+    # Drop duplicates
+    ct_ai_papers = ct_ai_papers.drop_duplicates(subset=["parent_id", "id", "level"])
+    ct_noai_papers = ct_noai_papers.drop_duplicates(subset=["parent_id", "id", "level"])
+
+    return ct_ai_papers, ct_noai_papers
+
+
 def get_candidate_authors(
     alphafold_data: pd.DataFrame,
     ct_data: pd.DataFrame,
     other_data: pd.DataFrame,
+    seed_papers: pd.DataFrame,
 ):
     """
     Get a list of candidate authors from different data sources.
@@ -104,18 +173,32 @@ def get_candidate_authors(
     # get the last authors from the CT data
     ct_authors = _get_applied_candidate_authors(ct_data)
 
+    # create ct_level_0_ai_papers
+    ct_ai_papers, ct_noai_papers = get_ai_noai_div(ct_data, seed_papers)
+
+    ct_ai_authors = _get_applied_candidate_authors(ct_ai_papers)
+    ct_noai_authors = _get_applied_candidate_authors(ct_noai_papers)
+
     # get the last authors from the other SB data
     other_authors = _get_applied_candidate_authors(other_data)
 
     # create a unique list of authors
     authors = list(set(alphafold_authors + ct_authors + other_authors))
 
-    return authors, alphafold_authors, ct_authors, other_authors
+    return (
+        authors,
+        alphafold_authors,
+        ct_authors,
+        ct_ai_authors,
+        ct_noai_authors,
+        other_authors,
+    )
 
 
 def create_candidates_map(
     alphafold_authors: List,
-    ct_authors: List,
+    ct_ai_authors: List,
+    ct_noai_authors: List,
     other_authors: List,
 ) -> pd.DataFrame:
     """
@@ -135,14 +218,17 @@ def create_candidates_map(
     alphafold_df = pd.DataFrame(alphafold_authors, columns=["author", "institution"])
     alphafold_df["seed"] = "alphafold"
 
-    ct_df = pd.DataFrame(ct_authors, columns=["author", "institution"])
-    ct_df["seed"] = "ct"
+    ct_ai_df = pd.DataFrame(ct_ai_authors, columns=["author", "institution"])
+    ct_ai_df["seed"] = "ct_ai"
+
+    ct_noai_df = pd.DataFrame(ct_noai_authors, columns=["author", "institution"])
+    ct_noai_df["seed"] = "ct_noai"
 
     other_df = pd.DataFrame(other_authors, columns=["author", "institution"])
     other_df["seed"] = "other"
 
     # combine the candidate dataframes
-    candidate_data = pd.concat([alphafold_df, ct_df, other_df])
+    candidate_data = pd.concat([alphafold_df, ct_ai_df, ct_noai_df, other_df])
 
     # check for duplicates in candidate_data
     # candidate_data = candidate_data.drop_duplicates(subset=["author", "institution"])
@@ -153,19 +239,19 @@ def create_candidates_map(
     candidate_data = candidate_data.drop_duplicates(subset=["author", "institution"])
 
     # ad-hoc fixes
-    # if "seed" is alphafold,other let's go back to alphafold
+    # if seed contains alphafold, go to alphafold
     candidate_data["seed"] = candidate_data["seed"].apply(
-        lambda x: "alphafold" if x == "alphafold,other" else x
+        lambda x: "alphafold" if "alphafold" in x else x
     )
 
-    # if "seed" is alphafold,ct,other let's go to alphafold,ct
+    # if seed contains ct_ai, go to ct_ai
     candidate_data["seed"] = candidate_data["seed"].apply(
-        lambda x: "alphafold,ct" if x == "alphafold,ct,other" else x
+        lambda x: "ct_ai" if "ct_ai" in x else x
     )
 
-    # if ct,other let's go back to ct
+    # if seed contains ct_noai, go to ct_noai
     candidate_data["seed"] = candidate_data["seed"].apply(
-        lambda x: "ct" if x == "ct,other" else x
+        lambda x: "ct_noai" if "ct_noai" in x else x
     )
 
     return candidate_data
@@ -174,7 +260,8 @@ def create_candidates_map(
 def calculate_lab_determinants(
     dict_loader: AbstractDataset,
     alphafold_authors: List,
-    ct_authors: List,
+    ct_ai_authors: List,
+    ct_noai_authors: List,
     other_authors: List,
 ) -> Generator[Dict[str, pd.DataFrame], None, None]:
     """
@@ -247,7 +334,7 @@ def calculate_lab_determinants(
 
         # get mapping between candidates and chain seeds
         candidate_map = create_candidates_map(
-            alphafold_authors, ct_authors, other_authors
+            alphafold_authors, ct_ai_authors, ct_noai_authors, other_authors
         )
 
         # keep if author, institution pair is in candidate_map author institution columns
