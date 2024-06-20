@@ -101,6 +101,8 @@ sb_data_qtly <- sb_data_qtly %>%
     g = ifelse(seed == "other", NA, g),
     g_af = ifelse(str_detect(seed, "af"), g, NA),
     g_ct = ifelse(str_detect(seed, "ct"), g, NA),
+    g_ct_ai = ifelse(str_detect(seed, "ct_ai"), g, NA),
+    g_ct_noai = ifelse(str_detect(seed, "ct_noai"), g, NA),
     treatment_af_dyn = ifelse(time > g_af, 1, 0),
     treatment_af = ifelse(time > 15 & !is.na(g_af), 1, 0),
     treatment_ct = ifelse(time > g_ct, 1, 0),
@@ -112,10 +114,12 @@ sb_data_qtly <- sb_data_qtly %>%
       treatment_af_dyn = 0,
       treatment_af = 0,
       treatment_ct = 0,
+      treatment_ct_ai = 0,
+      treatment_ct_noai = 0,
       pdb_share = 0
     )
   ) %>%
-  select(c(g, g_af, g_ct, time), everything()) %>%
+  select(c(g, g_af, g_ct, g_ct_ai, g_ct_noai, time), everything()) %>%
   arrange(pi_id, time)
 
 # bfill pdb_share, resolution, R_free
@@ -217,32 +221,36 @@ percentile_75_prot <- quantile(avg_protein_share$avg_protein_share, 0.75, na.rm 
 ### SUBSETS ###
 sub_samples <- list(
   "all" = sb_data_qtly,
-  "af_other" = sb_data_qtly %>%
-    filter(str_detect(seed, "af") | seed == "other"),
+  # "af_other" = sb_data_qtly %>%
+  #   filter(str_detect(seed, "af") | seed == "other"),
   "af_ct" = sb_data_qtly %>%
     filter(str_detect(seed, "af") | str_detect(seed, "ct")),
-  "af_other_w_pdb" = sb_data_qtly %>%
-    filter(str_detect(seed, "af") | seed == "other") %>%
-    filter(!is.na(pdb_share)),
+  "af_ct_ai" = sb_data_qtly %>%
+    filter(str_detect(seed, "af") | str_detect(seed, "ct_ai")),
+  "af_ct_noai" = sb_data_qtly %>%
+    filter(str_detect(seed, "af") | str_detect(seed, "ct_noai")),
+  # "af_other_w_pdb" = sb_data_qtly %>%
+  #   filter(str_detect(seed, "af") | seed == "other") %>%
+  #   filter(!is.na(pdb_share)),
   "af_ct_w_high_pdb" = sb_data_qtly %>%
-    filter(str_detect(seed, "af") | seed == "ct") %>%
+    filter(str_detect(seed, "af") | str_detect(seed, "ct")) %>%
     semi_join(avg_pdb_share %>%
-      filter(avg_pdb_share > percentile_75_pdb), by = "pi_id"), # nolint
-  "pi_id_high_pdb" = sb_data_qtly %>%
-    semi_join(avg_pdb_share %>%
-      filter(avg_pdb_share > percentile_75_pdb), by = "pi_id"), # nolint
-  "pi_id_high_field" = sb_data_qtly %>%
-    semi_join(avg_field_biochemistry_genetics_and_molecular_biology %>%
-      filter(
-        avg_field_biochemistry_genetics_and_molecular_biology >
-          percentile_75_bio
-      ), by = "pi_id"),
-  "pi_id_high_protein" = sb_data_qtly %>%
-    semi_join(avg_protein_share %>%
-      filter(avg_protein_share > percentile_75_prot), by = "pi_id"), # nolint
-  "pi_id_high_experimental" = sb_data_qtly %>%
-    semi_join(avg_experimental_share %>%
-      filter(avg_experimental_share > percentile_75_exp), by = "pi_id") # nolint
+      filter(avg_pdb_share > percentile_75_pdb), by = "pi_id") # nolint
+  # "pi_id_high_pdb" = sb_data_qtly %>%
+  #   semi_join(avg_pdb_share %>%
+  #     filter(avg_pdb_share > percentile_75_pdb), by = "pi_id"), # nolint
+  # "pi_id_high_field" = sb_data_qtly %>%
+  #   semi_join(avg_field_biochemistry_genetics_and_molecular_biology %>%
+  #     filter(
+  #       avg_field_biochemistry_genetics_and_molecular_biology >
+  #         percentile_75_bio
+  #     ), by = "pi_id"),
+  # "pi_id_high_protein" = sb_data_qtly %>%
+  #   semi_join(avg_protein_share %>%
+  #     filter(avg_protein_share > percentile_75_prot), by = "pi_id"), # nolint
+  # "pi_id_high_experimental" = sb_data_qtly %>%
+  #   semi_join(avg_experimental_share %>%
+  #     filter(avg_experimental_share > percentile_75_exp), by = "pi_id") # nolint
 )
 
 # get na per column in sub_samples[["af_ct"]], export as excel
@@ -290,6 +298,11 @@ sb_data_qtly_t0_cem <- sb_data_qtly %>%
 
 # Convert the cols vector to a string with + between each variable
 cols_str <- paste0(cols, collapse = " + ")
+
+# fill any NAN in strong with FALSE
+sb_data_qtly_t0_cem$strong <- ifelse(
+  is.na(sb_data_qtly_t0_cem$strong), FALSE, sb_data_qtly_t0_cem$strong
+)
 
 # Perform CEM
 match_out_af <- matchit(
@@ -341,14 +354,8 @@ fes[["fe2"]] <- c(fes$fe1, "time_qtly", "country")
 
 # List of dependent variables
 dep_vars <- c(
-  "num_publications",
-  # "tcc",
-  "ct0",
-  "ct1",
-  # "ca_count",
-  # "patent_count",
-  # "patent_citation",
-  "cited_by_count_std"
+  "num_publications", "tcc", "ct0", "ct1", "cited_by_count_std"
+  # "ca_count", "patent_count", "patent_citation"
 )
 
 # List of covariate sets
@@ -434,6 +441,8 @@ etable(results[c(
   "all_ca_count_base3_fe2_treatment_af_dyn",
   "all_ca_count_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
   "af_ct_ca_count_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
+  "af_ct_ai_ca_count_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
+  "af_ct_noai_ca_count_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
   "af_ct_w_high_pdb_ca_count_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share" # nolint
 )], keep = variable_interest, file = paste0(tables, "01_applied/01_ca_translational.tex")) # nolint
 
@@ -442,13 +451,26 @@ etable(results[c(
   "all_tcc_base3_fe2_treatment_af_dyn",
   "all_tcc_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
   "af_ct_tcc_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share" # nolint
+  "af_ct_ai_tcc_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
+  "af_ct_noai_tcc_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share" # nolint
 )], keep = variable_interest, file = paste0(tables, "01_applied/02_tcc_translational.tex")) # nolint
 
 ### Patents
 etable(results[c(
+  "af_ct_ai_patent_count_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
+  "af_ct_noai_patent_count_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
+  "af_ct_w_high_pdb_patent_count_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
+  "af_ct_ai_patent_citation_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
+  "af_ct_noai_patent_citation_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
+  "af_ct_w_high_pdb_patent_citation_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share" # nolint
+)], keep = variable_interest, file = paste0(tables, "01_applied/03a_patent_translational.tex")) # nolint
+
+etable(results[c(
   "all_patent_count_base3_fe2_treatment_af_dyn",
   "all_patent_count_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
   "af_ct_patent_count_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
+  "af_ct_ai_patent_count_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
+  "af_ct_noai_patent_count_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
   "af_ct_w_high_pdb_patent_count_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share" # nolint
 )], keep = variable_interest, file = paste0(tables, "01_applied/03_patent_count_translational.tex")) # nolint
 
@@ -456,6 +478,8 @@ etable(results[c(
   "all_patent_citation_base3_fe2_treatment_af_dyn",
   "all_patent_citation_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
   "af_ct_patent_citation_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
+  "af_ct_ai_patent_citation_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
+  "af_ct_noai_patent_citation_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
   "af_ct_w_high_pdb_patent_citation_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share" # nolint
 )], keep = variable_interest, file = paste0(tables, "01_applied/04_patent_citation_translational.tex")) # nolint
 
@@ -464,6 +488,8 @@ etable(results[c(
   "all_ct0_base3_fe2_treatment_af_dyn",
   "all_ct0_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
   "af_ct_ct0_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
+  "af_ct_ai_ct0_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
+  "af_ct_noai_ct0_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
   "af_ct_w_high_pdb_ct0_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share" # nolint
 )], keep = variable_extended_interest, file = paste0(tables, "01_applied/05_ct0_productivity.tex")) # nolint
 
@@ -472,6 +498,8 @@ etable(results[c(
   "all_ct1_base3_fe2_treatment_af_dyn",
   "all_ct1_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
   "af_ct_ct1_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
+  "af_ct_ai_ct1_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
+  "af_ct_noai_ct1_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
   "af_ct_w_high_pdb_ct1_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share" # nolint
 )], keep = variable_extended_interest, file = paste0(tables, "01_applied/06_ct1_productivity.tex")) # nolint
 
@@ -479,6 +507,8 @@ etable(results[c(
   "all_num_publications_base3_fe2_treatment_af_dyn",
   "all_num_publications_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
   "af_ct_num_publications_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
+  "af_ct_ai_num_publications_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
+  "af_ct_noai_num_publications_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
   "af_ct_w_high_pdb_num_publications_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share" # nolint
 )], keep = variable_extended_interest, file = paste0(tables, "01_applied/07_num_publications_productivity.tex")) # nolint
 
@@ -487,6 +517,8 @@ etable(results[c(
   "all_cited_by_count_std_base3_fe2_treatment_af_dyn",
   "all_cited_by_count_std_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
   "af_ct_cited_by_count_std_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
+  "af_ct_ai_cited_by_count_std_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
+  "af_ct_noai_cited_by_count_std_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
   "af_ct_w_high_pdb_cited_by_count_std_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share" # nolint
 )], keep = variable_extended_interest, file = paste0(tables, "01_applied/08_cited_by_count_std_productivity.tex")) # nolint
 
@@ -495,11 +527,13 @@ etable(results[c(
   "all_grant_count_std_base3_fe2_treatment_af_dyn",
   "all_grant_count_std_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
   "af_ct_grant_count_std_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
+  "af_ct_ai_grant_count_std_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
+  "af_ct_noai_grant_count_std_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
   "af_ct_w_high_pdb_grant_count_std_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share" # nolint
 )], keep = variable_interest, file = paste0(tables, "01_applied/09_grant_count_std_productivity.tex")) # nolint
 
 
-###
+# ###
 basic_str <- as.formula(
   paste0(
     "ca_count ~ treatment_af_dyn + treatment_af_dyn:strong:pdb_share + treatment_af_dyn:strong + treatment_af_dyn:pdb_share +",
@@ -511,26 +545,26 @@ basic_str <- as.formula(
 
 reg <- feols(
   basic_str,
-  data = sub_samples[["af_ct"]],
+  data = sub_samples[["all"]],
   cluster = "pi_id"
 )
 
-# print full row 82 of sub_files[["af_ct"]]
-print(sub_samples[["af_ct"]][26693:26694, ], width = Inf)
+# # print full row 82 of sub_files[["af_ct"]]
+# print(sub_samples[["af_ct"]][26693:26694, ], width = Inf)
 
-summary(reg)
-treat_vars <- c(
-  "treatment_af_dyn",
-  "treatment_af_dyn + treatment_af_dyn:strong:protein_share + treatment_af_dyn:strong + treatment_af_dyn:protein_share", # nolint
-  "treatment_af_dyn + protein_share + experimental_share + strong + treatment_af_dyn:strong + treatment_af_dyn:protein_share + treatment_af_dyn:experimental_share" # nolint
-)
+# summary(reg)
+# treat_vars <- c(
+#   "treatment_af_dyn",
+#   "treatment_af_dyn + treatment_af_dyn:strong:protein_share + treatment_af_dyn:strong + treatment_af_dyn:protein_share", # nolint
+#   "treatment_af_dyn + protein_share + experimental_share + strong + treatment_af_dyn:strong + treatment_af_dyn:protein_share + treatment_af_dyn:experimental_share" # nolint
+# )
 
-rsb_data_qtly <- read_parquet(
-  "data/04_outputs/applied_labs/staggered/outputs_quarterly.parquet"
-)
+# rsb_data_qtly <- read_parquet(
+#   "data/04_outputs/applied_labs/staggered/outputs_quarterly.parquet"
+# )
 
-# print rows in rsb_data_qtly where pi_id is A5005264477, show column time and strong
-print(rsb_data_qtly %>% filter(pi_id == "A5005264477") %>% select(time, strong), n = 30)
+# # print rows in rsb_data_qtly where pi_id is A5005264477, show column time and strong
+# print(rsb_data_qtly %>% filter(pi_id == "A5005264477") %>% select(time, strong), n = 30)
 
-# get size of rsb_data_qtly
-dim(rsb_data_qtly)
+# # get size of rsb_data_qtly
+# dim(rsb_data_qtly)
