@@ -805,7 +805,6 @@ def _get_yearly_citations(data):
 
     return data
 
-
 def _get_pdb_activity(data, pdb_submissions):
     """
     Calculate PDB activity metrics based on the given data and PDB submissions,
