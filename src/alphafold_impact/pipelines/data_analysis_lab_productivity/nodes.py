@@ -800,7 +800,7 @@ def _get_yearly_citations(data):
     return data
 
 
-def _get_pdb_activity(data, pdb_submissions):
+def _get_pdb_activity_old(data, pdb_submissions):
     """
     Calculate PDB activity metrics based on the given data and PDB submissions.
 
@@ -841,6 +841,55 @@ def _get_pdb_activity(data, pdb_submissions):
 
     return data
 
+def _get_pdb_activity(data, pdb_submissions):
+    """
+    Calculate PDB activity metrics based on the given data and PDB submissions,
+    adjusting the pdb_share to be the share of pdb submissions over the share of
+    publications by each pi_id at each time.
+
+    Args:
+        data (pandas.DataFrame): The input data containing information about PIs,
+          time, and publications count.
+        pdb_submissions (pandas.DataFrame): The PDB submissions data containing
+          information about PDB IDs, resolution, and R_free.
+
+    Returns:
+        pandas.DataFrame: The updated data with additional PDB activity metrics.
+    """
+    # Convert resolution and R_free columns to numeric, coercing errors
+    pdb_submissions["resolution"] = pd.to_numeric(pdb_submissions["resolution"], errors="coerce")
+    pdb_submissions["R_free"] = pd.to_numeric(pdb_submissions["R_free"], errors="coerce")
+
+    # Merge pdb_submissions with data on 'id'
+    submissions = pdb_submissions[["id", "resolution", "R_free"]].merge(data, on="id", how="inner")
+
+    # Group by pi_id and time, then calculate metrics
+    submissions_grouped = (
+        submissions.groupby(["pi_id", "time"])
+        .agg(
+            pdb_count=pd.NamedAgg(column="id", aggfunc="count"),
+            resolution=pd.NamedAgg(column="resolution", aggfunc="mean"),
+            R_free=pd.NamedAgg(column="R_free", aggfunc="mean"),
+        )
+        .reset_index()
+    )
+
+    # compute publications_count
+    publications_count = data.groupby(["pi_id", "time"]).size().reset_index(name="publications_count")
+
+    # create publications_count column in submissions_grouped
+    submissions_grouped = submissions_grouped.merge(publications_count, on=["pi_id", "time"], how="left")
+
+    # Merge the grouped submissions back with the original data to include publication counts
+    data_merged = data.merge(submissions_grouped, on=["pi_id", "time"], how="left")
+
+    # Calculate pdb_share as the share of pdb submissions over the share of publications
+    data_merged["pdb_share"] = data_merged["pdb_count"] / data_merged["publications_count"]
+
+    # Drop the intermediate 'pdb_count' column if no longer needed
+    data_merged.drop(columns=["pdb_count"], inplace=True)
+
+    return data_merged
 
 def _get_patent_citations(data, patents_data):
     """
