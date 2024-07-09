@@ -506,6 +506,7 @@ def get_sb_lab_staggered_outputs(
         "ext_" + col if col != "authorships" else col for col in author_counts.columns
     ]
 
+    outputs = []
     agg_outputs = []
     collapsed_outputs = []
     for i, loader in enumerate(data_loaders.values()):
@@ -554,6 +555,9 @@ def get_sb_lab_staggered_outputs(
                 any(element == "C18051474" or element == "C47701112" for element in x)
             )
         )
+
+        logger.info("Check if paper includes AI concept")
+        data_processed["ai_concept"] = data_processed["concepts"].apply(_get_ai_use)
 
         logger.info("Map papers with experimental links")
         data_processed["experimental"] = data_processed["concepts"].apply(
@@ -608,14 +612,16 @@ def get_sb_lab_staggered_outputs(
         # drop institution_author
         data_processed = data_processed.drop(columns=["institution_author"])
 
+        outputs.append(data_processed)
         quarterly, collapsed = _get_quarterly_aggregate_outputs(data_processed)
         agg_outputs.append(quarterly)
         collapsed_outputs.append(collapsed)
 
+    data = pd.concat(outputs)
     agg_data = pd.concat(agg_outputs)
     collapsed_data = pd.concat(collapsed_outputs)
 
-    return agg_data, collapsed_data
+    return data, agg_data, collapsed_data
 
 
 def _preprocess_for_staggered_design(
@@ -800,47 +806,6 @@ def _get_yearly_citations(data):
     return data
 
 
-def _get_pdb_activity_old(data, pdb_submissions):
-    """
-    Calculate PDB activity metrics based on the given data and PDB submissions.
-
-    Args:
-        data (pandas.DataFrame): The input data containing information about PIs
-          and time.
-        pdb_submissions (pandas.DataFrame): The PDB submissions data containing
-          information about PDB IDs, resolution, and R_free.
-
-    Returns:
-        pandas.DataFrame: The updated data with additional PDB activity metrics.
-
-    """
-    pdb_submissions["resolution"] = pd.to_numeric(
-        pdb_submissions["resolution"], errors="coerce"
-    )
-    pdb_submissions["R_free"] = pd.to_numeric(
-        pdb_submissions["R_free"], errors="coerce"
-    )
-
-    submissions = pdb_submissions[["id", "resolution", "R_free"]].merge(
-        data, on="id", how="inner"
-    )
-
-    total_count = submissions["id"].count()
-    submissions_grouped = (
-        submissions.groupby(["pi_id", "time"])
-        .agg(
-            pdb_share=pd.NamedAgg(column="id", aggfunc=lambda x: len(x) / total_count),
-            resolution=pd.NamedAgg(column="resolution", aggfunc="mean"),
-            R_free=pd.NamedAgg(column="R_free", aggfunc="mean"),
-        )
-        .reset_index()
-    )
-
-    # merge with data
-    data = data.merge(submissions_grouped, on=["pi_id", "time"], how="left")
-
-    return data
-
 def _get_pdb_activity(data, pdb_submissions):
     """
     Calculate PDB activity metrics based on the given data and PDB submissions,
@@ -885,6 +850,9 @@ def _get_pdb_activity(data, pdb_submissions):
 
     # Calculate pdb_share as the share of pdb submissions over the share of publications
     data_merged["pdb_share"] = data_merged["pdb_count"] / data_merged["publications_count"]
+
+    # fillna pdb_share nan with 0
+    data_merged["pdb_share"] = data_merged["pdb_share"].fillna(0)
 
     # Drop the intermediate 'pdb_count' column if no longer needed
     data_merged.drop(columns=["pdb_count"], inplace=True)
@@ -982,6 +950,9 @@ def _get_cc(data, clinical_citations):
 
     return data
 
+def _get_ai_use(concepts_list):
+    # create a boolean if AI concept
+    return any("C154945302" in sublist[0] for sublist in concepts_list)
 
 def _get_awards(data, grants_data):
     """
@@ -1173,6 +1144,7 @@ def _get_quarterly_aggregate_outputs(data):
         "resolution": "mean",
         "R_free": "mean",
         "strong": "first",
+        "ai_concept": lambda x: x.sum(),
         "protein_concept": lambda x: x.sum(),
         "experimental": lambda x: x.sum(),
         "covid_share_2020": "first",

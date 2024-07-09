@@ -143,7 +143,7 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                     "institutional_data": "sb_lab.data_collection.institution_info.primary",
                 },
                 outputs=[
-                    # "sb_lab.data_analysis.staggered.outputs.primary",
+                    "sb_lab.data_analysis.staggered.outputs.primary",
                     "sb_lab.data_analysis.staggered.outputs.quarterly.primary",
                     "sb_lab.data_analysis.staggered.outputs.collapsed.primary",
                 ],
