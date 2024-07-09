@@ -235,7 +235,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                     "pdb_submissions": "pdb.entries.intermediate",
                 },
                 outputs="analysis.descriptive.data.af",
-                tags=["publications_data"],
+                tags=["af_publications_data"],
             ),
             node(
                 create_publications_data,
@@ -248,7 +248,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                     "pdb_submissions": "pdb.entries.intermediate",
                 },
                 outputs="analysis.descriptive.data.ct",
-                tags=["publications_data"],
+                tags=["ct_publications_data"],
             ),
             node(
                 create_publications_data,
@@ -261,7 +261,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                     "pdb_submissions": "pdb.entries.intermediate",
                 },
                 outputs="analysis.descriptive.data.other",
-                tags=["publications_data"],
+                tags=["other_publications_data"],
             ),
             node(
                 merge_individual_data,
@@ -271,7 +271,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                     "data_other": "analysis.descriptive.data.other",
                 },
                 outputs="analysis.descriptive.data.outputs",
-                tags=["publications_data"],
+                tags=["merge_publications_data"],
             ),
         ],
         tags=["create_individual_data"],

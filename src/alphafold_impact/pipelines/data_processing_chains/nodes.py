@@ -13,7 +13,7 @@ pd.options.mode.copy_on_write = True
 
 Entrez.email = "david.ampudia@nesta.org.uk"
 logger = logging.getLogger(__name__)
-NUM_LEVELS = 2
+NUM_LEVELS = 3
 
 
 def _sort_and_drop(

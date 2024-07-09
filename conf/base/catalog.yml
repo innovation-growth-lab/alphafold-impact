@@ -940,6 +940,18 @@ reporting.cc_sb_labs:
   <<: *_image
   filepath: s3://alphafold-impact/data/07_reporting/tcc/cc_sb_labs.png
 
+analysis.descriptive.data.af:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/04_output/analysis/descriptive/data_af.parquet
+
+analysis.descriptive.data.ct:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/04_output/analysis/descriptive/data_ct.parquet
+
+analysis.descriptive.data.other:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/04_output/analysis/descriptive/data_other.parquet
+
 analysis.descriptive.data.outputs:
   <<: *_pq
   filepath: s3://alphafold-impact/data/04_output/analysis/descriptive/data_outputs.parquet

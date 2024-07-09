@@ -496,7 +496,10 @@ def create_publications_data(
 ):
     if "level" in data.columns:
         data = data[data["level"] != 3]
-    data = _sort_drop(data)
+    try:
+        data = _sort_drop(data)
+    except:
+        data.drop_duplicates(subset="id", inplace=True)
 
     mesh_terms["term_group"] = mesh_terms["tree_number"].apply(
         lambda x: str(x)[:1] if x is not None else None
@@ -525,6 +528,9 @@ def create_publications_data(
     # add pdb activity metrics
     data = _get_pdb_activity(data, pdb_submissions)
 
+    # drop mesh_terms column
+    data.drop(columns="mesh_terms", inplace=True)
+
     return data
 
 def merge_individual_data(
@@ -540,6 +546,14 @@ def merge_individual_data(
 
     # concatenate, ignore index
     data = pd.concat([data_af, data_ct, data_other], ignore_index=True)
+
+    # drop column '0' if it exists
+    if "0" in data.columns:
+        data.drop(columns="0", inplace=True)
+
+    # change column level to str, drop -1
+    data["level"] = data["level"].astype(str)
+    data = data[data["level"] != "-1"]
 
     return data
 
