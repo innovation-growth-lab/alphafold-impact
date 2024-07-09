@@ -15,6 +15,7 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
             node(
                 process_baseline_data,
                 inputs={
+                    "alphafold_data": "oa.data_processing.depth.all.primary",
                     "intent_data": "oa.data_processing.depth.level.0.baseline.primary",
                     "baseline_data": "oa.data_collection.subfield.structural_biology.depth.0.intermediate",
                     "seed_baseline_data": "oa.data_processing.subfield.structural_biology.primary",

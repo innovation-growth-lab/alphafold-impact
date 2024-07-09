@@ -149,46 +149,46 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                 outputs="analysis.descriptive.applied_data",
                 tags=["descriptive_merge", "applied_strength_descriptive"],
             ),
-            node(
-                get_cc_papers,
-                inputs={
-                    "data": "analysis.descriptive.applied_data",
-                    "icite_data": "pubmed.data_processing.icite.intermediate",
-                },
-                outputs="analysis.descriptive.applied_data_with_cc",
-                tags=["cc_counts"],
-            ),
-            node(
-                get_cc_moderators,
-                inputs={
-                    "cc_data": "analysis.descriptive.applied_data_with_cc",
-                    "sc_data_af": "chains.complete_strong_links.id.primary",
-                    "sc_data_ct": "chains.complete_strong_links.id.ct.primary",
-                    "pdb_data": "pdb.entries.intermediate",
-                },
-                outputs="analysis.descriptive.applied_data_with_moderators_cc",
-                tags=["cc_moderators", "moderators"],
-            ),
-            node(
-                get_patent_papers,
-                inputs={
-                    "data": "analysis.descriptive.applied_data",
-                    "patent_data": "lens.data_processing.primary",
-                },
-                outputs="analysis.descriptive.applied_data_with_patents",
-                tags=["patent_counts", "applied_strength_descriptive"],
-            ),
-            node(
-                get_patent_moderators,
-                inputs={
-                    "pc_data": "analysis.descriptive.applied_data_with_patents",
-                    "sc_data_af": "chains.complete_strong_links.id.primary",
-                    "sc_data_ct": "chains.complete_strong_links.id.ct.primary",
-                    "pdb_data": "pdb.entries.intermediate",
-                },
-                outputs="analysis.descriptive.applied_data_with_moderators_pc",
-                tags=["pc_moderators", "moderators"],
-            ),
+            # node(
+            #     get_cc_papers,
+            #     inputs={
+            #         "data": "analysis.descriptive.applied_data",
+            #         "icite_data": "pubmed.data_processing.icite.intermediate",
+            #     },
+            #     outputs="analysis.descriptive.applied_data_with_cc",
+            #     tags=["cc_counts"],
+            # ),
+            # node(
+            #     get_cc_moderators,
+            #     inputs={
+            #         "cc_data": "analysis.descriptive.applied_data_with_cc",
+            #         "sc_data_af": "chains.complete_strong_links.id.primary",
+            #         "sc_data_ct": "chains.complete_strong_links.id.ct.primary",
+            #         "pdb_data": "pdb.entries.intermediate",
+            #     },
+            #     outputs="analysis.descriptive.applied_data_with_moderators_cc",
+            #     tags=["cc_moderators", "moderators"],
+            # ),
+            # node(
+            #     get_patent_papers,
+            #     inputs={
+            #         "data": "analysis.descriptive.applied_data",
+            #         "patent_data": "lens.data_processing.primary",
+            #     },
+            #     outputs="analysis.descriptive.applied_data_with_patents",
+            #     tags=["patent_counts", "applied_strength_descriptive"],
+            # ),
+            # node(
+            #     get_patent_moderators,
+            #     inputs={
+            #         "pc_data": "analysis.descriptive.applied_data_with_patents",
+            #         "sc_data_af": "chains.complete_strong_links.id.primary",
+            #         "sc_data_ct": "chains.complete_strong_links.id.ct.primary",
+            #         "pdb_data": "pdb.entries.intermediate",
+            #     },
+            #     outputs="analysis.descriptive.applied_data_with_moderators_pc",
+            #     tags=["pc_moderators", "moderators"],
+            # ),
         ],
         tags=["analysis_descriptive_translational_applied"],
     )

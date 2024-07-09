@@ -39,6 +39,7 @@ def _assign_label(row):
 
 
 def process_baseline_data(
+    alphafold_data: pd.DataFrame,
     intent_data: pd.DataFrame,
     baseline_data: pd.DataFrame,
     seed_baseline_data: pd.DataFrame,
@@ -181,10 +182,10 @@ def process_baseline_data(
         lambda x: any("C154945302" in sublist[0] for sublist in x)
     )
 
-    # select only if parent_publication_date >= 2020
+    # select only if parent_publication_date >= 2018-01-01 and <= 2022-06-15
     processed_data = processed_data[
-        (processed_data["parent_publication_date"] >= "2019-01-01") &
-        (processed_data["parent_publication_date"] <= "2021-06-15")
+        (processed_data["parent_publication_date"] >= "2018-01-01") &
+        (processed_data["parent_publication_date"] <= "2022-06-15")
     ]
 
     logger.info("Creating aggregated baseline data")
@@ -226,6 +227,11 @@ def process_baseline_data(
                 "W2944959599",
             ]
         )
+    ]
+
+    # remove candidates if parent_id is in "id" in alphafold_data
+    baseline_candidates = baseline_candidates[
+        ~baseline_candidates["parent_id"].isin(alphafold_data["id"])
     ]
 
     return baseline_candidates
@@ -323,7 +329,7 @@ def assign_focal_label(
     baseline_candidates["distance"] = np.mean(distances, axis=1)
 
     # drop any row with a distance larger than the quantile of the distances
-    threshold = baseline_candidates["distance"].quantile(0.25)
+    threshold = baseline_candidates["distance"].quantile(0.35)
     baseline_candidates_thresholded = baseline_candidates[
         baseline_candidates["distance"] < threshold
     ]

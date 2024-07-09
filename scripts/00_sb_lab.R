@@ -155,6 +155,15 @@ sb_data_qtly <- sb_data_qtly %>%
 # Scale 'pdb_share' between 0 and 1
 sb_data_qtly$pdb_share <- rescale(sb_data_qtly$pdb_share, to = c(0, 1))
 
+###### checks
+# calculate the average pdb_share for each pi_id
+avg_pdb_share <- sb_data_qtly %>%
+  group_by(pi_id) %>%
+  summarise(avg_pdb_share = mean(pdb_share, na.rm = TRUE))
+
+# calculate the 75th percentile of the averages
+percentile_75_pdb <- quantile(avg_pdb_share$avg_pdb_share, 0.75, na.rm = TRUE)
+
 ################################################################################
 ################################################################################
 ################################# SUBSET #######################################
