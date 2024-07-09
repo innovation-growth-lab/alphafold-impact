@@ -20,7 +20,8 @@ from ..data_analysis_lab_productivity.nodes import (  # pylint: disable=E0402
     _get_yearly_citations,
     _calculate_mesh_balance,
     _calculate_topic_share,
-    _collect_covid_references
+    _collect_covid_references,
+    _get_ai_use
 )
 
 from Bio import Entrez
@@ -89,7 +90,7 @@ def get_applied_lab_outputs(
         logger.info("Loading data batch %d / %d", i + 1, len(data_loaders))
         data_batch = loader()
 
-        data_batch = data_batch[["pmid", "id", "publication_date", "cited_by_count", "pi_id"]]
+        data_batch = data_batch[["pmid", "id", "doi", "publication_date", "cited_by_count", "pi_id"]]
 
         # # drop superfluous vars
         # data_batch = data_batch.drop(
@@ -466,6 +467,7 @@ def get_applied_lab_staggered_outputs(
             right_on="author",
             how="left",
         )
+        
 
         data_batch["publication_date"] = pd.to_datetime(data_batch["publication_date"])
 
@@ -485,6 +487,9 @@ def get_applied_lab_staggered_outputs(
                 any(element == "C18051474" or element == "C47701112" for element in x)
             )
         )
+
+        logger.info("Check if paper includes AI concept")
+        data_processed["ai_concept"] = data_processed["concepts"].apply(_get_ai_use)
 
         logger.info("Map papers with experimental links")
         data_processed["experimental"] = data_processed["concepts"].apply(
