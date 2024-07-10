@@ -352,7 +352,7 @@ def combine_levels_data(unique: str = "all", **kwargs) -> pd.DataFrame:
                 col
                 for col in df.columns
                 if col
-                not in ["strength", "mesh_terms", "authorships", "topics", "concepts"]
+                not in ["strength", "mesh_terms", "authorships", "topics", "concepts", "grants"]
             ]
         )
 
