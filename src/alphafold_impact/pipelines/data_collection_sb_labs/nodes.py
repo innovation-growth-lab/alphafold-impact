@@ -78,12 +78,16 @@ def separate_ct_from_seed(
     """Separate the CT data from the seed data."""
     # create ct_level_0_ai_papers
     ct_level_0_ai_papers = baseline_data[
-        baseline_data["parent_id"].isin(ct_data[ct_data["label"].str.contains("ai")]["parent_id"])
+        baseline_data["parent_id"].isin(
+            ct_data[ct_data["label"].str.contains("ai")]["parent_id"]
+        )
     ]
 
     # create ct_level_0_noai_papers
     ct_level_0_noai_papers = baseline_data[
-        baseline_data["parent_id"].isin(ct_data[~ct_data["label"].str.contains("ai")]["parent_id"])
+        baseline_data["parent_id"].isin(
+            ct_data[~ct_data["label"].str.contains("ai")]["parent_id"]
+        )
     ]
 
     # subset the seed data for rows that do not have the id in ct_data (as parent_id)
@@ -116,7 +120,9 @@ def get_candidate_authors(
     alphafold_authors = _get_sb_candidate_authors(alphafold_data)
 
     # separate the CT data from the seed data
-    ct_long_ai_data, ct_long_noai_data, other_data = separate_ct_from_seed(baseline_data, seed_data, ct_data)
+    ct_long_ai_data, ct_long_noai_data, other_data = separate_ct_from_seed(
+        baseline_data, seed_data, ct_data
+    )
 
     # get the last authors from the CT data
     ct_ai_authors = _get_sb_candidate_authors(ct_long_ai_data)
@@ -131,7 +137,14 @@ def get_candidate_authors(
     # create a unique list of authors
     authors = list(set(alphafold_authors + ct_authors + other_authors))
 
-    return authors, alphafold_authors, ct_ai_authors, ct_noai_authors, ct_authors, other_authors
+    return (
+        authors,
+        alphafold_authors,
+        ct_ai_authors,
+        ct_noai_authors,
+        ct_authors,
+        other_authors,
+    )
 
 
 def create_candidates_map(
@@ -178,20 +191,6 @@ def create_candidates_map(
         "seed"
     ].transform(lambda x: ",".join(x.unique()))
     candidate_data = candidate_data.drop_duplicates(subset=["author", "institution"])
-
-    # ad-hoc fixes
-    # if "seed" is alphafold,other let's go back to alphafold
-    candidate_data["seed"] = candidate_data["seed"].apply(
-        lambda x: "alphafold" if x == "alphafold,other" else x
-    )
-
-    # if "seed" is alphafold,ct,other let's go to alphafold,ct
-    candidate_data["seed"] = candidate_data["seed"].apply(
-        lambda x: "alphafold,ct_ai" if x == "alphafold,ct_ai,other" else x
-    )
-    candidate_data["seed"] = candidate_data["seed"].apply(
-        lambda x: "alphafold,ct_noai" if x == "alphafold,ct_noai,other" else x
-    )
 
     # if seed contains alphafold, go to alphafold
     candidate_data["seed"] = candidate_data["seed"].apply(
@@ -470,7 +469,9 @@ def get_institution_info(
     data = pd.DataFrame(institution_data_list)
 
     # merge back on author_ids
-    data = author_ids[["author", "institution"]].merge(data, on="institution", how="left")
+    data = author_ids[["author", "institution"]].merge(
+        data, on="institution", how="left"
+    )
 
     return data
 
@@ -510,7 +511,7 @@ def _fetch_institution_data(institution):
                 "i10_index": institution_data.get("summary_stats", {}).get("i10_index"),
             }
             break
-        except: # pylint: disable=bare-except
+        except:  # pylint: disable=bare-except
             logger.info("Trying again for institution %s", institution)
             continue
     return institution_data

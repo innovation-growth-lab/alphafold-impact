@@ -134,7 +134,7 @@ def fetch_author_publications(
     filter_batches = [[from_publication_date, batch] for batch in author_batches]
 
     # slice to create parallel jobs that produce slices
-    slices = [filter_batches[i : i + 100] for i in range(0, len(filter_batches), 100)]
+    slices = [filter_batches[i : i + 25] for i in range(0, len(filter_batches), 25)]
 
     logger.info("Fetching papers for %d author batches", len(slices))
 
