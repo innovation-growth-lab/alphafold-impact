@@ -78,7 +78,7 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                     "candidate_data": "other_lab.data_collection.candidates.scores.primary",
                 },
                 outputs="other_lab.data_collection.assignment.primary",
-                tags=["process_other_candidates", "assign_lab_label"],
+                tags=["process_other_candidates", "assign_lab_label", "applied_end"],
             ),
             node(
                 func=get_publications_from_labs,
@@ -88,7 +88,7 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                     "api_config": "params:labs.data_collection.api",
                 },
                 outputs="other_lab.data_collection.publications.raw",
-                tags=["get_publications_from_applied_labs"],
+                tags=["process_other_candidates", "get_publications_from_applied_labs", "applied_end"],
             ),
         ],
         tags="candidate_authors.other_labs",
@@ -107,7 +107,7 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                 outputs="other_lab.data_collection.candidates.map",
             ),
         ],
-        tags="other_candidate_authors.get_map",
+        tags=["process_other_candidates", "other_candidate_authors.get_map"],
     )
 
     collect_institution_info = pipeline(

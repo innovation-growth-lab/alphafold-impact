@@ -450,7 +450,7 @@ def get_sb_lab_staggered_outputs(
     strength_es: pd.DataFrame,
     patents_data: pd.DataFrame,
     clinical_citations: pd.DataFrame,
-    grants_data: pd.DataFrame,
+    # grants_data: pd.DataFrame,
     mesh_terms: pd.DataFrame,
     institutional_data: pd.DataFrame,
 ):
@@ -588,8 +588,8 @@ def get_sb_lab_staggered_outputs(
         logger.info("Merging data with clinical citations data")
         data_processed = _get_cc(data_processed, clinical_citations)
 
-        logger.info("Merging data with grants data")
-        data_processed = _get_awards(data_processed, grants_data)
+        # logger.info("Merging data with grants data")
+        # data_processed = _get_awards(data_processed, grants_data)
 
         # add extensive margin
         data_processed = data_processed.merge(
@@ -1052,7 +1052,6 @@ def _calculate_mesh_balance(data, mesh_terms_dict):
     df["mesh_terms"] = df["mesh_terms"].apply(
         lambda x: [mesh_terms_dict.get(y, "") for y in x] if x is not None else []
     )
-    # iterate over mesh_terms column values, extracting the first character of each element in the nested list
 
     # explode the mesh_terms column into multiple rows
     df = df.explode("mesh_terms")
@@ -1157,10 +1156,10 @@ def _get_quarterly_aggregate_outputs(data):
             filter(lambda i: i != "nan" and i != "None", map(str, x))
         ),
         "ca_publication_date": "first",
-        "grant_count": "sum",
-        "grant_agency": lambda x: ";;".join(
-            filter(lambda i: i != "nan" and i != "None", map(str, x))
-        ),
+        # "grant_count": "sum",
+        # "grant_agency": lambda x: ";;".join(
+        #     filter(lambda i: i != "nan" and i != "None", map(str, x))
+        # ),
     }
 
     # Assume `data` is your original data
@@ -1177,7 +1176,7 @@ def _get_quarterly_aggregate_outputs(data):
     data_grouped = data.groupby(["pi_id", "time"]).agg(agg_funcs).reset_index()
 
     # remove ";;None" in CPCs, ca_publication_type, grant_agency
-    for col in ["CPCs", "ca_publication_type", "grant_agency"]:
+    for col in ["CPCs", "ca_publication_type"]:#, "grant_agency"]:
         data_grouped[col] = data_grouped[col].str.replace(";;None", "")
         data_grouped[col] = data_grouped[col].str.replace("None;;", "")
 
@@ -1188,7 +1187,7 @@ def _get_quarterly_aggregate_outputs(data):
     data_collapsed = data.groupby(["pi_id", "before_af"]).agg(agg_funcs).reset_index()
 
     # remove ";;None" in CPCs, ca_publication_type, grant_agency
-    for col in ["CPCs", "ca_publication_type", "grant_agency"]:
+    for col in ["CPCs", "ca_publication_type"]:#, "grant_agency"]:
         data_collapsed[col] = data_collapsed[col].str.replace(";;None", "")
         data_collapsed[col] = data_collapsed[col].str.replace("None;;", "")
 

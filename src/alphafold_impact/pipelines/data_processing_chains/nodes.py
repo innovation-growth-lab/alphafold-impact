@@ -13,7 +13,7 @@ pd.options.mode.copy_on_write = True
 
 Entrez.email = "david.ampudia@nesta.org.uk"
 logger = logging.getLogger(__name__)
-NUM_LEVELS = 3
+NUM_LEVELS = 3 # (2 for Other (NaN → Other,1,2), 3 for AF and CT (seed → 0,1,2))
 
 
 def _sort_and_drop(

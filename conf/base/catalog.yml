@@ -698,9 +698,9 @@ analysis.descriptive.level0_data_with_patents_cpc:
   <<: *_pq
   filepath: s3://alphafold-impact/data/04_output/analysis/descriptive/level0_data_with_patents_cpc.parquet
 
-# sb_lab.data_analysis.outputs.input:
-#   <<: *_pq
-#   filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/outputs.parquet
+sb_lab.data_analysis.outputs.input:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/outputs.parquet
 
 sb_lab.data_analysis.monthly_outputs:
   <<: *_pq
@@ -710,9 +710,9 @@ sb_lab.data_analysis.yearly_outputs:
   <<: *_pq
   filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/yearly_outputs.parquet
 
-# sb_lab.data_analysis.outputs.primary:
-#   <<: *_pq
-#   filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/outputs_primary.parquet
+sb_lab.data_analysis.outputs.primary:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/outputs_primary.parquet
 
 
 sb_lab.data_analysis.staggered.outputs.primary:
@@ -786,9 +786,9 @@ sb_lab.data_analysis.outputs.citations.event_study_pc:
 
 
 
-# applied_lab.data_analysis.outputs.input:
-#   <<: *_pq
-#   filepath: s3://alphafold-impact/data/04_output/analysis/applied_labs/outputs.parquet
+applied_lab.data_analysis.outputs.input:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/04_output/analysis/applied_labs/outputs.parquet
 
 applied_lab.data_analysis.monthly_outputs:
   <<: *_pq
@@ -798,9 +798,9 @@ applied_lab.data_analysis.yearly_outputs:
   <<: *_pq
   filepath: s3://alphafold-impact/data/04_output/analysis/applied_labs/yearly_outputs.parquet
 
-# applied_lab.data_analysis.outputs.primary:
-#   <<: *_pq
-#   filepath: s3://alphafold-impact/data/04_output/analysis/applied_labs/outputs_primary.parquet
+applied_lab.data_analysis.outputs.primary:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/04_output/analysis/applied_labs/outputs_primary.parquet
 
 applied_lab.data_analysis.outputs.counts.event_study:
   <<: *_pq

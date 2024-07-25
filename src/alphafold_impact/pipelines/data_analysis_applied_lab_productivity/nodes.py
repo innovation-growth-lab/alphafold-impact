@@ -90,23 +90,32 @@ def get_applied_lab_outputs(
         logger.info("Loading data batch %d / %d", i + 1, len(data_loaders))
         data_batch = loader()
 
-        data_batch = data_batch[["pmid", "id", "doi", "publication_date", "cited_by_count", "pi_id"]]
+        # [HACK] select some 20% of the pi_id unique values, and drop all rows containing them
+        pi_ids = data_batch["pi_id"].unique()
+        pi_ids = pi_ids[::5]
+        data_batch = data_batch[~data_batch["pi_id"].isin(pi_ids)]
 
-        # # drop superfluous vars
-        # data_batch = data_batch.drop(
-        #     columns=["authorships", "counts_by_year", "ids", "grants"]
-        # )
+        # data_batch = data_batch[["pmid", "id", "doi", "publication_date", "cited_by_count", "pi_id"]]
 
-        # # transform mesh, concepts, topics to be a list of the ids (ie first item in sublists)
-        # data_batch["mesh_terms"] = data_batch["mesh_terms"].apply(
-        #     lambda x: [y[0] for y in x] if x is not None else []
-        # )
-        # data_batch["concepts"] = data_batch["concepts"].apply(
-        #     lambda x: [y[0] for y in x] if x is not None else []
-        # )
-        # data_batch["topics"] = data_batch["topics"].apply(
-        #     lambda x: [y[0] for y in x] if x is not None else []
-        # )
+        # drop superfluous vars
+        data_batch = data_batch.drop(
+            columns=["authorships", "counts_by_year", "ids"]
+        )
+
+        # if grants in data also drop
+        if "grants" in data_batch.columns:
+            data_batch = data_batch.drop(columns=["grants"])
+
+        # transform mesh, concepts, topics to be a list of the ids (ie first item in sublists)
+        data_batch["mesh_terms"] = data_batch["mesh_terms"].apply(
+            lambda x: [y[0] for y in x] if x is not None else []
+        )
+        data_batch["concepts"] = data_batch["concepts"].apply(
+            lambda x: [y[0] for y in x] if x is not None else []
+        )
+        data_batch["topics"] = data_batch["topics"].apply(
+            lambda x: [y[0] for y in x] if x is not None else []
+        )
 
         outputs.append(data_batch)
 
@@ -398,7 +407,7 @@ def get_applied_lab_staggered_outputs(
     strength_es: pd.DataFrame,
     patents_data: pd.DataFrame,
     clinical_citations: pd.DataFrame,
-    grants_data: pd.DataFrame,
+    # grants_data: pd.DataFrame,
     mesh_terms: pd.DataFrame,
     institutional_data: pd.DataFrame,
 ):
@@ -520,8 +529,8 @@ def get_applied_lab_staggered_outputs(
         logger.info("Merging data with clinical citations data")
         data_processed = _get_cc(data_processed, clinical_citations)
 
-        logger.info("Merging data with grants data")
-        data_processed = _get_awards(data_processed, grants_data)
+        # logger.info("Merging data with grants data")
+        # data_processed = _get_awards(data_processed, grants_data)
 
         # drop columns
         data_processed.drop(

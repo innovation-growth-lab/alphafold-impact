@@ -82,7 +82,7 @@ sb_data_qtly <- sb_data_qtly %>%
     ct1 = 0,
     ca_count = 0,
     patent_count = 0,
-    grant_count = 0,
+    # grant_count = 0,
     pdb_share = 0,
     resolution = 0,
     R_free = 0,
@@ -135,7 +135,7 @@ sb_data_qtly <- sb_data_qtly %>%
     num_publications = log1p(num_publications),
     ca_count = log1p(ca_count),
     patent_count = log1p(patent_count),
-    grant_count = log1p(grant_count)
+    # grant_count = log1p(grant_count)
   )
 
 # create category columns for whether seed is in af, ct, or other
@@ -147,7 +147,7 @@ sb_data_qtly <- sb_data_qtly %>%
   mutate(
     num_publications_std = scale(num_publications, center = TRUE, scale = TRUE),
     patent_count_std = scale(patent_count, center = TRUE, scale = TRUE),
-    grant_count_std = scale(grant_count, center = TRUE, scale = TRUE),
+    # grant_count_std = scale(grant_count, center = TRUE, scale = TRUE),
     ca_count_std = scale(ca_count, center = TRUE, scale = TRUE),
     cited_by_count_std = scale(cited_by_count, center = TRUE, scale = TRUE)
   ) %>%
@@ -354,8 +354,8 @@ fes[["fe2"]] <- c(fes$fe1, "time_qtly", "country")
 
 # List of dependent variables
 dep_vars <- c(
-  "num_publications", "tcc", "ct0", "ct1", "cited_by_count_std"
-  # "ca_count", "patent_count", "patent_citation"
+  "num_publications", "tcc", "ct0", "ct1", "cited_by_count_std",
+  "ca_count", "patent_count", "patent_citation"
 )
 
 # List of covariate sets
@@ -426,7 +426,7 @@ for (sub in names(sub_samples)) {
 }
 
 variable_interest <- c(
-  "treatment_af_dyn", "strong", "pdb_share",
+  "treatment_af_dyn", "strong", 
   "treatment_af_dyn:strong", "treatment_af_dyn:pdb_share",
   "treatment_af_dyn:strong:pdb_share"
 )
@@ -522,18 +522,18 @@ etable(results[c(
   "af_ct_w_high_pdb_cited_by_count_std_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share" # nolint
 )], keep = variable_extended_interest, file = paste0(tables, "01_applied/08_cited_by_count_std_productivity.tex")) # nolint
 
-### Grants
-etable(results[c(
-  "all_grant_count_std_base3_fe2_treatment_af_dyn",
-  "all_grant_count_std_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
-  "af_ct_grant_count_std_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
-  "af_ct_ai_grant_count_std_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
-  "af_ct_noai_grant_count_std_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
-  "af_ct_w_high_pdb_grant_count_std_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share" # nolint
-)], keep = variable_interest, file = paste0(tables, "01_applied/09_grant_count_std_productivity.tex")) # nolint
+# ### Grants
+# etable(results[c(
+#   "all_grant_count_std_base3_fe2_treatment_af_dyn",
+#   "all_grant_count_std_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
+#   "af_ct_grant_count_std_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
+#   "af_ct_ai_grant_count_std_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
+#   "af_ct_noai_grant_count_std_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share", # nolint
+#   "af_ct_w_high_pdb_grant_count_std_base3_fe2_treatment_af_dyn_+_treatment_af_dyn:strong:pdb_share_+_treatment_af_dyn:strong_+_treatment_af_dyn:pdb_share" # nolint
+# )], keep = variable_interest, file = paste0(tables, "01_applied/09_grant_count_std_productivity.tex")) # nolint
 
 
-# ###
+# # ###
 basic_str <- as.formula(
   paste0(
     "ca_count ~ treatment_af_dyn + treatment_af_dyn:strong:pdb_share + treatment_af_dyn:strong + treatment_af_dyn:pdb_share +",

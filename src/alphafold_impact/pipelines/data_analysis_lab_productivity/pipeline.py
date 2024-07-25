@@ -30,7 +30,7 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                     "mapping_df": "sb_lab.data_collection.candidates.map",
                 },
                 outputs="sb_lab.data_analysis.outputs.input",
-                tags=["sb_lab_outputs", "event_study", "cc"],
+                tags=["sb_lab_outputs", "event_study", "cc", "sb_lab_outs"],
             ),
             node(
                 compute_publication_production,
@@ -48,7 +48,7 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                     "level0": "analysis.descriptive.level0_data.processed",
                 },
                 outputs="sb_lab.data_analysis.outputs.primary",
-                tags=["preprocess_for_event_study", "event_study", "cc"],
+                tags=["preprocess_for_event_study", "event_study", "cc", "sb_lab_outs"],
             ),
             node(
                 get_event_study_outputs,
@@ -95,7 +95,7 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                     "sb_lab.data_analysis.outputs.counts.event_study_predictive",
                     "sb_lab.data_analysis.outputs.citations.event_study_predictive",
                 ],
-                tags=["event_study_predictive", "event_study"],
+                tags=["event_study_predictive_sb", "event_study"],
             ),
             node(
                 get_event_study_cc,
@@ -123,7 +123,8 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                 ],
                 tags=["event_study_pc", "event_study", "pc"],
             ),
-        ]
+        ],
+        tags=["sb_lab_poductivity"],
     )
 
     staggered_pipeline = pipeline(
@@ -138,7 +139,7 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                     "strength_es": "sb_lab.data_analysis.outputs.counts.event_study_strength",
                     "patents_data": "lens.data_processing.primary",
                     "clinical_citations": "sb_lab.data_analysis.outputs.papers_with_ccs",
-                    "grants_data": "oa.data_processing.depth.grants.primary",
+                    # "grants_data": "oa.data_processing.depth.grants.primary",
                     "mesh_terms": "nih.data_collection.mesh_terms",
                     "institutional_data": "sb_lab.data_collection.institution_info.primary",
                 },

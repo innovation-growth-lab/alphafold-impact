@@ -473,9 +473,9 @@ def assign_lab_label(
     )
 
     logger.info("Make final selection")
-    quantile_75 = candidate_data["score"].quantile(0.75)
+    quantile_90 = candidate_data["score"].quantile(0.9)
     likely_pis = candidate_data.groupby(["author", "institution"]).filter(
-        is_likely_pi, quantile=quantile_75
+        is_likely_pi, quantile=quantile_90
     )
 
     return likely_pis

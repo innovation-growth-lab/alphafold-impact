@@ -198,8 +198,13 @@ def get_cc_papers(data: pd.DataFrame, icite_data: pd.DataFrame):
         pd.DataFrame: The combined data with citation counts.
 
     """
+    # preprocess data
+    data = data.drop_duplicates(subset=["id", "parent_id", "level", "dataset"])
+    data = data[["id", "doi", "pmid", "parent_id", "level", "dataset"]]
+    
     # preprocess icite data
     icite_data["pmid"] = icite_data["pmid"].astype(str)
+    icite_data = icite_data[["doi", "pmid", "cited_by_clin"]]
 
     logger.info("Merging chains with iCite data")
 

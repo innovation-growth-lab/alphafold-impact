@@ -31,7 +31,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                     "mapping_df": "other_lab.data_collection.candidates.map",
                 },
                 outputs="applied_lab.data_analysis.outputs.input",
-                tags=["applied_lab_outputs", "event_study", "applied_cc", "event_study_strength_applied", "event_study_pc"],
+                tags=["applied_lab_outputs", "applied_inputs", "event_study", "applied_cc", "event_study_strength_applied", "event_study_pc"],
             ),
             node(
                 compute_publication_production,
@@ -49,7 +49,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                     "applied_levels": "analysis.descriptive.applied_data",
                 },
                 outputs="applied_lab.data_analysis.outputs.primary",
-                tags=["preprocess_for_event_study", "event_study", "event_study_pc", "applied_cc", "event_study_strength_applied"],
+                tags=["preprocess_for_event_study", "applied_inputs", "event_study", "event_study_pc", "applied_cc", "event_study_strength_applied"],
             ),
             node(
                 get_event_study_outputs,
@@ -140,7 +140,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                     "strength_es": "applied_lab.data_analysis.outputs.counts.event_study_strength",
                     "patents_data": "lens.data_processing.primary",
                     "clinical_citations": "applied_lab.data_analysis.outputs.papers_with_ccs",
-                    "grants_data": "oa.data_processing.depth.grants.primary",
+                    # "grants_data": "oa.data_processing.depth.grants.primary",
                     "mesh_terms": "nih.data_collection.mesh_terms",
                     "institutional_data": "other_lab.data_collection.institution_info.primary"
                 },
