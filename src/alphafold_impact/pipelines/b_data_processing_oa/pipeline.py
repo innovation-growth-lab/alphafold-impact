@@ -10,11 +10,7 @@ To run this pipeline, use the following command:
 
 from kedro.pipeline import Pipeline, node, pipeline
 from alphafold_impact import settings
-from ...utils.nih_mesh_tagging import (  # pylint: disable=E0402
-    generate_text_for_mesh_tagging,
-    skr_web_python_api_generic_batch,
-    mesh_results_to_df,
-)
+
 from .nodes import (
     process_subfield_data,
     process_data_by_level,
@@ -23,7 +19,6 @@ from .nodes import (
     reassign_ct_levels,
     process_data_by_level_ptd,
     concat_pq_ptd,
-    collect_grants_info
 )
 
 
@@ -32,26 +27,26 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
 ) -> Pipeline:
 
     af_processing_pipeline = pipeline(
-            [
-                node(
-                    func=process_data_by_level,
-                    inputs={
-                        "raw_data": "oa.data_collection.triad.depth.level.raw",
-                        "level_placeholder": f"params:oa.data_collection.depth.levels.{level}",
-                        "extra_mesh_placeholder": "params:false_",
-                    },
-                    outputs={
-                        "intermediate_data": f"oa.data_processing.depth.no_mesh.{level}.intermediate",
-                    },
-                    tags=[
-                        f"oa.data_processing.depth.no_mesh.level.{str(level)}",
-                        "oa.data_processing.depth.no_mesh.levels",
-                    ],
-                    namespace=f"oa.data_processing.depth.no_mesh.level.{str(level)}",
-                )
-                for level in settings.DYNAMIC_PIPELINES_MAPPING["depth_levels"]
-            ]
-        )
+        [
+            node(
+                func=process_data_by_level,
+                inputs={
+                    "raw_data": "oa.data_collection.triad.depth.level.raw",
+                    "level_placeholder": f"params:oa.data_collection.depth.levels.{level}",
+                    "extra_mesh_placeholder": "params:false_",
+                },
+                outputs={
+                    "intermediate_data": f"oa.data_processing.depth.no_mesh.{level}.intermediate",
+                },
+                tags=[
+                    f"oa.data_processing.depth.no_mesh.level.{str(level)}",
+                    "oa.data_processing.depth.no_mesh.levels",
+                ],
+                namespace=f"oa.data_processing.depth.no_mesh.level.{str(level)}",
+            )
+            for level in settings.DYNAMIC_PIPELINES_MAPPING["depth_levels"]
+        ]
+    )
 
     combine_levels_pipeline = pipeline(
         [
@@ -73,18 +68,16 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
         [
             node(
                 func=process_subfield_data,
-                inputs={
-                    "data_placeholder.raw": f"oa.data_collection.subfield.{subfield}.raw",
-                },
-                outputs={
-                    "data_placeholder.primary": f"oa.data_processing.subfield.{subfield}.primary",
-                },
+                inputs=[
+                    "oa.data_collection.subfield.structural_biology.raw"
+                ],
+                outputs=[
+                    "oa.data_processing.subfield.structural_biology.primary"
+                ],
                 tags=[
-                    f"oa.data_processing.subfield.{subfield}",
-                    "oa.data_processing.subfields",
+                    "oa.data_processing.subfield.structural_biology",
                 ],
             )
-            for subfield in settings.DYNAMIC_PIPELINES_MAPPING["oa"]["subfields"]
         ]
     )
 
@@ -120,7 +113,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
             node(
                 func=concat_pq_ptd,
                 inputs={
-                    "data": "oa.data_collection.subfield.structural_biology.depth.1.ptd.intermediate",
+                    "data": "oa.data_collection.subfield.structural_biology.depth.1.ptd.intermediate",  # pylint: disable=line-too-long
                 },
                 outputs="oa.data_collection.subfield.structural_biology.depth.1.intermediate",
                 tags="concat_pq_ptd",
@@ -172,7 +165,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
             node(
                 func=concat_pq_ptd,
                 inputs={
-                    "data": "oa.data_collection.subfield.structural_biology.depth.2.ptd.intermediate",
+                    "data": "oa.data_collection.subfield.structural_biology.depth.2.ptd.intermediate", # pylint: disable=line-too-long
                 },
                 outputs="oa.data_collection.subfield.structural_biology.depth.2.intermediate",
                 tags=["concat_pq_ptd", "concat_and_combine_ct"],
@@ -180,39 +173,22 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
             node(
                 func=combine_levels_data_connect_parents,
                 inputs={
-                    "level1": "oa.data_processing.structural_biology.depth.reassigned.ct.intermediate",
+                    "level1": "oa.data_processing.structural_biology.depth.reassigned.ct.intermediate", # pylint: disable=line-too-long
                     "level2": "oa.data_collection.subfield.structural_biology.depth.2.intermediate",
                 },
                 outputs="oa.data_processing.structural_biology.depth.ct.intermediate",
-                tags=["combine_ct", "concat_and_combine_ct"]
+                tags=["combine_ct", "concat_and_combine_ct"],
             ),
         ],
         tags="oa.data_processing.depth.post_level2_dw",
     )
 
-    grants_pipeline = pipeline(
-        [
-            node(
-                func=collect_grants_info,
-                inputs={
-                    "sb_data": "sb_lab.data_collection.publications.raw",
-                    # "applied_data": "other_lab.data_collection.publications.raw",
-                },
-                outputs="oa.data_processing.depth.grants.primary",
-            ),
-        ],
-        tags="oa.data_processing.depth.grants",
-    )
-
     return (
-        sum(additioal_mesh_levels)
-        + sum(no_additional_mesh_levels)
-        + mesh_tagging_pipeline
+        af_processing_pipeline
         + combine_levels_pipeline
-        + sum(subfield_pipelines)
+        + structural_biology_processing_pieline
         + baseline_level0_pipeline
         + baseline_level1_pipeline
         + reassign_baseline_levels_pipeline
         + post_level2_dw_pipeline
-        + grants_pipeline
     )

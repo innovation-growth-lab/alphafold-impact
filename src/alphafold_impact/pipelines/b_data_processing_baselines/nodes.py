@@ -7,7 +7,7 @@ import logging
 import pandas as pd
 import numpy as np
 from scipy.spatial.distance import euclidean
-from ..data_processing_chains.nodes import (  # pylint: disable=relative-beyond-top-level
+from ..d_data_processing_chains.nodes import (  # pylint: disable=relative-beyond-top-level
     _sort_and_drop,
 )
 

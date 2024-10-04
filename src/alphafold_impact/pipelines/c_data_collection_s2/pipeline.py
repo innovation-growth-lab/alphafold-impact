@@ -13,7 +13,7 @@ from kedro.pipeline import Pipeline, node, pipeline
 from .nodes import (
     get_citation_intent_from_oa_dataset,
     get_baseline_citation_intent_from_oa_dataset,
-    get_baseline_seed_intent
+    get_baseline_seed_intent,
 )
 
 
@@ -87,4 +87,9 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
         tags=["s2_intent_other_sb"],
     )
 
-    return primary_data_intent_pipeline + baseline_seed_pipeline + ct_sb_data_intent_pipeline + other_sb_data_intent_pipeline
+    return (
+        primary_data_intent_pipeline
+        + baseline_seed_pipeline
+        + ct_sb_data_intent_pipeline
+        + other_sb_data_intent_pipeline
+    )

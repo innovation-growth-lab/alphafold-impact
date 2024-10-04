@@ -18,7 +18,6 @@ from typing import Dict, Generator, Tuple
 import pandas as pd
 import numpy as np
 from kedro.io import AbstractDataset
-from Bio import Entrez
 
 logger = logging.getLogger(__name__)
 
@@ -193,77 +192,7 @@ def _json_loader(
     return df
 
 
-def fetch_additional_mesh(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Fetches additional mesh terms for DOIs in a DataFrame.
-
-    Args:
-        df (pd.DataFrame): The DataFrame containing DOIs and mesh terms.
-
-    Returns:
-        pd.DataFrame: The updated DataFrame with additional mesh terms.
-
-    """
-    # Filter DataFrame for rows where mesh_terms is empty
-    df_no_mesh = df[df["mesh_terms"].isna()]
-    logger.info("Fetching additional mesh terms for %s DOIs", len(df_no_mesh))
-
-    # Create list of DOIs
-    dois = df_no_mesh["doi"] + "[DOI]"
-    # Fetch PubMed entries for each DOI
-    for i, doi in enumerate(dois):
-        logger.info(
-            "Fetching mesh terms for DOI %s. %s/%s",
-            doi,
-            i + 1,
-            len(dois),
-        )
-        Entrez.email = "david.ampudia@nesta.org.uk"
-
-        try:
-            stream = Entrez.esearch(db="pubmed", term=doi, retmax="1")
-            record = Entrez.read(stream)
-
-            # if I get a record, I want to extract the pubmed ID, which is the first ID in the list
-            pmid = record["IdList"][0] if record["IdList"] else None
-
-            # if pubmed_id is not None, I want to fetch the mesh terms
-            if pmid:
-                stream = Entrez.efetch(db="pubmed", id=pmid, retmax="250")
-                record = Entrez.read(stream)
-
-                # get the meshheadings & descriptors
-                mesh_terms = record["PubmedArticle"][0]["MedlineCitation"].get(
-                    "MeshHeadingList", None
-                )
-                if mesh_terms:
-                    descriptors = [
-                        (
-                            heading["DescriptorName"].attributes["UI"],
-                            str(heading["DescriptorName"]),
-                        )
-                        for heading in mesh_terms
-                    ]
-                else:
-                    descriptors = None
-
-                # update the dataframe with the new mesh terms for the corresponding DOI
-                df.at[
-                    df[df["doi"] == doi.replace("[DOI]", "")].index[0], "mesh_terms"
-                ] = descriptors
-
-        except Exception as e:  # pylint: disable=W0718
-            logger.error("Error fetching mesh terms for DOI %s: %s", doi, e)
-
-    logger.info(
-        "Still missing mesh terms for %s DOIs", len(df[df["mesh_terms"].isna()])
-    )
-    return df
-
-
-def process_data_by_level(
-    data: Dict[str, AbstractDataset], level: int, extra_mesh: str = True
-) -> pd.DataFrame:
+def process_data_by_level(data: Dict[str, AbstractDataset], level: int) -> pd.DataFrame:
     """
     Process data by level and return a DataFrame with selected columns.
 
@@ -286,11 +215,6 @@ def process_data_by_level(
 
     # Iterate over data batches in current level
     for df_batch in data_gen:
-
-        if extra_mesh:
-            logger.info("Processing parent IDs: %s", df_batch["parent_id"].iloc[0])
-            # Fetch additional mesh terms for current batch
-            df_batch = fetch_additional_mesh(df_batch)
 
         # Append current batch to level DataFrame
         df_level = pd.concat([df_level, df_batch])
@@ -352,7 +276,14 @@ def combine_levels_data(unique: str = "all", **kwargs) -> pd.DataFrame:
                 col
                 for col in df.columns
                 if col
-                not in ["strength", "mesh_terms", "authorships", "topics", "concepts", "grants"]
+                not in [
+                    "strength",
+                    "mesh_terms",
+                    "authorships",
+                    "topics",
+                    "concepts",
+                    "grants",
+                ]
             ]
         )
 
@@ -360,6 +291,7 @@ def combine_levels_data(unique: str = "all", **kwargs) -> pd.DataFrame:
         df["level"] = df["level"].astype(str)
 
     return df
+
 
 def combine_levels_data_connect_parents(unique: str = "all", **kwargs) -> pd.DataFrame:
     """
@@ -379,21 +311,28 @@ def combine_levels_data_connect_parents(unique: str = "all", **kwargs) -> pd.Dat
         "level",
         "all",
     ], f"unique must be either 'id' or 'level, or 'all'. Instead, got {unique}."
-    
+
     # filter out rows in level t+1 if their parent_id is not in level t
     levels = [level for level in kwargs.values()]
-    for i in range(len(levels)-1):
-        levels[i+1] = levels[i+1][levels[i+1]["parent_id"].isin(levels[i]["id"])]
+    for i in range(len(levels) - 1):
+        levels[i + 1] = levels[i + 1][levels[i + 1]["parent_id"].isin(levels[i]["id"])]
 
     df = pd.concat([level for level in levels])
-    
+
     logger.info("Removing only full duplicate rows.")
     df = df.drop_duplicates(
         subset=[
             col
             for col in df.columns
             if col
-            not in ["strength", "mesh_terms", "authorships", "topics", "concepts", "grants"]
+            not in [
+                "strength",
+                "mesh_terms",
+                "authorships",
+                "topics",
+                "concepts",
+                "grants",
+            ]
         ]
     )
 
@@ -401,6 +340,78 @@ def combine_levels_data_connect_parents(unique: str = "all", **kwargs) -> pd.Dat
     df["level"] = df["level"].astype(str)
 
     return df
+
+
+def process_data_by_level_ptd(
+    data: Dict[str, AbstractDataset], level: int
+) -> Generator[Dict[str, pd.DataFrame], None, None]:
+    """
+    Process data by level and return a DataFrame with selected columns.
+
+    Args:
+        data (Dict[str, AbstractDataset]): A dictionary containing the input data.
+        level (int): The level to process the data for.
+        extra_mesh (bool): Whether to enrich the data with additional mesh terms.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing the processed data with selected columns.
+    """
+
+    logger.info("Processing data for level %s", level)
+
+    # Generate data for current level
+    data_gen = _data_generator(data, level)
+
+    # Iterate over data batches in current level
+    for i, df_batch in enumerate(data_gen):
+
+        yield {
+            f"s{i}": df_batch[
+                [
+                    "parent_id",
+                    "id",
+                    "pmid",
+                    "level",
+                    "doi",
+                    "publication_date",
+                    "mesh_terms",
+                    "cited_by_count",
+                    "authorships",
+                    "topics",
+                    "concepts",
+                    "grants",
+                ]
+            ]
+        }
+
+
+def concat_pq_ptd(
+    data: Dict[str, pd.DataFrame],
+) -> pd.DataFrame:
+    """
+    Concatenate dataframes from multiple levels into a single dataframe.
+
+    Args:
+        data (Dict[str, pd.DataFrame]): A dictionary containing the input data.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing the concatenated data.
+    """
+    output = []
+    for i, loader in enumerate(data.values()):
+        logger.info("Processing data partition: %s / %s", i + 1, len(data))
+        data_pt = loader()
+        # drop rows with id or parent id W3177828909, W3211795435, W3202105508
+        data_pt = data_pt[
+            ~(
+                data_pt["id"].isin(["W3177828909", "W3211795435", "W3202105508"])
+                | data_pt["parent_id"].isin(
+                    ["W3177828909", "W3211795435", "W3202105508"]
+                )
+            )
+        ]
+        output.append(data_pt)
+    return pd.concat(output)
 
 
 def process_subfield_data(data: Dict[str, AbstractDataset]) -> pd.DataFrame:
@@ -570,83 +581,6 @@ def process_subfield_data(data: Dict[str, AbstractDataset]) -> pd.DataFrame:
     ]
 
 
-def process_data_by_level_ptd(
-    data: Dict[str, AbstractDataset], level: int, extra_mesh: str = True
-) -> Generator[Dict[str, pd.DataFrame], None, None]:
-    """
-    Process data by level and return a DataFrame with selected columns.
-
-    Args:
-        data (Dict[str, AbstractDataset]): A dictionary containing the input data.
-        level (int): The level to process the data for.
-        extra_mesh (bool): Whether to enrich the data with additional mesh terms.
-
-    Returns:
-        pd.DataFrame: A DataFrame containing the processed data with selected columns.
-    """
-
-    logger.info("Processing data for level %s", level)
-
-    # Generate data for current level
-    data_gen = _data_generator(data, level)
-
-    # Iterate over data batches in current level
-    for i, df_batch in enumerate(data_gen):
-
-        if extra_mesh:
-            logger.info("Processing parent IDs: %s", df_batch["parent_id"].iloc[0])
-            # Fetch additional mesh terms for current batch
-            df_batch = fetch_additional_mesh(df_batch)
-
-        yield {
-            f"s{i}": df_batch[
-                [
-                    "parent_id",
-                    "id",
-                    "pmid",
-                    "level",
-                    "doi",
-                    "publication_date",
-                    "mesh_terms",
-                    "cited_by_count",
-                    "authorships",
-                    "topics",
-                    "concepts",
-                    "grants",
-                ]
-            ]
-        }
-
-
-def concat_pq_ptd(
-    data: Dict[str, pd.DataFrame],
-) -> pd.DataFrame:
-    """
-    Concatenate dataframes from multiple levels into a single dataframe.
-
-    Args:
-        data (Dict[str, pd.DataFrame]): A dictionary containing the input data.
-
-    Returns:
-        pd.DataFrame: A DataFrame containing the concatenated data.
-    """
-    output = []
-    for i, loader in enumerate(data.values()):
-        logger.info("Processing data partition: %s / %s", i + 1, len(data))
-        data_pt = loader()
-        # drop rows with id or parent id W3177828909, W3211795435, W3202105508
-        data_pt = data_pt[
-            ~(
-                data_pt["id"].isin(["W3177828909", "W3211795435", "W3202105508"])
-                | data_pt["parent_id"].isin(
-                    ["W3177828909", "W3211795435", "W3202105508"]
-                )
-            )
-        ]
-        output.append(data_pt)
-    return pd.concat(output)
-
-
 def reassign_ct_levels(
     data: pd.DataFrame,
     ct_data: pd.DataFrame,
@@ -736,63 +670,3 @@ def reassign_ct_levels(
     data_other = pd.concat([level_0_data, level_1_data, level_2_data])
 
     return data_ct, data_other
-
-
-def collect_grants_info(**kwargs):
-
-    def _inner_load(dt):
-        json_data = [
-            {k: v for k, v in item.items() if k in ["id", "grants"]} for item in dt
-        ]
-
-        df = pd.DataFrame(json_data)
-
-        df["grants"] = df["grants"].apply(
-            lambda x: (
-                [
-                    (
-                        grant.get("funder", "").replace("https://openalex.org/", ""),
-                        grant.get("funder_display_name", ""),
-                        grant.get("award_id", ""),
-                    )
-                    for grant in x
-                ]
-                if x
-                else None
-            )
-        )
-
-        # explode grants
-        df = df.explode("grants")
-
-        # dropna grants
-        df.dropna(subset=["grants"], inplace=True)
-
-        # if empty, skip
-        if df.empty:
-            return df
-
-        # separate the tuples into columns
-        df[["funder", "funder_display_name", "award_id"]] = pd.DataFrame(
-            df["grants"].tolist(), index=df.index
-        )
-
-        # drop grants column
-        df = df.drop(columns=["grants"])
-
-        return df
-
-    grants_list = []
-
-    for dataset in kwargs.values():
-        logger.info("Processing dataset: %s", dataset)
-        for i, data_loader in enumerate(dataset.values()):
-            logger.info("Processing data loader: %s / %s", i + 1, len(dataset))
-            dta = data_loader()
-            for _, children_list in dta.items():
-                inner_df = _inner_load(children_list)
-                grants_list.append(inner_df)
-
-    grants_df = pd.concat(grants_list)
-
-    return grants_df
