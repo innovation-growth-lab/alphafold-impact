@@ -31,9 +31,8 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
             node(
                 func=process_data_by_level,
                 inputs={
-                    "raw_data": "oa.data_collection.triad.depth.level.raw",
-                    "level_placeholder": f"params:oa.data_collection.depth.levels.{level}",
-                    "extra_mesh_placeholder": "params:false_",
+                    "data": "oa.data_collection.triad.depth.level.raw",
+                    "level": f"params:oa.data_collection.depth.levels.{level}",
                 },
                 outputs={
                     "intermediate_data": f"oa.data_processing.depth.no_mesh.{level}.intermediate",
@@ -88,7 +87,6 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 inputs={
                     "data": "oa.data_collection.subfield.structural_biology.depth.raw",
                     "level": "params:oa.data_collection.depth.levels.0",
-                    "extra_mesh": "params:false_",
                 },
                 outputs="oa.data_collection.subfield.structural_biology.depth.0.intermediate",
             )
@@ -106,7 +104,6 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 inputs={
                     "data": "oa.data_collection.subfield.structural_biology.depth.raw",
                     "level": "params:oa.data_collection.depth.levels.1",
-                    "extra_mesh": "params:false_",
                 },
                 outputs="oa.data_collection.subfield.structural_biology.depth.1.ptd.intermediate",
             ),
@@ -158,7 +155,6 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 inputs={
                     "data": "oa.data_collection.subfield.structural_biology.depth.raw",
                     "level": "params:oa.data_collection.depth.levels.2",
-                    "extra_mesh": "params:false_",
                 },
                 outputs="oa.data_collection.subfield.structural_biology.depth.2.ptd.intermediate",
             ),
