@@ -54,52 +54,52 @@ _csv_ptd: &_csv_ptd
 # OA
 oa.data_collection.direction.cites.raw: &cites_raw
   <<: *_js_ptd
-  path: s3://alphafold-impact/data/01_raw/oa/works/cites/
+  path: s3://igl-alphafold/01_raw/oa/works/cites/
 
 oa.data_collection.direction.cited_by.raw:
   <<: *_js_ptd
-  path: s3://alphafold-impact/data/01_raw/oa/works/cited_by/
+  path: s3://igl-alphafold/01_raw/oa/works/cited_by/
   
 oa.data_collection.downstream.cites.input: # [HACK] need to fetch in different nameplace
   <<: *cites_raw
 
 oa.data_collection.downstream.cites.intermediate:
   <<: *_js_ptd
-  path: "s3://alphafold-impact/data/02_intermediate/oa/works/downstream/${globals:oa.data_collection.get.work_id}/"
+  path: "s3://igl-alphafold/02_intermediate/oa/works/downstream/${globals:oa.data_collection.get.work_id}/"
 
 oa.data_collection.works_for_concepts.raw:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/01_raw/oa/works/oa_works_for_concepts.parquet
+  filepath: s3://igl-alphafold/01_raw/oa/works/oa_works_for_concepts.parquet
 
 # Raw Gateway to Research data - includes projects, publications, organisations and funds 
 
 "{source}.data_collection.{label}.raw":
   <<: *_js
-  filepath: s3://alphafold-impact/data/01_raw/{source}/{label}.json
+  filepath: s3://igl-alphafold/01_raw/{source}/{label}.json
 
 # Intermediate Gateway to Research data - includes projects, publications, organisations and funds
 
 "{source}.data_collection.{label}.intermediate":
   <<: *_pq
-  filepath: s3://alphafold-impact/data/02_intermediate/{source}/{label}.parquet
+  filepath: s3://igl-alphafold/02_intermediate/{source}/{label}.parquet
 
 # OpenAlex data from publications in Gateawy to Research
 
 oa.data_collection.gtr.publications: # [HACK] fetch the above's template for publications in gtr-oa pl
   <<: *_pq
-  filepath: s3://alphafold-impact/data/02_intermediate/gtr/outcomes/publications.parquet
+  filepath: s3://igl-alphafold/02_intermediate/gtr/outcomes/publications.parquet
 
 oa.data_collection.gtr.dict: &gtr_dict_raw
   <<: *_js
-  filepath: s3://alphafold-impact/data/02_intermediate/gtr/outcomes/publications/oa/doi_oaid.json
+  filepath: s3://igl-alphafold/02_intermediate/gtr/outcomes/publications/oa/doi_oaid.json
 
 oa.data_collection.gtr.works: &gtr_works_raw
   <<: *_js_ptd
-  path: s3://alphafold-impact/data/01_raw/gtr/outcomes/publications/oa/works/
+  path: s3://igl-alphafold/01_raw/gtr/outcomes/publications/oa/works/
 
 oa.data_collection.gtr.citations:
   <<: *_js_ptd
-  path: s3://alphafold-impact/data/01_raw/gtr/outcomes/publications/oa/citations/
+  path: s3://igl-alphafold/01_raw/gtr/outcomes/publications/oa/citations/
 
 # Gateway to research processing
 oa.data_processing.gtr.dict:
@@ -113,240 +113,245 @@ oa.data_processing.gtr.cites.raw:
 
 oa.data_processing.gtr.publications:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/03_primary/gtr/outcomes/publications/oa/publications.parquet
+  filepath: s3://igl-alphafold/03_primary/gtr/outcomes/publications/oa/publications.parquet
 
 oa.data_processing.gtr.institutions:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/03_primary/gtr/outcomes/publications/oa/institutions.parquet
+  filepath: s3://igl-alphafold/03_primary/gtr/outcomes/publications/oa/institutions.parquet
 
 oa.data_processing.gtr.citations.alphafold:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/03_primary/gtr/outcomes/publications/oa/citations.parquet
+  filepath: s3://igl-alphafold/03_primary/gtr/outcomes/publications/oa/citations.parquet
 
 oa.data_processing.depth.intermediate:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/02_intermediate/oa/works/depth/main.parquet
+  filepath: s3://igl-alphafold/02_intermediate/oa/works/depth/main.parquet
 
 oa.data_processing.depth.duplicated.intermediate:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/02_intermediate/oa/works/depth/main_duplicated.parquet
+  filepath: s3://igl-alphafold/02_intermediate/oa/works/depth/main_duplicated.parquet
   
 oa.data_processing.depth.primary:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/03_primary/oa/works/depth/main_all.parquet # [HACK] ensure everything points to dups
+  filepath: s3://igl-alphafold/03_primary/oa/works/depth/main_all.parquet # [HACK] ensure everything points to dups
 
 oa.data_processing.depth.duplicated.primary:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/03_primary/oa/works/depth/main_duplicated.parquet
+  filepath: s3://igl-alphafold/03_primary/oa/works/depth/main_duplicated.parquet
 
 oa.data_processing.depth.all.primary:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/03_primary/oa/works/depth/main_all.parquet
+  filepath: s3://igl-alphafold/03_primary/oa/works/depth/main_all.parquet
   
 oa.chain_labels.id.primary:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/03_primary/oa/works/chain_labels.parquet
+  filepath: s3://igl-alphafold/03_primary/oa/works/chain_labels.parquet
 
 oa.chain_labels.id.ct.primary:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/03_primary/oa/works/ct/chain_labels.parquet
+  filepath: s3://igl-alphafold/03_primary/oa/works/ct/chain_labels.parquet
 
 oa.chain_labels.id.other.primary:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/03_primary/oa/works/other/chain_labels.parquet
+  filepath: s3://igl-alphafold/03_primary/oa/works/other/chain_labels.parquet
 
 # Openalex works - Concepts
 oa_raw_works_for_concepts_and_years:
   type: kedro_datasets.pandas.JSONDataset
-  filepath: s3://alphafold-impact/data/01_raw/openalex/works/oa_works_for_concepts_and_years.json
+  filepath: s3://igl-alphafold/01_raw/openalex/works/oa_works_for_concepts_and_years.json
   credentials: s3_credentials
 
 works_for_concepts:
   type: ${_json.type}
-  filepath: s3://alphafold-impact/data/01_raw/oa/works/works_for_concepts.json
+  filepath: s3://igl-alphafold/01_raw/oa/works/works_for_concepts.json
   credentials: s3_credentials
 
 # OA depth data
 oa.data_collection.depth.works:
   <<: *_js_ptd
-  path: s3://alphafold-impact/data/01_raw/oa/works/depth/
+  path: s3://igl-alphafold/01_raw/oa/works/depth/
 
 oa.data_collection.depth.edges:
   <<: *_csv_ptd
-  path: s3://alphafold-impact/data/02_intermediate/oa/works/depth/edges/
+  path: s3://igl-alphafold/02_intermediate/oa/works/depth/edges/
 
 oa.data_collection.depth.network:
   <<: *_pkl
-  filepath: s3://alphafold-impact/data/02_intermediate/oa/works/depth/network.pkl
+  filepath: s3://igl-alphafold/02_intermediate/oa/works/depth/network.pkl
 
 # OA specific depth
 oa.data_collection.depth.level.raw:
   <<: *_js_ptd
-  path: s3://alphafold-impact/data/01_raw/oa/works/depth/levels/
+  path: s3://igl-alphafold/01_raw/oa/works/depth/levels/
 
 oa.data_collection.triad.depth.level.raw:
   <<: *_js_ptd
-  path: s3://alphafold-impact/data/01_raw/oa/works/depth/triad/levels/
+  path: s3://igl-alphafold/01_raw/oa/works/depth/triad/levels/
 
 oa.data_collection.subfield.structural_biology.depth.raw:
   <<: *_js_ptd
-  path: s3://alphafold-impact/data/01_raw/oa/works/depth/subfield/structural_biology/levels/
+  path: s3://igl-alphafold/01_raw/oa/works/depth/subfield/structural_biology/levels/
 
 oa.data_collection.subfield.structural_biology.depth.restarted.raw:
   <<: *_js_ptd
-  path: s3://alphafold-impact/data/01_raw/oa/works/depth/subfield/structural_biology/levels/
+  path: s3://igl-alphafold/01_raw/oa/works/depth/subfield/structural_biology/levels/
 
 oa.data_collection.subfield.structural_biology.depth.level.2.raw:
   <<: *_js_ptd
-  path: s3://alphafold-impact/data/01_raw/oa/works/depth/subfield/structural_biology/levels/
+  path: s3://igl-alphafold/01_raw/oa/works/depth/subfield/structural_biology/levels/
 
 "oa.data_collection.subfield.structural_biology.depth.{level}.intermediate":
   <<: *_pq
-  filepath: s3://alphafold-impact/data/02_intermediate/oa/works/depth/subfield/structural_biology/level/{level}/main.parquet
+  filepath: s3://igl-alphafold/02_intermediate/oa/works/depth/subfield/structural_biology/level/{level}/main.parquet
 
 "oa.data_collection.subfield.structural_biology.depth.{level}.ptd.intermediate":
   <<: *_pq_ptd
-  path: s3://alphafold-impact/data/02_intermediate/oa/works/depth/subfield/structural_biology/level/{level}/ptd/
+  path: s3://igl-alphafold/02_intermediate/oa/works/depth/subfield/structural_biology/level/{level}/ptd/
 
 oa.data_processing.structural_biology.depth.reassigned.ct.intermediate:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/02_intermediate/oa/works/depth/subfield/structural_biology/reassigned_ct.parquet
+  filepath: s3://igl-alphafold/02_intermediate/oa/works/depth/subfield/structural_biology/reassigned_ct.parquet
 
 oa.data_processing.structural_biology.depth.other.intermediate:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/02_intermediate/oa/works/depth/subfield/structural_biology/reassigned_other.parquet
+  filepath: s3://igl-alphafold/02_intermediate/oa/works/depth/subfield/structural_biology/reassigned_other.parquet
   
 oa.data_processing.structural_biology.depth.ct.intermediate:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/02_intermediate/oa/works/depth/subfield/structural_biology/ct.parquet
+  filepath: s3://igl-alphafold/02_intermediate/oa/works/depth/subfield/structural_biology/ct.parquet
 
 oa.data_processing.depth.other.primary:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/03_primary/oa/works/depth/other/main.parquet
+  filepath: s3://igl-alphafold/03_primary/oa/works/depth/other/main.parquet
 
 oa.data_processing.depth.ct.primary:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/03_primary/oa/works/depth/ct/main.parquet
+  filepath: s3://igl-alphafold/03_primary/oa/works/depth/ct/main.parquet
 
 "oa.data_processing.depth.mesh.{level}.intermediate":
   <<: *_pq
-  filepath: s3://alphafold-impact/data/02_intermediate/oa/works/depth/level/{level}/main.parquet
+  filepath: s3://igl-alphafold/02_intermediate/oa/works/depth/level/{level}/main.parquet
 
 "oa.data_processing.depth.no_mesh.{level}.intermediate":
   <<: *_pq
-  filepath: s3://alphafold-impact/data/02_intermediate/oa/works/depth/level/{level}/no_mesh_main.parquet
+  filepath: s3://igl-alphafold/02_intermediate/oa/works/depth/level/{level}/no_mesh_main.parquet
 
 "oa.data_processing.depth.level.{level}.primary":
   <<: *_pq
-  filepath: s3://alphafold-impact/data/03_primary/oa/works/depth/level/{level}/main.parquet
+  filepath: s3://igl-alphafold/03_primary/oa/works/depth/level/{level}/main.parquet
 
 "oa.data_processing.depth.level.{level}.{subfield}.primary":
   <<: *_pq
-  filepath: s3://alphafold-impact/data/03_primary/oa/works/depth/{subfield}/level/{level}/main.parquet
+  filepath: s3://igl-alphafold/03_primary/oa/works/depth/{subfield}/level/{level}/main.parquet
 
 "oa.data_collection.subfield.{subfield}.raw":
   <<: *_js_ptd
-  path: s3://alphafold-impact/data/01_raw/oa/works/subfield/{subfield}/
+  path: s3://igl-alphafold/01_raw/oa/works/subfield/{subfield}/
 
 "oa.data_processing.subfield.{subfield}.primary":
   <<: *_pq
-  filepath: s3://alphafold-impact/data/03_primary/oa/works/subfield/{subfield}/main.parquet
+  filepath: s3://igl-alphafold/03_primary/oa/works/subfield/{subfield}/main.parquet
   
 # Lens data
 lens.data_collection.{jurisdiction}.{year}.{month}.raw:
   <<: *_js_ptd
-  path: s3://alphafold-impact/data/01_raw/lens/{jurisdiction}/{year}/{month}/
+  path: s3://igl-alphafold/01_raw/lens/{jurisdiction}/{year}/{month}/
   
 lens.data_processing.csv.raw:
   <<: *_csv_ptd
-  path: s3://alphafold-impact/data/01_raw/lens/
+  path: s3://igl-alphafold/01_raw/lens/
 
 lens.data_processing.primary:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/03_primary/lens/main.parquet
+  filepath: s3://igl-alphafold/03_primary/lens/main.parquet
 
 cpc.codes:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/03_primary/lens/cpc_codes.parquet
+  filepath: s3://igl-alphafold/03_primary/lens/cpc_codes.parquet
 
 # NIH - Clinical Trials
 nih.data_collection.mesh_terms:
   <<: *_csv
-  filepath: s3://alphafold-impact/data/01_raw/nih/mesh/gdm_mesh_taxonomy.csv
+  filepath: s3://igl-alphafold/01_raw/nih/mesh/gdm_mesh_taxonomy.csv
 
 # NIH data
 nih.data_collection.clinical_trials.raw:
   <<: *_csv_ptd
-  path: s3://alphafold-impact/data/01_raw/nih/clinical_trials/
+  path: s3://igl-alphafold/01_raw/nih/clinical_trials/
 
 nih.data_processing.clinical_trials_with_references.intermediate:
   <<: *_csv
-  filepath: s3://alphafold-impact/data/02_intermediate/nih/clinical_trials/clinical_trials_with_references.csv
+  filepath: s3://igl-alphafold/02_intermediate/nih/clinical_trials/clinical_trials_with_references.csv
 
 nih.data_processing.clinical_trials_links_to_papers.intermediate:
   <<: *_csv
-  filepath: s3://alphafold-impact/data/02_intermediate/nih/clinical_trials/clinical_trials_links_to_papers.csv
+  filepath: s3://igl-alphafold/02_intermediate/nih/clinical_trials/clinical_trials_links_to_papers.csv
 
 nih.data_collection.funded_projects.raw:
   <<: *_csv_ptd
-  path: s3://alphafold-impact/data/01_raw/nih/funded_projects/
+  path: s3://igl-alphafold/01_raw/nih/funded_projects/
 
 nih.data_collection.funding_opportunities.raw:
   <<: *_csv
-  filepath: s3://alphafold-impact/data/01_raw/nih/funding_opportunities/funding_opportunities.csv
+  filepath: s3://igl-alphafold/01_raw/nih/funding_opportunities/funding_opportunities.csv
 
 nih.data_processing.funding_opportunities.intermediate:
   <<: *_csv
-  filepath: s3://alphafold-impact/data/02_intermediate/nih/funding_opportunities/funding_opportunities.csv
+  filepath: s3://igl-alphafold/02_intermediate/nih/funding_opportunities/funding_opportunities.csv
 
 nih.data_processing.funding_opportunities_mesh_tagging_input_text.intermediate:
   <<: *_txt
-  filepath: s3://alphafold-impact/data/02_intermediate/nih/funding_opportunities/mesh_tagging_input_text.txt
+  filepath: s3://igl-alphafold/02_intermediate/nih/funding_opportunities/mesh_tagging_input_text.txt
 
 nih.data_processing.funding_opportunities_mesh_tagging_output_text.intermediate:
   <<: *_txt
-  filepath: s3://alphafold-impact/data/02_intermediate/nih/funding_opportunities/mesh_tagging_output_text.txt
+  filepath: s3://igl-alphafold/02_intermediate/nih/funding_opportunities/mesh_tagging_output_text.txt
 
 nih.data_processing.funding_opportunities_mesh_tagging_output_df.intermediate:
   <<: *_csv
-  filepath: s3://alphafold-impact/data/02_intermediate/nih/funding_opportunities/mesh_tagging_output_df.csv
+  filepath: s3://igl-alphafold/02_intermediate/nih/funding_opportunities/mesh_tagging_output_df.csv
 
 pubmed.data_collection.icite.raw:
   <<: *_csv_ptd
-  path: s3://alphafold-impact/data/01_raw/icite/icite_feb_2024/
+  path: s3://igl-alphafold/01_raw/icite/icite_feb_2024/
 
 pubmed.data_processing.icite.intermediate:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/02_intermediate/pubmed/icite.parquet
+  filepath: s3://igl-alphafold/02_intermediate/pubmed/icite.parquet
+  load_args:
+    columns:
+      - 'pmid'
+      - 'doi'
+      - 'cited_by_clin'
 
 nih.data_analysis.funding_opportunities.structural_biology:
   <<: *_csv
-  filepath: s3://alphafold-impact/data/04_analysis/nih/funding_opportunities/structural_biology.csv
+  filepath: s3://igl-alphafold/04_analysis/nih/funding_opportunities/structural_biology.csv
 
 nih.data_analysis.funding_opportunities.experimental_biology:
   <<: *_csv
-  filepath: s3://alphafold-impact/data/04_analysis/nih/funding_opportunities/experimental_biology.csv
+  filepath: s3://igl-alphafold/04_analysis/nih/funding_opportunities/experimental_biology.csv
 
 nih.reporting.funding_opportunities.sb_eb:
   <<: *_image
-  filepath: s3://alphafold-impact/data/07_reporting/nih/funding_opportunities/sb_eb_funding_opportunities.png
+  filepath: s3://igl-alphafold/07_reporting/nih/funding_opportunities/sb_eb_funding_opportunities.png
 
 nih.reporting.funding_opportunity_amounts.sb_eb:
   <<: *_image
-  filepath: s3://alphafold-impact/data/07_reporting/nih/funding_opportunities/sb_eb_funding_opportunity_amounts.png
+  filepath: s3://igl-alphafold/07_reporting/nih/funding_opportunities/sb_eb_funding_opportunity_amounts.png
 
 nih.reporting.funding_opportunities.total:
   <<: *_image
-  filepath: s3://alphafold-impact/data/07_reporting/nih/funding_opportunities/total_funding_opportunities.png
+  filepath: s3://igl-alphafold/07_reporting/nih/funding_opportunities/total_funding_opportunities.png
 
 nih.reporting.funding_opportunity_amounts.total:
   <<: *_image
-  filepath: s3://alphafold-impact/data/07_reporting/nih/funding_opportunities/total_funding_opportunity_amounts.png
+  filepath: s3://igl-alphafold/07_reporting/nih/funding_opportunities/total_funding_opportunity_amounts.png
 
 # Crunchbase data
 _cb_raw: &_cb_raw
   type: pandas.CSVDataset
-  credentials: nesta_s3_credentials
+  credentials: s3_credentials
 
 cb.data_processing.acquisitions.raw:
   <<: *_cb_raw
@@ -419,538 +424,537 @@ cb.data_processing.people.raw:
 # NSF
 "nsf.data_collection.awards.{year}.raw":
   type: alphafold_impact.datasets.zip_dataset.ZipDataset
-  filepath: s3://alphafold-impact/data/01_raw/nsf/{year}.zip
+  filepath: s3://igl-alphafold/01_raw/nsf/{year}.zip
   credentials: s3_credentials
 
 "nsf.data_collection.awards.{year}.intermediate":
   <<: *_js_ptd
-  path: s3://alphafold-impact/data/02_intermediate/nsf/awards/{year}/
+  path: s3://igl-alphafold/02_intermediate/nsf/awards/{year}/
 
 nsf.data_collection.funding_opportunities.raw:
   <<: *_csv
-  filepath: s3://alphafold-impact/data/01_raw/nsf/funding_opportunities/nsf_funding.csv
+  filepath: s3://igl-alphafold/01_raw/nsf/funding_opportunities/nsf_funding.csv
 
 nsf.data_collection.archived_funding_opportunities.raw:
   <<: *_csv
-  filepath: s3://alphafold-impact/data/01_raw/nsf/funding_opportunities/archived_nsf_funding.csv
+  filepath: s3://igl-alphafold/01_raw/nsf/funding_opportunities/archived_nsf_funding.csv
 
 s2.data_collection.strength.cites.input:
   <<: *cites_raw
 
 "s2.data_collection.strength.level.{lvl}.log.ids.in": &s2_log
   <<: *_js
-  filepath: s3://alphafold-impact/data/01_raw/s2/strength/log/{lvl}/ids.json
+  filepath: s3://igl-alphafold/01_raw/s2/strength/log/{lvl}/ids.json
 
 "s2.data_collection.strength.level.{lvl}.log.ids.out":
   <<: *s2_log
 
 s2.data_collection.strength.level.0:
   <<: *_csv
-  filepath: s3://alphafold-impact/data/01_raw/s2/strength/0/10.1038/s41586-021-03819-2.csv
+  filepath: s3://igl-alphafold/01_raw/s2/strength/0/10.1038/s41586-021-03819-2.csv
 
 "s2.data_collection.strength.level.{lvl}": &s2_lvl
   <<: *_csv_ptd
-  path: s3://alphafold-impact/data/01_raw/s2/strength/{lvl}/
+  path: s3://igl-alphafold/01_raw/s2/strength/{lvl}/
 
 "s2.data_collection.strength.level.{lvl}.raw":
   <<: *s2_lvl
 
 lab.data_collection.subfield.{subfield}.raw:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/03_primary/oa/works/subfield/{subfield}/main.parquet
+  filepath: s3://igl-alphafold/03_primary/oa/works/subfield/{subfield}/main.parquet
   
 lab.data_collection.level.{level}.raw:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/03_primary/oa/works/depth/level/{level}/main.parquet
+  filepath: s3://igl-alphafold/03_primary/oa/works/depth/level/{level}/main.parquet
 
 lab.data_collection.candidates.{subfield}.intermediate:
   <<: *_js
-  filepath: s3://alphafold-impact/data/02_intermediate/oa/labs/candidates/{subfield}.json
+  filepath: s3://igl-alphafold/02_intermediate/oa/labs/candidates/{subfield}.json
 
 lab.data_collection.candidates.intermediate:
   <<: *_js_ptd
-  path: s3://alphafold-impact/data/02_intermediate/oa/labs/candidates/
+  path: s3://igl-alphafold/02_intermediate/oa/labs/candidates/
 
 lab.data_collection.candidates.publications.intermediate:
   <<: *_js_ptd
-  path: s3://alphafold-impact/data/02_intermediate/oa/labs/candidate_publications/
+  path: s3://igl-alphafold/02_intermediate/oa/labs/candidate_publications/
 
 lab.data_collection.candidates.scores.intermediate:
   <<: *_pq_ptd
-  path: s3://alphafold-impact/data/02_intermediate/oa/labs/scores/
+  path: s3://igl-alphafold/02_intermediate/oa/labs/scores/
   
 lab.data_collection.candidates.scores.primary:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/03_primary/oa/labs/main_scores.parquet
+  filepath: s3://igl-alphafold/03_primary/oa/labs/main_scores.parquet
 
 lab.data_collection.candidates.nih:
   <<: *_csv
-  filepath: s3://alphafold-impact/data/01_raw/nih/principal_investigators/nih_principal_investigators.csv
+  filepath: s3://igl-alphafold/01_raw/nih/principal_investigators/nih_principal_investigators.csv
 
 lab.data_collection.candidates.nih.intermediate:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/02_intermediate/nih/principal_investigators/nih_principal_investigators.parquet
+  filepath: s3://igl-alphafold/02_intermediate/nih/principal_investigators/nih_principal_investigators.parquet
 
 lab.data_collection.candidates.map.intermediate:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/02_intermediate/oa/labs/candidates_map.parquet
+  filepath: s3://igl-alphafold/02_intermediate/oa/labs/candidates_map.parquet
 
 lab.data_collection.assignment.primary:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/03_primary/oa/labs/assignments.parquet
+  filepath: s3://igl-alphafold/03_primary/oa/labs/assignments.parquet
 
 lab.data_collection.publications.raw:
   <<: *_pq_ptd
-  path: s3://alphafold-impact/data/01_raw/oa/labs/publications/
-
+  path: s3://igl-alphafold/01_raw/oa/labs/publications/
 
 "chains.complete_links.{identifier}.primary":
   <<: *_pq
-  filepath: s3://alphafold-impact/data/03_primary/oa/works/chains/{identifier}/complete_links.parquet
+  filepath: s3://igl-alphafold/03_primary/oa/works/chains/{identifier}/complete_links.parquet
 
 "chains.complete_strong_links.{identifier}.primary":
   <<: *_pq
-  filepath: s3://alphafold-impact/data/03_primary/oa/works/chains/{identifier}/complete_strong_links.parquet
+  filepath: s3://igl-alphafold/03_primary/oa/works/chains/{identifier}/complete_strong_links.parquet
 
 "chains.complete_strong_links_with_ca.{identifier}.primary":
   <<: *_pq
-  filepath: s3://alphafold-impact/data/03_primary/oa/works/chains/{identifier}/complete_strong_links_with_ca.parquet
+  filepath: s3://igl-alphafold/03_primary/oa/works/chains/{identifier}/complete_strong_links_with_ca.parquet
 
 pdb.entries.raw:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/01_raw/pdb/entries.parquet
+  filepath: s3://igl-alphafold/01_raw/pdb/entries.parquet
 
 pdb.entries.intermediate:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/02_intermediate/pdb/entries.parquet
+  filepath: s3://igl-alphafold/02_intermediate/pdb/entries.parquet
   
 chains.seed_technologies.intermediate:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/02_intermediate/oa/works/chains/baseline/seed_technologies.parquet
+  filepath: s3://igl-alphafold/02_intermediate/oa/works/chains/baseline/seed_technologies.parquet
 
 "chains.complete_links.{identifier}.ct.primary":
   <<: *_pq
-  filepath: s3://alphafold-impact/data/03_primary/oa/works/chains/ct/{identifier}/complete_links.parquet
+  filepath: s3://igl-alphafold/03_primary/oa/works/chains/ct/{identifier}/complete_links.parquet
 
 "chains.complete_strong_links.{identifier}.ct.primary":
   <<: *_pq
-  filepath: s3://alphafold-impact/data/03_primary/oa/works/chains/ct/{identifier}/complete_strong_links.parquet
+  filepath: s3://igl-alphafold/03_primary/oa/works/chains/ct/{identifier}/complete_strong_links.parquet
 
 "chains.complete_strong_links_with_ca.{identifier}.ct.primary":
   <<: *_pq
-  filepath: s3://alphafold-impact/data/03_primary/oa/works/chains/ct/{identifier}/complete_strong_links_with_ca.parquet
+  filepath: s3://igl-alphafold/03_primary/oa/works/chains/ct/{identifier}/complete_strong_links_with_ca.parquet
 
 "chains.complete_links.{identifier}.other.primary":
   <<: *_pq
-  filepath: s3://alphafold-impact/data/03_primary/oa/works/chains/other/{identifier}/complete_links.parquet
+  filepath: s3://igl-alphafold/03_primary/oa/works/chains/other/{identifier}/complete_links.parquet
 
 "chains.complete_strong_links.{identifier}.other.primary":
   <<: *_pq
-  filepath: s3://alphafold-impact/data/03_primary/oa/works/chains/other/{identifier}/complete_strong_links.parquet
+  filepath: s3://igl-alphafold/03_primary/oa/works/chains/other/{identifier}/complete_strong_links.parquet
 
 "chains.complete_strong_links_with_ca.{identifier}.other.primary":
   <<: *_pq
-  filepath: s3://alphafold-impact/data/03_primary/oa/works/chains/other/{identifier}/complete_strong_links_with_ca.parquet
+  filepath: s3://igl-alphafold/03_primary/oa/works/chains/other/{identifier}/complete_strong_links_with_ca.parquet
 
 sb_lab.data_collection.candidates.publications.intermediate:
   <<: *_js_ptd
-  path: s3://alphafold-impact/data/02_intermediate/oa/sb_labs/candidate_publications/
+  path: s3://igl-alphafold/02_intermediate/oa/sb_labs/candidate_publications/
 
 sb_lab.data_collection.candidates.map:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/02_intermediate/oa/sb_labs/candidates_map.parquet
+  filepath: s3://igl-alphafold/02_intermediate/oa/sb_labs/candidates_map.parquet
 
 
 sb_lab.data_collection.institution_info.primary:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/03_primary/oa/sb_labs/institution_info.parquet
+  filepath: s3://igl-alphafold/03_primary/oa/sb_labs/institution_info.parquet
 
 sb_lab.data_collection.candidates.scores.intermediate:
   <<: *_pq_ptd
-  path: s3://alphafold-impact/data/02_intermediate/oa/sb_labs/scores/
+  path: s3://igl-alphafold/02_intermediate/oa/sb_labs/scores/
 
 sb_lab.data_collection.candidates.scores.primary:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/03_primary/oa/sb_labs/main_scores.parquet
+  filepath: s3://igl-alphafold/03_primary/oa/sb_labs/main_scores.parquet
 
 sb_lab.data_collection.assignment.primary:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/03_primary/oa/sb_labs/assignments.parquet
+  filepath: s3://igl-alphafold/03_primary/oa/sb_labs/assignments.parquet
 
 sb_lab.data_collection.publications.raw:
   <<: *_pq_ptd
-  path: s3://alphafold-impact/data/01_raw/oa/sb_labs/publications/
+  path: s3://igl-alphafold/01_raw/oa/sb_labs/publications/
 
 other_lab.data_collection.candidates.publications.intermediate:
   <<: *_js_ptd
-  path: s3://alphafold-impact/data/02_intermediate/oa/other_labs/candidate_publications/
+  path: s3://igl-alphafold/02_intermediate/oa/other_labs/candidate_publications/
 
 other_lab.data_collection.candidates.map:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/02_intermediate/oa/other_labs/candidates_map.parquet
+  filepath: s3://igl-alphafold/02_intermediate/oa/other_labs/candidates_map.parquet
 
 other_lab.data_collection.institution_info.primary:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/03_primary/oa/other_labs/institution_info.parquet
+  filepath: s3://igl-alphafold/03_primary/oa/other_labs/institution_info.parquet
 
 other_lab.data_collection.candidates.scores.intermediate:
   <<: *_pq_ptd
-  path: s3://alphafold-impact/data/02_intermediate/oa/other_labs/scores/
+  path: s3://igl-alphafold/02_intermediate/oa/other_labs/scores/
 
 other_lab.data_collection.candidates.scores.primary:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/03_primary/oa/other_labs/main_scores.parquet
+  filepath: s3://igl-alphafold/03_primary/oa/other_labs/main_scores.parquet
 
 other_lab.data_collection.assignment.primary:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/03_primary/oa/other_labs/assignments.parquet
+  filepath: s3://igl-alphafold/03_primary/oa/other_labs/assignments.parquet
 
 other_lab.data_collection.publications.raw:
   <<: *_pq_ptd
-  path: s3://alphafold-impact/data/01_raw/oa/other_labs/publications/
+  path: s3://igl-alphafold/01_raw/oa/other_labs/publications/
 
 os.data_collection.regions.raw:
   <<: *_pq_ptd
-  path: s3://alphafold-impact/data/01_raw/os/region/
+  path: s3://igl-alphafold/01_raw/os/region/
 
 os.data_collection.keywords.raw:
   <<: *_pq_ptd
-  path: s3://alphafold-impact/data/01_raw/os/keyword/
+  path: s3://igl-alphafold/01_raw/os/keyword/
 
 os.labelled_biology_courses.primary:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/03_primary/os/labelled_biology_courses.parquet
+  filepath: s3://igl-alphafold/03_primary/os/labelled_biology_courses.parquet
 
 ecr.authors.raw:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/01_raw/ecr/authors.parquet
+  filepath: s3://igl-alphafold/01_raw/ecr/authors.parquet
 
 ecr.authors.publications.raw:
   <<: *_pq_ptd
-  path: s3://alphafold-impact/data/01_raw/ecr/publications/
+  path: s3://igl-alphafold/01_raw/ecr/publications/
 
 ecr.authors.institutions.raw:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/01_raw/ecr/institutions.parquet
+  filepath: s3://igl-alphafold/01_raw/ecr/institutions.parquet
 
 oa.data_processing.depth.grants.primary:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/03_primary/oa/works/depth/grants.parquet
+  filepath: s3://igl-alphafold/03_primary/oa/works/depth/grants.parquet
 
 ### ANALYSIS ###
 analysis.af.level0_data:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/03_primary/oa/works/analysis/af/level0_data.parquet
+  filepath: s3://igl-alphafold/03_primary/oa/works/analysis/af/level0_data.parquet
 
 analysis.ct.level0_data:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/03_primary/oa/works/analysis/ct/level0_data.parquet
+  filepath: s3://igl-alphafold/03_primary/oa/works/analysis/ct/level0_data.parquet
 
 analysis.other.level0_data:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/03_primary/oa/works/analysis/other/level0_data.parquet
+  filepath: s3://igl-alphafold/03_primary/oa/works/analysis/other/level0_data.parquet
 
 analysis.descriptive.level0_data:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/03_primary/oa/works/analysis/descriptive/level0_data.parquet
+  filepath: s3://igl-alphafold/03_primary/oa/works/analysis/descriptive/level0_data.parquet
 
 analysis.descriptive.level0_data.processed:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/03_primary/oa/works/analysis/descriptive/level0_data_processed.parquet
+  filepath: s3://igl-alphafold/03_primary/oa/works/analysis/descriptive/level0_data_processed.parquet
 
 analysis.descriptive.level0_data_with_cc:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/descriptive/level0_data_with_cc.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/descriptive/level0_data_with_cc.parquet
 
 analysis.descriptive.level0_data_with_moderators_cc:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/descriptive/level0_data_with_strong_cc.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/descriptive/level0_data_with_strong_cc.parquet
 
 analysis.descriptive.level0_data_with_patents:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/descriptive/level0_data_with_patents.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/descriptive/level0_data_with_patents.parquet
 
 analysis.descriptive.level0_data_with_moderators_pc:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/descriptive/level0_data_with_strong_pc.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/descriptive/level0_data_with_strong_pc.parquet
 
 analysis.descriptive.applied_data:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/03_primary/oa/works/analysis/descriptive/applied_data.parquet
+  filepath: s3://igl-alphafold/03_primary/oa/works/analysis/descriptive/applied_data.parquet
 
 analysis.descriptive.applied_data_with_cc:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/descriptive/applied_data_with_cc.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/descriptive/applied_data_with_cc.parquet
 
 analysis.descriptive.applied_data_with_moderators_cc:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/descriptive/applied_data_with_strong_cc.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/descriptive/applied_data_with_strong_cc.parquet
 
 analysis.descriptive.applied_data_with_patents:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/descriptive/applied_data_with_patents.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/descriptive/applied_data_with_patents.parquet
 
 analysis.descriptive.applied_data_with_moderators_pc:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/descriptive/applied_data_with_strong_pc.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/descriptive/applied_data_with_strong_pc.parquet
 
 analysis.descriptive.level0_data_with_patents_cpc:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/descriptive/level0_data_with_patents_cpc.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/descriptive/level0_data_with_patents_cpc.parquet
 
 sb_lab.data_analysis.outputs.input:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/outputs.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/sb_labs/outputs.parquet
 
 sb_lab.data_analysis.monthly_outputs:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/monthly_outputs.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/sb_labs/monthly_outputs.parquet
 
 sb_lab.data_analysis.yearly_outputs:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/yearly_outputs.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/sb_labs/yearly_outputs.parquet
 
 sb_lab.data_analysis.outputs.primary:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/outputs_primary.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/sb_labs/outputs_primary.parquet
 
 
 sb_lab.data_analysis.staggered.outputs.primary:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/staggered/outputs_primary.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/sb_labs/staggered/outputs_primary.parquet
 
 sb_lab.data_analysis.staggered.outputs.quarterly.primary:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/staggered/outputs_quarterly.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/sb_labs/staggered/outputs_quarterly.parquet
 
 sb_lab.data_analysis.staggered.outputs.collapsed.primary:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/staggered/outputs_collapsed.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/sb_labs/staggered/outputs_collapsed.parquet
 
 sb_lab.data_analysis.outputs.counts.event_study:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/outputs_event_study.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/sb_labs/outputs_event_study.parquet
 
 sb_lab.data_analysis.outputs.citations.event_study:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/outputs_event_study_citations.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/sb_labs/outputs_event_study_citations.parquet
 
 
 sb_lab.data_analysis.outputs.counts.event_study_strength:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/outputs_event_study_strength.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/sb_labs/outputs_event_study_strength.parquet
 
 sb_lab.data_analysis.outputs.citations.event_study_strength:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/outputs_event_study_strength_citations.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/sb_labs/outputs_event_study_strength_citations.parquet
 
 sb_lab.data_analysis.outputs.counts.event_study_pdb_submissions:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/outputs_event_study_pdb_submissions.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/sb_labs/outputs_event_study_pdb_submissions.parquet
 
 sb_lab.data_analysis.outputs.citations.event_study_pdb_submissions:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/outputs_event_study_pdb_submissions_citations.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/sb_labs/outputs_event_study_pdb_submissions_citations.parquet
 
 sb_lab.data_analysis.outputs.counts.event_study_predictive:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/outputs_event_study_predictive.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/sb_labs/outputs_event_study_predictive.parquet
 
 sb_lab.data_analysis.outputs.citations.event_study_predictive:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/outputs_event_study_predictive_citations.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/sb_labs/outputs_event_study_predictive_citations.parquet
 
 sb_lab.data_analysis.outputs.papers_with_ccs:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/outputs_papers_with_ccs.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/sb_labs/outputs_papers_with_ccs.parquet
 
 sb_lab.data_analysis.outputs.counts.event_study_cc:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/outputs_event_study_cc.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/sb_labs/outputs_event_study_cc.parquet
 
 sb_lab.data_analysis.outputs.citations.event_study_cc:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/outputs_event_study_cc_citations.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/sb_labs/outputs_event_study_cc_citations.parquet
 
 sb_lab.data_analysis.outputs.papers_with_pcs:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/outputs_papers_with_pcs.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/sb_labs/outputs_papers_with_pcs.parquet
 
 sb_lab.data_analysis.outputs.counts.event_study_pc:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/outputs_event_study_pc.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/sb_labs/outputs_event_study_pc.parquet
 
 sb_lab.data_analysis.outputs.citations.event_study_pc:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/sb_labs/outputs_event_study_pc_citations.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/sb_labs/outputs_event_study_pc_citations.parquet
 
 
 
 applied_lab.data_analysis.outputs.input:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/applied_labs/outputs.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/applied_labs/outputs.parquet
 
 applied_lab.data_analysis.monthly_outputs:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/applied_labs/monthly_outputs.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/applied_labs/monthly_outputs.parquet
 
 applied_lab.data_analysis.yearly_outputs:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/applied_labs/yearly_outputs.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/applied_labs/yearly_outputs.parquet
 
 applied_lab.data_analysis.outputs.primary:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/applied_labs/outputs_primary.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/applied_labs/outputs_primary.parquet
 
 applied_lab.data_analysis.outputs.counts.event_study:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/applied_labs/outputs_event_study.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/applied_labs/outputs_event_study.parquet
 
 applied_lab.data_analysis.outputs.citations.event_study:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/applied_labs/outputs_event_study_citations.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/applied_labs/outputs_event_study_citations.parquet
 
 
 applied_lab.data_analysis.outputs.counts.event_study_strength:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/applied_labs/outputs_event_study_strength.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/applied_labs/outputs_event_study_strength.parquet
 
 applied_lab.data_analysis.outputs.citations.event_study_strength:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/applied_labs/outputs_event_study_strength_citations.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/applied_labs/outputs_event_study_strength_citations.parquet
 
 applied_lab.data_analysis.outputs.counts.event_study_pdb_submissions:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/applied_labs/outputs_event_study_pdb_submissions.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/applied_labs/outputs_event_study_pdb_submissions.parquet
 
 applied_lab.data_analysis.outputs.citations.event_study_pdb_submissions:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/applied_labs/outputs_event_study_pdb_submissions_citations.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/applied_labs/outputs_event_study_pdb_submissions_citations.parquet
 
 applied_lab.data_analysis.outputs.counts.event_study_predictive:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/applied_labs/outputs_event_study_predictive.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/applied_labs/outputs_event_study_predictive.parquet
 
 applied_lab.data_analysis.outputs.citations.event_study_predictive:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/applied_labs/outputs_event_study_predictive_citations.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/applied_labs/outputs_event_study_predictive_citations.parquet
 
 applied_lab.data_analysis.outputs.papers_with_ccs:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/applied_labs/outputs_papers_with_ccs.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/applied_labs/outputs_papers_with_ccs.parquet
 
 applied_lab.data_analysis.outputs.counts.event_study_cc:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/applied_labs/outputs_event_study_cc.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/applied_labs/outputs_event_study_cc.parquet
 
 applied_lab.data_analysis.outputs.citations.event_study_cc:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/applied_labs/outputs_event_study_cc_citations.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/applied_labs/outputs_event_study_cc_citations.parquet
 
 applied_lab.data_analysis.outputs.papers_with_pcs:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/applied_labs/outputs_papers_with_pcs.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/applied_labs/outputs_papers_with_pcs.parquet
 
 applied_lab.data_analysis.outputs.counts.event_study_pc:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/applied_labs/outputs_event_study_pc.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/applied_labs/outputs_event_study_pc.parquet
 
 applied_lab.data_analysis.outputs.citations.event_study_pc:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/applied_labs/outputs_event_study_pc_citations.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/applied_labs/outputs_event_study_pc_citations.parquet
 
 applied_lab.data_analysis.staggered.outputs.primary:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/applied_labs/staggered/outputs_primary.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/applied_labs/staggered/outputs_primary.parquet
 
 applied_lab.data_analysis.staggered.outputs.quarterly.primary:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/applied_labs/staggered/outputs_quarterly.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/applied_labs/staggered/outputs_quarterly.parquet
 
 applied_lab.data_analysis.staggered.outputs.collapsed.primary:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/applied_labs/staggered/outputs_collapsed.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/applied_labs/staggered/outputs_collapsed.parquet
   
 os.data_analysis.outputs.trends:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/os/outputs_trends.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/os/outputs_trends.parquet
 
 os.data_analysis.outputs.regional_trends:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/os/outputs_regional_trends.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/os/outputs_regional_trends.parquet
 
 ecr.data_analysis.yearly_counts:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/ecr/outputs_yearly_counts.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/ecr/outputs_yearly_counts.parquet
   
 ecr.data_analysis.subfield.af:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/ecr/outputs_af.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/ecr/outputs_af.parquet
 
 ecr.data_analysis.subfield.no_af:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/ecr/outputs_no_af.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/ecr/outputs_no_af.parquet
 
 ecr.data_analysis.field.af:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/ecr/outputs_field_af.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/ecr/outputs_field_af.parquet
 
 ecr.data_analysis.field.no_af:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/ecr/outputs_field_no_af.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/ecr/outputs_field_no_af.parquet
 
 ecr.data_analysis.counts.af:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/ecr/outputs_counts_af.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/ecr/outputs_counts_af.parquet
 
 ecr.data_analysis.counts.no_af:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/ecr/outputs_counts_no_af.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/ecr/outputs_counts_no_af.parquet
 
 ecr.data_analysis.citations.af:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/ecr/outputs_citations_af.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/ecr/outputs_citations_af.parquet
 
 ecr.data_analysis.citations.no_af:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/ecr/outputs_citations_no_af.parquet# TCC
+  filepath: s3://igl-alphafold/04_output/analysis/ecr/outputs_citations_no_af.parquet# TCC
 
 tcc.data_analysis:
   <<: *_csv_ptd
-  path: s3://alphafold-impact/data/04_analysis/tcc/
+  path: s3://igl-alphafold/04_analysis/tcc/
 
 tcc.reporting.summary_subfields:
   <<: *_csv_ptd
-  path: s3://alphafold-impact/data/07_reporting/tcc/summary_subfields
+  path: s3://igl-alphafold/07_reporting/tcc/summary_subfields
 
 tcc.reporting.tcc_by_publication_quarter_subfields:
   <<: *_image
-  filepath: s3://alphafold-impact/data/07_reporting/tcc/tcc_by_publication_quarter_subfields.png
+  filepath: s3://igl-alphafold/07_reporting/tcc/tcc_by_publication_quarter_subfields.png
 
 tcc.reporting.tcc_by_publication_quarter_af_levels:
   <<: *_image
-  filepath: s3://alphafold-impact/data/07_reporting/tcc/tcc_by_publication_quarter_af_levels.png
+  filepath: s3://igl-alphafold/07_reporting/tcc/tcc_by_publication_quarter_af_levels.png
 
 reporting.tcc_sb_papers:
   <<: *_image
-  filepath: s3://alphafold-impact/data/07_reporting/tcc/tcc_sb_papers.png
+  filepath: s3://igl-alphafold/07_reporting/tcc/tcc_sb_papers.png
 
 reporting.cc_sb_labs:
   <<: *_image
-  filepath: s3://alphafold-impact/data/07_reporting/tcc/cc_sb_labs.png
+  filepath: s3://igl-alphafold/07_reporting/tcc/cc_sb_labs.png
 
 analysis.descriptive.data.af:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/descriptive/data_af.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/descriptive_af.parquet
 
 analysis.descriptive.data.ct:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/descriptive/data_ct.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/descriptive_ct.parquet
 
 analysis.descriptive.data.other:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/descriptive/data_other.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/descriptive_other.parquet
 
 analysis.descriptive.data.outputs:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/descriptive/data_outputs.parquet
+  filepath: s3://igl-alphafold/04_output/analysis/descriptive_outputs.parquet

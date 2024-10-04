@@ -157,3 +157,5 @@ stats.json
 .telemetry
 .vscode
 __pycache__/
+
+bin/

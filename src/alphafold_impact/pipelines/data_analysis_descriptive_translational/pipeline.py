@@ -16,7 +16,7 @@ from .nodes import (
     get_patent_classifications,
     create_tcc_sb_papers,
     create_publications_data,
-    merge_individual_data
+    merge_individual_data,
 )
 
 
@@ -215,7 +215,10 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                 inputs={
                     "data": "analysis.descriptive.level0_data_with_cc",
                 },
-                outputs=["analysis.descriptive.tcc_sb_papers", "reporting.tcc_sb_papers"],
+                outputs=[
+                    "analysis.descriptive.tcc_sb_papers",
+                    "reporting.tcc_sb_papers",
+                ],
                 tags=["tcc_sb_papers"],
             ),
         ],
@@ -233,6 +236,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                     "patents_data": "lens.data_processing.primary",
                     "grants_data": "oa.data_processing.depth.grants.primary",
                     "pdb_submissions": "pdb.entries.intermediate",
+                    "icite_data": "pubmed.data_processing.icite.intermediate",
                 },
                 outputs="analysis.descriptive.data.af",
                 tags=["af_publications_data"],
@@ -246,6 +250,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                     "patents_data": "lens.data_processing.primary",
                     "grants_data": "oa.data_processing.depth.grants.primary",
                     "pdb_submissions": "pdb.entries.intermediate",
+                    "icite_data": "pubmed.data_processing.icite.intermediate",
                 },
                 outputs="analysis.descriptive.data.ct",
                 tags=["ct_publications_data"],
@@ -259,6 +264,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                     "patents_data": "lens.data_processing.primary",
                     "grants_data": "oa.data_processing.depth.grants.primary",
                     "pdb_submissions": "pdb.entries.intermediate",
+                    "icite_data": "pubmed.data_processing.icite.intermediate",
                 },
                 outputs="analysis.descriptive.data.other",
                 tags=["other_publications_data"],
@@ -277,4 +283,10 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
         tags=["create_individual_data"],
     )
 
-    return level0_pipeline + applied_pipeline + patent_cpc_pipeline + tcc_sb_papers + create_publications_data_pipeline
+    return (
+        level0_pipeline
+        + applied_pipeline
+        + patent_cpc_pipeline
+        + tcc_sb_papers
+        + create_publications_data_pipeline
+    )

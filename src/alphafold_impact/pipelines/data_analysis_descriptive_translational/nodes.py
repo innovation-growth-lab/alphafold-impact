@@ -115,7 +115,7 @@ def load_input_applied_data(
             "concepts",
             "mesh_terms",
             "topics",
-            "strength"
+            "strength",
         ]
     ]
 
@@ -201,7 +201,7 @@ def get_cc_papers(data: pd.DataFrame, icite_data: pd.DataFrame):
     # preprocess data
     data = data.drop_duplicates(subset=["id", "parent_id", "level", "dataset"])
     data = data[["id", "doi", "pmid", "parent_id", "level", "dataset"]]
-    
+
     # preprocess icite data
     icite_data["pmid"] = icite_data["pmid"].astype(str)
     icite_data = icite_data[["doi", "pmid", "cited_by_clin"]]
@@ -459,21 +459,23 @@ def create_tcc_sb_papers(
 
     return data, chart
 
+
 def _sort_drop(data):
-    sort_order = {"strong": 0, 'partial_strong':1, 'mixed':2, "weak": 3, 'partial_weak':4, "unknown": 5, "no_data": 6}
+    sort_order = {
+        "strong": 0,
+        "partial_strong": 1,
+        "mixed": 2,
+        "weak": 3,
+        "partial_weak": 4,
+        "unknown": 5,
+        "no_data": 6,
+    }
     data["sort_order"] = data["chain_label"].map(sort_order)
 
-    data = (
-        data.sort_values("sort_order")
-        .groupby(["id"])
-        .first()
-        .reset_index()
-    )
+    data = data.sort_values("sort_order").groupby(["level", "id"]).first().reset_index()
 
     data = data[
-        ~data["id"].isin(
-            ["W3177828909", "W3211795435", "W3202105508", "W3202105508"]
-        )
+        ~data["id"].isin(["W3177828909", "W3211795435", "W3202105508", "W3202105508"])
     ]
 
     data = data[
@@ -490,6 +492,7 @@ def _sort_drop(data):
     data.reset_index(drop=True, inplace=True)
     return data
 
+
 def create_publications_data(
     data: pd.DataFrame,
     source: str,
@@ -497,7 +500,7 @@ def create_publications_data(
     patents_data,
     grants_data,
     pdb_submissions,
-
+    icite_data,
 ):
     if "level" in data.columns:
         data = data[data["level"] != 3]
@@ -536,13 +539,68 @@ def create_publications_data(
     # drop mesh_terms column
     data.drop(columns="mesh_terms", inplace=True)
 
+    # icite data
+    icite_outputs = create_cc_counts(
+        data[["parent_id", "id", "level", "source", "pmid", "doi"]], icite_data
+    )
+
+    data = data.merge(icite_outputs[["id", "count"]], on="id", how="left")
+
     return data
 
-def merge_individual_data(
-    data_af,
-    data_ct,
-    data_other
-):
+
+def create_cc_counts(data, icite_data):
+    """
+    Creates a count column in the given data DataFrame based on the 'cited_by_clin' column
+        in the icite_data DataFrame.
+
+    Args:
+        data (pandas.DataFrame): The input data DataFrame.
+        icite_data (pandas.DataFrame): The icite_data DataFrame containing the
+            'cited_by_clin' column.
+
+    Returns:
+        pandas.DataFrame: The updated data DataFrame with a new 'count' column.
+    """
+    # change pmid, doi to str
+    icite_data["pmid"] = icite_data["pmid"].astype(str)
+    icite_data["doi"] = icite_data["doi"].astype(str)
+
+    # merge on 'pmid'
+    data_pmid = data.merge(icite_data[["pmid", "cited_by_clin"]], how="left", on="pmid")
+    data_pmid = data_pmid.drop_duplicates(
+        subset=["parent_id", "id", "level", "source"]
+    )
+
+    # merge on 'doi'
+    data_doi = data.merge(icite_data[["doi", "cited_by_clin"]], how="left", on="doi")
+    data_doi = data_doi.drop_duplicates(subset=["parent_id", "id", "level", "source"])
+
+    combined_data = pd.concat([data_pmid, data_doi]).drop_duplicates(
+        subset=["parent_id", "id", "level", "source"]
+    )
+
+    logger.info("Exploding cited_by_clin")
+    combined_data = combined_data[combined_data["cited_by_clin"].astype(str) != "nan"]
+
+    # drop if cited_by_clin is None
+    combined_data = combined_data[combined_data["cited_by_clin"].notnull()]
+
+    combined_data["cited_by_clin"] = combined_data["cited_by_clin"].apply(
+        lambda x: x.split(" ")
+    )
+
+    # create count column
+    combined_data["count"] = combined_data["cited_by_clin"].apply(lambda x: len(x))
+
+    # merge back with data, fill with 0 for missing count
+    data = data.merge(combined_data[["id", "count"]], on="id", how="left")
+    data["count"] = data["count"].fillna(0)
+
+    return data
+
+
+def merge_individual_data(data_af, data_ct, data_other):
     # drop id in data_ct if it is in data_af
     data_ct = data_ct[~data_ct["id"].isin(data_af["id"])]
 
@@ -563,8 +621,6 @@ def merge_individual_data(
     return data
 
 
-
-
 def _get_field_distr(data):
     df = data.copy()
     df["fields"] = df["topics"].apply(
@@ -576,9 +632,7 @@ def _get_field_distr(data):
     df = df.groupby(["id", "fields"]).size().reset_index(name="count")
 
     # calculate the share of each subfield
-    df["share"] = df.apply(
-        lambda row: row["count"] / 1, axis=1
-    )
+    df["share"] = df.apply(lambda row: row["count"] / 1, axis=1)
     # pivot the DataFrame to get one column for each subfield
     df = df.pivot(index=["id"], columns="fields", values="share")
 
@@ -590,11 +644,7 @@ def _get_field_distr(data):
 
     # change column names to be camel case, and prefix with "field_"
     df.columns = [
-        (
-            "field_" + col.lower().replace(" ", "_")
-            if col != "id"
-            else col
-        )
+        ("field_" + col.lower().replace(" ", "_") if col != "id" else col)
         for col in df.columns
     ]
 
@@ -602,6 +652,7 @@ def _get_field_distr(data):
     data = data.merge(df, on=["id"], how="left")
 
     return data
+
 
 def _calculate_mesh_balance(data, mesh_terms_dict):
     df = data.copy()
@@ -621,11 +672,8 @@ def _calculate_mesh_balance(data, mesh_terms_dict):
     # group by author and mesh_terms and calculate the count
     df = df.groupby(["id", "mesh_terms"]).size().reset_index(name="count")
 
-
     # calculate the share of each mesh term
-    df["share"] = df.apply(
-        lambda row: row["count"], axis=1
-    )
+    df["share"] = df.apply(lambda row: row["count"], axis=1)
 
     # pivot the DataFrame to get one column for each mesh term
     df = df.pivot(index=["id"], columns="mesh_terms", values="share")
@@ -634,10 +682,7 @@ def _calculate_mesh_balance(data, mesh_terms_dict):
     df.reset_index(inplace=True)
 
     # change column names to be camel case, and prefix with "mesh_"
-    df.columns = [
-        "mesh_" + col if col != "id" else col
-        for col in df.columns
-    ]
+    df.columns = ["mesh_" + col if col != "id" else col for col in df.columns]
 
     # fill NaN values with 0
     df = df.fillna(0)
@@ -646,6 +691,7 @@ def _calculate_mesh_balance(data, mesh_terms_dict):
     data = data.merge(df, on="id", how="left")
 
     return data
+
 
 def _get_patent_citations(data, patents_data):
     """
@@ -764,12 +810,15 @@ def _get_pdb_activity(data, pdb_submissions):
     )
 
     # drop missing R_free and resolution values
-    pdb_submissions_e["R_free"] = pd.to_numeric(pdb_submissions_e["R_free"], errors="coerce")
+    pdb_submissions_e["R_free"] = pd.to_numeric(
+        pdb_submissions_e["R_free"], errors="coerce"
+    )
     pdb_submissions_e["resolution"] = pd.to_numeric(
         pdb_submissions_e["resolution"], errors="coerce"
     )
     pdb_submissions_e = pdb_submissions_e[
-        pdb_submissions_e["R_free"].notnull() & pdb_submissions_e["resolution"].notnull()
+        pdb_submissions_e["R_free"].notnull()
+        & pdb_submissions_e["resolution"].notnull()
     ]
 
     # compute average resolution and R_free per authors
@@ -801,7 +850,9 @@ def _get_pdb_activity(data, pdb_submissions):
     data_e = data_e.explode("authors")
 
     # merge with pdb_submissions_grouped
-    data_e = data_e.merge(pdb_submissions_grouped, left_on="authors", right_on="authors", how="left")
+    data_e = data_e.merge(
+        pdb_submissions_grouped, left_on="authors", right_on="authors", how="left"
+    )
 
     # group by "id", sum counts, average R_free and resolution
     data_e_grouped = (
@@ -819,7 +870,9 @@ def _get_pdb_activity(data, pdb_submissions):
         "group_" + col if col != "id" else col for col in data_e_grouped.columns
     ]
 
-    data = data.merge(pdb_submissions[["id", "resolution", "R_free"]], on="id", how="left")
+    data = data.merge(
+        pdb_submissions[["id", "resolution", "R_free"]], on="id", how="left"
+    )
     data = data.merge(data_e_grouped, on="id", how="left")
 
     return data
