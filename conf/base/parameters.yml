@@ -37,7 +37,7 @@ oa:
       api: *api
       get: *get
       filter: cites
-      max_depth: 4
+      max_depth: 3
       levels:
         0: 0
         1: 1
