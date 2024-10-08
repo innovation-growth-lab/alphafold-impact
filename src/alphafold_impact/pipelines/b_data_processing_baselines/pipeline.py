@@ -37,5 +37,5 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                 outputs="chains.seed_technologies.intermediate",
             ),
         ],
-        tags="data_analysis_chains",
+        tags=["data_analysis_chains", "rerun"],
     )

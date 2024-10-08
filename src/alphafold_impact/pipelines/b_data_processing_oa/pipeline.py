@@ -34,14 +34,12 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                     "data": "oa.data_collection.triad.depth.level.raw",
                     "level": f"params:oa.data_collection.depth.levels.{level}",
                 },
-                outputs={
-                    "intermediate_data": f"oa.data_processing.depth.no_mesh.{level}.intermediate",
-                },
+                outputs=f"oa.data_processing.depth.{level}.intermediate",
                 tags=[
-                    f"oa.data_processing.depth.no_mesh.level.{str(level)}",
-                    "oa.data_processing.depth.no_mesh.levels",
+                    f"oa.data_processing.depth.level.{str(level)}",
+                    "oa.data_processing.depth.levels",
                 ],
-                namespace=f"oa.data_processing.depth.no_mesh.level.{str(level)}",
+                name=f"oa.data_processing.depth.level.{str(level)}",
             )
             for level in settings.DYNAMIC_PIPELINES_MAPPING["depth_levels"]
         ]
@@ -53,9 +51,9 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 func=combine_levels_data,
                 inputs={
                     # "unique": "params:false_",
-                    "level0": "oa.data_processing.depth.no_mesh.0.intermediate",
-                    "level1": "oa.data_processing.depth.no_mesh.1.intermediate",
-                    "level2": "oa.data_processing.depth.no_mesh.2.intermediate",
+                    "level0": "oa.data_processing.depth.0.intermediate",
+                    "level1": "oa.data_processing.depth.1.intermediate",
+                    "level2": "oa.data_processing.depth.2.intermediate",
                 },
                 outputs="oa.data_processing.depth.intermediate",
             )
@@ -75,6 +73,8 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 ],
                 tags=[
                     "oa.data_processing.subfield.structural_biology",
+                    "rerun",
+                    "debug"
                 ],
             )
         ]
@@ -94,6 +94,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
         tags=[
             "oa.data_processing.structural_biology.depth.level.0",
             "oa.data_processing.structural_biology.depth.levels",
+            "rerun"
         ],
     )
 
@@ -119,6 +120,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
         tags=[
             "oa.data_processing.structural_biology.depth.level.1",
             "oa.data_processing.structural_biology.depth.levels",
+            "rerun"
         ],
     )
 
@@ -145,7 +147,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 ],
             ),
         ],
-        tags="oa.data_processing.depth.reassign_ct",
+        tags=["oa.data_processing.depth.reassign_ct", "rerun"],
     )
 
     post_level2_dw_pipeline = pipeline(
@@ -176,7 +178,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 tags=["combine_ct", "concat_and_combine_ct"],
             ),
         ],
-        tags="oa.data_processing.depth.post_level2_dw",
+        tags=["oa.data_processing.depth.post_level2_dw", "rerun"],
     )
 
     return (

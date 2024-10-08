@@ -56,14 +56,15 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
             node(
                 func=fetch_subfield_baseline,
                 inputs={
-                    "oa_concept_ids": "params:oa.data_collection.subfield.structural_biology.concept_ids", # pylint: disable=line-too-long
-                    "from_publication_date": "params:oa.data_collection.subfield.structural_biology.from_date", # pylint: disable=line-too-long
+                    "oa_concept_ids": "params:oa.data_collection.subfield.structural_biology.concept_ids",  # pylint: disable=line-too-long
+                    "from_publication_date": "params:oa.data_collection.subfield.structural_biology.from_date",  # pylint: disable=line-too-long
                     "api_config": "params:oa.data_collection.subfield.structural_biology.api",
                 },
                 outputs="oa.data_collection.subfield.structural_biology.raw",
-                tags="structural_biology",
+                name="fetch_subfield_baseline",
             )
-        ]
+        ],
+        tags="structural_biology",
     )
 
     fixed_depth_structural_biology_pipeline = pipeline(
@@ -87,11 +88,11 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                 outputs="oa.data_collection.subfield.structural_biology.depth.raw",
             ),
         ],
-        tags="oa.data_collection.depth.structural_biology",
+        tags=["oa.data_collection.depth.structural_biology", "rerun"],
     )
 
     fetch_level_2_ct_papers_pipeline = pipeline(
-        [
+        [  # additional level 2 for when a set of SB papers are assigned level -1 (ie. CT papers)
             node(
                 func=fetch_level_2_ct_papers,
                 inputs={
@@ -111,7 +112,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                 outputs="oa.data_collection.subfield.structural_biology.depth.level.2.raw",
             ),
         ],
-        tags="oa.data_collection.depth.level_2",
+        tags=["oa.data_collection.depth.level_2", "rerun"],
     )
 
     return (

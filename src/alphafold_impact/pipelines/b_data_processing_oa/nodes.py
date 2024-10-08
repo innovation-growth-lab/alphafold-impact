@@ -75,7 +75,6 @@ def _json_loader(
                     "authorships",
                     "topics",
                     "concepts",
-                    "grants",
                 ]
             }
             for item in children_list
@@ -166,24 +165,6 @@ def _json_loader(
             )
         )
 
-        # process grants, getting triplets out of "funder", "funder_display_name", and "award_id"
-        df["grants"] = df["grants"].apply(
-            lambda x: (
-                [
-                    (
-                        grant.get("funder", {})
-                        # .get("id", "")
-                        .replace("https://openalex.org/", ""),
-                        grant.get("funder_display_name"),
-                        grant.get("award_id"),
-                    )
-                    for grant in x
-                ]
-                if x
-                else None
-            )
-        )
-
         # append to output
         output.append(df)
 
@@ -232,7 +213,6 @@ def process_data_by_level(data: Dict[str, AbstractDataset], level: int) -> pd.Da
             "authorships",
             "topics",
             "concepts",
-            "grants",
         ]
     ]
 
@@ -282,7 +262,6 @@ def combine_levels_data(unique: str = "all", **kwargs) -> pd.DataFrame:
                     "authorships",
                     "topics",
                     "concepts",
-                    "grants",
                 ]
             ]
         )
@@ -331,7 +310,6 @@ def combine_levels_data_connect_parents(unique: str = "all", **kwargs) -> pd.Dat
                 "authorships",
                 "topics",
                 "concepts",
-                "grants",
             ]
         ]
     )
@@ -379,7 +357,6 @@ def process_data_by_level_ptd(
                     "authorships",
                     "topics",
                     "concepts",
-                    "grants",
                 ]
             ]
         }
@@ -449,7 +426,6 @@ def process_subfield_data(data: Dict[str, AbstractDataset]) -> pd.DataFrame:
                     "authorships",
                     "topics",
                     "concepts",
-                    "grants",
                 ]
             }
             for item in raw_json_data
@@ -540,23 +516,6 @@ def process_subfield_data(data: Dict[str, AbstractDataset]) -> pd.DataFrame:
             )
         )
 
-        # process grants, getting triplets out of "funder", "funder_display_name", and "award_id"
-        df["grants"] = df["grants"].apply(
-            lambda x: (
-                [
-                    (
-                        grant.get("funder", {})
-                        .get("id", "")
-                        .replace("https://openalex.org/", ""),
-                        grant.get("funder", {}).get("display_name"),
-                        grant.get("award_id"),
-                    )
-                    for grant in x
-                ]
-                if x
-                else None
-            )
-        )
         # change doi to remove the url
         df["doi"] = df["doi"].str.replace("https://doi.org/", "")
 

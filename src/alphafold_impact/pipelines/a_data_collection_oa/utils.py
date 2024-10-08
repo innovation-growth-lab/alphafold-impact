@@ -126,6 +126,18 @@ def _works_generator(
     else:
         filter_string = f"{filter_criteria}:{oa_id}"
 
+    mailto_candidates = [
+        "david.ampudia@nesta.org.uk",
+        "data_analytics@nesta.org.uk",
+        "david.ampudia@bse.eu",
+        "david.ampudia@upf.edu",
+        "dampudiavicente@gmail.com"
+    ]
+
+    # select a random email from the list
+    import random
+    mailto = random.choice(mailto_candidates)
+
     if sample_size == -1:
         cursor_url = (
             f"https://api.openalex.org/works?filter={filter_string}"
