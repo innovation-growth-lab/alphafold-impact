@@ -61,7 +61,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                     "api_config": "params:oa.data_collection.subfield.structural_biology.api",
                 },
                 outputs="oa.data_collection.subfield.structural_biology.raw",
-                name="fetch_sb",
+                name="fetch_baseline_sb",
             )
         ],
         tags="data_collection_oa",

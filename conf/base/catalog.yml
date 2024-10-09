@@ -173,6 +173,44 @@ oa.chain_labels.id.other.primary:
   <<: *_pq
   filepath: s3://igl-alphafold/oct/03_primary/oa/works/other/chain_labels.parquet
 
+nih.data_collection.mesh_terms:
+  <<: *_csv
+  filepath: s3://igl-alphafold/oct/01_raw/nih/mesh/gdm_mesh_taxonomy.csv
+
+publications.data.af:
+  <<: *_pq
+  filepath: s3://igl-alphafold/oct/04_output/publications/af.parquet
+
+publications.data.ct:
+  <<: *_pq
+  filepath: s3://igl-alphafold/oct/04_output/publications/ct.parquet
+
+publications.data.other:
+  <<: *_pq
+  filepath: s3://igl-alphafold/oct/04_output/publications/other.parquet
+
+publications.data.outputs:
+  <<: *_pq
+  filepath: s3://igl-alphafold/oct/04_output/publications/outputs.parquet
+
+  
+lens.data_processing.csv.raw:
+  <<: *_csv_ptd
+  path: s3://igl-alphafold/oct/01_raw/lens/
+
+lens.data_processing.primary:
+  <<: *_pq
+  filepath: s3://igl-alphafold/oct/03_primary/lens/main.parquet
+  
+pdb.entries.raw:
+  <<: *_pq
+  filepath: s3://igl-alphafold/oct/01_raw/pdb/entries.parquet
+
+pdb.entries.intermediate:
+  <<: *_pq
+  filepath: s3://igl-alphafold/oct/02_intermediate/pdb/entries.parquet
+  
+
 # -------------------------------------------------------------
 
 # # OA
@@ -321,32 +359,39 @@ oa.chain_labels.id.other.primary:
 #   filepath: s3://igl-alphafold/oct/03_primary/oa/works/depth/level/{level}/main.parquet
 
 
+applied_lab.data_analysis.staggered.outputs.primary:
+  <<: *_pq
+  filepath: s3://igl-alphafold/oct/04_output/analysis/applied_labs/staggered/outputs_primary.parquet
+
+applied_lab.data_analysis.staggered.outputs.quarterly.primary:
+  <<: *_pq
+  filepath: s3://igl-alphafold/oct/04_output/analysis/applied_labs/staggered/outputs_quarterly.parquet
+
+sb_lab.data_analysis.staggered.outputs.primary:
+  <<: *_pq
+  filepath: s3://igl-alphafold/oct/04_output/analysis/sb_labs/staggered/outputs_primary.parquet
+
+sb_lab.data_analysis.staggered.outputs.quarterly.primary:
+  <<: *_pq
+  filepath: s3://igl-alphafold/oct/04_output/analysis/sb_labs/staggered/outputs_quarterly.parquet
 
 
 
+# -------------------------------------------------------------
 
   
 # Lens datakedro
 lens.data_collection.{jurisdiction}.{year}.{month}.raw:
   <<: *_js_ptd
   path: s3://igl-alphafold/oct/01_raw/lens/{jurisdiction}/{year}/{month}/
-  
-lens.data_processing.csv.raw:
-  <<: *_csv_ptd
-  path: s3://igl-alphafold/oct/01_raw/lens/
 
-lens.data_processing.primary:
-  <<: *_pq
-  filepath: s3://igl-alphafold/oct/03_primary/lens/main.parquet
 
 cpc.codes:
   <<: *_pq
   filepath: s3://igl-alphafold/oct/03_primary/lens/cpc_codes.parquet
 
 # NIH - Clinical Trials
-nih.data_collection.mesh_terms:
-  <<: *_csv
-  filepath: s3://igl-alphafold/oct/01_raw/nih/mesh/gdm_mesh_taxonomy.csv
+
 
 # NIH data
 nih.data_collection.clinical_trials.raw:
@@ -398,120 +443,120 @@ pubmed.data_processing.icite.intermediate:
       - 'doi'
       - 'cited_by_clin'
 
-nih.data_analysis.funding_opportunities.structural_biology:
-  <<: *_csv
-  filepath: s3://igl-alphafold/oct/04_analysis/nih/funding_opportunities/structural_biology.csv
+# nih.data_analysis.funding_opportunities.structural_biology:
+#   <<: *_csv
+#   filepath: s3://igl-alphafold/oct/04_analysis/nih/funding_opportunities/structural_biology.csv
 
-nih.data_analysis.funding_opportunities.experimental_biology:
-  <<: *_csv
-  filepath: s3://igl-alphafold/oct/04_analysis/nih/funding_opportunities/experimental_biology.csv
+# nih.data_analysis.funding_opportunities.experimental_biology:
+#   <<: *_csv
+#   filepath: s3://igl-alphafold/oct/04_analysis/nih/funding_opportunities/experimental_biology.csv
 
-nih.reporting.funding_opportunities.sb_eb:
-  <<: *_image
-  filepath: s3://igl-alphafold/oct/07_reporting/nih/funding_opportunities/sb_eb_funding_opportunities.png
+# nih.reporting.funding_opportunities.sb_eb:
+#   <<: *_image
+#   filepath: s3://igl-alphafold/oct/07_reporting/nih/funding_opportunities/sb_eb_funding_opportunities.png
 
-nih.reporting.funding_opportunity_amounts.sb_eb:
-  <<: *_image
-  filepath: s3://igl-alphafold/oct/07_reporting/nih/funding_opportunities/sb_eb_funding_opportunity_amounts.png
+# nih.reporting.funding_opportunity_amounts.sb_eb:
+#   <<: *_image
+#   filepath: s3://igl-alphafold/oct/07_reporting/nih/funding_opportunities/sb_eb_funding_opportunity_amounts.png
 
-nih.reporting.funding_opportunities.total:
-  <<: *_image
-  filepath: s3://igl-alphafold/oct/07_reporting/nih/funding_opportunities/total_funding_opportunities.png
+# nih.reporting.funding_opportunities.total:
+#   <<: *_image
+#   filepath: s3://igl-alphafold/oct/07_reporting/nih/funding_opportunities/total_funding_opportunities.png
 
-nih.reporting.funding_opportunity_amounts.total:
-  <<: *_image
-  filepath: s3://igl-alphafold/oct/07_reporting/nih/funding_opportunities/total_funding_opportunity_amounts.png
+# nih.reporting.funding_opportunity_amounts.total:
+#   <<: *_image
+#   filepath: s3://igl-alphafold/oct/07_reporting/nih/funding_opportunities/total_funding_opportunity_amounts.png
 
-# Crunchbase data
-_cb_raw: &_cb_raw
-  type: pandas.CSVDataset
-  credentials: s3_credentials
+# # Crunchbase data
+# _cb_raw: &_cb_raw
+#   type: pandas.CSVDataset
+#   credentials: s3_credentials
 
-cb.data_processing.acquisitions.raw:
-  <<: *_cb_raw
-  filepath: ${globals:diss.crunchbase}/acquisitions.csv
+# cb.data_processing.acquisitions.raw:
+#   <<: *_cb_raw
+#   filepath: ${globals:diss.crunchbase}/acquisitions.csv
 
-cb.data_processing.category_groups.raw:
-  <<: *_cb_raw
-  filepath: ${globals:diss.crunchbase}/category_groups.csv
+# cb.data_processing.category_groups.raw:
+#   <<: *_cb_raw
+#   filepath: ${globals:diss.crunchbase}/category_groups.csv
 
-cb.data_processing.degrees.raw:
-  <<: *_cb_raw
-  filepath: ${globals:diss.crunchbase}/degrees.csv
+# cb.data_processing.degrees.raw:
+#   <<: *_cb_raw
+#   filepath: ${globals:diss.crunchbase}/degrees.csv
 
-cb.data_processing.event_appearances.raw:
-  <<: *_cb_raw
-  filepath: ${globals:diss.crunchbase}/event_appearances.csv
+# cb.data_processing.event_appearances.raw:
+#   <<: *_cb_raw
+#   filepath: ${globals:diss.crunchbase}/event_appearances.csv
 
-cb.data_processing.events.raw:
-  <<: *_cb_raw
-  filepath: ${globals:diss.crunchbase}/events.csv
+# cb.data_processing.events.raw:
+#   <<: *_cb_raw
+#   filepath: ${globals:diss.crunchbase}/events.csv
 
-cb.data_processing.funding_rounds.raw:
-  <<: *_cb_raw
-  filepath: ${globals:diss.crunchbase}/funding_rounds.csv
+# cb.data_processing.funding_rounds.raw:
+#   <<: *_cb_raw
+#   filepath: ${globals:diss.crunchbase}/funding_rounds.csv
 
-cb.data_processing.funds.raw:
-  <<: *_cb_raw
-  filepath: ${globals:diss.crunchbase}/funds.csv
+# cb.data_processing.funds.raw:
+#   <<: *_cb_raw
+#   filepath: ${globals:diss.crunchbase}/funds.csv
 
-cb.data_processing.investment_partners.raw:
-  <<: *_cb_raw
-  filepath: ${globals:diss.crunchbase}/investment_partners.csv
+# cb.data_processing.investment_partners.raw:
+#   <<: *_cb_raw
+#   filepath: ${globals:diss.crunchbase}/investment_partners.csv
 
-cb.data_processing.investments.raw:
-  <<: *_cb_raw
-  filepath: ${globals:diss.crunchbase}/investments.csv
+# cb.data_processing.investments.raw:
+#   <<: *_cb_raw
+#   filepath: ${globals:diss.crunchbase}/investments.csv
   
-cb.data_processing.investors.raw:
-  <<: *_cb_raw
-  filepath: ${globals:diss.crunchbase}/investors.csv
+# cb.data_processing.investors.raw:
+#   <<: *_cb_raw
+#   filepath: ${globals:diss.crunchbase}/investors.csv
   
-cb.data_processing.ipos.raw:
-  <<: *_cb_raw
-  filepath: ${globals:diss.crunchbase}/ipos.csv
+# cb.data_processing.ipos.raw:
+#   <<: *_cb_raw
+#   filepath: ${globals:diss.crunchbase}/ipos.csv
   
-cb.data_processing.jobs.raw:
-  <<: *_cb_raw
-  filepath: ${globals:diss.crunchbase}/jobs.csv
+# cb.data_processing.jobs.raw:
+#   <<: *_cb_raw
+#   filepath: ${globals:diss.crunchbase}/jobs.csv
   
-cb.data_processing.org_parents.raw:
-  <<: *_cb_raw
-  filepath: ${globals:diss.crunchbase}/org_parents.csv
+# cb.data_processing.org_parents.raw:
+#   <<: *_cb_raw
+#   filepath: ${globals:diss.crunchbase}/org_parents.csv
   
-cb.data_processing.organization_descriptions.raw:
-  <<: *_cb_raw
-  filepath: ${globals:diss.crunchbase}/organization_descriptions.csv
+# cb.data_processing.organization_descriptions.raw:
+#   <<: *_cb_raw
+#   filepath: ${globals:diss.crunchbase}/organization_descriptions.csv
   
-cb.data_processing.organizations.raw:
-  <<: *_cb_raw
-  filepath: ${globals:diss.crunchbase}/organizations.csv
+# cb.data_processing.organizations.raw:
+#   <<: *_cb_raw
+#   filepath: ${globals:diss.crunchbase}/organizations.csv
   
-cb.data_processing.people_descriptions.raw:
-  <<: *_cb_raw
-  filepath: ${globals:diss.crunchbase}/people_descriptions.csv
+# cb.data_processing.people_descriptions.raw:
+#   <<: *_cb_raw
+#   filepath: ${globals:diss.crunchbase}/people_descriptions.csv
   
-cb.data_processing.people.raw:
-  <<: *_cb_raw
-  filepath: ${globals:diss.crunchbase}/people.csv
+# cb.data_processing.people.raw:
+#   <<: *_cb_raw
+#   filepath: ${globals:diss.crunchbase}/people.csv
 
 # NSF
-"nsf.data_collection.awards.{year}.raw":
-  type: alphafold_impact.datasets.zip_dataset.ZipDataset
-  filepath: s3://igl-alphafold/oct/01_raw/nsf/{year}.zip
-  credentials: s3_credentials
+# "nsf.data_collection.awards.{year}.raw":
+#   type: alphafold_impact.datasets.zip_dataset.ZipDataset
+#   filepath: s3://igl-alphafold/oct/01_raw/nsf/{year}.zip
+#   credentials: s3_credentials
 
-"nsf.data_collection.awards.{year}.intermediate":
-  <<: *_js_ptd
-  path: s3://igl-alphafold/oct/02_intermediate/nsf/awards/{year}/
+# "nsf.data_collection.awards.{year}.intermediate":
+#   <<: *_js_ptd
+#   path: s3://igl-alphafold/oct/02_intermediate/nsf/awards/{year}/
 
-nsf.data_collection.funding_opportunities.raw:
-  <<: *_csv
-  filepath: s3://igl-alphafold/oct/01_raw/nsf/funding_opportunities/nsf_funding.csv
+# nsf.data_collection.funding_opportunities.raw:
+#   <<: *_csv
+#   filepath: s3://igl-alphafold/oct/01_raw/nsf/funding_opportunities/nsf_funding.csv
 
-nsf.data_collection.archived_funding_opportunities.raw:
-  <<: *_csv
-  filepath: s3://igl-alphafold/oct/01_raw/nsf/funding_opportunities/archived_nsf_funding.csv
+# nsf.data_collection.archived_funding_opportunities.raw:
+#   <<: *_csv
+#   filepath: s3://igl-alphafold/oct/01_raw/nsf/funding_opportunities/archived_nsf_funding.csv
 
 s2.data_collection.strength.cites.input:
   <<: *_js_ptd
@@ -588,14 +633,7 @@ lab.data_collection.publications.raw:
   <<: *_pq
   filepath: s3://igl-alphafold/oct/03_primary/oa/works/chains/{identifier}/complete_strong_links_with_ca.parquet
 
-pdb.entries.raw:
-  <<: *_pq
-  filepath: s3://igl-alphafold/oct/01_raw/pdb/entries.parquet
 
-pdb.entries.intermediate:
-  <<: *_pq
-  filepath: s3://igl-alphafold/oct/02_intermediate/pdb/entries.parquet
-  
 
 
 "chains.complete_strong_links_with_ca.{identifier}.ct.primary":
@@ -692,41 +730,41 @@ oa.data_processing.depth.grants.primary:
   filepath: s3://igl-alphafold/oct/03_primary/oa/works/depth/grants.parquet
 
 ### ANALYSIS ###
-analysis.af.level0_data:
+analysis.af.foundational_data:
   <<: *_pq
-  filepath: s3://igl-alphafold/oct/03_primary/oa/works/analysis/af/level0_data.parquet
+  filepath: s3://igl-alphafold/oct/03_primary/oa/works/analysis/af/foundational_data.parquet
 
-analysis.ct.level0_data:
+analysis.ct.foundational_data:
   <<: *_pq
-  filepath: s3://igl-alphafold/oct/03_primary/oa/works/analysis/ct/level0_data.parquet
+  filepath: s3://igl-alphafold/oct/03_primary/oa/works/analysis/ct/foundational_data.parquet
 
-analysis.other.level0_data:
+analysis.other.foundational_data:
   <<: *_pq
-  filepath: s3://igl-alphafold/oct/03_primary/oa/works/analysis/other/level0_data.parquet
+  filepath: s3://igl-alphafold/oct/03_primary/oa/works/analysis/other/foundational_data.parquet
 
-analysis.descriptive.level0_data:
+analysis.descriptive.foundational_data:
   <<: *_pq
-  filepath: s3://igl-alphafold/oct/03_primary/oa/works/analysis/descriptive/level0_data.parquet
+  filepath: s3://igl-alphafold/oct/03_primary/oa/works/analysis/descriptive/foundational_data.parquet
 
-analysis.descriptive.level0_data.processed:
+analysis.descriptive.foundational_data.processed:
   <<: *_pq
-  filepath: s3://igl-alphafold/oct/03_primary/oa/works/analysis/descriptive/level0_data_processed.parquet
+  filepath: s3://igl-alphafold/oct/03_primary/oa/works/analysis/descriptive/foundational_data_processed.parquet
 
-analysis.descriptive.level0_data_with_cc:
+analysis.descriptive.foundational_data_with_cc:
   <<: *_pq
-  filepath: s3://igl-alphafold/oct/04_output/analysis/descriptive/level0_data_with_cc.parquet
+  filepath: s3://igl-alphafold/oct/04_output/analysis/descriptive/foundational_data_with_cc.parquet
 
-analysis.descriptive.level0_data_with_moderators_cc:
+analysis.descriptive.foundational_data_with_moderators_cc:
   <<: *_pq
-  filepath: s3://igl-alphafold/oct/04_output/analysis/descriptive/level0_data_with_strong_cc.parquet
+  filepath: s3://igl-alphafold/oct/04_output/analysis/descriptive/foundational_data_with_strong_cc.parquet
 
-analysis.descriptive.level0_data_with_patents:
+analysis.descriptive.foundational_data_with_patents:
   <<: *_pq
-  filepath: s3://igl-alphafold/oct/04_output/analysis/descriptive/level0_data_with_patents.parquet
+  filepath: s3://igl-alphafold/oct/04_output/analysis/descriptive/foundational_data_with_patents.parquet
 
-analysis.descriptive.level0_data_with_moderators_pc:
+analysis.descriptive.foundational_data_with_moderators_pc:
   <<: *_pq
-  filepath: s3://igl-alphafold/oct/04_output/analysis/descriptive/level0_data_with_strong_pc.parquet
+  filepath: s3://igl-alphafold/oct/04_output/analysis/descriptive/foundational_data_with_strong_pc.parquet
 
 analysis.descriptive.applied_data:
   <<: *_pq
@@ -748,9 +786,9 @@ analysis.descriptive.applied_data_with_moderators_pc:
   <<: *_pq
   filepath: s3://igl-alphafold/oct/04_output/analysis/descriptive/applied_data_with_strong_pc.parquet
 
-analysis.descriptive.level0_data_with_patents_cpc:
+analysis.descriptive.foundational_data_with_patents_cpc:
   <<: *_pq
-  filepath: s3://igl-alphafold/oct/04_output/analysis/descriptive/level0_data_with_patents_cpc.parquet
+  filepath: s3://igl-alphafold/oct/04_output/analysis/descriptive/foundational_data_with_patents_cpc.parquet
 
 sb_lab.data_analysis.outputs.input:
   <<: *_pq
@@ -769,13 +807,7 @@ sb_lab.data_analysis.outputs.primary:
   filepath: s3://igl-alphafold/oct/04_output/analysis/sb_labs/outputs_primary.parquet
 
 
-sb_lab.data_analysis.staggered.outputs.primary:
-  <<: *_pq
-  filepath: s3://igl-alphafold/oct/04_output/analysis/sb_labs/staggered/outputs_primary.parquet
 
-sb_lab.data_analysis.staggered.outputs.quarterly.primary:
-  <<: *_pq
-  filepath: s3://igl-alphafold/oct/04_output/analysis/sb_labs/staggered/outputs_quarterly.parquet
 
 sb_lab.data_analysis.staggered.outputs.collapsed.primary:
   <<: *_pq
@@ -913,13 +945,7 @@ applied_lab.data_analysis.outputs.citations.event_study_pc:
   <<: *_pq
   filepath: s3://igl-alphafold/oct/04_output/analysis/applied_labs/outputs_event_study_pc_citations.parquet
 
-applied_lab.data_analysis.staggered.outputs.primary:
-  <<: *_pq
-  filepath: s3://igl-alphafold/oct/04_output/analysis/applied_labs/staggered/outputs_primary.parquet
 
-applied_lab.data_analysis.staggered.outputs.quarterly.primary:
-  <<: *_pq
-  filepath: s3://igl-alphafold/oct/04_output/analysis/applied_labs/staggered/outputs_quarterly.parquet
 
 applied_lab.data_analysis.staggered.outputs.collapsed.primary:
   <<: *_pq
@@ -992,19 +1018,3 @@ reporting.tcc_sb_papers:
 reporting.cc_sb_labs:
   <<: *_image
   filepath: s3://igl-alphafold/oct/07_reporting/tcc/cc_sb_labs.png
-
-analysis.descriptive.data.af:
-  <<: *_pq
-  filepath: s3://igl-alphafold/oct/04_output/analysis/descriptive_af.parquet
-
-analysis.descriptive.data.ct:
-  <<: *_pq
-  filepath: s3://igl-alphafold/oct/04_output/analysis/descriptive_ct.parquet
-
-analysis.descriptive.data.other:
-  <<: *_pq
-  filepath: s3://igl-alphafold/oct/04_output/analysis/descriptive_other.parquet
-
-analysis.descriptive.data.outputs:
-  <<: *_pq
-  filepath: s3://igl-alphafold/oct/04_output/analysis/descriptive_outputs.parquet

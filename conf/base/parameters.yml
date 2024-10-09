@@ -467,7 +467,7 @@ pdb:
 start_level: 1
 max_level: 3
 
-analysis:
+publications:
   source:
     af: "af"
     ct: "ct"
