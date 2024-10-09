@@ -454,8 +454,6 @@ false_: False
 chains:
   identifier:
     id: "id"
-    pmid: "pmid"
-    doi: "doi"
   num_levels:
     af: 3
     ct: 3
