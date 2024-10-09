@@ -9,7 +9,7 @@ from kedro.pipeline import Pipeline, pipeline, node
 from .nodes import filter_and_combine_icite
 
 
-def create_pipeline(**kwargs) -> Pipeline:
+def create_pipeline(**kwargs) -> Pipeline: # pylint: disable=unused-argument&missing-function-docstring
     return pipeline(
         [
             node(
