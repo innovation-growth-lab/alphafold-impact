@@ -35,11 +35,8 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                     "level": f"params:oa.data_collection.depth.levels.{level}",
                 },
                 outputs=f"oa.data_processing.depth.{level}.intermediate",
-                tags=[
-                    f"oa.data_processing.depth.level.{str(level)}",
-                    "oa.data_processing.depth.levels",
-                ],
-                name=f"oa.data_processing.depth.level.{str(level)}",
+                tags=["data_processing_oa"],
+                name=f"process_af_level_{str(level)}",
             )
             for level in settings.DYNAMIC_PIPELINES_MAPPING["depth_levels"]
         ]
@@ -56,25 +53,22 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                     "level2": "oa.data_processing.depth.2.intermediate",
                 },
                 outputs="oa.data_processing.depth.intermediate",
+                name="combine_af_levels",
             )
         ],
-        tags="oa.data_processing.depth.combine_levels",
+        tags="data_processing_oa",
     )
 
     structural_biology_processing_pieline = pipeline(
         [
             node(
                 func=process_subfield_data,
-                inputs=[
-                    "oa.data_collection.subfield.structural_biology.raw"
-                ],
-                outputs=[
-                    "oa.data_processing.subfield.structural_biology.primary"
-                ],
+                inputs=["oa.data_collection.subfield.structural_biology.raw"],
+                outputs="oa.data_processing.subfield.structural_biology.primary",
+                name="process_sb",
                 tags=[
-                    "oa.data_processing.subfield.structural_biology",
+                    "data_processing_oa",
                     "rerun",
-                    "debug"
                 ],
             )
         ]
@@ -89,13 +83,10 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                     "level": "params:oa.data_collection.depth.levels.0",
                 },
                 outputs="oa.data_collection.subfield.structural_biology.depth.0.intermediate",
+                name="process_sb_level_0",
             )
         ],
-        tags=[
-            "oa.data_processing.structural_biology.depth.level.0",
-            "oa.data_processing.structural_biology.depth.levels",
-            "rerun"
-        ],
+        tags=["data_processing_oa", "rerun"],
     )
 
     baseline_level1_pipeline = pipeline(
@@ -107,6 +98,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                     "level": "params:oa.data_collection.depth.levels.1",
                 },
                 outputs="oa.data_collection.subfield.structural_biology.depth.1.ptd.intermediate",
+                name="process_sb_level_1",
             ),
             node(
                 func=concat_pq_ptd,
@@ -114,13 +106,12 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                     "data": "oa.data_collection.subfield.structural_biology.depth.1.ptd.intermediate",  # pylint: disable=line-too-long
                 },
                 outputs="oa.data_collection.subfield.structural_biology.depth.1.intermediate",
-                tags="concat_pq_ptd",
+                name="concatenate_sb_partitioned",
             ),
         ],
         tags=[
-            "oa.data_processing.structural_biology.depth.level.1",
-            "oa.data_processing.structural_biology.depth.levels",
-            "rerun"
+            "data_processing_oa",
+            "rerun",
         ],
     )
 
@@ -134,6 +125,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                     "level1": "oa.data_collection.subfield.structural_biology.depth.1.intermediate",
                 },
                 outputs="oa.data_processing.structural_biology.depth.intermediate",
+                name="combine_sb_levels",
             ),
             node(
                 func=reassign_ct_levels,
@@ -145,9 +137,10 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                     "oa.data_processing.structural_biology.depth.reassigned.ct.intermediate",
                     "oa.data_processing.structural_biology.depth.other.intermediate",
                 ],
+                name="extract_ct_sb_levels",
             ),
         ],
-        tags=["oa.data_processing.depth.reassign_ct", "rerun"],
+        tags=["data_processing_oa", "rerun"],
     )
 
     post_level2_dw_pipeline = pipeline(
@@ -159,26 +152,27 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                     "level": "params:oa.data_collection.depth.levels.2",
                 },
                 outputs="oa.data_collection.subfield.structural_biology.depth.2.ptd.intermediate",
+                name="process_ct_sb_level_2",
             ),
             node(
                 func=concat_pq_ptd,
                 inputs={
-                    "data": "oa.data_collection.subfield.structural_biology.depth.2.ptd.intermediate", # pylint: disable=line-too-long
+                    "data": "oa.data_collection.subfield.structural_biology.depth.2.ptd.intermediate",  # pylint: disable=line-too-long
                 },
                 outputs="oa.data_collection.subfield.structural_biology.depth.2.intermediate",
-                tags=["concat_pq_ptd", "concat_and_combine_ct"],
+                name="concatenate_ct_sb_partitioned",
             ),
             node(
                 func=combine_levels_data_connect_parents,
                 inputs={
-                    "level1": "oa.data_processing.structural_biology.depth.reassigned.ct.intermediate", # pylint: disable=line-too-long
+                    "level1": "oa.data_processing.structural_biology.depth.reassigned.ct.intermediate",  # pylint: disable=line-too-long
                     "level2": "oa.data_collection.subfield.structural_biology.depth.2.intermediate",
                 },
                 outputs="oa.data_processing.structural_biology.depth.ct.intermediate",
-                tags=["combine_ct", "concat_and_combine_ct"],
+                name="combine_ct_sb_levels",
             ),
         ],
-        tags=["oa.data_processing.depth.post_level2_dw", "rerun"],
+        tags=["data_processing_oa", "rerun"],
     )
 
     return (
