@@ -69,9 +69,11 @@ oa.data_processing.structural_biology.depth.reassigned.ct.intermediate:
   <<: *_pq
   filepath: s3://igl-alphafold/oct/02_intermediate/oa/works/depth/subfield/structural_biology/reassigned_ct.parquet
 
+
 oa.data_processing.depth.all.primary:
   <<: *_pq
   filepath: s3://igl-alphafold/oct/03_primary/oa/works/depth/main_all.parquet
+  
   
 oa.data_processing.depth.level.0.baseline.primary:
   <<: *_pq
@@ -96,6 +98,18 @@ oa.data_collection.subfield.structural_biology.depth.1.ptd.intermediate:
 oa.data_collection.subfield.structural_biology.depth.2.ptd.intermediate:
   <<: *_pq_ptd
   path: s3://igl-alphafold/oct/02_intermediate/oa/works/depth/subfield/structural_biology/level/2/ptd/
+
+oa.data_processing.depth.0.intermediate:
+  <<: *_pq
+  filepath: s3://igl-alphafold/oct/02_intermediate/oa/works/depth/level/0/main.parquet
+
+oa.data_processing.depth.1.intermediate:
+  <<: *_pq
+  filepath: s3://igl-alphafold/oct/02_intermediate/oa/works/depth/level/1/main.parquet
+
+oa.data_processing.depth.2.intermediate:
+  <<: *_pq
+  filepath: s3://igl-alphafold/oct/02_intermediate/oa/works/depth/level/2/main.parquet
 
 oa.data_processing.depth.intermediate:
   <<: *_pq
@@ -124,6 +138,8 @@ oa.data_processing.depth.ct.primary:
 oa.data_processing.depth.other.primary:
   <<: *_pq
   filepath: s3://igl-alphafold/oct/03_primary/oa/works/depth/other/main.parquet
+
+# -------------------------------------------------------------
 
 chains.seed_technologies.intermediate:
   <<: *_pq
@@ -165,9 +181,15 @@ oa.chain_labels.id.other.primary:
   <<: *_pq
   filepath: s3://igl-alphafold/oct/03_primary/oa/works/other/chain_labels.parquet
 
+# -------------------------------------------------------------
+
 nih.data_collection.mesh_terms:
   <<: *_csv
   filepath: s3://igl-alphafold/oct/01_raw/nih/mesh/gdm_mesh_taxonomy.csv
+
+pubmed.data_collection.icite.raw:
+  <<: *_csv_ptd
+  path: s3://igl-alphafold/oct/01_raw/icite/icite_feb_2024/
 
 pubmed.data_processing.icite.intermediate:
   <<: *_pq
@@ -209,6 +231,64 @@ publications.data.other:
 publications.data.outputs:
   <<: *_pq
   filepath: s3://igl-alphafold/oct/04_output/publications/outputs.parquet
+
+# -------------------------------------------------------------
+
+sb_lab.data_collection.candidates.publications.intermediate:
+  <<: *_js_ptd
+  path: s3://igl-alphafold/oct/02_intermediate/oa/sb_labs/candidate_publications/
+
+sb_lab.data_collection.candidates.scores.intermediate:
+  <<: *_pq_ptd
+  path: s3://igl-alphafold/oct/02_intermediate/oa/sb_labs/scores/
+
+sb_lab.data_collection.candidates.scores.primary:
+  <<: *_pq
+  filepath: s3://igl-alphafold/oct/03_primary/oa/sb_labs/main_scores.parquet
+
+sb_lab.data_collection.assignment.primary:
+  <<: *_pq
+  filepath: s3://igl-alphafold/oct/03_primary/oa/sb_labs/assignments.parquet
+
+sb_lab.data_collection.publications.raw:
+  <<: *_pq_ptd
+  path: s3://igl-alphafold/oct/01_raw/oa/sb_labs/publications/
+
+sb_lab.data_collection.candidates.map:
+  <<: *_pq
+  filepath: s3://igl-alphafold/oct/02_intermediate/oa/sb_labs/candidates_map.parquet
+
+sb_lab.data_collection.institution_info.primary:
+  <<: *_pq
+  filepath: s3://igl-alphafold/oct/03_primary/oa/sb_labs/institution_info.parquet
+
+other_lab.data_collection.candidates.publications.intermediate:
+  <<: *_js_ptd
+  path: s3://igl-alphafold/oct/02_intermediate/oa/other_labs/candidate_publications/
+
+other_lab.data_collection.candidates.scores.intermediate:
+  <<: *_pq_ptd
+  path: s3://igl-alphafold/oct/02_intermediate/oa/other_labs/scores/
+
+other_lab.data_collection.candidates.scores.primary:
+  <<: *_pq
+  filepath: s3://igl-alphafold/oct/03_primary/oa/other_labs/main_scores.parquet
+
+other_lab.data_collection.assignment.primary:
+  <<: *_pq
+  filepath: s3://igl-alphafold/oct/03_primary/oa/other_labs/assignments.parquet
+
+other_lab.data_collection.publications.raw:
+  <<: *_pq_ptd
+  path: s3://igl-alphafold/oct/01_raw/oa/other_labs/publications/
+
+other_lab.data_collection.candidates.map:
+  <<: *_pq
+  filepath: s3://igl-alphafold/oct/02_intermediate/oa/other_labs/candidates_map.parquet
+
+other_lab.data_collection.institution_info.primary:
+  <<: *_pq
+  filepath: s3://igl-alphafold/oct/03_primary/oa/other_labs/institution_info.parquet
 
 # -------------------------------------------------------------
 
@@ -643,62 +723,9 @@ sb_lab.data_analysis.staggered.outputs.quarterly.primary:
 #   <<: *_pq
 #   filepath: s3://igl-alphafold/oct/03_primary/oa/works/chains/other/{identifier}/complete_strong_links_with_ca.parquet
 
-# sb_lab.data_collection.candidates.publications.intermediate:
-#   <<: *_js_ptd
-#   path: s3://igl-alphafold/oct/02_intermediate/oa/sb_labs/candidate_publications/
-
-# sb_lab.data_collection.candidates.map:
-#   <<: *_pq
-#   filepath: s3://igl-alphafold/oct/02_intermediate/oa/sb_labs/candidates_map.parquet
 
 
-# sb_lab.data_collection.institution_info.primary:
-#   <<: *_pq
-#   filepath: s3://igl-alphafold/oct/03_primary/oa/sb_labs/institution_info.parquet
 
-# sb_lab.data_collection.candidates.scores.intermediate:
-#   <<: *_pq_ptd
-#   path: s3://igl-alphafold/oct/02_intermediate/oa/sb_labs/scores/
-
-# sb_lab.data_collection.candidates.scores.primary:
-#   <<: *_pq
-#   filepath: s3://igl-alphafold/oct/03_primary/oa/sb_labs/main_scores.parquet
-
-# sb_lab.data_collection.assignment.primary:
-#   <<: *_pq
-#   filepath: s3://igl-alphafold/oct/03_primary/oa/sb_labs/assignments.parquet
-
-# sb_lab.data_collection.publications.raw:
-#   <<: *_pq_ptd
-#   path: s3://igl-alphafold/oct/01_raw/oa/sb_labs/publications/
-
-# other_lab.data_collection.candidates.publications.intermediate:
-#   <<: *_js_ptd
-#   path: s3://igl-alphafold/oct/02_intermediate/oa/other_labs/candidate_publications/
-
-# other_lab.data_collection.candidates.map:
-#   <<: *_pq
-#   filepath: s3://igl-alphafold/oct/02_intermediate/oa/other_labs/candidates_map.parquet
-
-# other_lab.data_collection.institution_info.primary:
-#   <<: *_pq
-#   filepath: s3://igl-alphafold/oct/03_primary/oa/other_labs/institution_info.parquet
-
-# other_lab.data_collection.candidates.scores.intermediate:
-#   <<: *_pq_ptd
-#   path: s3://igl-alphafold/oct/02_intermediate/oa/other_labs/scores/
-
-# other_lab.data_collection.candidates.scores.primary:
-#   <<: *_pq
-#   filepath: s3://igl-alphafold/oct/03_primary/oa/other_labs/main_scores.parquet
-
-# other_lab.data_collection.assignment.primary:
-#   <<: *_pq
-#   filepath: s3://igl-alphafold/oct/03_primary/oa/other_labs/assignments.parquet
-
-# other_lab.data_collection.publications.raw:
-#   <<: *_pq_ptd
-#   path: s3://igl-alphafold/oct/01_raw/oa/other_labs/publications/
 
 # os.data_collection.regions.raw:
 #   <<: *_pq_ptd
