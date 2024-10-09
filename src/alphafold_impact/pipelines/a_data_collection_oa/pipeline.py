@@ -90,7 +90,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                 name="fetch_sb_citation_to_specific_depth",
             ),
         ],
-        tags=["data_collection_oa", "rerun"],
+        tags=["data_collection_oa"],
     )
 
 

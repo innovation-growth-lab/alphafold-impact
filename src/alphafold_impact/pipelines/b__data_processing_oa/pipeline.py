@@ -68,7 +68,6 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 name="process_sb",
                 tags=[
                     "data_processing_oa",
-                    "rerun",
                 ],
             )
         ]
@@ -86,7 +85,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 name="process_sb_level_0",
             )
         ],
-        tags=["data_processing_oa", "rerun"],
+        tags=["data_processing_oa"],
     )
 
     baseline_level1_pipeline = pipeline(
@@ -111,7 +110,6 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
         ],
         tags=[
             "data_processing_oa",
-            "rerun",
         ],
     )
 
@@ -140,7 +138,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 name="extract_ct_sb_levels",
             ),
         ],
-        tags=["data_processing_oa", "rerun"],
+        tags=["data_processing_oa"],
     )
 
     post_level2_dw_pipeline = pipeline(
@@ -172,7 +170,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 name="combine_ct_sb_levels",
             ),
         ],
-        tags=["data_processing_oa", "rerun"],
+        tags=["data_processing_oa"],
     )
 
     return (

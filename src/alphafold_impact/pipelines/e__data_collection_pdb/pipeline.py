@@ -19,5 +19,5 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                 name="fetch_pdb_details",
             )
         ],
-        tags=["data_collection_pdb", "rerun"],
+        tags=["data_collection_pdb",  "rerun"],
     )

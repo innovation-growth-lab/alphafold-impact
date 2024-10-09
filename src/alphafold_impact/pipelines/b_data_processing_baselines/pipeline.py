@@ -39,5 +39,5 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                 name="assign_ct_focal_label"
             ),
         ],
-        tags=["data_processing_baselines", "rerun"],
+        tags=["data_processing_baselines"],
     )
