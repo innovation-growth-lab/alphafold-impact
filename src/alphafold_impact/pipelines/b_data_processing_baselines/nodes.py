@@ -7,8 +7,8 @@ import logging
 import pandas as pd
 import numpy as np
 from scipy.spatial.distance import euclidean
-from ..d_data_processing_chains.nodes import (  # pylint: disable=relative-beyond-top-level
-    _sort_and_drop,
+from ..d_data_processing_chains.utils import (  # pylint: disable=relative-beyond-top-level
+    sort_and_drop,
 )
 
 
@@ -156,7 +156,7 @@ def process_baseline_data(
     )
 
     # define & implement the custom sorting, filtering order
-    processed_data = _sort_and_drop(processed_data, unique=False)
+    processed_data = sort_and_drop(processed_data, unique=False)
 
     # drop empty topics & concepts rows
     processed_data = processed_data.dropna(

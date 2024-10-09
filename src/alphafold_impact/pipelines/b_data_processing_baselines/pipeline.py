@@ -21,12 +21,14 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                     "seed_baseline_data": "oa.data_processing.subfield.structural_biology.primary",
                 },
                 outputs="baseline_candidates",
+                name="process_sb_for_chain_assignment",
             ),
             node(
                 process_af_data,
                 inputs={"alphafold_data": "oa.data_processing.depth.all.primary"},
                 outputs="alphafold_target",
                 tags="alphafold_targert_obs",
+                name="process_af_for_chain_assignment",
             ),
             node(
                 assign_focal_label,
@@ -35,7 +37,8 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                     "alphafold_target": "alphafold_target",
                 },
                 outputs="chains.seed_technologies.intermediate",
+                name="assign_ct_focal_label"
             ),
         ],
-        tags=["data_analysis_chains", "rerun"],
+        tags=["data_processing_baselines", "rerun"],
     )
