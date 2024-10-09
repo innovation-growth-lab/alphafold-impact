@@ -31,9 +31,10 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                     "perpage": "params:s2.data_collection.strength.api.perpage",
                 },
                 outputs="oa.data_processing.depth.all.primary",
+                name="fetch_s2_citation_intent_af"
             ),
         ],
-        tags=["s2.intent.primary"],
+        tags=["data_collection_s2"],
     )
 
     baseline_seed_pipeline = pipeline(
@@ -48,9 +49,10 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                     "perpage": "params:s2.data_collection.strength.api.perpage",
                 },
                 outputs="oa.data_processing.depth.level.0.baseline.primary",
+                name="fetch_s2_citation_intent_sb_level_0",
             ),
         ],
-        tags=["s2.intent.baseline"],
+        tags=["data_collection_s2"],
     )
 
     ct_sb_data_intent_pipeline = pipeline(
@@ -65,9 +67,10 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                     "perpage": "params:s2.data_collection.strength.api.perpage",
                 },
                 outputs="oa.data_processing.depth.ct.primary",
+                name="fetch_s2_citation_intent_ct_sb",
             ),
         ],
-        tags=["s2_intent_ct_sb"],
+        tags=["data_collection_s2"],
     )
 
     other_sb_data_intent_pipeline = pipeline(
@@ -82,9 +85,10 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                     "perpage": "params:s2.data_collection.strength.api.perpage",
                 },
                 outputs="oa.data_processing.depth.other.primary",
+                name="fetch_s2_citation_intent_other_sb",
             ),
         ],
-        tags=["s2_intent_other_sb"],
+        tags=["data_collection_s2"],
     )
 
     return (

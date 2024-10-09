@@ -67,7 +67,7 @@ def fetch_citation_details(
     data_list = []
 
     while True:
-        response = session.get(url, headers=headers)
+        response = session.get(url)#, headers=headers)
         response.raise_for_status()
         data = response.json().get("data", [])
         data_list.extend(data)
