@@ -29,7 +29,6 @@ from .nodes import (
     fetch_subfield_baseline,
     fetch_citation_to_specific_depth,
     preprocess_baseline_data,
-    fetch_level_2_ct_papers,
 )
 
 
@@ -46,9 +45,10 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                     "max_depth": "params:oa.data_collection.depth.max_depth",
                 },
                 outputs="oa.data_collection.triad.depth.level.raw",
+                name="fetch_af_citation_to_specific_depth",
             )
         ],
-        tags="oa.data_collection.depth.level",
+        tags="data_collection_oa",
     )
 
     structural_biology_pipeline = pipeline(
@@ -61,10 +61,10 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                     "api_config": "params:oa.data_collection.subfield.structural_biology.api",
                 },
                 outputs="oa.data_collection.subfield.structural_biology.raw",
-                name="fetch_subfield_baseline",
+                name="fetch_sb",
             )
         ],
-        tags="structural_biology",
+        tags="data_collection_oa",
     )
 
     fixed_depth_structural_biology_pipeline = pipeline(
@@ -76,6 +76,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                     "alphafold_papers": "params:oa.data_collection.depth.get.work_ids",
                 },
                 outputs="oa.structural_biology.seed_papers",
+                name="preprocess_sb",
             ),
             node(
                 func=fetch_citation_to_specific_depth,
@@ -86,38 +87,15 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                     "max_depth": "params:sb_labs.data_collection.depth.max_depth",
                 },
                 outputs="oa.data_collection.subfield.structural_biology.depth.raw",
+                name="fetch_sb_citation_to_specific_depth",
             ),
         ],
-        tags=["oa.data_collection.depth.structural_biology", "rerun"],
+        tags=["data_collection_oa", "rerun"],
     )
 
-    fetch_level_2_ct_papers_pipeline = pipeline(
-        [  # additional level 2 for when a set of SB papers are assigned level -1 (ie. CT papers)
-            node(
-                func=fetch_level_2_ct_papers,
-                inputs={
-                    "ct_data": "oa.data_processing.structural_biology.depth.reassigned.ct.intermediate",  # pylint: disable=line-too-long
-                },
-                outputs="ct_level_1_seeds",
-            ),
-            node(
-                func=fetch_citation_to_specific_depth,
-                inputs={
-                    "seed_paper": "ct_level_1_seeds",
-                    "start_level": "params:sb_labs.data_collection.depth.ct_start_level",
-                    "api_config": "params:oa.data_collection.depth.api",
-                    "filter_config": "params:oa.data_collection.depth.filter",
-                    "max_depth": "params:sb_labs.data_collection.depth.max_depth",
-                },
-                outputs="oa.data_collection.subfield.structural_biology.depth.level.2.raw",
-            ),
-        ],
-        tags=["oa.data_collection.depth.level_2", "rerun"],
-    )
 
     return (
         fixed_depth_alphafold_pipeline
         + structural_biology_pipeline  # SB pipeline
         + fixed_depth_structural_biology_pipeline
-        + fetch_level_2_ct_papers_pipeline
     )

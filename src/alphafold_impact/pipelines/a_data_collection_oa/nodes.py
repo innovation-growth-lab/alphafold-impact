@@ -236,13 +236,6 @@ def preprocess_baseline_data(
     return list(seed_papers)
 
 
-def fetch_level_2_ct_papers(
-    ct_data: pd.DataFrame,
-) -> set:
-    """Fetch the level 2 parent CT papers."""
-    return set(ct_data[ct_data["level"] == "1"]["id"].tolist())
-
-
 def _process_flatten_dict(child_papers_dict: Dict[str, any]) -> Dict[str, any]:
     """Process and flatten, removing entries before 2021 and cleaning IDs."""
     return {
