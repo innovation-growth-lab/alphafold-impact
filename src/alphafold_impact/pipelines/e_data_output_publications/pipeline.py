@@ -7,6 +7,7 @@ from kedro.pipeline import Pipeline, pipeline, node
 from .nodes import (
     create_publications_data,
     merge_individual_data,
+    update_alphafold_triad,
 )
 
 
@@ -14,9 +15,17 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
     create_publications_data_pipeline = pipeline(
         [
             node(
-                create_publications_data,
+                update_alphafold_triad,
                 inputs={
                     "data": "oa.chain_labels.id.primary",
+                },
+                outputs="oa.chain_labels.id.updated",
+                name="upsert_alphafold_triad",
+            ),
+            node(
+                create_publications_data,
+                inputs={
+                    "data": "oa.chain_labels.id.updated",
                     "source": "params:publications.source.af",
                     "mesh_terms": "nih.data_collection.mesh_terms",
                     "patents_data": "lens.data_processing.primary",
@@ -60,7 +69,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                     "data_other": "publications.data.other",
                 },
                 outputs="publications.data.outputs",
-                name="merge_publications_data",
+                name="export_publications_data",
             ),
         ],
         tags=["data_output_publications"],

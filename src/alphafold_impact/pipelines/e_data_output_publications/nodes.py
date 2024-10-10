@@ -5,18 +5,40 @@ generated using Kedro 0.19.1
 
 import logging
 import pandas as pd
+import numpy as np
 
 logger = logging.getLogger(__name__)
+
+
+def update_alphafold_triad(data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Uodates levels for AlphaFold triad other rows.
+
+    Args:
+        data (pd.DataFrame): The input DataFrame containing publication data.
+
+    Returns:
+        pd.DataFrame: The updated DataFrame with the new AlphaFold publication row
+            appended and specified rows updated.
+    """
+
+    # change level to -1 for the other two papers
+    data.loc[
+        data["id"].isin(["W3211795435", "W3202105508", "W3177828909"]),
+        ["level", "parent_level", "parent_id"],
+    ] = [-1, -2, np.nan]
+
+    return data
 
 
 def create_publications_data(
     data: pd.DataFrame,
     source: str,
     mesh_terms: pd.DataFrame,
-    patents_data,
-    pdb_submissions,
-    icite_data,
-):
+    patents_data: pd.DataFrame,
+    pdb_submissions: pd.DataFrame,
+    icite_data: pd.DataFrame,
+) -> pd.DataFrame:
     """
     Processes and enriches publication data with various metrics and annotations.
     Args:
@@ -43,6 +65,10 @@ def create_publications_data(
     mesh_terms_dict = mesh_terms.set_index("DUI")["term_group"].to_dict()
 
     data["source"] = source
+
+    # create a new column 'parent_publication_date'
+    id_date_dict = data.set_index("id")["publication_date"].to_dict()
+    data["parent_publication_date"] = data["parent_id"].map(id_date_dict)
 
     # get fields data
     data = _get_field_distr(data)
@@ -71,10 +97,22 @@ def create_publications_data(
 
     data = data.merge(icite_outputs[["id", "ca_count"]], on="id", how="left")
 
+    # id, parent id as str
+    data["id"] = data["id"].astype(str)
+    data["parent_id"] = data["parent_id"].astype(str)
+
     return data
 
 
-def _sort_drop(data):
+def _sort_drop(data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Sorts and filters a DataFrame based on specific criteria.
+    Args:
+        data (pd.DataFrame): The input DataFrame to be sorted and filtered.
+    Returns:
+        pd.DataFrame: The sorted and filtered DataFrame.
+    """
+
     sort_order = {
         "strong": 0,
         "partial_strong": 1,
@@ -84,13 +122,12 @@ def _sort_drop(data):
         "unknown": 5,
         "no_data": 6,
     }
-    data["sort_order"] = data["chain_label"].map(sort_order)
+    data["sort_order"] = data.apply(
+        lambda row: -1 if row["level"] == -1 else sort_order.get(row["chain_label"], 7),
+        axis=1,
+    )
 
     data = data.sort_values("sort_order").groupby(["id"]).first().reset_index()
-
-    data = data[
-        ~data["id"].isin(["W3177828909", "W3211795435", "W3202105508", "W3202105508"])
-    ]
 
     data = data[
         ~(
@@ -104,6 +141,7 @@ def _sort_drop(data):
     # drop the sort_order column, reindex
     data.drop(columns="sort_order", inplace=True)
     data.reset_index(drop=True, inplace=True)
+
     return data
 
 
@@ -184,7 +222,7 @@ def merge_individual_data(
     if "0" in data.columns:
         data.drop(columns="0", inplace=True)
 
-    # change column level to str, drop -1
+    # change column level to str
     data["level"] = data["level"].astype(str)
 
     return data
