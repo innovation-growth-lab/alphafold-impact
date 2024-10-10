@@ -292,152 +292,6 @@ applied_lab.data_collection.institution_info.primary:
 
 # -------------------------------------------------------------
 
-# # OA
-# oa.data_collection.direction.cites.raw: &cites_raw
-#   <<: *_js_ptd
-#   path: s3://igl-alphafold/oct/01_raw/oa/works/cites/
-
-# oa.data_collection.direction.cited_by.raw:
-#   <<: *_js_ptd
-#   path: s3://igl-alphafold/oct/01_raw/oa/works/cited_by/
-  
-# oa.data_collection.downstream.cites.input: # [HACK] need to fetch in different nameplace
-#   <<: *cites_raw
-
-# oa.data_collection.downstream.cites.intermediate:
-#   <<: *_js_ptd
-#   path: "s3://igl-alphafold/oct/02_intermediate/oa/works/downstream/${globals:oa.data_collection.get.work_id}/"
-
-# oa.data_collection.works_for_concepts.raw:
-#   <<: *_pq
-#   filepath: s3://igl-alphafold/oct/01_raw/oa/works/oa_works_for_concepts.parquet
-
-# # Raw Gateway to Research data - includes projects, publications, organisations and funds 
-
-# "{source}.data_collection.{label}.raw":
-#   <<: *_js
-#   filepath: s3://igl-alphafold/oct/01_raw/{source}/{label}.json
-
-# # Intermediate Gateway to Research data - includes projects, publications, organisations and funds
-
-# "{source}.data_collection.{label}.intermediate":
-#   <<: *_pq
-#   filepath: s3://igl-alphafold/oct/02_intermediate/{source}/{label}.parquet
-
-# # OpenAlex data from publications in Gateawy to Research
-
-# oa.data_collection.gtr.publications: # [HACK] fetch the above's template for publications in gtr-oa pl
-#   <<: *_pq
-#   filepath: s3://igl-alphafold/oct/02_intermediate/gtr/outcomes/publications.parquet
-
-# oa.data_collection.gtr.dict: &gtr_dict_raw
-#   <<: *_js
-#   filepath: s3://igl-alphafold/oct/02_intermediate/gtr/outcomes/publications/oa/doi_oaid.json
-
-# oa.data_collection.gtr.works: &gtr_works_raw
-#   <<: *_js_ptd
-#   path: s3://igl-alphafold/oct/01_raw/gtr/outcomes/publications/oa/works/
-
-# oa.data_collection.gtr.citations:
-#   <<: *_js_ptd
-#   path: s3://igl-alphafold/oct/01_raw/gtr/outcomes/publications/oa/citations/
-
-# # Gateway to research processing
-# oa.data_processing.gtr.dict:
-#   <<: *gtr_dict_raw
-
-# oa.data_processing.gtr.works:
-#   <<: *gtr_works_raw
-
-# oa.data_processing.gtr.cites.raw:
-#   <<: *cites_raw
-
-# oa.data_processing.gtr.publications:
-#   <<: *_pq
-#   filepath: s3://igl-alphafold/oct/03_primary/gtr/outcomes/publications/oa/publications.parquet
-
-# oa.data_processing.gtr.institutions:
-#   <<: *_pq
-#   filepath: s3://igl-alphafold/oct/03_primary/gtr/outcomes/publications/oa/institutions.parquet
-
-# oa.data_processing.gtr.citations.alphafold:
-#   <<: *_pq
-#   filepath: s3://igl-alphafold/oct/03_primary/gtr/outcomes/publications/oa/citations.parquet
-
-# oa.data_processing.depth.duplicated.intermediate:
-#   <<: *_pq
-#   filepath: s3://igl-alphafold/oct/02_intermediate/oa/works/depth/main_duplicated.parquet
-  
-# oa.data_processing.depth.primary:
-#   <<: *_pq
-#   filepath: s3://igl-alphafold/oct/03_primary/oa/works/depth/main_all.parquet # [HACK] ensure everything points to dups
-
-# oa.data_processing.depth.duplicated.primary:
-#   <<: *_pq
-#   filepath: s3://igl-alphafold/oct/03_primary/oa/works/depth/main_duplicated.parquet
-
-
-
-
-# # Openalex works - Concepts
-# oa_raw_works_for_concepts_and_years:
-#   type: kedro_datasets.pandas.JSONDataset
-#   filepath: s3://igl-alphafold/oct/01_raw/openalex/works/oa_works_for_concepts_and_years.json
-#   credentials: s3_credentials
-
-# works_for_concepts:
-#   type: ${_json.type}
-#   filepath: s3://igl-alphafold/oct/01_raw/oa/works/works_for_concepts.json
-#   credentials: s3_credentials
-
-# # OA depth data
-# oa.data_collection.depth.works:
-#   <<: *_js_ptd
-#   path: s3://igl-alphafold/oct/01_raw/oa/works/depth/
-
-# oa.data_collection.depth.edges:
-#   <<: *_csv_ptd
-#   path: s3://igl-alphafold/oct/02_intermediate/oa/works/depth/edges/
-
-# oa.data_collection.depth.network:
-#   <<: *_pkl
-#   filepath: s3://igl-alphafold/oct/02_intermediate/oa/works/depth/network.pkl
-
-# # OA specific depth
-# oa.data_collection.depth.level.raw:
-#   <<: *_js_ptd
-#   path: s3://igl-alphafold/oct/01_raw/oa/works/depth/levels/
-
-
-
-# oa.data_collection.subfield.structural_biology.depth.restarted.raw:
-#   <<: *_js_ptd
-#   path: s3://igl-alphafold/oct/01_raw/oa/works/depth/subfield/structural_biology/levels/
-
-
-
-
-
-
-
-
-
-
-
-
-# "oa.data_processing.depth.mesh.{level}.intermediate":
-#   <<: *_pq
-#   filepath: s3://igl-alphafold/oct/02_intermediate/oa/works/depth/level/{level}/main.parquet
-
-# "oa.data_processing.depth.{level}.intermediate":
-#   <<: *_pq
-#   filepath: s3://igl-alphafold/oct/02_intermediate/oa/works/depth/level/{level}/no_mesh_main.parquet
-
-# "oa.data_processing.depth.level.{level}.primary":
-#   <<: *_pq
-#   filepath: s3://igl-alphafold/oct/03_primary/oa/works/depth/level/{level}/main.parquet
-
-
 applied_lab.data_analysis.staggered.outputs.primary:
   <<: *_pq
   filepath: s3://igl-alphafold/oct/04_output/analysis/applied_labs/staggered/outputs_primary.parquet
@@ -446,13 +300,13 @@ applied_lab.data_analysis.staggered.outputs.quarterly.primary:
   <<: *_pq
   filepath: s3://igl-alphafold/oct/04_output/analysis/applied_labs/staggered/outputs_quarterly.parquet
 
-sb_lab.data_analysis.staggered.outputs.primary:
+foundational_lab.data_analysis.staggered.outputs.primary:
   <<: *_pq
-  filepath: s3://igl-alphafold/oct/04_output/analysis/sb_labs/staggered/outputs_primary.parquet
+  filepath: s3://igl-alphafold/oct/04_output/analysis/foundational_labs/staggered/outputs_primary.parquet
 
-sb_lab.data_analysis.staggered.outputs.quarterly.primary:
+foundational_lab.data_analysis.staggered.outputs.quarterly.primary:
   <<: *_pq
-  filepath: s3://igl-alphafold/oct/04_output/analysis/sb_labs/staggered/outputs_quarterly.parquet
+  filepath: s3://igl-alphafold/oct/04_output/analysis/foundational_labs/staggered/outputs_quarterly.parquet
 
 
 
