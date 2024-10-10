@@ -125,7 +125,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 name="get_chain_labels_other"
             ),
         ],
-        tags=["data_processing_chains", "rerun"],
+        tags=["data_processing_chains"],
     )
 
     return af_chain_pipeline + ct_chain_pipeline + other_chain_pipeline

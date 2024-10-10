@@ -63,7 +63,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                 name="merge_publications_data",
             ),
         ],
-        tags=["rerun", "data_output_publications"],
+        tags=["data_output_publications"],
     )
 
     return create_publications_data_pipeline

@@ -22,5 +22,5 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                 name="fetch_oa_details_from_pdb_pubs",
             )
         ],
-        tags=["data_processing_pdb", "rerun"],
+        tags=["data_processing_pdb"],
     )

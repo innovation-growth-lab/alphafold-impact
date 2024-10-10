@@ -17,5 +17,5 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                 name="preprocess_lens_manual_data",
             ),
         ],
-        tags=["data_processing_lens", "rerun"],
+        tags=["data_processing_lens"],
     )
