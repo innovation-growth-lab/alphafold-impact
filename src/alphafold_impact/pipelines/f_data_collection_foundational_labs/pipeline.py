@@ -1,5 +1,5 @@
 """
-This is a boilerplate pipeline 'data_collection_sb_labs'
+This is a boilerplate pipeline 'data_collection_foundational_labs'
 generated using Kedro 0.19.1
 """
 
@@ -46,45 +46,45 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                     "from_publication_date": "params:labs.data_collection.from_date",
                     "api_config": "params:labs.data_collection.api",
                 },
-                outputs="sb_lab.data_collection.candidates.publications.intermediate",
+                outputs="foundational_lab.data_collection.candidates.publications.intermediate",
                 name="fetch_candidate_foundational_publications",
             ),
             node(
                 func=calculate_lab_determinants,
                 inputs={
-                    "dict_loader": "sb_lab.data_collection.candidates.publications.intermediate",
+                    "dict_loader": "foundational_lab.data_collection.candidates.publications.intermediate",
                     "alphafold_authors": "alphafold_authors",
                     "ct_ai_authors": "ct_ai_authors",
                     "ct_noai_authors": "ct_noai_authors",
                     "other_authors": "other_authors",
                 },
-                outputs="sb_lab.data_collection.candidates.scores.intermediate",
+                outputs="foundational_lab.data_collection.candidates.scores.intermediate",
                 name="calculate_foundational_lab_determinants",
             ),
             node(
                 func=combine_lab_results,
                 inputs={
-                    "dict_loader": "sb_lab.data_collection.candidates.scores.intermediate"
+                    "dict_loader": "foundational_lab.data_collection.candidates.scores.intermediate"
                 },
-                outputs="sb_lab.data_collection.candidates.scores.primary",
+                outputs="foundational_lab.data_collection.candidates.scores.primary",
                 name="combine_foundational_lab_results",
             ),
             node(
                 func=assign_lab_label,
                 inputs={
-                    "candidate_data": "sb_lab.data_collection.candidates.scores.primary",
+                    "candidate_data": "foundational_lab.data_collection.candidates.scores.primary",
                 },
-                outputs="sb_lab.data_collection.assignment.primary",
+                outputs="foundational_lab.data_collection.assignment.primary",
                 name="assign_foundational_lab_label",
             ),
             node(
                 func=get_publications_from_labs,
                 inputs={
-                    "data": "sb_lab.data_collection.assignment.primary",
+                    "data": "foundational_lab.data_collection.assignment.primary",
                     "from_publication_date": "params:labs.data_collection.from_date",
                     "api_config": "params:labs.data_collection.api",
                 },
-                outputs="sb_lab.data_collection.publications.raw",
+                outputs="foundational_lab.data_collection.publications.raw",
                 name="get_publications_from_foundational_labs",
             ),
         ],
@@ -101,7 +101,7 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                     "ct_noai_authors": "ct_noai_authors",
                     "other_authors": "other_authors",
                 },
-                outputs="sb_lab.data_collection.candidates.map",
+                outputs="foundational_lab.data_collection.candidates.map",
                 name="create_foundational_candidates_map",
             ),
         ],
@@ -113,9 +113,9 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
             node(
                 func=get_institution_info,
                 inputs={
-                    "author_ids": "sb_lab.data_collection.assignment.primary",
+                    "author_ids": "foundational_lab.data_collection.assignment.primary",
                 },
-                outputs="sb_lab.data_collection.institution_info.primary",
+                outputs="foundational_lab.data_collection.institution_info.primary",
                 name="get_foundational_institution_info",
             ),
         ],

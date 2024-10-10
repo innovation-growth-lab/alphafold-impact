@@ -1,5 +1,5 @@
 """
-This is a boilerplate pipeline 'data_collection_other_labs'
+This is a boilerplate pipeline 'data_collection_applied_labs'
 generated using Kedro 0.19.1
 """
 
@@ -48,45 +48,45 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                     "from_publication_date": "params:labs.data_collection.from_date",
                     "api_config": "params:labs.data_collection.api",
                 },
-                outputs="other_lab.data_collection.candidates.publications.intermediate",
+                outputs="applied_lab.data_collection.candidates.publications.intermediate",
                 name="fetch_candidate_applied_publications",
             ),
             node(
                 func=calculate_lab_determinants,
                 inputs={
-                    "dict_loader": "other_lab.data_collection.candidates.publications.intermediate",
+                    "dict_loader": "applied_lab.data_collection.candidates.publications.intermediate",
                     "alphafold_authors": "applied_alphafold_authors",
                     "ct_ai_authors": "applied_ct_ai_authors",
                     "ct_noai_authors": "applied_ct_noai_authors",
                     "other_authors": "applied_other_authors",
                 },
-                outputs="other_lab.data_collection.candidates.scores.intermediate",
+                outputs="applied_lab.data_collection.candidates.scores.intermediate",
                 name="calculate_applied_lab_determinants",
             ),
             node(
                 func=combine_lab_results,
                 inputs={
-                    "dict_loader": "other_lab.data_collection.candidates.scores.intermediate"
+                    "dict_loader": "applied_lab.data_collection.candidates.scores.intermediate"
                 },
-                outputs="other_lab.data_collection.candidates.scores.primary",
+                outputs="applied_lab.data_collection.candidates.scores.primary",
                 name="combine_applied_lab_results",
             ),
             node(
                 func=assign_lab_label,
                 inputs={
-                    "candidate_data": "other_lab.data_collection.candidates.scores.primary",
+                    "candidate_data": "applied_lab.data_collection.candidates.scores.primary",
                 },
-                outputs="other_lab.data_collection.assignment.primary",
+                outputs="applied_lab.data_collection.assignment.primary",
                 name="assign_applied_lab_label",
             ),
             node(
                 func=get_publications_from_labs,
                 inputs={
-                    "data": "other_lab.data_collection.assignment.primary",
+                    "data": "applied_lab.data_collection.assignment.primary",
                     "from_publication_date": "params:labs.data_collection.from_date",
                     "api_config": "params:labs.data_collection.api",
                 },
-                outputs="other_lab.data_collection.publications.raw",
+                outputs="applied_lab.data_collection.publications.raw",
                 name="get_publications_from_applied_labs",
             ),
         ],
@@ -103,7 +103,7 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                     "ct_noai_authors": "applied_ct_noai_authors",
                     "other_authors": "applied_other_authors",
                 },
-                outputs="other_lab.data_collection.candidates.map",
+                outputs="applied_lab.data_collection.candidates.map",
                 name="create_applied_candidates_map",
             ),
         ],
@@ -115,9 +115,9 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
             node(
                 func=get_institution_info,
                 inputs={
-                    "author_ids": "other_lab.data_collection.assignment.primary",
+                    "author_ids": "applied_lab.data_collection.assignment.primary",
                 },
-                outputs="other_lab.data_collection.institution_info.primary",
+                outputs="applied_lab.data_collection.institution_info.primary",
                 name="get_applied_institution_info",
             ),
         ],
