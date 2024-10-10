@@ -69,7 +69,7 @@ def create_publications_data(
         data[["parent_id", "id", "level", "source", "pmid", "doi"]], icite_data
     )
 
-    data = data.merge(icite_outputs[["id", "count"]], on="id", how="left")
+    data = data.merge(icite_outputs[["id", "ca_count"]], on="id", how="left")
 
     return data
 
@@ -86,7 +86,7 @@ def _sort_drop(data):
     }
     data["sort_order"] = data["chain_label"].map(sort_order)
 
-    data = data.sort_values("sort_order").groupby(["level", "id"]).first().reset_index()
+    data = data.sort_values("sort_order").groupby(["id"]).first().reset_index()
 
     data = data[
         ~data["id"].isin(["W3177828909", "W3211795435", "W3202105508", "W3202105508"])
@@ -147,11 +147,11 @@ def _create_cc_counts(data, icite_data):
     )
 
     # create count column
-    combined_data["count"] = combined_data["cited_by_clin"].apply(len)
+    combined_data["ca_count"] = combined_data["cited_by_clin"].apply(len)
 
     # merge back with data, fill with 0 for missing count
-    data = data.merge(combined_data[["id", "count"]], on="id", how="left")
-    data["count"] = data["count"].fillna(0)
+    data = data.merge(combined_data[["id", "ca_count"]], on="id", how="left")
+    data["ca_count"] = data["ca_count"].fillna(0)
 
     return data
 
