@@ -186,7 +186,6 @@ def merge_individual_data(
 
     # change column level to str, drop -1
     data["level"] = data["level"].astype(str)
-    data = data[data["level"] != "-1"]
 
     return data
 

@@ -5,7 +5,7 @@ source("scripts/utils.R")
 
 # Check installation & load required packages
 list_of_packages <- c(
-  "arrow", "tidyverse", "MatchIt", "fastDummies"
+  "arrow", "tidyverse", "MatchIt", "fastDummies", "aws.s3", "yaml"
 )
 new_packages <- list_of_packages[
   !(list_of_packages %in% installed.packages()[, "Package"])
@@ -34,9 +34,23 @@ bind_rows <- dplyr::bind_rows
 # DATA PREPARATION
 # ------------------------------------------------------------------------------
 
-# Read and clean the dataset
-sb_data_qtly <- read_parquet(
-  "data/04_outputs/applied_labs/staggered/outputs_quarterly.parquet"
+credentials <- yaml.load_file("conf/base/credentials.yml")
+
+Sys.setenv(
+  "AWS_ACCESS_KEY_ID" = credentials$s3_credentials$key,
+  "AWS_SECRET_ACCESS_KEY" = credentials$s3_credentials$secret,
+  "AWS_DEFAULT_REGION" = "eu-west-2"
+)
+
+# Define the S3 bucket and path
+bucket <- "igl-alphafold"
+path <- "oct/04_output/analysis/applied_labs/staggered/outputs_quarterly.parquet" # nolint
+
+# Fetch the data from the S3 bucket
+sb_data_qtly <- s3read_using(
+  FUN = arrow::read_parquet,
+  object = path,
+  bucket = bucket
 )
 
 # Clean column names
