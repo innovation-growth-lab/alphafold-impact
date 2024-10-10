@@ -234,61 +234,61 @@ publications.data.outputs:
 
 # -------------------------------------------------------------
 
-sb_lab.data_collection.candidates.publications.intermediate:
+foundational_lab.data_collection.candidates.publications.intermediate:
   <<: *_js_ptd
-  path: s3://igl-alphafold/oct/02_intermediate/oa/sb_labs/candidate_publications/
+  path: s3://igl-alphafold/oct/02_intermediate/oa/foundational_labs/candidate_publications/
 
-sb_lab.data_collection.candidates.scores.intermediate:
+foundational_lab.data_collection.candidates.scores.intermediate:
   <<: *_pq_ptd
-  path: s3://igl-alphafold/oct/02_intermediate/oa/sb_labs/scores/
+  path: s3://igl-alphafold/oct/02_intermediate/oa/foundational_labs/scores/
 
-sb_lab.data_collection.candidates.scores.primary:
+foundational_lab.data_collection.candidates.scores.primary:
   <<: *_pq
-  filepath: s3://igl-alphafold/oct/03_primary/oa/sb_labs/main_scores.parquet
+  filepath: s3://igl-alphafold/oct/03_primary/oa/foundational_labs/main_scores.parquet
 
-sb_lab.data_collection.assignment.primary:
+foundational_lab.data_collection.assignment.primary:
   <<: *_pq
-  filepath: s3://igl-alphafold/oct/03_primary/oa/sb_labs/assignments.parquet
+  filepath: s3://igl-alphafold/oct/03_primary/oa/foundational_labs/assignments.parquet
 
-sb_lab.data_collection.publications.raw:
+foundational_lab.data_collection.publications.raw:
   <<: *_pq_ptd
-  path: s3://igl-alphafold/oct/01_raw/oa/sb_labs/publications/
+  path: s3://igl-alphafold/oct/01_raw/oa/foundational_labs/publications/
 
-sb_lab.data_collection.candidates.map:
+foundational_lab.data_collection.candidates.map:
   <<: *_pq
-  filepath: s3://igl-alphafold/oct/02_intermediate/oa/sb_labs/candidates_map.parquet
+  filepath: s3://igl-alphafold/oct/02_intermediate/oa/foundational_labs/candidates_map.parquet
 
-sb_lab.data_collection.institution_info.primary:
+foundational_lab.data_collection.institution_info.primary:
   <<: *_pq
-  filepath: s3://igl-alphafold/oct/03_primary/oa/sb_labs/institution_info.parquet
+  filepath: s3://igl-alphafold/oct/03_primary/oa/foundational_labs/institution_info.parquet
 
-other_lab.data_collection.candidates.publications.intermediate:
+applied_lab.data_collection.candidates.publications.intermediate:
   <<: *_js_ptd
-  path: s3://igl-alphafold/oct/02_intermediate/oa/other_labs/candidate_publications/
+  path: s3://igl-alphafold/oct/02_intermediate/oa/applied_labs/candidate_publications/
 
-other_lab.data_collection.candidates.scores.intermediate:
+applied_lab.data_collection.candidates.scores.intermediate:
   <<: *_pq_ptd
-  path: s3://igl-alphafold/oct/02_intermediate/oa/other_labs/scores/
+  path: s3://igl-alphafold/oct/02_intermediate/oa/applied_labs/scores/
 
-other_lab.data_collection.candidates.scores.primary:
+applied_lab.data_collection.candidates.scores.primary:
   <<: *_pq
-  filepath: s3://igl-alphafold/oct/03_primary/oa/other_labs/main_scores.parquet
+  filepath: s3://igl-alphafold/oct/03_primary/oa/applied_labs/main_scores.parquet
 
-other_lab.data_collection.assignment.primary:
+applied_lab.data_collection.assignment.primary:
   <<: *_pq
-  filepath: s3://igl-alphafold/oct/03_primary/oa/other_labs/assignments.parquet
+  filepath: s3://igl-alphafold/oct/03_primary/oa/applied_labs/assignments.parquet
 
-other_lab.data_collection.publications.raw:
+applied_lab.data_collection.publications.raw:
   <<: *_pq_ptd
-  path: s3://igl-alphafold/oct/01_raw/oa/other_labs/publications/
+  path: s3://igl-alphafold/oct/01_raw/oa/applied_labs/publications/
 
-other_lab.data_collection.candidates.map:
+applied_lab.data_collection.candidates.map:
   <<: *_pq
-  filepath: s3://igl-alphafold/oct/02_intermediate/oa/other_labs/candidates_map.parquet
+  filepath: s3://igl-alphafold/oct/02_intermediate/oa/applied_labs/candidates_map.parquet
 
-other_lab.data_collection.institution_info.primary:
+applied_lab.data_collection.institution_info.primary:
   <<: *_pq
-  filepath: s3://igl-alphafold/oct/03_primary/oa/other_labs/institution_info.parquet
+  filepath: s3://igl-alphafold/oct/03_primary/oa/applied_labs/institution_info.parquet
 
 # -------------------------------------------------------------
 
