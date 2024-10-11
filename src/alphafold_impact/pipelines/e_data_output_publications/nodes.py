@@ -212,11 +212,13 @@ def merge_individual_data(
     # drop id in data_ct if it is in data_af
     data_ct = data_ct[~data_ct["id"].isin(data_af["id"])]
 
+    data = pd.concat([data_af, data_ct], ignore_index=True)
+
     # drop id in data_other if it is in data_af or data_ct
-    data_other = data_other[~data_other["id"].isin(data_af["id"])]
+    data_other = data_other[~data_other["id"].isin(data["id"])]
 
     # concatenate, ignore index
-    data = pd.concat([data_af, data_ct, data_other], ignore_index=True)
+    data = pd.concat([data, data_other], ignore_index=True)
 
     # drop column '0' if it exists
     if "0" in data.columns:
