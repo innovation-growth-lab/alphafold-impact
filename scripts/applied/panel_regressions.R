@@ -1,7 +1,7 @@
+# %%
 # Clean out the workspace
 rm(list = ls())
 options(max.print = 1000)
-source("scripts/utils.R")
 
 # Check installation & load required packages
 list_of_packages <- c(
@@ -20,8 +20,17 @@ invisible(lapply(list_of_packages, library, character.only = TRUE))
 
 # Set working directory and paths
 setwd("~/projects/alphafold-impact/")
-figures <- "data/05_model_output/figures/"
-tables <- "data/05_model_output/tables/"
+figures <- "data/05_model_output/figures/applied/"
+tables <- "data/05_model_output/tables/applied/"
+
+# Create directories if they do not exist
+if (!dir.exists(figures)) {
+  dir.create(figures, recursive = TRUE)
+}
+
+if (!dir.exists(tables)) {
+  dir.create(tables, recursive = TRUE)
+}
 
 # Assign commonly used dplyr functions
 select <- dplyr::select
@@ -43,41 +52,40 @@ mesh_cols <- grep("^mesh_", names(sub_samples$all), value = TRUE)
 institution_cols <- grep("^institution_", names(sub_samples$all), value = TRUE)
 
 covs <- list()
-covs[["base0"]] <- c("covid_share_2020")
-covs[["base1"]] <- c(covs$base0, "high_pdb", "protein_share", "experimental_share") # nolint
-covs[["base2"]] <- c(covs$base1, field_cols)
-covs[["base3"]] <- c(covs$base2, mesh_cols, institution_cols)
+covs[["base0"]] <- c("pdb_share_4q", "protein_share_4q", "experimental_share_4q") # nolint
+covs[["base1"]] <- c(covs$base0, field_cols)
+covs[["base2"]] <- c(covs$base1, mesh_cols)
 
 fes <- list()
-fes[["fe1"]] <- c("pi_id")
-fes[["fe2"]] <- c(fes$fe1, "time_qtly", "country")
+fes[["fe0"]] <- c("pi_id", "covid_share_2020")
+fes[["fe1"]] <- c(fes$fe0, "time_qtly", "country", institution_cols)
 
 ### Extensive ###
 
 # List of dependent variables
 dep_vars <- c(
-  "ca_count", #"tcc",
+  "ca_count",
   "num_publications", "ct0", "ct1", "cited_by_count",
   "patent_count", "patent_citation"
 )
 
 # List of covariate sets
-cov_sets <- c("base3")
+cov_sets <- c("base2")
 
 # List of fixed effects
-fe_list <- c("fe2")
+fe_list <- c("fe1")
 
 # List of treatment variables
 treat_vars <- c(
   "treatment_af_dyn",
   paste0(
-    "treatment_af_dyn + treatment_af_dyn:strong + treatment_af_dyn:high_pdb + ",
+    "treatment_af_dyn + treatment_af_dyn:intent_strong +",
     "treatment_af_dyn:ext_af"
   ),
   paste0(
-    "treatment_af_dyn + treatment_af_dyn:strong + treatment_af_dyn:high_pdb + ",
-    "treatment_af_dyn:ext_af + treatment_af_dyn:strong:high_pdb + ",
-    "treatment_af_dyn:strong:ext_af + treatment_af_dyn:high_pdb:ext_af"
+    "treatment_af_dyn + treatment_af_dyn:intent_strong + ",
+    "treatment_af_dyn:ext_af + treatment_af_dyn:intent_strong + ",
+    "treatment_af_dyn:intent_strong:ext_af"
   )
 )
 
@@ -127,7 +135,9 @@ results <- list()
 for (sub in names(sub_samples)) {
   # For each formula, compute feols
   for (form in names(form_list)) {
-    results[[paste0(sub, "_", form)]] <- feols(
+    regression_label <- paste0(sub, "_", form)
+    message("Running regression: ", regression_label)
+    results[[regression_label]] <- feols(
       form_list[[form]],
       data = sub_samples[[sub]],
       cluster = "pi_id"
@@ -139,48 +149,47 @@ for (sub in names(sub_samples)) {
 # ------------------------------------------------------------------------------
 # TABLE GENERATION
 # ------------------------------------------------------------------------------
-
 # Define variables of interest
 variable_interest <- c(
-  "treatment_af_dyn", "strong",
-  "treatment_af_dyn:strong", "treatment_af_dyn:high_pdb",
-  "treatment_af_dyn:ext_af", "treatment_af_dyn:strong:high_pdb",
-  "treatment_af_dyn:strong:ext_af", "treatment_af_dyn:high_pdb:ext_af"
+  "treatment_af_dyn",
+  "treatment_af_dyn:intent_strong",
+  "treatment_af_dyn:ext_af",
+  "treatment_af_dyn:intent_strong:ext_af"
 )
 
 # Define mapping from dependent variables to variables of interest and file names # nolint
 table_info <- list(
   "ca_count" = list(
     vars_to_keep = variable_interest,
-    file_name = "applied/01_ca_translational.tex"
+    file_name = "01_ca_translational.tex"
   ),
   "tcc" = list(
     vars_to_keep = variable_interest,
-    file_name = "applied/02_tcc_translational.tex"
+    file_name = "02_tcc_translational.tex"
   ),
   "patent_count" = list(
     vars_to_keep = variable_interest,
-    file_name = "applied/03_patent_count_translational.tex"
+    file_name = "03_patent_count_translational.tex"
   ),
   "patent_citation" = list(
     vars_to_keep = variable_interest,
-    file_name = "applied/04_patent_citation_translational.tex"
+    file_name = "04_patent_citation_translational.tex"
   ),
   "ct0" = list(
     vars_to_keep = variable_interest,
-    file_name = "applied/05_ct0_productivity.tex"
+    file_name = "05_ct0_productivity.tex"
   ),
   "ct1" = list(
     vars_to_keep = variable_interest,
-    file_name = "applied/06_ct1_productivity.tex"
+    file_name = "06_ct1_productivity.tex"
   ),
   "num_publications" = list(
     vars_to_keep = variable_interest,
-    file_name = "applied/07_num_publications_productivity.tex"
+    file_name = "07_num_publications_productivity.tex"
   ),
   "cited_by_count_std" = list(
     vars_to_keep = variable_interest,
-    file_name = "applied/08_cited_by_count_std_productivity.tex"
+    file_name = "08_cited_by_count_std_productivity.tex"
   )
 )
 
@@ -196,6 +205,7 @@ generate_tables <- function(dep_vars, table_info, subsets, cov_sets, fe_list, tr
     vars_to_keep <- table_info[[dep_var]]$vars_to_keep
     file_name <- table_info[[dep_var]]$file_name
     result_names <- c()
+    col_names <- c()
 
     # Iterate over subsets, covariate sets, fixed effects, and treatment variables # nolint
     for (sub in subsets) {
@@ -209,6 +219,7 @@ generate_tables <- function(dep_vars, table_info, subsets, cov_sets, fe_list, tr
             # Check if result exists
             if (result_name %in% names(results)) {
               result_names <- c(result_names, result_name)
+              col_names <- c(col_names, sub)
             }
           }
         }
@@ -220,7 +231,8 @@ generate_tables <- function(dep_vars, table_info, subsets, cov_sets, fe_list, tr
       fixest::etable(
         results[result_names],
         keep = vars_to_keep,
-        file = paste0(tables, file_name)
+        file = paste0(tables, file_name),
+        headers = col_names
       )
     }
   }
