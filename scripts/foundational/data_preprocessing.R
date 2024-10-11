@@ -1,11 +1,10 @@
 # Clean out the workspace
 rm(list = ls())
 options(max.print = 1000)
-source("scripts/utils.R")
 
 # Check installation & load required packages
 list_of_packages <- c(
-  "arrow", "tidyverse", "MatchIt", "fastDummies", "aws.s3", "yaml"
+  "arrow", "tidyverse", "MatchIt", "fastDummies", "aws.s3", "yaml", "zoo"
 )
 new_packages <- list_of_packages[
   !(list_of_packages %in% installed.packages()[, "Package"])
@@ -18,11 +17,8 @@ if (length(new_packages)) {
 }
 invisible(lapply(list_of_packages, library, character.only = TRUE))
 
-# Set working directory and paths
+# Set working directory
 setwd("~/projects/alphafold-impact/")
-figures <- "data/05_model_output/figures/"
-tables <- "data/05_model_output/tables/"
-figs <- list()
 
 # Assign commonly used dplyr functions
 select <- dplyr::select
@@ -63,25 +59,35 @@ sb_data_qtly <- sb_data_qtly %>%
   # ungroup() %>%
   group_by(pi_id) %>%
   fill(
-    seed, strong, institution_country_code,
+    seed, intent, institution_country_code,
     starts_with("institution_"),
     .direction = "downup"
   ) %>%
   replace_na(list(
     num_publications = 0, cited_by_count = 0, ct0 = 0, ct1 = 0,
     ca_count = 0, patent_count = 0, pdb_share = 0, # resolution = 0, R_free = 0,
-    covid_share_2020 = 0,
-    institution_country_code = "OTH", institution_type = "other"
+    covid_share_2020 = 0, ext_af = 0,
+    institution_country_code = "OTH", institution_type = "other",
+    intent = "unknown"
   )) %>%
   ungroup()
 
 # Factorize relevant columns
 sb_data_qtly <- sb_data_qtly %>%
   mutate(
-    strong = as.factor(strong),
     time_qtly = as.factor(time),
     country = as.factor(institution_country_code),
     institution_type = as.factor(institution_type)
+  )
+
+# create dummy for intents
+sb_data_qtly <- sb_data_qtly %>%
+  dummy_cols(
+    select_columns = c(
+      "intent"
+    ),
+    remove_first_dummy = FALSE,
+    remove_selected_columns = TRUE
   )
 
 # Replace NA in columns starting with "mesh_" with 0
@@ -94,28 +100,51 @@ sb_data_qtly <- sb_data_qtly %>%
   mutate(
     g = ifelse(seed == "other", NA, g),
     g_af = ifelse(str_detect(seed, "af"), g, NA),
+    g_af_delay = g_af - 2,
     g_ct = ifelse(str_detect(seed, "ct"), g, NA),
     g_ct_ai = ifelse(str_detect(seed, "ct_ai"), g, NA),
     g_ct_noai = ifelse(str_detect(seed, "ct_noai"), g, NA),
     treatment_af_dyn = ifelse(time > g_af, 1, 0),
+    treatment_af_delay = ifelse(time > g_af_delay, 1, 0),
     treatment_af = ifelse(time > 15 & !is.na(g_af), 1, 0),
     treatment_ct = ifelse(time > g_ct, 1, 0),
     experimental_share = experimental / num_publications,
     protein_share = protein_concept / num_publications
   ) %>%
   replace_na(list(
-    treatment_af_dyn = 0, treatment_af = 0, treatment_ct = 0,
-    treatment_ct_ai = 0, treatment_ct_noai = 0, pdb_share = 0,
-    protein_share = 0, experimental_share = 0
+    treatment_af_dyn = 0, treatment_af_delay = 0, treatment_af = 0,
+    treatment_ct = 0, treatment_ct_ai = 0, treatment_ct_noai = 0,
+    pdb_share = 0, protein_share = 0, experimental_share = 0
   )) %>%
-  select(c(g, g_af, g_ct, g_ct_ai, g_ct_noai, time), everything()) %>%
+  select(
+    c(g, g_af, g_af_delay, g_ct, g_ct_ai, g_ct_noai, time), everything()
+  ) %>%
   arrange(pi_id, time)
 
-# Backfill pdb_share, resolution, R_free
+# Backfill pdb_share
 sb_data_qtly <- sb_data_qtly %>%
   select(-institution_country_code) %>%
   group_by(pi_id) %>%
-  fill(pdb_share, resolution, R_free) %>%
+  fill(pdb_share) %>% # , resolution, R_free) %>%
+  ungroup()
+
+# create a 4 quarter rolling average of the share variables
+sb_data_qtly <- sb_data_qtly %>%
+  group_by(pi_id) %>%
+  mutate(
+    pdb_share_4q = coalesce(
+      rollmeanr(pdb_share, k = 4, fill = NA),
+      pdb_share
+    ),
+    protein_share_4q = coalesce(
+      rollmeanr(protein_share, k = 4, fill = NA),
+      protein_share
+    ),
+    experimental_share_4q = coalesce(
+      rollmeanr(experimental_share, k = 4, fill = NA),
+      experimental_share
+    )
+  ) %>%
   ungroup()
 
 # Log-transform some columns
@@ -133,15 +162,14 @@ sb_data_qtly <- sb_data_qtly %>%
 sb_data_qtly <- sb_data_qtly %>%
   group_by(time) %>%
   mutate(
-    num_publications_std = scale(num_publications, center = TRUE, scale = TRUE),
-    patent_count_std = scale(patent_count, center = TRUE, scale = TRUE),
-    ca_count_std = scale(ca_count, center = TRUE, scale = TRUE),
     cited_by_count_std = scale(cited_by_count, center = TRUE, scale = TRUE)
   ) %>%
   ungroup()
 
 sb_data_qtly <- sb_data_qtly %>%
-  mutate_at(vars(starts_with("field_"), starts_with("mesh_")), ~ replace_na(., 0))
+  mutate_at(
+    vars(starts_with("field_"), starts_with("mesh_")), ~ replace_na(., 0)
+  )
 # ------------------------------------------------------------------------------
 # CREATING DUMMIES FOR EVENT STUDY
 # ------------------------------------------------------------------------------
@@ -149,7 +177,7 @@ sb_data_qtly <- sb_data_qtly %>%
 sb_data_qtly <- sb_data_qtly %>%
   mutate(
     rel_treat_af = time - g_af,
-    rel_treat_af_strong = ifelse(strong == "TRUE", time - g_af, NA),
+    rel_treat_af_strong = ifelse(intent_strong == 1, time - g_af, NA),
     rel_treat_ct = time - g_ct,
     rel_treat_ct_ai = time - g_ct_ai,
     rel_treat_ct_noai = time - g_ct_noai
@@ -175,8 +203,8 @@ sb_data_qtly <- sb_data_qtly %>%
 # ------------------------------------------------------------------------------
 
 # PDB subset: high-pdb researchers
-sb_data_qtly_2018_2020 <- sb_data_qtly %>% filter(time %in% 1:13)
-avg_pdb_share <- sb_data_qtly_2018_2020 %>%
+sb_data_qtly_2015_2017 <- sb_data_qtly %>% filter(time %in% -9:0)
+avg_pdb_share <- sb_data_qtly_2015_2017 %>%
   group_by(pi_id) %>%
   summarise(avg_pdb_share = mean(pdb_share, na.rm = TRUE))
 percentile_75_pdb <- quantile(avg_pdb_share$avg_pdb_share, 0.75, na.rm = TRUE)
@@ -187,22 +215,22 @@ sb_data_qtly$high_pdb <- ifelse(sb_data_qtly$pi_id %in% high_pdb, 1, 0)
 
 ### SUBSETS ###
 sub_samples <- list(
-  "all" = sb_data_qtly,
+  "all" = sb_data_qtly %>%
+    filter(time >= 0),
   "af_ct" = sb_data_qtly %>%
-    filter(str_detect(seed, "af") | str_detect(seed, "ct")),
+    filter((str_detect(seed, "af") | str_detect(seed, "ct")) & time >= 0),
   "af_ct_ai" = sb_data_qtly %>%
-    filter(str_detect(seed, "af") | str_detect(seed, "ct_ai")),
+    filter((str_detect(seed, "af") | str_detect(seed, "ct_ai")) & time >= 0),
   "af_ct_noai" = sb_data_qtly %>%
-    filter(str_detect(seed, "af") | str_detect(seed, "ct_noai")),
+    filter((str_detect(seed, "af") | str_detect(seed, "ct_noai")) & time >= 0),
   "af_ct_w_high_pdb" = sb_data_qtly %>%
-    filter(str_detect(seed, "af") | str_detect(seed, "ct")) %>%
+    filter((str_detect(seed, "af") | str_detect(seed, "ct")) & time >= 0) %>%
     semi_join(
       avg_pdb_share %>%
         filter(avg_pdb_share > percentile_75_pdb),
       by = "pi_id"
     )
 )
-
 # ------------------------------------------------------------------------------
 # CEM (Coarsened Exact Matching)
 # ------------------------------------------------------------------------------
@@ -212,12 +240,12 @@ cols <- c(
   "num_publications", "cited_by_count", "ct0", "ct1", "pdb_share",
   "protein_share", "experimental_share", "patent_count",
   "field_biochemistry_genetics_and_molecular_biology",
-  "mesh_C"
+  "mesh_C", "covid_share_2020"
 )
 
 # Filter and prepare data for collapsing
 sb_data_qtly_y0_cem <- sb_data_qtly %>%
-  filter(time %in% 1:5) %>%
+  filter(time %in% -9:0) %>%
   mutate(treatment_af_ct = ifelse(!is.na(g_af) & is.na(g_ct), 1, 0)) %>%
   filter(complete.cases(field_biochemistry_genetics_and_molecular_biology, mesh_C)) # nolint
 
