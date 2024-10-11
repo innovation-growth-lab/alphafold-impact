@@ -470,3 +470,21 @@ def _get_pdb_activity(
     data = data.merge(data_e_grouped, on="id", how="left")
 
     return data
+
+def select_regression_columns(data: pd.DataFrame, columns: list) -> pd.DataFrame:
+    """
+    Selects columns relevant for regression analysis from the given DataFrame.
+
+    Args:
+        data (pd.DataFrame): The input DataFrame containing various metrics and annotations.
+        columns (list): A list of columns to keep in the DataFrame.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing only the columns relevant for regression analysis.
+    """
+
+
+    # Drop columns that are not relevant for regression analysis
+    regression_data = data.drop(columns=columns)
+
+    return regression_data

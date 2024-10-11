@@ -232,6 +232,11 @@ publications.data.outputs:
   <<: *_pq
   filepath: s3://igl-alphafold/oct/04_output/publications/outputs.parquet
 
+publications.regression.inputs:
+  <<: *_pq
+  filepath: s3://igl-alphafold/oct/04_output/publications/regression_inputs.parquet
+
+
 # -------------------------------------------------------------
 
 foundational_lab.data_collection.candidates.publications.intermediate:

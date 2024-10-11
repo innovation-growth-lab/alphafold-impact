@@ -8,6 +8,7 @@ from .nodes import (
     create_publications_data,
     merge_individual_data,
     update_alphafold_triad,
+    select_regression_columns,
 )
 
 
@@ -71,6 +72,15 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                 outputs="publications.data.outputs",
                 name="export_publications_data",
             ),
+            node(
+                select_regression_columns,
+                inputs={
+                    "data": "publications.data.outputs",
+                    "columns": "params:publications.columns_to_drop",
+                },
+                outputs="publications.regression.inputs",
+                name="subset_columns_for_regression",
+            )
         ],
         tags=["data_output_publications"],
     )
