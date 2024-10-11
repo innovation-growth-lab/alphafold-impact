@@ -10,6 +10,43 @@ Entrez.email = "david.ampudia@nesta.org.uk"
 
 logger = logging.getLogger(__name__)
 
+QUARTER_MAPPING = { # HACK
+    "2015Q3": -9,
+    "2015Q4": -8,
+    "2016Q1": -7,
+    "2016Q2": -6,
+    "2016Q3": -5,
+    "2016Q4": -4,
+    "2017Q1": -3,
+    "2017Q2": -2,
+    "2017Q3": -1,
+    "2017Q4": 0,
+    "2018Q1": 1,
+    "2018Q2": 2,
+    "2018Q3": 3,
+    "2018Q4": 4,
+    "2019Q1": 5,
+    "2019Q2": 6,
+    "2019Q3": 7,
+    "2019Q4": 8,
+    "2020Q1": 9,
+    "2020Q2": 10,
+    "2020Q3": 11,
+    "2020Q4": 12,
+    "2021Q1": 13,
+    "2021Q2": 14,
+    "2021Q3": 15,
+    "2021Q4": 16,
+    "2022Q1": 17,
+    "2022Q2": 18,
+    "2022Q3": 19,
+    "2022Q4": 20,
+    "2023Q1": 21,
+    "2023Q2": 22,
+    "2023Q3": 23,
+    "2023Q4": 24,
+    "2024Q1": 25,
+}
 
 def get_entrez_ptype_pmid(pmid: str) -> str:
     """
@@ -621,39 +658,9 @@ def _get_time(data):
     # if seed isother, set parent_publication_date to NaT
     data.loc[data["seed"] == "other", "parent_publication_date"] = pd.NaT
 
-    # Create a mapping dictionary
-    quarter_mapping = {
-        "2017Q4": 0,
-        "2018Q1": 1,
-        "2018Q2": 2,
-        "2018Q3": 3,
-        "2018Q4": 4,
-        "2019Q1": 5,
-        "2019Q2": 6,
-        "2019Q3": 7,
-        "2019Q4": 8,
-        "2020Q1": 9,
-        "2020Q2": 10,
-        "2020Q3": 11,
-        "2020Q4": 12,
-        "2021Q1": 13,
-        "2021Q2": 14,
-        "2021Q3": 15,
-        "2021Q4": 16,
-        "2022Q1": 17,
-        "2022Q2": 18,
-        "2022Q3": 19,
-        "2022Q4": 20,
-        "2023Q1": 21,
-        "2023Q2": 22,
-        "2023Q3": 23,
-        "2023Q4": 24,
-        "2024Q1": 25,
-    }
-
     # Replace the quarters with the corresponding numbers
-    data["time"] = data["publication_date"].map(quarter_mapping)
-    data["parent_time"] = data["parent_publication_date"].map(quarter_mapping)
+    data["time"] = data["publication_date"].map(QUARTER_MAPPING)
+    data["parent_time"] = data["parent_publication_date"].map(QUARTER_MAPPING)
 
     return data
 
