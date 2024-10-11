@@ -2,11 +2,10 @@
 rm(list = ls())
 options(max.print = 1000)
 
-# Check installation & LOAD PACKAGES
+# Check installation & load required packages
 list_of_packages <- c(
-  "arrow", "tidyverse", "ggplot2", "data.table", "bacondecomp",
-  "fixest", "broom", "stargazer", "kableExtra", "patchwork",
-  "extrafont", "RColorBrewer", "plotrix", "MatchIt", "cem", "zoo"
+  "arrow", "tidyverse", "MatchIt", "fastDummies", "aws.s3",
+  "yaml", "zoo", "fixest"
 )
 new_packages <- list_of_packages[
   !(list_of_packages %in% installed.packages()[, "Package"])
@@ -17,29 +16,57 @@ if (length(new_packages)) {
     repos = "http://cran.us.r-project.org"
   )
 }
-
 invisible(lapply(list_of_packages, library, character.only = TRUE))
 
+# Set working directory
 setwd("~/projects/alphafold-impact/")
+figures <- "data/05_model_output/figures/papers/"
+tables <- "data/05_model_output/tables/papers/"
 
-figures <- "data/05_model_output/figures/"
-tables <- "data/05_model_output/tables/"
-figs <- list()
+# Create directories if they do not exist
+if (!dir.exists(figures)) {
+  dir.create(figures, recursive = TRUE)
+}
 
-getwd()
+if (!dir.exists(tables)) {
+  dir.create(tables, recursive = TRUE)
+}
 
+# Assign commonly used dplyr functions
 select <- dplyr::select
 summarise <- dplyr::summarise
 summarize <- dplyr::summarize
+bind_rows <- dplyr::bind_rows
 
 # ------------------------------------------------------------------------------
-# DATA PREP
+# DATA PREPARATION
 # ------------------------------------------------------------------------------
 
-papers <- read_parquet("data/04_outputs/descriptive/reduced_outputs.parquet")
+credentials <- yaml.load_file("conf/base/credentials.yml")
+
+Sys.setenv(
+  "AWS_ACCESS_KEY_ID" = credentials$s3_credentials$key,
+  "AWS_SECRET_ACCESS_KEY" = credentials$s3_credentials$secret,
+  "AWS_DEFAULT_REGION" = "eu-west-2"
+)
+
+# Define the S3 bucket and path
+bucket <- "igl-alphafold"
+path <- "oct/04_output/publications/regression_inputs.parquet" # nolint
+
+
+# Fetch the data from the S3 bucket
+papers <- s3read_using(
+  FUN = arrow::read_parquet,
+  object = path,
+  bucket = bucket
+)
 
 # Replace commas in column names
 colnames(papers) <- gsub(",", "", colnames(papers))
+
+# for duplicate ids, keep first
+papers <- papers %>% distinct(id, .keep_all = TRUE)
 
 # Create 'strong' variable
 papers <- papers %>%
@@ -77,17 +104,6 @@ papers <- papers %>%
   mutate(across(starts_with("field_"), ~ replace_na(., 0))) %>%
   mutate(across(starts_with("mesh_"), ~ replace_na(., 0)))
 
-# Standardize variables by 'time_qtly'
-papers <- papers %>%
-  group_by(time_qtly) %>%
-  mutate(
-    cited_by_count_std = scale(cited_by_count, center = TRUE, scale = TRUE),
-    patent_count_std = scale(patent_count, center = TRUE, scale = TRUE),
-    patent_citation_std = scale(patent_citation, center = TRUE, scale = TRUE),
-    grant_count_std = scale(grant_count, center = TRUE, scale = TRUE)
-  ) %>%
-  ungroup()
-
 # Create log-transformed variables
 papers <- papers %>%
   mutate(
@@ -110,13 +126,13 @@ percentile_75_pdb <- quantile(papers$group_pdb_count, 0.75)
 sub_samples <- list(
   "all_lvl0" = papers_lvl0,
   # papers either in ct or af
-  "all_lvl0_ct" = papers_lvl0 %>% filter(str_detect(source, "af") | str_detect(source, "ct")),# nolint
+  "all_lvl0_ct" = papers_lvl0 %>% filter(str_detect(source, "af") | str_detect(source, "ct")), # nolint
   "all_lvl0_w_high_pdb" = papers_lvl0 %>% filter(group_pdb_count >= percentile_75_pdb), # nolint
-  "af_ct_lvl0_w_high_pdb" = papers_lvl0 %>% filter(group_pdb_count >= percentile_75_pdb) %>% filter(str_detect(source, "af") | str_detect(source, "ct")),# nolint
+  "af_ct_lvl0_w_high_pdb" = papers_lvl0 %>% filter(group_pdb_count >= percentile_75_pdb) %>% filter(str_detect(source, "af") | str_detect(source, "ct")), # nolint
   "all_lvl12" = papers_lvl12,
-  "all_lvl12_ct" = papers_lvl12 %>% filter(str_detect(source, "af") | str_detect(source, "ct")),# nolint
+  "all_lvl12_ct" = papers_lvl12 %>% filter(str_detect(source, "af") | str_detect(source, "ct")), # nolint
   "all_lvl12_w_high_pdb" = papers_lvl12 %>% filter(group_pdb_count >= percentile_75_pdb), # nolint
-  "af_ct_lvl12_w_high_pdb" = papers_lvl12 %>% filter(group_pdb_count >= percentile_75_pdb) %>% filter(str_detect(source, "af") | str_detect(source, "ct"))# nolint
+  "af_ct_lvl12_w_high_pdb" = papers_lvl12 %>% filter(group_pdb_count >= percentile_75_pdb) %>% filter(str_detect(source, "af") | str_detect(source, "ct")) # nolint
 )
 
 # ------------------------------------------------------------------------------
@@ -127,12 +143,11 @@ field_cols <- grep("^field_", names(papers), value = TRUE)
 mesh_cols <- grep("^mesh_", names(papers), value = TRUE)
 
 covs <- list()
-covs[["base0"]] <- c("group_pdb_count")
 covs[["base1"]] <- c(field_cols)
 covs[["base2"]] <- c(covs$base1, mesh_cols)
 
 fes <- list()
-fes[["fe1"]] <- c("time_qtly")
+fes[["fe1"]] <- c("time_qtly", "group_pdb_count")
 
 ### Extensive ###
 
@@ -198,9 +213,11 @@ results <- list()
 for (sub in names(sub_samples)) {
   # For each formula, compute feols
   for (form in names(form_list)) {
-    results[[paste0(sub, "_", form)]] <- feols(
+    regression_label <- paste0(sub, "_", form)
+    message("Running regression: ", regression_label)
+    results[[regression_label]] <- feols(
       form_list[[form]],
-      data = sub_samples[[sub]]
+      data = sub_samples[[sub]],
     )
   }
 }
@@ -212,7 +229,8 @@ for (sub in names(sub_samples)) {
 # Define variables of interest
 variable_interest <- c(
   "treatment_af_dyn",
-  "treatment_af_dyn:strong", "treatment_af_dyn:high_pdb",
+  "treatment_af_dyn:strong", 
+  "treatment_af_dyn:high_pdb",
   "treatment_af_dyn:strong:high_pdb"
 )
 
@@ -220,19 +238,19 @@ variable_interest <- c(
 table_info <- list(
   "cited_by_count_ln" = list(
     vars_to_keep = variable_interest,
-    file_name = "02_paper/03_cited_by_count_ln_productivity_lvl0.tex"
+    file_name = "03_cited_by_count_ln_productivity_lvl0.tex"
   ),
   "patent_count_ln" = list(
     vars_to_keep = variable_interest,
-    file_name = "02_paper/01_patent_count_ln_productivity_lvl0.tex"
+    file_name = "01_patent_count_ln_productivity_lvl0.tex"
   ),
   "patent_citation_ln" = list(
     vars_to_keep = variable_interest,
-    file_name = "02_paper/02_patent_citation_ln_productivity_lvl0.tex"
+    file_name = "02_patent_citation_ln_productivity_lvl0.tex"
   ),
   "ca_count_ln" = list(
     vars_to_keep = variable_interest,
-    file_name = "02_paper/04_ca_count_ln_productivity_lvl0.tex"
+    file_name = "04_ca_count_ln_productivity_lvl0.tex"
   )
 )
 
@@ -243,21 +261,21 @@ subsets_lvl0 <- c(
 
 # Define mapping from dependent variables to variables
 table_info_lvl12 <- list(
-  "cited_by_count_ln" = list(
-    vars_to_keep = variable_interest,
-    file_name = "02_paper/03_cited_by_count_ln_productivity_lvl12.tex"
-  ),
   "patent_count_ln" = list(
     vars_to_keep = variable_interest,
-    file_name = "02_paper/01_patent_count_ln_productivity_lvl12.tex"
+    file_name = "01_patent_count_ln_productivity_lvl12.tex"
+  ),
+  "cited_by_count_ln" = list(
+    vars_to_keep = variable_interest,
+    file_name = "03_cited_by_count_ln_productivity_lvl12.tex"
   ),
   "patent_citation_ln" = list(
     vars_to_keep = variable_interest,
-    file_name = "02_paper/02_patent_citation_ln_productivity_lvl12.tex"
+    file_name = "02_patent_citation_ln_productivity_lvl12.tex"
   ),
   "ca_count_ln" = list(
     vars_to_keep = variable_interest,
-    file_name = "02_paper/04_ca_count_ln_productivity_lvl12.tex"
+    file_name = "04_ca_count_ln_productivity_lvl12.tex"
   )
 )
 
