@@ -62,7 +62,7 @@ for (group in c(
 }
 
 # Baseline covariates
-es_covs <- c("covid_share_2020", "high_pdb", field_cols, mesh_cols, institution_cols)
+es_covs <- c("protein_share", "experimental_share", field_cols, mesh_cols)
 
 # # Add field and mesh columns
 # interacted_covs <- expand.grid(
@@ -79,10 +79,13 @@ interacted_covs <- c(
 )
 
 # Final set of covariates
-es_covs <- c(es_covs, interacted_covs)
+# es_covs <- c(es_covs, interacted_covs)
 
 # Add fixed effects
-es_fes <- c("pi_id", "time_qtly", "time_qtly^country")
+es_fes <- c(
+  "pi_id", "time_qtly", "covid_share_2020", 
+  "country", institution_cols, "high_pdb"
+)
 
 # Create formulas for each regs group
 es_form_list <- list()

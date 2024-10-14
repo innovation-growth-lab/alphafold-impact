@@ -34,7 +34,7 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                 name="create_foundational_lab_outputs",
             ),
         ],
-        tags=["data_processing_foundational_labs", "rerun"],
+        tags=["data_processing_foundational_labs"],
     )
 
     return staggered_pipeline
