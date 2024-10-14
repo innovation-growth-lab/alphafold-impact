@@ -21,10 +21,17 @@ invisible(lapply(list_of_packages, library, character.only = TRUE))
 
 # Set working directory and paths
 setwd("~/projects/alphafold-impact/")
-figures <- "data/05_model_output/figures/"
-tables <- "data/05_model_output/tables/"
-figs <- list()
+figures <- "data/05_model_output/figures/applied/es"
+tables <- "data/05_model_output/tables/applied/es"
 
+# Create directories if they do not exist
+if (!dir.exists(figures)) {
+  dir.create(figures, recursive = TRUE)
+}
+
+if (!dir.exists(tables)) {
+  dir.create(tables, recursive = TRUE)
+}
 
 # Assign commonly used dplyr functions
 select <- dplyr::select
@@ -180,7 +187,7 @@ for (result in names(es_results)) {
 
       # Save the plot with a unique filename
       ggsave(
-        paste0(figures, "exploration/applied/", result, ".png"),
+        paste0(figures, result, ".png"),
         plot,
         width = 12, height = 6
       )
