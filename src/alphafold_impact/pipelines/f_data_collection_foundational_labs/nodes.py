@@ -86,7 +86,7 @@ def fetch_author_publications(
     Args:
         author_ids (List[str]): List of author IDs.
         from_publication_date (str): Starting publication date in the format 'YYYY-MM-DD'.
-        api_config (Dict[str, str]): API configuration dictionary containing 'mailto' and
+        api_config (Dict[str, str]): API configuration dictionary containing
             'perpage' values.
 
     Yields:
@@ -116,7 +116,6 @@ def fetch_author_publications(
         slice_results = Parallel(n_jobs=8, backend="loky", verbose=10)(
             delayed(collect_papers)(
                 oa_ids=batch,
-                mailto=api_config["mailto"],
                 perpage=api_config["perpage"],
                 filter_criteria=["from_publication_date", "author.id"],
                 slice_keys=True,
@@ -450,7 +449,6 @@ def get_publications_from_labs(
         slice_results = Parallel(n_jobs=8, backend="loky", verbose=10)(
             delayed(collect_papers)(
                 oa_ids=batch,
-                mailto=api_config["mailto"],
                 perpage=api_config["perpage"],
                 filter_criteria=["from_publication_date", "author.id"],
                 slice_keys=True,

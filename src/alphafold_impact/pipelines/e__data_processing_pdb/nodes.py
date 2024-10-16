@@ -32,6 +32,9 @@ def _process_responses(responses):
                     "authorships",
                     "topics",
                     "concepts",
+                    "fwci",
+                    "citation_normalized_percentile",
+                    "cited_by_percentile_year",
                 ]
             }
             for item in children_list
@@ -39,7 +42,7 @@ def _process_responses(responses):
 
         # transform to datafram
         df = pd.DataFrame(json_data)
-        
+
         # if dataframe is empty, continue
         if df.empty:
             continue
@@ -124,6 +127,29 @@ def _process_responses(responses):
             )
         )
 
+        # Extract the content of citation_normalized_percentile
+        df[
+            [
+                "citation_normalized_percentile_value",
+                "citation_normalized_percentile_is_in_top_1_percent",
+                "citation_normalized_percentile_is_in_top_10_percent",
+            ]
+        ] = df["citation_normalized_percentile"].apply(
+            lambda x: pd.Series(x) if x else pd.Series([None, None, None]),
+            result_type="expand",
+        )
+
+        # Extract the content of cited_by_percentile_year
+        df[
+            [
+                "cited_by_percentile_year_min",
+                "cited_by_percentile_year_max",
+            ]
+        ] = df["cited_by_percentile_year"].apply(
+            lambda x: pd.Series(x) if x else pd.Series([None, None]),
+            result_type="expand",
+        )
+
         # append to output
         output.append(df)
 
@@ -142,7 +168,6 @@ def _get_papers(ids: list, api_config: dict, label: str = "doi"):
     papers_with_ids = Parallel(n_jobs=8, backend="loky", verbose=10)(
         delayed(collect_papers)(
             oa_ids=batch_key,
-            mailto=api_config["mailto"],
             perpage=api_config["perpage"],
             filter_criteria=label,
             eager_loading=True,
