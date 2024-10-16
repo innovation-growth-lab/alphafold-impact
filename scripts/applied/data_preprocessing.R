@@ -147,6 +147,10 @@ sb_data_qtly <- sb_data_qtly %>%
   ) %>%
   ungroup()
 
+# if patent_count is 0, set patent_citation to NA
+sb_data_qtly <- sb_data_qtly %>%
+  mutate(patent_citation = ifelse(patent_count == 0, NA, patent_citation))
+
 # Log-transform some columns
 sb_data_qtly <- sb_data_qtly %>%
   mutate(
@@ -155,7 +159,8 @@ sb_data_qtly <- sb_data_qtly %>%
     patent_count = log1p(patent_count),
     ct0 = log1p(ct0),
     ct1 = log1p(ct1),
-    cited_by_count = log1p(cited_by_count)
+    cited_by_count = log1p(cited_by_count),
+    patent_citation = log1p(patent_citation)
   )
 
 # Standardise publication-related counts

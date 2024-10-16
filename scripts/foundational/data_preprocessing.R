@@ -155,7 +155,8 @@ sb_data_qtly <- sb_data_qtly %>%
     patent_count = log1p(patent_count),
     ct0 = log1p(ct0),
     ct1 = log1p(ct1),
-    cited_by_count = log1p(cited_by_count)
+    cited_by_count = log1p(cited_by_count),
+    patent_citation = log1p(patent_citation)
   )
 
 # Standardise publication-related counts
