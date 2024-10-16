@@ -14,6 +14,7 @@ Utilities for data collection from OpenAlex.
 """
 
 import logging
+import random
 from typing import Iterator, List, Dict, Sequence, Union, Callable, Generator
 import time
 from requests.adapters import HTTPAdapter, Retry
@@ -22,6 +23,14 @@ from joblib import Parallel, delayed
 
 logger = logging.getLogger(__name__)
 
+
+MAIL_TO_CANDIDATES = [
+    "david.ampudia@nesta.org.uk",
+    "data_analytics@nesta.org.uk",
+    "david.ampudia@bse.eu",
+    "david.ampudia@upf.edu",
+    "dampudiavicente@gmail.com",
+]
 
 
 def _revert_abstract_index(abstract_inverted_index: Dict[str, Sequence[int]]) -> str:
@@ -79,7 +88,9 @@ def _parse_results(response: List[Dict]) -> Dict[str, List[str]]:
             "grants": paper.get("grants", []),
             "ids": paper.get("ids", []),
             "counts_by_year": paper.get("counts_by_year", []),
-            "citation_normalized_percentile": paper.get("citation_normalized_percentile", []),
+            "citation_normalized_percentile": paper.get(
+                "citation_normalized_percentile", []
+            ),
             "cited_by_percentile_year": paper.get("cited_by_percentile_year", []),
             "fwci": paper.get("fwci", ""),
         }
@@ -122,17 +133,8 @@ def _works_generator(
     else:
         filter_string = f"{filter_criteria}:{oa_id}"
 
-    mailto_candidates = [
-        "david.ampudia@nesta.org.uk",
-        "data_analytics@nesta.org.uk",
-        "david.ampudia@bse.eu",
-        "david.ampudia@upf.edu",
-        "dampudiavicente@gmail.com"
-    ]
-
     # select a random email from the list
-    import random
-    mailto = random.choice(mailto_candidates)
+    mailto = random.choice(MAIL_TO_CANDIDATES)
 
     if sample_size == -1:
         cursor_url = (
@@ -165,7 +167,7 @@ def _works_generator(
         except Exception as e:  # pylint: disable=broad-except
             logger.error("Error fetching data for %s: %s", oa_id, e)
             yield []
-    else: # OA does not accept cursor pagination with samples.
+    else:  # OA does not accept cursor pagination with samples.
         cursor_url = (
             f"https://api.openalex.org/works?filter={filter_string}&seed=123"
             f"&mailto={mailto}&per-page={perpage}&sample={sample_size}&page={{}}"
@@ -196,8 +198,6 @@ def _works_generator(
             logger.error("Error fetching data for %s: %s", oa_id, e)
             yield []
 
-   
-
 
 def preprocess_oa_ids(
     oa_ids: Union[str, List[str], Dict[str, str]], group_oa_ids: bool
@@ -223,7 +223,7 @@ def fetch_papers_for_id(
     mailto: str,
     perpage: str,
     filter_criteria: Union[str, List[str]],
-    **kwargs
+    **kwargs,
 ) -> List[dict]:
     """Fetches all papers cited by a specific work ID."""
     assert isinstance(
