@@ -12,6 +12,77 @@ from ..a_data_collection_oa.nodes import collect_papers  # pylint: disable=E0402
 logger = logging.getLogger(__name__)
 
 
+def collect_pdb_details(pdb_df: pd.DataFrame, api_config: dict) -> pd.DataFrame:
+    """
+    Collects PDB details from a DataFrame and API configuration.
+
+    Args:
+        pdb_df (pd.DataFrame): The DataFrame containing PDB details.
+        api_config (dict): The API configuration.
+
+    Returns:
+        pd.DataFrame: The combined DataFrame with collected PDB details.
+    """
+
+    # get the set of unique pmid
+    pmids = (
+        pdb_df["pmid"]
+        .replace(["", "None", "nan"], np.nan)
+        .dropna()
+        .astype(float)
+        .astype(int)
+        .astype(str)
+        .unique()
+        .tolist()
+    )
+
+    processed_papers_with_pmids = _get_papers(pmids, api_config, label="ids.pmid")
+
+    # filter out from pdb_df the rows with pmid in processed_papers_with_pmids
+    spdb_df = pdb_df[
+        ~pdb_df["pmid"].isin(
+            processed_papers_with_pmids["pmid"].astype(float).astype(str)
+        )
+    ]
+
+    # extract the list of doi from spdb_df
+    dois = (
+        spdb_df["doi"].replace(["", "None", "nan"], np.nan).dropna().unique().tolist()
+    )
+
+    processed_papers_with_dois = _get_papers(dois, api_config, label="doi")
+
+    # concatenate the two frames, drop duplicate ids
+    oa_pdb_df = pd.concat(
+        [processed_papers_with_pmids, processed_papers_with_dois]
+    ).drop_duplicates(subset=["id"])
+
+    pdb_with_pmid = pdb_df[~pdb_df["pmid"].isin(["", "None", "nan"])]
+    pdb_with_pmid["pmid"] = pdb_with_pmid["pmid"].astype(float).astype(int).astype(str)
+
+    # merge to oa_pdb_df the dataframe pdb_df, first try on pmid, then on doi
+    oa_pdb_df_pmid = oa_pdb_df.merge(
+        pdb_with_pmid[["rcsb_id", "pmid", "resolution", "R_free"]],
+        how="left",
+        on="pmid",
+    )
+
+    oa_pdb_df_doi = oa_pdb_df.merge(
+        pdb_df[["rcsb_id", "doi", "resolution", "R_free"]], how="left", on="doi"
+    )
+
+    # Combine the results
+    combined_df = pd.concat([oa_pdb_df_pmid, oa_pdb_df_doi]).drop_duplicates("id")
+
+    # replace openalex.org in id
+    combined_df["id"] = combined_df["id"].str.replace("https://openalex.org/", "")
+
+    # drop ids
+    combined_df.drop(columns=["ids"], inplace=True)
+
+    return combined_df
+
+
 def _process_responses(responses):
     output = []
 
@@ -134,8 +205,9 @@ def _process_responses(responses):
                 "citation_normalized_percentile_is_in_top_1_percent",
                 "citation_normalized_percentile_is_in_top_10_percent",
             ]
-        ] = df["citation_normalized_percentile"].apply(
-            lambda x: pd.Series(x) if x else pd.Series([None, None, None]),
+        ] = df.apply(
+            lambda x: (pd.Series(x["citation_normalized_percentile"])),
+            axis=1,
             result_type="expand",
         )
 
@@ -145,8 +217,9 @@ def _process_responses(responses):
                 "cited_by_percentile_year_min",
                 "cited_by_percentile_year_max",
             ]
-        ] = df["cited_by_percentile_year"].apply(
-            lambda x: pd.Series(x) if x else pd.Series([None, None]),
+        ] = df.apply(
+            lambda x: pd.Series(x["cited_by_percentile_year"]),
+            axis=1,
             result_type="expand",
         )
 
@@ -182,74 +255,3 @@ def _get_papers(ids: list, api_config: dict, label: str = "doi"):
     processed_papers_with_ids = _process_responses(papers_with_ids_list)
 
     return processed_papers_with_ids
-
-
-def collect_pdb_details(pdb_df: pd.DataFrame, api_config: dict) -> pd.DataFrame:
-    """
-    Collects PDB details from a DataFrame and API configuration.
-
-    Args:
-        pdb_df (pd.DataFrame): The DataFrame containing PDB details.
-        api_config (dict): The API configuration.
-
-    Returns:
-        pd.DataFrame: The combined DataFrame with collected PDB details.
-    """
-
-    # get the set of unique pmid
-    pmids = (
-        pdb_df["pmid"]
-        .replace(["", "None", "nan"], np.nan)
-        .dropna()
-        .astype(float)
-        .astype(int)
-        .astype(str)
-        .unique()
-        .tolist()
-    )
-
-    processed_papers_with_pmids = _get_papers(pmids, api_config, label="ids.pmid")
-
-    # filter out from pdb_df the rows with pmid in processed_papers_with_pmids
-    spdb_df = pdb_df[
-        ~pdb_df["pmid"].isin(
-            processed_papers_with_pmids["pmid"].astype(float).astype(str)
-        )
-    ]
-
-    # extract the list of doi from spdb_df
-    dois = (
-        spdb_df["doi"].replace(["", "None", "nan"], np.nan).dropna().unique().tolist()
-    )
-
-    processed_papers_with_dois = _get_papers(dois, api_config, label="doi")
-
-    # concatenate the two frames, drop duplicate ids
-    oa_pdb_df = pd.concat(
-        [processed_papers_with_pmids, processed_papers_with_dois]
-    ).drop_duplicates(subset=["id"])
-
-    pdb_with_pmid = pdb_df[~pdb_df["pmid"].isin(["", "None", "nan"])]
-    pdb_with_pmid["pmid"] = pdb_with_pmid["pmid"].astype(float).astype(int).astype(str)
-
-    # merge to oa_pdb_df the dataframe pdb_df, first try on pmid, then on doi
-    oa_pdb_df_pmid = oa_pdb_df.merge(
-        pdb_with_pmid[["rcsb_id", "pmid", "resolution", "R_free"]],
-        how="left",
-        on="pmid",
-    )
-
-    oa_pdb_df_doi = oa_pdb_df.merge(
-        pdb_df[["rcsb_id", "doi", "resolution", "R_free"]], how="left", on="doi"
-    )
-
-    # Combine the results
-    combined_df = pd.concat([oa_pdb_df_pmid, oa_pdb_df_doi]).drop_duplicates("id")
-
-    # replace openalex.org in id
-    combined_df["id"] = combined_df["id"].str.replace("https://openalex.org/", "")
-
-    # drop ids
-    combined_df.drop(columns=["ids"], inplace=True)
-
-    return combined_df
