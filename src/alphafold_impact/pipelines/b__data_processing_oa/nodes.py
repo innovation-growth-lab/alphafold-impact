@@ -75,6 +75,9 @@ def _json_loader(
                     "authorships",
                     "topics",
                     "concepts",
+                    "fwci",
+                    "citation_normalized_percentile",
+                    "cited_by_percentile_year",
                 ]
             }
             for item in children_list
@@ -165,6 +168,29 @@ def _json_loader(
             )
         )
 
+        # Extract the content of citation_normalized_percentile
+        df[
+            [
+                "citation_normalized_percentile_value",
+                "citation_normalized_percentile_is_in_top_1_percent",
+                "citation_normalized_percentile_is_in_top_10_percent",
+            ]
+        ] = df["citation_normalized_percentile"].apply(
+            lambda x: pd.Series(x) if x else pd.Series([None, None, None]),
+            result_type="expand",
+        )
+
+        # Extract the content of cited_by_percentile_year
+        df[
+            [
+                "cited_by_percentile_year_min",
+                "cited_by_percentile_year_max",
+            ]
+        ] = df["cited_by_percentile_year"].apply(
+            lambda x: pd.Series(x) if x else pd.Series([None, None]),
+            result_type="expand",
+        )
+
         # append to output
         output.append(df)
 
@@ -213,6 +239,9 @@ def process_data_by_level(data: Dict[str, AbstractDataset], level: int) -> pd.Da
             "authorships",
             "topics",
             "concepts",
+            "fwci",
+            "citation_normalized_percentile",
+            "cited_by_percentile_year",
         ]
     ]
 
@@ -262,6 +291,8 @@ def combine_levels_data(unique: str = "all", **kwargs) -> pd.DataFrame:
                     "authorships",
                     "topics",
                     "concepts",
+                    "citation_normalized_percentile",
+                    "cited_by_percentile_year",
                 ]
             ]
         )
@@ -310,6 +341,8 @@ def combine_levels_data_connect_parents(unique: str = "all", **kwargs) -> pd.Dat
                 "authorships",
                 "topics",
                 "concepts",
+                "citation_normalized_percentile",
+                "cited_by_percentile_year",
             ]
         ]
     )
@@ -357,6 +390,9 @@ def process_data_by_level_ptd(
                     "authorships",
                     "topics",
                     "concepts",
+                    "fwci",
+                    "citation_normalized_percentile",
+                    "cited_by_percentile_year",
                 ]
             ]
         }
@@ -426,6 +462,9 @@ def process_subfield_data(data: Dict[str, AbstractDataset]) -> pd.DataFrame:
                     "authorships",
                     "topics",
                     "concepts",
+                    "fwci",
+                    "citation_normalized_percentile",
+                    "cited_by_percentile_year",
                 ]
             }
             for item in raw_json_data
@@ -514,6 +553,29 @@ def process_subfield_data(data: Dict[str, AbstractDataset]) -> pd.DataFrame:
                 if x
                 else None
             )
+        )
+
+        # Extract the content of citation_normalized_percentile
+        df[
+            [
+                "citation_normalized_percentile_value",
+                "citation_normalized_percentile_is_in_top_1_percent",
+                "citation_normalized_percentile_is_in_top_10_percent",
+            ]
+        ] = df["citation_normalized_percentile"].apply(
+            lambda x: pd.Series(x) if x else pd.Series([None, None, None]),
+            result_type="expand",
+        )
+
+        # Extract the content of cited_by_percentile_year
+        df[
+            [
+                "cited_by_percentile_year_min",
+                "cited_by_percentile_year_max",
+            ]
+        ] = df["cited_by_percentile_year"].apply(
+            lambda x: pd.Series(x) if x else pd.Series([None, None]),
+            result_type="expand",
         )
 
         # change doi to remove the url

@@ -50,13 +50,13 @@ def get_sb_candidate_authors(data: pd.DataFrame) -> List[Tuple[str, str]]:
     author_data = author_data[~(author_data["institution"] == "")]
 
     # instead return all author, institution pairs when position is last
-    alphafold_authors = (
+    candidate_authors = (
         author_data[author_data["position"] == "last"]
         .groupby(["author", "institution"])["id"]
         .nunique()
     )
 
-    return list(alphafold_authors.index)
+    return list(candidate_authors.index)
 
 
 def separate_ct_from_seed(

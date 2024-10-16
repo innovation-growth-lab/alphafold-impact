@@ -70,22 +70,18 @@ def _parse_results(response: List[Dict]) -> Dict[str, List[str]]:
         {
             "id": paper.get("id", "").replace("https://openalex.org/", ""),
             "doi": paper.get("doi", ""),
-            # "display_name": paper.get("display_name", ""),
-            # "title": paper.get("title", ""),
             "publication_date": paper.get("publication_date", ""),
-            # "abstract": _revert_abstract_index(
-            #     paper.get("abstract_inverted_index", {})
-            # ),
             "authorships": paper.get("authorships", []),
             "cited_by_count": paper.get("cited_by_count", ""),
             "concepts": paper.get("concepts", []),
-            # "keywords": paper.get("keywords", []),
             "mesh_terms": paper.get("mesh", []),
             "topics": paper.get("topics", []),
             "grants": paper.get("grants", []),
-            # "referenced_works": paper.get("referenced_works", []),
             "ids": paper.get("ids", []),
             "counts_by_year": paper.get("counts_by_year", []),
+            "citation_normalized_percentile": paper.get("citation_normalized_percentile", []),
+            "cited_by_percentile_year": paper.get("cited_by_percentile_year", []),
+            "fwci": paper.get("fwci", ""),
         }
         for paper in response
     ]

@@ -21,7 +21,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                     "data": "oa.chain_labels.id.primary",
                 },
                 outputs="oa.chain_labels.id.updated",
-                name="upsert_alphafold_triad",
+                name="update_alphafold_triad",
             ),
             node(
                 create_publications_data,
