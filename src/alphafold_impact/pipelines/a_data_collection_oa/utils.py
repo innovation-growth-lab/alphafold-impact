@@ -99,7 +99,6 @@ def _parse_results(response: List[Dict]) -> Dict[str, List[str]]:
 
 
 def _works_generator(
-    mailto: str,
     perpage: str,
     oa_id: Union[str, List[str]],
     filter_criteria: Union[str, List[str]],
@@ -110,7 +109,6 @@ def _works_generator(
     given work ID.
 
     Args:
-        mailto (str): The email address to use for the API.
         perpage (str): The number of results to return per page.
         oa_id (Union[str, List[str]): The work ID to use for the API.
         filter_criteria (Union[str, List[str]]): The filter criteria to use for the API.
@@ -220,7 +218,6 @@ def _chunk_oa_ids(ids: List[str], chunk_size: int = 50) -> Generator[str, None, 
 
 def fetch_papers_for_id(
     oa_id: Union[str, List[str]],
-    mailto: str,
     perpage: str,
     filter_criteria: Union[str, List[str]],
     **kwargs,
@@ -234,7 +231,7 @@ def fetch_papers_for_id(
     retries = Retry(total=5, backoff_factor=0.3)
     session.mount("https://", HTTPAdapter(max_retries=retries))
     for page, papers in enumerate(
-        _works_generator(mailto, perpage, oa_id, filter_criteria, session, **kwargs)
+        _works_generator(perpage, oa_id, filter_criteria, session, **kwargs)
     ):
         papers_for_id.extend(_parse_results(papers))
         logger.info(
@@ -248,7 +245,6 @@ def fetch_papers_for_id(
 
 def yield_papers_for_id(
     oa_id: Union[str, List[str]],
-    mailto: str,
     perpage: str,
     filter_criteria: Union[str, List[str]],
 ) -> Generator[Dict[str, List[dict]], None, None]:
@@ -261,7 +257,7 @@ def yield_papers_for_id(
     retries = Retry(total=5, backoff_factor=0.3)
     session.mount("https://", HTTPAdapter(max_retries=retries))
     for page, papers in enumerate(
-        _works_generator(mailto, perpage, oa_id, filter_criteria, session)
+        _works_generator(perpage, oa_id, filter_criteria, session)
     ):
         results = _parse_results(papers)
         papers_collected += len(results)
@@ -276,7 +272,6 @@ def yield_papers_for_id(
 
 def fetch_papers_eager(
     processed_ids: Union[List[str], List[List[str]]],
-    mailto: str,
     perpage: int,
     filter_criteria: Union[str, List[str]],
     slice_keys: bool,
@@ -288,7 +283,6 @@ def fetch_papers_eager(
     return {
         oa_id if not slice_keys else f"s{str(i)}": fetch_papers_for_id(
             oa_id=oa_id,
-            mailto=mailto,
             perpage=perpage,
             filter_criteria=filter_criteria,
             **kwargs,
@@ -299,7 +293,6 @@ def fetch_papers_eager(
 
 def fetch_papers_lazy(
     processed_ids: Union[List[str], List[List[str]]],
-    mailto: str,
     perpage: int,
     filter_criteria: Union[str, List[str]],
     slice_keys: bool,
@@ -310,7 +303,6 @@ def fetch_papers_lazy(
             oa_id if not slice_keys else f"s{str(i)}"
         ): lambda oa_id=oa_id: fetch_papers_for_id(
             oa_id=oa_id,
-            mailto=mailto,
             perpage=perpage,
             filter_criteria=filter_criteria,
         )
@@ -320,7 +312,6 @@ def fetch_papers_lazy(
 
 def fetch_papers_parallel(
     processed_ids: Union[List[str], List[List[str]]],
-    mailto: str,
     perpage: int,
     filter_criteria: Union[str, List[str]],
     parallel_jobs: int = 4,
@@ -331,7 +322,7 @@ def fetch_papers_parallel(
     logger.info("Slicing data. Number of oa_id_chunks: %s", len(oa_id_chunks))
     return {
         f"s{str(i)}": lambda chunk=chunk: Parallel(n_jobs=parallel_jobs, verbose=10)(
-            delayed(fetch_papers_for_id)(oa_id, mailto, perpage, filter_criteria)
+            delayed(fetch_papers_for_id)(oa_id, perpage, filter_criteria)
             for oa_id in chunk
         )
         for i, chunk in enumerate(oa_id_chunks)

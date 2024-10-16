@@ -3,7 +3,7 @@ This module contains functions for fetching and preprocessing data from
 the OpenAlex (OA) API.
 
 Functions:
-    collect_papers(mailto, perpage, oa_ids, filter_criteria, group_oa_ids=False, **kwargs):
+    collect_papers(perpage, oa_ids, filter_criteria, group_oa_ids=False, **kwargs):
         Collects papers based on the provided work IDs.
     fetch_subfield_baseline(oa_concept_ids, from_publication_date, api_config):
         Fetches the baseline data for a subfield based on the given concept IDs and 
@@ -53,7 +53,6 @@ logger = logging.getLogger(__name__)
 
 
 def collect_papers(
-    mailto: str,
     perpage: str,
     oa_ids: Union[str, List[str], List[List[str]], Dict[str, str]],
     filter_criteria: Union[str, List[str]],
@@ -69,7 +68,6 @@ def collect_papers(
     Collects papers based on the provided work IDs.
 
     Args:
-        mailto (str): The email address to be used for API requests.
         perpage (str): The number of papers to fetch per page.
         oa_ids (Union[str, List[str], List[List[str]], Dict[str, str]]): The work IDs to fetch
             papers for.
@@ -95,16 +93,16 @@ def collect_papers(
 
     # if concepts, simplify code and run direct fetch
     if bypass:
-        return yield_papers_for_id(oa_ids, mailto, perpage, filter_criteria)
+        return yield_papers_for_id(oa_ids, perpage, filter_criteria)
 
     # fetch papers for each oa_id
     if not parallelise:
         if eager_loading:
             return fetch_papers_eager(
-                oa_ids, mailto, perpage, filter_criteria, slice_keys, **kwargs
+                oa_ids, perpage, filter_criteria, slice_keys, **kwargs
             )
-        return fetch_papers_lazy(oa_ids, mailto, perpage, filter_criteria, slice_keys)
-    return fetch_papers_parallel(oa_ids, mailto, perpage, filter_criteria)
+        return fetch_papers_lazy(oa_ids, perpage, filter_criteria, slice_keys)
+    return fetch_papers_parallel(oa_ids, perpage, filter_criteria)
 
 
 def fetch_subfield_baseline(
@@ -135,7 +133,6 @@ def fetch_subfield_baseline(
 
     # fetch papers
     return collect_papers(
-        mailto=api_config["mailto"],
         perpage=api_config["perpage"],
         oa_ids=filter_ids,
         filter_criteria=["from_publication_date", "concepts.id"],
@@ -186,7 +183,6 @@ def fetch_citation_to_specific_depth(
             child_papers = Parallel(n_jobs=6, backend="loky", verbose=10)(
                 delayed(collect_papers)(
                     oa_ids=paper,
-                    mailto=api_config["mailto"],
                     perpage=api_config["perpage"],
                     filter_criteria=filter_config,
                     eager_loading=True,
