@@ -313,71 +313,28 @@ foundational_lab.data_analysis.staggered.outputs.quarterly.primary:
   <<: *_pq
   filepath: s3://igl-alphafold/oct/04_output/analysis/foundational_labs/staggered/outputs_quarterly.parquet
 
+# -------------------------------------------------------------
 
-# os.data_analysis.outputs.trends:
-#   <<: *_pq
-#   filepath: s3://igl-alphafold/oct/04_output/analysis/os/outputs_trends.parquet
+ecr.candidate_authors.raw:
+  <<: *_pq
+  filepath: s3://igl-alphafold/oct/01_raw/ecr/candidate_authors.parquet
 
-# os.data_analysis.outputs.regional_trends:
-#   <<: *_pq
-#   filepath: s3://igl-alphafold/oct/04_output/analysis/os/outputs_regional_trends.parquet
+ecr.authors.raw:
+  <<: *_pq
+  filepath: s3://igl-alphafold/oct/01_raw/ecr/authors.parquet
+ 
+ecr.publications.raw:
+  <<: *_pq_ptd
+  path: s3://igl-alphafold/oct/01_raw/ecr/publications/
 
-# ecr.data_analysis.yearly_counts:
-#   <<: *_pq
-#   filepath: s3://igl-alphafold/oct/04_output/analysis/ecr/outputs_yearly_counts.parquet
-  
-# ecr.data_analysis.subfield.af:
-#   <<: *_pq
-#   filepath: s3://igl-alphafold/oct/04_output/analysis/ecr/outputs_af.parquet
+ecr.institutions.raw:
+  <<: *_pq
+  filepath: s3://igl-alphafold/oct/01_raw/ecr/institutions.parquet
 
-# ecr.data_analysis.subfield.no_af:
-#   <<: *_pq
-#   filepath: s3://igl-alphafold/oct/04_output/analysis/ecr/outputs_no_af.parquet
 
-# ecr.data_analysis.field.af:
-#   <<: *_pq
-#   filepath: s3://igl-alphafold/oct/04_output/analysis/ecr/outputs_field_af.parquet
-
-# ecr.data_analysis.field.no_af:
-#   <<: *_pq
-#   filepath: s3://igl-alphafold/oct/04_output/analysis/ecr/outputs_field_no_af.parquet
-
-# ecr.data_analysis.counts.af:
-#   <<: *_pq
-#   filepath: s3://igl-alphafold/oct/04_output/analysis/ecr/outputs_counts_af.parquet
-
-# ecr.data_analysis.counts.no_af:
-#   <<: *_pq
-#   filepath: s3://igl-alphafold/oct/04_output/analysis/ecr/outputs_counts_no_af.parquet
-
-# ecr.data_analysis.citations.af:
-#   <<: *_pq
-#   filepath: s3://igl-alphafold/oct/04_output/analysis/ecr/outputs_citations_af.parquet
-
-# ecr.data_analysis.citations.no_af:
-#   <<: *_pq
-#   filepath: s3://igl-alphafold/oct/04_output/analysis/ecr/outputs_citations_no_af.parquet# TCC
-
-# tcc.data_analysis:
-#   <<: *_csv_ptd
-#   path: s3://igl-alphafold/oct/04_analysis/tcc/
-
-# tcc.reporting.summary_subfields:
-#   <<: *_csv_ptd
-#   path: s3://igl-alphafold/oct/07_reporting/tcc/summary_subfields
-
-# tcc.reporting.tcc_by_publication_quarter_subfields:
-#   <<: *_image
-#   filepath: s3://igl-alphafold/oct/07_reporting/tcc/tcc_by_publication_quarter_subfields.png
-
-# tcc.reporting.tcc_by_publication_quarter_af_levels:
-#   <<: *_image
-#   filepath: s3://igl-alphafold/oct/07_reporting/tcc/tcc_by_publication_quarter_af_levels.png
-
-# reporting.tcc_sb_papers:
-#   <<: *_image
-#   filepath: s3://igl-alphafold/oct/07_reporting/tcc/tcc_sb_papers.png
-
-# reporting.cc_sb_labs:
-#   <<: *_image
-#   filepath: s3://igl-alphafold/oct/07_reporting/tcc/cc_sb_labs.png
+ecr.data_analysis.counts.af:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/04_output/analysis/ecr/outputs_counts_af.parquet
+ecr.data_analysis.counts.no_af:
+  <<: *_pq
+  filepath: s3://alphafold-impact/data/04_output/analysis/ecr/outputs_counts_no_af.parquet
