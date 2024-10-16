@@ -240,8 +240,11 @@ def process_data_by_level(data: Dict[str, AbstractDataset], level: int) -> pd.Da
             "topics",
             "concepts",
             "fwci",
-            "citation_normalized_percentile",
-            "cited_by_percentile_year",
+            "citation_normalized_percentile_value",
+            "citation_normalized_percentile_is_in_top_1_percent",
+            "citation_normalized_percentile_is_in_top_10_percent",
+            "cited_by_percentile_year_min",
+            "cited_by_percentile_year_max",
         ]
     ]
 
@@ -291,8 +294,6 @@ def combine_levels_data(unique: str = "all", **kwargs) -> pd.DataFrame:
                     "authorships",
                     "topics",
                     "concepts",
-                    "citation_normalized_percentile",
-                    "cited_by_percentile_year",
                 ]
             ]
         )
@@ -341,8 +342,6 @@ def combine_levels_data_connect_parents(unique: str = "all", **kwargs) -> pd.Dat
                 "authorships",
                 "topics",
                 "concepts",
-                "citation_normalized_percentile",
-                "cited_by_percentile_year",
             ]
         ]
     )
@@ -390,9 +389,12 @@ def process_data_by_level_ptd(
                     "authorships",
                     "topics",
                     "concepts",
-                    "fwci",
-                    "citation_normalized_percentile",
-                    "cited_by_percentile_year",
+            "fwci",
+            "citation_normalized_percentile_value",
+            "citation_normalized_percentile_is_in_top_1_percent",
+            "citation_normalized_percentile_is_in_top_10_percent",
+            "cited_by_percentile_year_min",
+            "cited_by_percentile_year_max",
                 ]
             ]
         }
@@ -598,6 +600,12 @@ def process_subfield_data(data: Dict[str, AbstractDataset]) -> pd.DataFrame:
             "authorships",
             "concepts",
             "topics",
+            "fwci",
+            "citation_normalized_percentile_value",
+            "citation_normalized_percentile_is_in_top_1_percent",
+            "citation_normalized_percentile_is_in_top_10_percent",
+            "cited_by_percentile_year_min",
+            "cited_by_percentile_year_max",
         ]
     ]
 
