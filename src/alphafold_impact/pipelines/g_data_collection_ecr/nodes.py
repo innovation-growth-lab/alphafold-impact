@@ -209,7 +209,7 @@ def fetch_candidate_ecr_status(
         authors_final = pd.concat(
             [authors_final, slice_candidates_df], ignore_index=True
         )
-        break
+
     return authors_final
 
 
