@@ -29,7 +29,6 @@ MAIL_TO_CANDIDATES = [
     "data_analytics@nesta.org.uk",
     "david.ampudia@bse.eu",
     "david.ampudia@upf.edu",
-    "dampudiavicente@gmail.com",
 ]
 
 
