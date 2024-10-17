@@ -28,7 +28,7 @@ MAIL_TO_CANDIDATES = [
     "david.ampudia@nesta.org.uk",
     "data_analytics@nesta.org.uk",
     "david.ampudia@bse.eu",
-    "david.ampudia@upf.edu",
+    # "david.ampudia@upf.edu",
 ]
 
 
@@ -97,6 +97,24 @@ def _parse_results(response: List[Dict]) -> Dict[str, List[str]]:
     ]
 
 
+def _make_request(session: requests.Session, url: str) -> dict:
+    response = session.get(url, timeout=20)
+    while response.status_code == 429:
+        logger.info("Waiting for 1 hour...")
+        time.sleep(3600)
+        response = session.get(url, timeout=20)
+    return response.json()
+
+
+def _log_and_yield_results(
+    session: requests.Session, url: str, num_calls: int
+) -> Iterator[list]:
+    for page in range(1, num_calls + 1):
+        data = _make_request(session, url.format(page))
+        results = data.get("results")
+        yield results
+
+
 def _works_generator(
     perpage: str,
     oa_id: Union[str, List[str]],
@@ -122,7 +140,6 @@ def _works_generator(
         filter_criteria, type(oa_id)
     ), "filter_criteria and oa_id must be of the same type."
 
-    # multiple filter criteria
     if isinstance(filter_criteria, list) and isinstance(oa_id, list):
         filter_string = ",".join(
             [f"{criteria}:{id_}" for criteria, id_ in zip(filter_criteria, oa_id)]
@@ -130,7 +147,6 @@ def _works_generator(
     else:
         filter_string = f"{filter_criteria}:{oa_id}"
 
-    # select a random email from the list
     mailto = random.choice(MAIL_TO_CANDIDATES)
 
     if sample_size == -1:
@@ -138,60 +154,31 @@ def _works_generator(
             f"https://api.openalex.org/works?filter={filter_string}"
             f"&mailto={mailto}&per-page={perpage}&cursor={{}}"
         )
-
         try:
-            # make a call to estimate total number of results
-            response = session.get(cursor_url.format(cursor), timeout=20)
-            data = response.json()
-
-            while response.status_code == 429:  # needs testing (try with 200)
-                logger.info("Waiting for 1 hour...")
-                time.sleep(3600)
-                response = session.get(cursor_url.format(cursor), timeout=20)
-                data = response.json()
-
-            logger.info("Fetching data for %s", oa_id[:50])
+            data = _make_request(session, cursor_url.format(cursor))
             total_results = data["meta"]["count"]
             num_calls = total_results // int(perpage) + 1
             logger.info("Total results: %s, in %s calls", total_results, num_calls)
             while cursor:
-                response = session.get(cursor_url.format(cursor), timeout=20)
-                data = response.json()
+                data = _make_request(session, cursor_url.format(cursor))
                 results = data.get("results")
                 cursor = data["meta"].get("next_cursor", False)
                 yield results
-
-        except Exception as e:  # pylint: disable=broad-except
+        except Exception as e: # pylint: disable=broad-except
             logger.error("Error fetching data for %s: %s", oa_id, e)
             yield []
-    else:  # OA does not accept cursor pagination with samples.
+    else:
         cursor_url = (
             f"https://api.openalex.org/works?filter={filter_string}&seed=123"
             f"&mailto={mailto}&per-page={perpage}&sample={sample_size}&page={{}}"
         )
-
         try:
-            # make a call to estimate total number of results
-            response = session.get(cursor_url.format(1), timeout=20)
-            data = response.json()
-
-            while response.status_code == 429:  # needs testing (try with 200)
-                logger.info("Waiting for 1 hour...")
-                time.sleep(3600)
-                response = session.get(cursor_url.format(1), timeout=20)
-                data = response.json()
-
-            logger.info("Fetching data for %s", oa_id[:50])
+            data = _make_request(session, cursor_url.format(1))
             total_results = data["meta"]["count"]
             num_calls = total_results // int(perpage) + 1
             logger.info("Total results: %s, in %s calls", total_results, num_calls)
-            for page in range(1, num_calls + 1):
-                response = session.get(cursor_url.format(page), timeout=20)
-                data = response.json()
-                results = data.get("results")
-                yield results
-
-        except Exception as e:  # pylint: disable=broad-except
+            yield from _log_and_yield_results(session, cursor_url, num_calls)
+        except Exception as e: # pylint: disable=broad-except
             logger.error("Error fetching data for %s: %s", oa_id, e)
             yield []
 
@@ -326,88 +313,3 @@ def fetch_papers_parallel(
         )
         for i, chunk in enumerate(oa_id_chunks)
     }
-
-
-def _create_concept_year_filter(concept_ids: List[str], years: List[int]) -> str:
-    """
-    Creates an API query filter string for the OpenAlex API to retrieve works
-    based on lists of concept IDs and years.
-
-    Args:
-        concept_ids (List[str]): A list of concept IDs (e.g., ['c12345', 'c67890']).
-        years (List[int]): A list of publication years (e.g., [2020, 2021]).
-
-    Returns:
-        str: A formatted API query filter string.
-    """
-    year_filter = f"publication_year:{'|'.join(map(str, years))}" if years else ""
-    concept_filter = f"concepts.id:{'|'.join(concept_ids)}" if concept_ids else ""
-    return ",".join(filter(None, [year_filter, concept_filter]))
-
-
-def chunk_list(input_list: List[str], chunk_size: int) -> List[List[str]]:
-    """
-    Divides the input list into chunks of specified size.
-
-    Args:
-        input_list (List[str]): The input list to be divided into chunks.
-        chunk_size (int): The size of each chunk.
-
-    Returns:
-        List[List[str]]: A list of chunks.
-    """
-    return [
-        input_list[i : i + chunk_size] for i in range(0, len(input_list), chunk_size)
-    ]
-
-
-def retrieve_oa_works_chunk(
-    concept_ids: List[str], years: List[int], works_per_page: int
-) -> List[dict]:
-    """
-    Retrieves a chunk of OpenAlex works for a chunk of concept IDs
-    and publication years.
-
-    Args:
-        concept_ids (List[str]): A list of OpenAlex concept IDs.
-        years (List[int]): A list of publication years.
-        works_per_page (int): The number of results to retrieve per API request.
-
-    Returns:
-        List[dict]: List containing works for the given concept IDs and years.
-    """
-    base_url = "https://api.openalex.org/works"
-    next_cursor = "*"
-    works = []
-
-    session = requests.Session()
-    retries = Retry(
-        total=5,
-        backoff_factor=0.3,
-    )
-    session.mount("https://", HTTPAdapter(max_retries=retries))
-
-    while True:
-        params = {
-            "filter": _create_concept_year_filter(concept_ids, years),
-            "per_page": works_per_page,
-            "cursor": next_cursor,
-        }
-        try:
-            response = session.get(base_url, params=params, timeout=30)
-
-            if response.status_code == 200:
-                data = response.json()
-                current_works = data.get("results", [])
-                works.extend(current_works)
-                next_cursor = data.get("meta", {}).get("next_cursor")
-                if not (current_works and next_cursor):
-                    break
-            else:
-                logger.error("Error fetching data: %s", response.status_code)
-                break
-        except requests.exceptions.RequestException as e:
-            logger.error("Request failed: %s", e)
-            break
-
-    return works
