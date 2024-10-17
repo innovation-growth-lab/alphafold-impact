@@ -28,7 +28,7 @@ MAIL_TO_CANDIDATES = [
     "david.ampudia@nesta.org.uk",
     "data_analytics@nesta.org.uk",
     "david.ampudia@bse.eu",
-    # "david.ampudia@upf.edu",
+    "david.ampudia@upf.edu",
 ]
 
 
