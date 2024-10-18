@@ -381,10 +381,10 @@ def merge_ecr_data(
         ~ecr_data["publication_date"].apply(
             lambda x: pd.to_datetime(x) < pd.to_datetime("2020-01-01")
         )
-    ]["authors"].unique()
+    ]["author"].unique()
 
     # remove non-ecr authors
-    ecr_data = ecr_data[~ecr_data["authors"].isin(non_ecr_authors)]
+    ecr_data = ecr_data[~ecr_data["author"].isin(non_ecr_authors)]
 
     return ecr_data
 
