@@ -7,9 +7,14 @@ import logging
 from itertools import chain
 from typing import Dict, Generator
 from joblib import Parallel, delayed
+from kedro.io import AbstractDataset
 import pandas as pd
 import numpy as np
 from ..a_data_collection_oa.nodes import collect_papers  # pylint: disable=E0402
+from ..e_data_output_publications.nodes import (  # pylint: disable=E0402
+    get_patent_citations,
+    create_cc_counts,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -283,9 +288,9 @@ def fetch_ecr_outputs(
         slice_papers = slice_papers.explode("authorships")
 
         # separate tuples into columns
-        slice_papers[
-            ["author", "institution", "author_position"]
-        ] = pd.DataFrame(slice_papers["authorships"].tolist(), index=slice_papers.index)
+        slice_papers[["author", "institution", "author_position"]] = pd.DataFrame(
+            slice_papers["authorships"].tolist(), index=slice_papers.index
+        )
 
         # drop the authorships column
         slice_papers.drop(columns=["authorships"], inplace=True)
@@ -313,8 +318,121 @@ def fetch_ecr_outputs(
         yield {f"s{i}": slice_papers}
 
 
-def _result_transformations(data: pd.DataFrame) -> pd.DataFrame:
+def merge_ecr_data(
+    data_loaders: Dict[str, AbstractDataset],
+    institutions: pd.DataFrame,
+    mesh_terms: pd.DataFrame,
+    patents_data: pd.DataFrame,
+    pdb_submissions: pd.DataFrame,
+    icite_data: pd.DataFrame,
+) -> pd.DataFrame:
+    """
+    Merges ECR (Early Career Researcher) data with institution information, and
+    other various data sources.
 
+    Args:
+        data_loaders (Dict[str, AbstractDataset]): A dictionary where keys are strings
+            and values are data loader functions that return DataFrames.
+        institutions (pd.DataFrame): A DataFrame containing institution information,
+            which must include an 'institution' column.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing the merged ECR data with institution
+        information.
+    """
+    institutions = institutions.drop(columns=["author"]).drop_duplicates(
+        subset=["institution"]
+    )
+
+    ecr_data = pd.DataFrame()
+    for i, loader in enumerate(data_loaders.values()):
+        logger.info(
+            "Processing data loader %d / %d",
+            i + 1,
+            len(data_loaders),
+        )
+        data = loader()
+        data = data.merge(institutions, on="institution", how="left")
+
+        # get mesh_terms data cleaned
+        data = _get_mesh_data(data, mesh_terms)
+
+        # get patent citations
+        data["doi"] = data["doi"].apply(
+            lambda x: x.replace("https://doi.org/", "") if x is not None else None
+        )
+        data = get_patent_citations(data, patents_data)
+
+        # get pdb activity metrics
+        data = data.merge(
+            pdb_submissions[["id", "resolution", "R_free"]], on="id", how="left"
+        )
+
+        # get icite_counts
+        icite_outputs = create_cc_counts(
+            data[["parent_id", "id", "level", "source", "pmid", "doi"]], icite_data
+        )
+
+        data = data.merge(icite_outputs[["id", "ca_count"]], on="id", how="left")
+
+        ecr_data = pd.concat([ecr_data, data], ignore_index=True)
+
+    return ecr_data
+
+
+def _get_mesh_data(data: pd.DataFrame, mesh_terms: pd.DataFrame) -> pd.DataFrame:
+
+    mesh_terms["term_group"] = mesh_terms["tree_number"].apply(
+        lambda x: str(x)[:1] if x is not None else None
+    )
+    mesh_tag_class_dict = mesh_terms.set_index("DUI")["term_group"].to_dict()
+
+    data["major_mesh_terms"] = data["mesh_terms"].apply(
+        lambda x: (
+            _extract_mesh_terms(x, True, mesh_tag_class_dict)
+            if isinstance(x, np.ndarray)
+            else []
+        )
+    )
+    data["minor_mesh_terms"] = data["mesh_terms"].apply(
+        lambda x: (
+            _extract_mesh_terms(x, False, mesh_tag_class_dict)
+            if isinstance(x, np.ndarray)
+            else []
+        )
+    )
+
+    return data
+
+
+def _extract_mesh_terms(mesh_terms, is_major, mesh_dict):
+    terms = []
+    for term in mesh_terms:
+        if term["is_major_topic"] == is_major:
+            descriptor_ui = term["descriptor_ui"]
+            descriptor_name = term["descriptor_name"]
+            mesh_class = mesh_dict.get(descriptor_ui, None)
+            methods = term["qualifier_name"]
+            terms.append([descriptor_name, mesh_class, methods])
+    return terms
+
+
+def _result_transformations(data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Transforms the input DataFrame by extracting and restructuring specific fields.
+    The function performs the following transformations:
+        1. Extracts and restructures the 'authorships' field.
+        2. Creates a list of topics from the 'topics' field.
+        3. Extracts concepts from the 'concepts' field.
+        4. Extracts the content of 'citation_normalized_percentile' into separate columns.
+        5. Extracts the content of 'cited_by_percentile_year' into separate columns.
+
+    Args:
+        data (pd.DataFrame): The input DataFrame containing the data to be transformed.
+
+    Returns:
+        pd.DataFrame: The transformed DataFrame with the extracted and restructured fields.
+    """
     # extract the content of authorships
     data["authorships"] = data["authorships"].apply(
         lambda x: (

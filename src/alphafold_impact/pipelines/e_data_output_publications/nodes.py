@@ -82,7 +82,7 @@ def create_publications_data(
     ].fillna(0)
 
     # get patent citations
-    data = _get_patent_citations(data, patents_data)
+    data = get_patent_citations(data, patents_data)
 
     # add pdb activity metrics
     data = _get_pdb_activity(data, pdb_submissions)
@@ -91,7 +91,7 @@ def create_publications_data(
     data.drop(columns="mesh_terms", inplace=True)
 
     # icite data
-    icite_outputs = _create_cc_counts(
+    icite_outputs = create_cc_counts(
         data[["parent_id", "id", "level", "source", "pmid", "doi"]], icite_data
     )
 
@@ -145,7 +145,7 @@ def _sort_drop(data: pd.DataFrame) -> pd.DataFrame:
     return data
 
 
-def _create_cc_counts(data, icite_data):
+def create_cc_counts(data, icite_data):
     """
     Creates a count column in the given data DataFrame based on the 'cited_by_clin' column
         in the icite_data DataFrame.
@@ -322,7 +322,7 @@ def _calculate_mesh_balance(data: pd.DataFrame, mesh_terms_dict: dict) -> pd.Dat
     return data
 
 
-def _get_patent_citations(
+def get_patent_citations(
     data: pd.DataFrame, patents_data: pd.DataFrame
 ) -> pd.DataFrame:
     """

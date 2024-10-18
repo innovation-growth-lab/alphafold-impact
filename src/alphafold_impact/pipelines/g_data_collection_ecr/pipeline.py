@@ -4,7 +4,12 @@ generated using Kedro 0.19.1
 """
 
 from kedro.pipeline import Pipeline, pipeline, node
-from .nodes import get_unique_authors, fetch_candidate_ecr_status, fetch_ecr_outputs
+from .nodes import (
+    get_unique_authors,
+    fetch_candidate_ecr_status,
+    fetch_ecr_outputs,
+    merge_ecr_data,
+)
 from ..f_data_collection_foundational_labs.nodes import (  # pylint: disable=E0402
     get_institution_info,
 )
@@ -52,6 +57,19 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                 },
                 outputs="ecr.institutions.raw",
                 name="get_ecr_institution_info",
+            ),
+            node(
+                func=merge_ecr_data,
+                inputs={
+                    "data_loaders": "ecr.publications.raw",
+                    "institutions": "ecr.institutions.raw",
+                    "mesh_terms": "nih.data_collection.mesh_terms",
+                    "patents_data": "lens.data_processing.primary",
+                    "pdb_submissions": "pdb.entries.intermediate",
+                    "icite_data": "pubmed.data_processing.icite.intermediate",
+                },
+                outputs="ecr.authors.institutions",
+                name="merge_ecr_institutions",
             ),
         ]
     )
