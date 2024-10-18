@@ -353,7 +353,7 @@ def merge_ecr_data(
         )
         data = loader()
         data = data.merge(institutions, on="institution", how="left")
-        data = data.merge(candidate_authors, on=["author", "institution"], how="left")
+        data = data.merge(candidate_authors, on="author", how="left")
 
         # get mesh_terms data cleaned
         data = _get_mesh_data(data, mesh_terms)
