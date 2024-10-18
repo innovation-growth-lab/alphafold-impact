@@ -169,17 +169,22 @@ def _json_loader(
         )
 
         # Extract the content of citation_normalized_percentile
-        df[
-            [
-                "citation_normalized_percentile_value",
-                "citation_normalized_percentile_is_in_top_1_percent",
-                "citation_normalized_percentile_is_in_top_10_percent",
-            ]
-        ] = df.apply(
-            lambda x: (pd.Series(x["citation_normalized_percentile"])),
-            axis=1,
-            result_type="expand",
-        )
+        try:
+            df[
+                [
+                    "citation_normalized_percentile_value",
+                    "citation_normalized_percentile_is_in_top_1_percent",
+                    "citation_normalized_percentile_is_in_top_10_percent",
+                ]
+            ] = df.apply(
+                lambda x: (pd.Series(x["citation_normalized_percentile"])),
+                axis=1,
+                result_type="expand",
+            )
+        except ValueError:
+            logger.warning(
+                "citation_normalized_percentile not found in %s", df["id"].values[0]
+            )
 
         # Extract the content of cited_by_percentile_year
         df[
@@ -193,10 +198,13 @@ def _json_loader(
             result_type="expand",
         )
 
+        # remove any column that is all NAN
+        df.dropna(axis=1, how="all", inplace=True)
+
         # append to output
         output.append(df)
 
-    df = pd.concat(output)
+    df = pd.concat(output, ignore_index=True)
 
     return df
 

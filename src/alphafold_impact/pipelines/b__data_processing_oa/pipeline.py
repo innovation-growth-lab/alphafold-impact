@@ -35,11 +35,11 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                     "level": f"params:oa.data_collection.depth.levels.{level}",
                 },
                 outputs=f"oa.data_processing.depth.{level}.intermediate",
-                tags=["data_processing_oa"],
                 name=f"process_af_level_{str(level)}",
             )
             for level in settings.DYNAMIC_PIPELINES_MAPPING["depth_levels"]
-        ]
+        ],
+        tags=["data_processing_oa", "rerun"],
     )
 
     combine_levels_pipeline = pipeline(
@@ -56,7 +56,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 name="combine_af_levels",
             )
         ],
-        tags="data_processing_oa",
+        tags=["data_processing_oa", "rerun"],
     )
 
     structural_biology_processing_pieline = pipeline(
