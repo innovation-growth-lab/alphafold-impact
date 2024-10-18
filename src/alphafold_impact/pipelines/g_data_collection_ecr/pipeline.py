@@ -62,14 +62,15 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                 func=merge_ecr_data,
                 inputs={
                     "data_loaders": "ecr.publications.raw",
+                    "candidate_authors": "ecr.candidate_authors.raw",
                     "institutions": "ecr.institutions.raw",
                     "mesh_terms": "nih.data_collection.mesh_terms",
                     "patents_data": "lens.data_processing.primary",
                     "pdb_submissions": "pdb.entries.intermediate",
                     "icite_data": "pubmed.data_processing.icite.intermediate",
                 },
-                outputs="ecr.authors.institutions",
-                name="merge_ecr_institutions",
+                outputs="ecr.publications.primary",
+                name="merge_ecr_data",
             ),
         ]
     )

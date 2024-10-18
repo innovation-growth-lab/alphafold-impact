@@ -13,7 +13,6 @@ import numpy as np
 from ..a_data_collection_oa.nodes import collect_papers  # pylint: disable=E0402
 from ..e_data_output_publications.nodes import (  # pylint: disable=E0402
     get_patent_citations,
-    create_cc_counts,
 )
 
 
@@ -320,6 +319,7 @@ def fetch_ecr_outputs(
 
 def merge_ecr_data(
     data_loaders: Dict[str, AbstractDataset],
+    candidate_authors: pd.DataFrame,
     institutions: pd.DataFrame,
     mesh_terms: pd.DataFrame,
     patents_data: pd.DataFrame,
@@ -340,9 +340,9 @@ def merge_ecr_data(
         pd.DataFrame: A DataFrame containing the merged ECR data with institution
         information.
     """
-    institutions = institutions.drop(columns=["author"]).drop_duplicates(
-        subset=["institution"]
-    )
+
+    institutions = _institution_preprocessing(institutions)
+    candidate_authors = _candidates_preprocessing(candidate_authors)
 
     ecr_data = pd.DataFrame()
     for i, loader in enumerate(data_loaders.values()):
@@ -353,6 +353,7 @@ def merge_ecr_data(
         )
         data = loader()
         data = data.merge(institutions, on="institution", how="left")
+        data = data.merge(candidate_authors, on=["author", "institution"], how="left")
 
         # get mesh_terms data cleaned
         data = _get_mesh_data(data, mesh_terms)
@@ -369,15 +370,53 @@ def merge_ecr_data(
         )
 
         # get icite_counts
-        icite_outputs = create_cc_counts(
-            data[["parent_id", "id", "level", "source", "pmid", "doi"]], icite_data
-        )
+        icite_outputs = _create_cc_counts(data[["id", "doi"]], icite_data)
 
-        data = data.merge(icite_outputs[["id", "ca_count"]], on="id", how="left")
+        data = data.merge(icite_outputs, on="id", how="left")
 
         ecr_data = pd.concat([ecr_data, data], ignore_index=True)
 
     return ecr_data
+
+
+def _institution_preprocessing(institutions: pd.DataFrame) -> pd.DataFrame:
+    institutions = institutions.drop(columns=["author"]).drop_duplicates(
+        subset=["institution"]
+    )
+    institutions.rename(
+        columns={"cited_by_count": "institution_cited_by_count"}, inplace=True
+    )
+
+    return institutions
+
+
+def _candidates_preprocessing(candidate_authors: pd.DataFrame) -> pd.DataFrame:
+    # sort candidate authors by af, ct, other
+    depth_summed_data = (
+        candidate_authors.groupby(["author", "depth"])
+        .agg({"af": "sum", "ct": "sum", "other": "sum"})
+        .reset_index()
+    )
+
+    depth_summed_data["total"] = depth_summed_data["af"] + depth_summed_data["ct"] + depth_summed_data["other"]
+
+    # Get the index of the row with the maximum total for each author
+    idx = depth_summed_data.groupby("author")["total"].idxmax()
+
+    max_total_data = depth_summed_data.loc[idx]
+
+    summed_data = (
+        candidate_authors.groupby("author")
+        .agg({"af": "sum", "ct": "sum", "other": "sum"})
+        .reset_index()
+    )
+
+    # merge the summed data with the max total data
+    max_total_data = max_total_data[["author", "depth"]].merge(
+        summed_data, on="author", how="left"
+    )
+
+    return max_total_data
 
 
 def _get_mesh_data(data: pd.DataFrame, mesh_terms: pd.DataFrame) -> pd.DataFrame:
@@ -415,6 +454,41 @@ def _extract_mesh_terms(mesh_terms, is_major, mesh_dict):
             methods = term["qualifier_name"]
             terms.append([descriptor_name, mesh_class, methods])
     return terms
+
+
+def _create_cc_counts(data, icite_data):
+    """
+    Creates a count column in the given data DataFrame based on the 'cited_by_clin' column
+        in the icite_data DataFrame.
+
+    Args:
+        data (pandas.DataFrame): The input data DataFrame.
+        icite_data (pandas.DataFrame): The icite_data DataFrame containing the
+            'cited_by_clin' column.
+
+    Returns:
+        pandas.DataFrame: The updated data DataFrame with a new 'count' column.
+    """
+    # change pmid, doi to str
+    icite_data["doi"] = icite_data["doi"].astype(str)
+
+    # merge on 'doi'
+    data_doi = data.merge(icite_data[["doi", "cited_by_clin"]], how="left", on="doi")
+    data_doi = data_doi.drop_duplicates(subset=["id"])
+
+    logger.info("Exploding cited_by_clin")
+    data_doi = data_doi[data_doi["cited_by_clin"].astype(str) != "nan"]
+    data_doi = data_doi[data_doi["cited_by_clin"].notnull()]
+    data_doi["cited_by_clin"] = data_doi["cited_by_clin"].apply(lambda x: x.split(" "))
+
+    # create count column
+    data_doi["ca_count"] = data_doi["cited_by_clin"].apply(len)
+
+    # merge back with data, fill with 0 for missing count
+    data = data.merge(data_doi[["id", "ca_count"]], on="id", how="left")
+    data["ca_count"] = data["ca_count"].fillna(0)
+
+    return data[["id", "ca_count"]]
 
 
 def _result_transformations(data: pd.DataFrame) -> pd.DataFrame:

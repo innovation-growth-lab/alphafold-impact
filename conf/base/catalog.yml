@@ -331,10 +331,32 @@ ecr.institutions.raw:
   <<: *_pq
   filepath: s3://igl-alphafold/oct/01_raw/ecr/institutions.parquet
 
+ecr.publications.primary:
+  <<: *_pq
+  filepath: s3://igl-alphafold/oct/03_primary/ecr/publications.parquet
 
-ecr.data_analysis.counts.af:
+
+# -------------------------------------------------------------
+
+# Analysis
+
+# -------------------------------------------------------------
+
+# 01. Reach ---------------------------------------------------
+
+reach.publications:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/ecr/outputs_counts_af.parquet
-ecr.data_analysis.counts.no_af:
+  filepath: s3://igl-alphafold/oct/04_output/publications/outputs.parquet
+
+reach.new_data.publications:
   <<: *_pq
-  filepath: s3://alphafold-impact/data/04_output/analysis/ecr/outputs_counts_no_af.parquet
+  filepath: s3://igl-alphafold/oct/02_intermediate/oa/works/depth/main.parquet
+  load_args:
+    columns:
+      - 'id'
+      - 'fwci'
+      - 'citation_normalized_percentile_value'
+      - 'citation_normalized_percentile_is_in_top_1_percent'
+      - 'citation_normalized_percentile_is_in_top_10_percent'
+      - 'cited_by_percentile_year_min'
+      - 'cited_by_percentile_year_max'
