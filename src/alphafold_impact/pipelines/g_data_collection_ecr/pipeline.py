@@ -48,9 +48,10 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
             node(
                 func=get_institution_info,
                 inputs={
-                    "author_ids": "ecr.authors.raw",
+                    "author_ids": "ecr.candidate_authors.raw",
                 },
                 outputs="ecr.institutions.raw",
+                name="get_ecr_institution_info",
             ),
         ]
     )

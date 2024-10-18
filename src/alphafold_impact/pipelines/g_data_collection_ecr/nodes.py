@@ -279,22 +279,19 @@ def fetch_ecr_outputs(
         # do necessary transformations
         slice_papers = _result_transformations(slice_papers)
 
-        slice_papers["authorships"] = slice_papers["authorships"].apply(
-            lambda x: (
-                [
-                    author["author"].get("id", "").replace("https://openalex.org/", "")
-                    for author in x
-                ]
-                if x
-                else None
-            )
-        )
-
         # explode the authorships
         slice_papers = slice_papers.explode("authorships")
 
+        # separate tuples into columns
+        slice_papers[
+            ["author", "institution", "author_position"]
+        ] = pd.DataFrame(slice_papers["authorships"].tolist(), index=slice_papers.index)
+
+        # drop the authorships column
+        slice_papers.drop(columns=["authorships"], inplace=True)
+
         # filter for authorships in the author list
-        slice_papers = slice_papers[slice_papers["authorships"].isin(authors)]
+        slice_papers = slice_papers[slice_papers["author"].isin(authors)]
 
         # normalise_citation_counts
         slice_papers = _normalise_citation_counts(slice_papers)
@@ -309,10 +306,40 @@ def fetch_ecr_outputs(
             inplace=True,
         )
 
+        # force fwci type to float
+        slice_papers.replace({"fwci": ""}, np.nan, inplace=True)
+        slice_papers["fwci"] = slice_papers["fwci"].astype(float)
+
         yield {f"s{i}": slice_papers}
 
 
 def _result_transformations(data: pd.DataFrame) -> pd.DataFrame:
+
+    # extract the content of authorships
+    data["authorships"] = data["authorships"].apply(
+        lambda x: (
+            [
+                (
+                    (
+                        author["author"]["id"].replace("https://openalex.org/", ""),
+                        inst["id"].replace("https://openalex.org/", ""),
+                        author["author_position"],
+                    )
+                    if author["institutions"]
+                    else [
+                        author["author"]["id"].replace("https://openalex.org/", ""),
+                        "",
+                        author["author_position"],
+                    ]
+                )
+                for author in x
+                for inst in author["institutions"] or [{}]
+            ]
+            if x
+            else None
+        )
+    )
+
     # create a list of topics
     data["topics"] = data["topics"].apply(
         lambda x: (
