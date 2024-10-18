@@ -376,6 +376,16 @@ def merge_ecr_data(
 
         ecr_data = pd.concat([ecr_data, data], ignore_index=True)
 
+    # identify any authors that have snuck in from before 2020
+    non_ecr_authors = ecr_data[
+        ~ecr_data["publication_date"].apply(
+            lambda x: pd.to_datetime(x) < pd.to_datetime("2020-01-01")
+        )
+    ]["authors"].unique()
+
+    # remove non-ecr authors
+    ecr_data = ecr_data[~ecr_data["authors"].isin(non_ecr_authors)]
+
     return ecr_data
 
 
@@ -398,7 +408,9 @@ def _candidates_preprocessing(candidate_authors: pd.DataFrame) -> pd.DataFrame:
         .reset_index()
     )
 
-    depth_summed_data["total"] = depth_summed_data["af"] + depth_summed_data["ct"] + depth_summed_data["other"]
+    depth_summed_data["total"] = (
+        depth_summed_data["af"] + depth_summed_data["ct"] + depth_summed_data["other"]
+    )
 
     # Get the index of the row with the maximum total for each author
     idx = depth_summed_data.groupby("author")["total"].idxmax()
