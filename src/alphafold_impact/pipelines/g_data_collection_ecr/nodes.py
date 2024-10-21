@@ -404,6 +404,7 @@ def merge_ecr_data(
         [
             "id",
             "author",
+            "author_position",
             "af",
             "ct",
             "other",

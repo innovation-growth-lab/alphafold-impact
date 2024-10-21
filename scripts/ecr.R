@@ -80,6 +80,7 @@ ecr_data <- ecr_data %>%
 ecr_data <- ecr_data %>%
   mutate(
     author = as.factor(author),
+    author_position = as.factor(author_position),
     depth = as.factor(depth),
     institution = as.factor(institution),
     institution_type = as.factor(type),
@@ -119,7 +120,7 @@ for (depth in unique_depths) {
 }
 
 covs <- list()
-covs[["base0"]] <- c("primary_field")
+covs[["base0"]] <- c("primary_field", "author_position")
 
 fes <- list()
 fes[["fe0"]] <- c("author", "quarter_year")
