@@ -377,7 +377,7 @@ def merge_author_data(
                     "cit_7",
                 ]
             )
-        except: # pylint: disable=bare-except
+        except:  # pylint: disable=bare-except
             pass
 
         data = data.merge(institutions, on="institution", how="left")
@@ -437,8 +437,14 @@ def aggregate_to_quarterly(data: pd.DataFrame) -> pd.DataFrame:
     """
     data["publication_date"] = pd.to_datetime(data["publication_date"])
     data["quarter"] = data["publication_date"].dt.to_period("Q")
+    for col in ["R_free", "resolution"]:
+        data[col] = data[col].replace({"": np.nan}).astype("float")
 
-    data = (
+    def safe_mode(series):
+        mode = series.mode()
+        return mode.iloc[0] if not mode.empty else np.nan
+
+    return (
         data.groupby(["author", "quarter"])
         .agg(
             num_publications=("id", "size"),
@@ -461,17 +467,14 @@ def aggregate_to_quarterly(data: pd.DataFrame) -> pd.DataFrame:
             country_code=("country_code", "first"),
             type=("type", "first"),
             depth=("depth", "first"),
-            source=("source", "first"),
             af=("af", "first"),
             ct=("ct", "first"),
             other=("other", "first"),
-            primary_field=("primary_field", lambda x: x.mode().iloc[0]),
-            author_position=("author_position", lambda x: x.mode().iloc[0]),
+            primary_field=("primary_field", safe_mode),
+            author_position=("author_position", safe_mode),
         )
         .reset_index(),
     )
-
-    return data
 
 
 def _institution_preprocessing(institutions: pd.DataFrame) -> pd.DataFrame:
