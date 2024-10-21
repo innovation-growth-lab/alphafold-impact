@@ -363,31 +363,22 @@ def merge_author_data(
         )
         data = loader()
 
-        # primary field
-        data["primary_field"] = data["topics"].apply(
-            lambda x: (
-                x[0][5]
-                if isinstance(x, np.ndarray)
-                and len(x) > 0
-                and isinstance(x[0], np.ndarray)
-                and len(x[0]) > 0
-                else None
+        try:
+            data.drop(
+                columns=[
+                    "concepts",
+                    "mesh_terms",
+                    "grants",
+                    "topics",
+                    "ids",
+                    "cited_by_percentile_year_min",
+                    "cited_by_percentile_year_max",
+                    "cit_6",
+                    "cit_7",
+                ]
             )
-        )
-
-        data.drop(
-            columns=[
-                "concepts",
-                "mesh_terms",
-                "grants",
-                "topics",
-                "ids",
-                "cited_by_percentile_year_min",
-                "cited_by_percentile_year_max",
-                "cit_6",
-                "cit_7",
-            ]
-        )
+        except: # pylint: disable=bare-except
+            pass
 
         data = data.merge(institutions, on="institution", how="left")
         data = data.merge(candidate_authors, on="author", how="left")
@@ -422,14 +413,66 @@ def merge_author_data(
         output_data = output_data[~output_data["author"].isin(non_ecr_authors)]
     else:
         authors_list = authors[authors["status"] == "not_ecr"]["candidate"].tolist()
-        non_ecr_authors = output_data[
-            output_data["author"].isin(authors_list)
-        ]["author"].unique()
+        non_ecr_authors = output_data[output_data["author"].isin(authors_list)][
+            "author"
+        ].unique()
 
         # remove non-ecr authors
         output_data = output_data[output_data["author"].isin(non_ecr_authors)]
 
     return output_data
+
+
+def aggregate_to_quarterly(data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Aggregates the input data to the quarterly level.
+
+    Args:
+        data (pd.DataFrame): The input DataFrame containing the data
+            to be aggregated.
+
+    Returns:
+        pd.DataFrame: The aggregated DataFrame with the data aggregated
+            to the quarterly level.
+    """
+    data["publication_date"] = pd.to_datetime(data["publication_date"])
+    data["quarter"] = data["publication_date"].dt.to_period("Q")
+
+    data = (
+        data.groupby(["author", "quarter"])
+        .agg(
+            num_publications=("id", "size"),
+            num_cited_by_count=("cited_by_count", "sum"),
+            num_cit_0=("cit_0", "sum"),
+            num_cit_1=("cit_1", "sum"),
+            cited_by_count=("cited_by_count", "mean"),
+            cit_0=("cit_0", "mean"),
+            cit_1=("cit_1", "mean"),
+            fwci=("fwci", "mean"),
+            percentile_value=("citation_normalized_percentile_value", "mean"),
+            patent_count=("patent_count", "sum"),
+            patent_citation=("patent_citation", "sum"),
+            ca_count=("ca_count", "sum"),
+            resolution=("resolution", "mean"),
+            R_free=("R_free", "mean"),
+            num_publications_pdb=("R_free", lambda x: x.notna().sum()),
+            institution=("institution", "first"),
+            institution_cited_by_count=("institution_cited_by_count", "first"),
+            country_code=("country_code", "first"),
+            type=("type", "first"),
+            depth=("depth", "first"),
+            source=("source", "first"),
+            af=("af", "first"),
+            ct=("ct", "first"),
+            other=("other", "first"),
+            primary_field=("primary_field", lambda x: x.mode().iloc[0]),
+            author_position=("author_position", lambda x: x.mode().iloc[0]),
+        )
+        .reset_index(),
+    )
+
+    return data
+
 
 def _institution_preprocessing(institutions: pd.DataFrame) -> pd.DataFrame:
     institutions = institutions.drop(columns=["author"]).drop_duplicates(
@@ -613,6 +656,18 @@ def _result_transformations(data: pd.DataFrame) -> pd.DataFrame:
         )
     )
 
+    # primary field
+    data["primary_field"] = data["topics"].apply(
+        lambda x: (
+            x[0][5]
+            if isinstance(x, np.ndarray)
+            and len(x) > 0
+            and isinstance(x[0], np.ndarray)
+            and len(x[0]) > 0
+            else None
+        )
+    )
+
     # extract concepts
     data["concepts"] = data["concepts"].apply(
         lambda x: (
@@ -641,16 +696,16 @@ def _result_transformations(data: pd.DataFrame) -> pd.DataFrame:
         result_type="expand",
     )
 
-    # Extract the content of cited_by_percentile_year
-    data[
-        [
+    data.drop(
+        columns=[
+            "concepts",
+            "mesh_terms",
+            "grants",
+            "topics",
+            "ids",
             "cited_by_percentile_year_min",
             "cited_by_percentile_year_max",
         ]
-    ] = data.apply(
-        lambda x: pd.Series(x["cited_by_percentile_year"]),
-        axis=1,
-        result_type="expand",
     )
 
     return data

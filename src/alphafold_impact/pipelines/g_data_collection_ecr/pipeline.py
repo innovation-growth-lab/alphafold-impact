@@ -9,6 +9,7 @@ from .nodes import (
     fetch_candidate_ecr_status,
     fetch_author_outputs,
     merge_author_data,
+    aggregate_to_quarterly,
 )
 from ..f_data_collection_foundational_labs.nodes import (  # pylint: disable=E0402
     get_institution_info,
@@ -46,9 +47,9 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                 },
                 outputs="ecr.institutions.raw",
                 name="get_ecr_institution_info",
-            )
+            ),
         ],
-        tags=["basic_ecr_collection"]
+        tags=["basic_ecr_collection"],
     )
 
     ecr_pipeline = pipeline(
@@ -78,7 +79,15 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                 },
                 outputs="ecr.publications.primary",
                 name="merge_ecr_data",
-            )
+            ),
+            node(
+                func=aggregate_to_quarterly,
+                inputs={
+                    "data": "ecr.publications.primary",
+                },
+                outputs="ecr.publications.quarterly",
+                name="aggregate_ecr_to_quarterly",
+            ),
         ],
         tags=["ecr_pipeline"],
     )
@@ -110,6 +119,14 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                 },
                 outputs="nonecr.publications.primary",
                 name="merge_nonecr_data",
+            ),
+            node(
+                func=aggregate_to_quarterly,
+                inputs={
+                    "data": "nonecr.publications.primary",
+                },
+                outputs="nonecr.publications.quarterly",
+                name="aggregate_nonecr_to_quarterly",
             ),
         ],
         tags=["nonecr_pipeline"],

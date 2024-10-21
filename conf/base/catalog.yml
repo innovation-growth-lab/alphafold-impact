@@ -339,9 +339,17 @@ ecr.publications.primary:
   <<: *_pq
   filepath: s3://igl-alphafold/oct/03_primary/ecr/publications.parquet
 
+ecr.publications.quarterly:
+  <<: *_pq
+  filepath: s3://igl-alphafold/oct/03_primary/ecr/publications_quarterly.parquet
+
 nonecr.publications.primary:
   <<: *_pq
   filepath: s3://igl-alphafold/oct/03_primary/nonecr/publications.parquet
+
+nonecr.publications.quarterly:
+  <<: *_pq
+  filepath: s3://igl-alphafold/oct/03_primary/nonecr/publications_quarterly.parquet
 
 # -------------------------------------------------------------
 
