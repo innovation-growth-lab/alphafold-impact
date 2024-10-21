@@ -43,6 +43,10 @@ bind_rows <- dplyr::bind_rows
 # ------------------------------------------------------------------------------
 sub_samples <- readRDS("data/05_model_output/applied_sub_samples.rds")
 
+# drop any column that starts with rel_
+sub_samples <- lapply(
+  sub_samples, function(x) x %>% select(-starts_with("rel_"))
+)
 # ------------------------------------------------------------------------------
 # REGRESSIONS
 # ------------------------------------------------------------------------------
