@@ -325,7 +325,7 @@ def merge_ecr_data(
     patents_data: pd.DataFrame,
     pdb_submissions: pd.DataFrame,
     icite_data: pd.DataFrame,
-) -> pd.DataFrame:
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     Merges ECR (Early Career Researcher) data with institution information, and
     other various data sources.
@@ -337,8 +337,9 @@ def merge_ecr_data(
             which must include an 'institution' column.
 
     Returns:
-        pd.DataFrame: A DataFrame containing the merged ECR data with institution
-        information.
+        tuple[pd.DataFrame, pd.DataFrame]: A tuple containing two DataFrames:
+            - The first DataFrame contains the merged ECR data.
+            - The second DataFrame contains the reduced ECR data for regression analysis.
     """
 
     institutions = _institution_preprocessing(institutions)
@@ -386,7 +387,52 @@ def merge_ecr_data(
     # remove non-ecr authors
     ecr_data = ecr_data[~ecr_data["author"].isin(non_ecr_authors)]
 
-    return ecr_data
+    # primary field
+    ecr_data["primary_field"] = ecr_data["topics"].apply(
+        lambda x: (
+            x[0][5]
+            if isinstance(x, np.ndarray)
+            and len(x) > 0
+            and isinstance(x[0], np.ndarray)
+            and len(x[0]) > 0
+            else None
+        )
+    )
+
+    # create reduced ecr_data version for regressions
+    ecr_data_reduced = ecr_data[
+        [
+            "id",
+            "author",
+            "af",
+            "ct",
+            "other",
+            "depth",
+            "cited_by_count",
+            "fwci",
+            "citation_normalized_percentile_value",
+            "cit_0",
+            "cit_1",
+            "cit_2",
+            "publication_date",
+            "primary_field",
+            "patent_count",
+            "patent_citation",
+            "ca_count",
+            "resolution",
+            "R_free",
+            "country_code",
+            "institution",
+            "type",
+            "works_count",
+            "institution_cited_by_count",
+            "2yr_mean_citedness",
+            "h_index",
+            "i10_index",
+        ]
+    ]
+
+    return ecr_data, ecr_data_reduced
 
 
 def _institution_preprocessing(institutions: pd.DataFrame) -> pd.DataFrame:

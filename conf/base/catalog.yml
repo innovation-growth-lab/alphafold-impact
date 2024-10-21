@@ -335,6 +335,9 @@ ecr.publications.primary:
   <<: *_pq
   filepath: s3://igl-alphafold/oct/03_primary/ecr/publications.parquet
 
+ecr.publications.regression.inputs:
+  <<: *_pq
+  filepath: s3://igl-alphafold/oct/04_output/ecr/regression_inputs.parquet
 
 # -------------------------------------------------------------
 

@@ -69,7 +69,7 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                     "pdb_submissions": "pdb.entries.intermediate",
                     "icite_data": "pubmed.data_processing.icite.intermediate",
                 },
-                outputs="ecr.publications.primary",
+                outputs=["ecr.publications.primary", "ecr.publications.regression.inputs"],
                 name="merge_ecr_data",
             ),
         ]
