@@ -11,7 +11,8 @@ from ..f_data_processing_foundational_labs.utils import (  # pylint: disable=rel
     preprocess_for_staggered_design,
     get_pdb_activity,
     collect_covid_references,
-    calculate_topic_share,
+    calculate_field_share,
+    calculate_primary_field,
     calculate_mesh_balance,
     get_ai_use,
     get_patent_citations,
@@ -171,7 +172,10 @@ def get_applied_lab_staggered_outputs(
         data_processed = collect_covid_references(data_processed)
 
         logger.info("Extracting fields")
-        data_processed = calculate_topic_share(data_processed)
+        data_processed = calculate_field_share(data_processed)
+
+        logger.info("Extracting primary field")
+        data_processed = calculate_primary_field(data_processed)
 
         logger.info("Extracting mesh tags")
         data_processed = calculate_mesh_balance(data_processed, mesh_terms_dict)

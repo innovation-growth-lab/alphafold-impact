@@ -429,7 +429,7 @@ def get_awards(data, grants_data):
     return data
 
 
-def calculate_topic_share(data):
+def calculate_field_share(data):
     """
     Calculate the share of each subfield for each author in a DataFrame.
 
@@ -469,6 +469,35 @@ def calculate_topic_share(data):
             if col != "author" and col != "time"
             else col
         )
+        for col in df.columns
+    ]
+
+    # merge with data on author and time
+    data = data.merge(df, on=["author", "time"], how="left")
+
+    return data
+
+def calculate_primary_field(data):
+    df = data.copy()
+    df["primary_field"] = df["topics"].apply(
+        lambda x: x[0][5] if x is not None and len(x) > 0 else ""
+    )
+
+    # groupby and calculate count
+    df = df.groupby(["author", "time", "primary_field"]).size().reset_index(name="count")
+
+    # pivot the DataFrame to get one column for each primary field
+    df = df.pivot(index=["author", "time"], columns="primary_field", values="count")
+
+    # reset index
+    df.reset_index(inplace=True)
+
+    # fill NaN values with 0
+    df = df.fillna(0)
+
+    # change column names to be camel case, and prefix with "field_"
+    df.columns = [
+        "primary_field_" + col if col != "author" and col != "time" else col
         for col in df.columns
     ]
 
