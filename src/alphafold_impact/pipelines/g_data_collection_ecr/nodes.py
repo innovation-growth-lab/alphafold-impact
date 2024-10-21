@@ -217,8 +217,9 @@ def fetch_candidate_ecr_status(
     return authors_final
 
 
-def fetch_ecr_outputs(
+def fetch_author_outputs(
     authors: pd.DataFrame,
+    ecr: bool,
     from_publication_date: str,
     api_config: Dict[str, str],
 ) -> Generator[Dict[str, pd.DataFrame], None, None]:
@@ -236,7 +237,14 @@ def fetch_ecr_outputs(
             are DataFrames containing the processed papers for each slice.
     """
     # create list of author ids
-    ecr_authors = list(set(authors[authors["status"] == "ecr"]["candidate"].tolist()))
+    if ecr:
+        ecr_authors = list(
+            set(authors[authors["status"] == "ecr"]["candidate"].tolist())
+        )
+    else:
+        ecr_authors = list(
+            set(authors[authors["status"] == "not_ecr"]["candidate"].tolist())
+        )
 
     # create batches of 50 authors
     author_batches = [
@@ -317,11 +325,12 @@ def fetch_ecr_outputs(
         yield {f"s{i}": slice_papers}
 
 
-def merge_ecr_data(
+def merge_author_data(
     data_loaders: Dict[str, AbstractDataset],
     candidate_authors: pd.DataFrame,
+    authors: pd.DataFrame,
+    ecr: bool,
     institutions: pd.DataFrame,
-    mesh_terms: pd.DataFrame,
     patents_data: pd.DataFrame,
     pdb_submissions: pd.DataFrame,
     icite_data: pd.DataFrame,
@@ -345,7 +354,7 @@ def merge_ecr_data(
     institutions = _institution_preprocessing(institutions)
     candidate_authors = _candidates_preprocessing(candidate_authors)
 
-    ecr_data = pd.DataFrame()
+    output_data = pd.DataFrame()
     for i, loader in enumerate(data_loaders.values()):
         logger.info(
             "Processing data loader %d / %d",
@@ -353,11 +362,35 @@ def merge_ecr_data(
             len(data_loaders),
         )
         data = loader()
+
+        # primary field
+        data["primary_field"] = data["topics"].apply(
+            lambda x: (
+                x[0][5]
+                if isinstance(x, np.ndarray)
+                and len(x) > 0
+                and isinstance(x[0], np.ndarray)
+                and len(x[0]) > 0
+                else None
+            )
+        )
+
+        data.drop(
+            columns=[
+                "concepts",
+                "mesh_terms",
+                "grants",
+                "topics",
+                "ids",
+                "cited_by_percentile_year_min",
+                "cited_by_percentile_year_max",
+                "cit_6",
+                "cit_7",
+            ]
+        )
+
         data = data.merge(institutions, on="institution", how="left")
         data = data.merge(candidate_authors, on="author", how="left")
-
-        # get mesh_terms data cleaned
-        data = _get_mesh_data(data, mesh_terms)
 
         # get patent citations
         data["doi"] = data["doi"].apply(
@@ -375,66 +408,28 @@ def merge_ecr_data(
 
         data = data.merge(icite_outputs, on="id", how="left")
 
-        ecr_data = pd.concat([ecr_data, data], ignore_index=True)
+        output_data = pd.concat([output_data, data], ignore_index=True)
 
-    # identify any authors that have snuck in from before 2020
-    non_ecr_authors = ecr_data[
-        ecr_data["publication_date"].apply(
-            lambda x: pd.to_datetime(x) < pd.to_datetime("2020-01-01")
-        )
-    ]["author"].unique()
+    if ecr:
+        # identify any authors that have snuck in from before 2020
+        non_ecr_authors = output_data[
+            output_data["publication_date"].apply(
+                lambda x: pd.to_datetime(x) < pd.to_datetime("2020-01-01")
+            )
+        ]["author"].unique()
 
-    # remove non-ecr authors
-    ecr_data = ecr_data[~ecr_data["author"].isin(non_ecr_authors)]
+        # remove non-ecr authors
+        output_data = output_data[~output_data["author"].isin(non_ecr_authors)]
+    else:
+        authors_list = authors[authors["status"] == "not_ecr"]["candidate"].tolist()
+        non_ecr_authors = output_data[
+            output_data["author"].isin(authors_list)
+        ]["author"].unique()
 
-    # primary field
-    ecr_data["primary_field"] = ecr_data["topics"].apply(
-        lambda x: (
-            x[0][5]
-            if isinstance(x, np.ndarray)
-            and len(x) > 0
-            and isinstance(x[0], np.ndarray)
-            and len(x[0]) > 0
-            else None
-        )
-    )
+        # remove non-ecr authors
+        output_data = output_data[output_data["author"].isin(non_ecr_authors)]
 
-    # create reduced ecr_data version for regressions
-    ecr_data_reduced = ecr_data[
-        [
-            "id",
-            "author",
-            "author_position",
-            "af",
-            "ct",
-            "other",
-            "depth",
-            "cited_by_count",
-            "fwci",
-            "citation_normalized_percentile_value",
-            "cit_0",
-            "cit_1",
-            "cit_2",
-            "publication_date",
-            "primary_field",
-            "patent_count",
-            "patent_citation",
-            "ca_count",
-            "resolution",
-            "R_free",
-            "country_code",
-            "institution",
-            "type",
-            "works_count",
-            "institution_cited_by_count",
-            "2yr_mean_citedness",
-            "h_index",
-            "i10_index",
-        ]
-    ]
-
-    return ecr_data, ecr_data_reduced
-
+    return output_data
 
 def _institution_preprocessing(institutions: pd.DataFrame) -> pd.DataFrame:
     institutions = institutions.drop(columns=["author"]).drop_duplicates(

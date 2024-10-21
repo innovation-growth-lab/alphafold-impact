@@ -327,6 +327,10 @@ ecr.publications.raw:
   <<: *_pq_ptd
   path: s3://igl-alphafold/oct/01_raw/ecr/publications/
 
+nonecr.publications.raw:
+  <<: *_pq_ptd
+  path: s3://igl-alphafold/oct/01_raw/nonecr/publications/
+
 ecr.institutions.raw:
   <<: *_pq
   filepath: s3://igl-alphafold/oct/01_raw/ecr/institutions.parquet
@@ -335,9 +339,9 @@ ecr.publications.primary:
   <<: *_pq
   filepath: s3://igl-alphafold/oct/03_primary/ecr/publications.parquet
 
-ecr.publications.regression.inputs:
+nonecr.publications.primary:
   <<: *_pq
-  filepath: s3://igl-alphafold/oct/04_output/ecr/regression_inputs.parquet
+  filepath: s3://igl-alphafold/oct/03_primary/nonecr/publications.parquet
 
 # -------------------------------------------------------------
 

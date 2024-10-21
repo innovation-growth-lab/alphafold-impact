@@ -7,8 +7,8 @@ from kedro.pipeline import Pipeline, pipeline, node
 from .nodes import (
     get_unique_authors,
     fetch_candidate_ecr_status,
-    fetch_ecr_outputs,
-    merge_ecr_data,
+    fetch_author_outputs,
+    merge_author_data,
 )
 from ..f_data_collection_foundational_labs.nodes import (  # pylint: disable=E0402
     get_institution_info,
@@ -18,7 +18,7 @@ from ..f_data_collection_foundational_labs.nodes import (  # pylint: disable=E04
 def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstring
     **kwargs,
 ) -> Pipeline:
-    return pipeline(
+    basic_pipeline = pipeline(
         [
             node(
                 func=get_unique_authors,
@@ -40,37 +40,79 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                 name="fetch_author_ecr_status",
             ),
             node(
-                func=fetch_ecr_outputs,
-                inputs={
-                    "authors": "ecr.authors.raw",
-                    "from_publication_date": "params:ecr.data_collection.from_author_date",
-                    "api_config": "params:ecr.data_collection.api",
-                },
-                tags="debug",
-                outputs="ecr.publications.raw",
-                name="fetch_ecr_outputs",
-            ),
-            node(
                 func=get_institution_info,
                 inputs={
                     "author_ids": "ecr.candidate_authors.raw",
                 },
                 outputs="ecr.institutions.raw",
                 name="get_ecr_institution_info",
+            )
+        ],
+        tags=["basic_ecr_collection"]
+    )
+
+    ecr_pipeline = pipeline(
+        [
+            node(
+                func=fetch_author_outputs,
+                inputs={
+                    "authors": "ecr.authors.raw",
+                    "ecr": "params:ecr.data_collection.ecr_bool.ecr",
+                    "from_publication_date": "params:ecr.data_collection.from_ecr_date",
+                    "api_config": "params:ecr.data_collection.api",
+                },
+                outputs="ecr.publications.raw",
+                name="fetch_ecr_outputs",
             ),
             node(
-                func=merge_ecr_data,
+                func=merge_author_data,
                 inputs={
                     "data_loaders": "ecr.publications.raw",
                     "candidate_authors": "ecr.candidate_authors.raw",
+                    "authors": "ecr.authors.raw",
                     "institutions": "ecr.institutions.raw",
-                    "mesh_terms": "nih.data_collection.mesh_terms",
+                    "ecr": "params:ecr.data_collection.ecr_bool.ecr",
                     "patents_data": "lens.data_processing.primary",
                     "pdb_submissions": "pdb.entries.intermediate",
                     "icite_data": "pubmed.data_processing.icite.intermediate",
                 },
-                outputs=["ecr.publications.primary", "ecr.publications.regression.inputs"],
+                outputs="ecr.publications.primary",
                 name="merge_ecr_data",
-            ),
-        ]
+            )
+        ],
+        tags=["ecr_pipeline"],
     )
+
+    nonecr_pipeline = pipeline(
+        [
+            node(
+                func=fetch_author_outputs,
+                inputs={
+                    "authors": "ecr.authors.raw",
+                    "ecr": "params:ecr.data_collection.ecr_bool.nonecr",
+                    "from_publication_date": "params:ecr.data_collection.from_nonecr_date",
+                    "api_config": "params:ecr.data_collection.api",
+                },
+                outputs="nonecr.publications.raw",
+                name="fetch_nonecr_outputs",
+            ),
+            node(
+                func=merge_author_data,
+                inputs={
+                    "data_loaders": "ecr.publications.raw",
+                    "candidate_authors": "ecr.candidate_authors.raw",
+                    "authors": "ecr.authors.raw",
+                    "institutions": "ecr.institutions.raw",
+                    "ecr": "params:ecr.data_collection.ecr_bool.nonecr",
+                    "patents_data": "lens.data_processing.primary",
+                    "pdb_submissions": "pdb.entries.intermediate",
+                    "icite_data": "pubmed.data_processing.icite.intermediate",
+                },
+                outputs="nonecr.publications.primary",
+                name="merge_nonecr_data",
+            ),
+        ],
+        tags=["nonecr_pipeline"],
+    )
+
+    return basic_pipeline + ecr_pipeline + nonecr_pipeline
