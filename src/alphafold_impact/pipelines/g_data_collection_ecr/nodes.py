@@ -378,7 +378,7 @@ def merge_ecr_data(
 
     # identify any authors that have snuck in from before 2020
     non_ecr_authors = ecr_data[
-        ~ecr_data["publication_date"].apply(
+        ecr_data["publication_date"].apply(
             lambda x: pd.to_datetime(x) < pd.to_datetime("2020-01-01")
         )
     ]["author"].unique()
