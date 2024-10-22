@@ -568,17 +568,22 @@ def process_subfield_data(data: Dict[str, AbstractDataset]) -> pd.DataFrame:
         )
 
         # Extract the content of citation_normalized_percentile
-        df[
-            [
-                "citation_normalized_percentile_value",
-                "citation_normalized_percentile_is_in_top_1_percent",
-                "citation_normalized_percentile_is_in_top_10_percent",
-            ]
-        ] = df.apply(
-            lambda x: (pd.Series(x["citation_normalized_percentile"])),
-            axis=1,
-            result_type="expand",
-        )
+        try:
+            df[
+                [
+                    "citation_normalized_percentile_value",
+                    "citation_normalized_percentile_is_in_top_1_percent",
+                    "citation_normalized_percentile_is_in_top_10_percent",
+                ]
+            ] = df.apply(
+                lambda x: (pd.Series(x["citation_normalized_percentile"])),
+                axis=1,
+                result_type="expand",
+            )
+        except ValueError:
+            logger.warning(
+                "citation_normalized_percentile not found in %s", df["id"].values[0]
+            )
 
         # Extract the content of cited_by_percentile_year
         df[

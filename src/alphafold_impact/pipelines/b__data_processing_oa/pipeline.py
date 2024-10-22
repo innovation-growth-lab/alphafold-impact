@@ -39,7 +39,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
             )
             for level in settings.DYNAMIC_PIPELINES_MAPPING["depth_levels"]
         ],
-        tags=["data_processing_oa", "rerun"],
+        tags=["data_processing_oa"],
     )
 
     combine_levels_pipeline = pipeline(
@@ -56,7 +56,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 name="combine_af_levels",
             )
         ],
-        tags=["data_processing_oa", "rerun"],
+        tags=["data_processing_oa"],
     )
 
     structural_biology_processing_pieline = pipeline(
@@ -67,7 +67,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 outputs="oa.data_processing.subfield.structural_biology.primary",
                 name="process_sb",
                 tags=[
-                    "data_processing_oa",
+                    "data_processing_oa", "rerun"
                 ],
             )
         ]
@@ -85,7 +85,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 name="process_sb_level_0",
             )
         ],
-        tags=["data_processing_oa"],
+        tags=["data_processing_oa", "rerun"],
     )
 
     baseline_level1_pipeline = pipeline(
@@ -109,7 +109,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
             ),
         ],
         tags=[
-            "data_processing_oa",
+            "data_processing_oa", "rerun"
         ],
     )
 
@@ -138,7 +138,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 name="extract_ct_sb_levels",
             ),
         ],
-        tags=["data_processing_oa"],
+        tags=["data_processing_oa", "rerun"],
     )
 
     post_level2_dw_pipeline = pipeline(
@@ -159,6 +159,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 },
                 outputs="oa.data_collection.subfield.structural_biology.depth.2.intermediate",
                 name="concatenate_ct_sb_partitioned",
+                tags="rerun"
             ),
             node(
                 func=combine_levels_data_connect_parents,
@@ -168,9 +169,10 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 },
                 outputs="oa.data_processing.structural_biology.depth.ct.intermediate",
                 name="combine_ct_sb_levels",
+                tags="rerun"
             ),
         ],
-        tags=["data_processing_oa"],
+        tags=["data_processing_oa",]
     )
 
     return (
