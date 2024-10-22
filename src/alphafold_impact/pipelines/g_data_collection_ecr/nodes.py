@@ -254,10 +254,12 @@ def fetch_author_outputs(
     filter_batches = [[from_publication_date, batch] for batch in author_batches]
 
     # slice to create parallel jobs that produce slices
-    slices = [filter_batches[i : i + 250] for i in range(0, len(filter_batches), 250)]
+    slices = [filter_batches[i : i + 100] for i in range(0, len(filter_batches), 100)]
 
     logger.info("Fetching papers for %d author batches", len(slices))
     for i, slice_ in enumerate(slices):
+        if i < 155:
+            continue
 
         # create a unique list of the authors in the slice
         authors = list(chain.from_iterable([x[1].split("|") for x in slice_]))
@@ -371,10 +373,6 @@ def merge_author_data(
                     "grants",
                     "topics",
                     "ids",
-                    "cited_by_percentile_year_min",
-                    "cited_by_percentile_year_max",
-                    "cit_6",
-                    "cit_7",
                 ]
             )
         except:  # pylint: disable=bare-except
@@ -444,9 +442,7 @@ def aggregate_to_quarterly(data: pd.DataFrame) -> pd.DataFrame:
         mode = series.mode()
         return mode.iloc[0] if not mode.empty else np.nan
 
-    return (
-        data.groupby(["author", "quarter"])
-        .agg(
+    return data.groupby(["author", "quarter"]).agg(
             num_publications=("id", "size"),
             num_cited_by_count=("cited_by_count", "sum"),
             num_cit_0=("cit_0", "sum"),
@@ -472,9 +468,7 @@ def aggregate_to_quarterly(data: pd.DataFrame) -> pd.DataFrame:
             other=("other", "first"),
             primary_field=("primary_field", safe_mode),
             author_position=("author_position", safe_mode),
-        )
-        .reset_index(),
-    )
+        ).reset_index()
 
 
 def _institution_preprocessing(institutions: pd.DataFrame) -> pd.DataFrame:
@@ -706,8 +700,6 @@ def _result_transformations(data: pd.DataFrame) -> pd.DataFrame:
             "grants",
             "topics",
             "ids",
-            "cited_by_percentile_year_min",
-            "cited_by_percentile_year_max",
         ]
     )
 
