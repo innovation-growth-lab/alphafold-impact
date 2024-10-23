@@ -66,11 +66,9 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 inputs=["oa.data_collection.subfield.structural_biology.raw"],
                 outputs="oa.data_processing.subfield.structural_biology.primary",
                 name="process_sb",
-                tags=[
-                    "data_processing_oa", "rerun"
-                ],
             )
-        ]
+        ],
+        tags=["data_processing_oa"],
     )
 
     baseline_level0_pipeline = pipeline(
@@ -85,7 +83,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 name="process_sb_level_0",
             )
         ],
-        tags=["data_processing_oa", "rerun"],
+        tags=["data_processing_oa"],
     )
 
     baseline_level1_pipeline = pipeline(
@@ -106,10 +104,11 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 },
                 outputs="oa.data_collection.subfield.structural_biology.depth.1.intermediate",
                 name="concatenate_sb_partitioned",
+                tags="needs_rerun",
             ),
         ],
         tags=[
-            "data_processing_oa", "rerun"
+            "data_processing_oa",
         ],
     )
 
@@ -138,7 +137,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 name="extract_ct_sb_levels",
             ),
         ],
-        tags=["data_processing_oa", "rerun"],
+        tags=["data_processing_oa", "needs_rerun"],
     )
 
     post_level2_dw_pipeline = pipeline(
@@ -159,7 +158,6 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 },
                 outputs="oa.data_collection.subfield.structural_biology.depth.2.intermediate",
                 name="concatenate_ct_sb_partitioned",
-                tags="rerun"
             ),
             node(
                 func=combine_levels_data_connect_parents,
@@ -169,10 +167,12 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 },
                 outputs="oa.data_processing.structural_biology.depth.ct.intermediate",
                 name="combine_ct_sb_levels",
-                tags="rerun"
+                tags="needs_rerun",
             ),
         ],
-        tags=["data_processing_oa",]
+        tags=[
+            "data_processing_oa",
+        ],
     )
 
     return (
