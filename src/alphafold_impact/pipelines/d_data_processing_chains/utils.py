@@ -2,6 +2,7 @@
 This module provides utility functions for data processing chains in the 
 AlphaFold Impact project.
 """
+
 import logging
 from typing import Dict
 import pandas as pd
@@ -31,9 +32,6 @@ def sort_and_drop(
     sort_order = {"strong": 0, "weak": 1, "unknown": 2, "N/A": 3}
     data["sort_order"] = data["intent"].map(sort_order)
 
-    # data = data[~data["intent"].isin(["", None])]
-
-    # keep the first row of every parent_{identifier}, identifier
     data = (
         data.sort_values("sort_order")
         .groupby(["parent_id", "id"])

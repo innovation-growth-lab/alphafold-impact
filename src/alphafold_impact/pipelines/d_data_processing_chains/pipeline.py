@@ -19,7 +19,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
             node(
                 filter_relevant_citation_links,
                 inputs={
-                    "alphafold_data": "oa.data_processing.depth.all.primary",
+                    "depth_data": "oa.data_processing.depth.all.primary",
                     "identifier": "params:chains.identifier.id",
                     "num_levels": "params:chains.num_levels.af",
                 },
@@ -30,7 +30,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 get_papers_with_strong_chain,
                 inputs={
                     "chains": "chains.complete_links.id.primary",
-                    "alphafold_data": "oa.data_processing.depth.all.primary",
+                    "depth_data": "oa.data_processing.depth.all.primary",
                     "identifier": "params:chains.identifier.id",
                     "num_levels": "params:chains.num_levels.af",
                 },
@@ -41,7 +41,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 get_chain_label_papers,
                 inputs={
                     "chains": "chains.complete_links.id.primary",
-                    "alphafold_data": "oa.data_processing.depth.all.primary",
+                    "depth_data": "oa.data_processing.depth.all.primary",
                     "identifier": "params:chains.identifier.id",
                     "num_levels": "params:chains.num_levels.af",
                 },
@@ -57,7 +57,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
             node(
                 filter_relevant_citation_links,
                 inputs={
-                    "alphafold_data": "oa.data_processing.depth.ct.primary",
+                    "depth_data": "oa.data_processing.depth.ct.primary",
                     "identifier": "params:chains.identifier.id",
                     "num_levels": "params:chains.num_levels.ct",
                 },
@@ -68,7 +68,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 get_papers_with_strong_chain,
                 inputs={
                     "chains": "chains.complete_links.id.ct.primary",
-                    "alphafold_data": "oa.data_processing.depth.ct.primary",
+                    "depth_data": "oa.data_processing.depth.ct.primary",
                     "identifier": "params:chains.identifier.id",
                     "num_levels": "params:chains.num_levels.ct",
                 },
@@ -79,7 +79,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 get_chain_label_papers,
                 inputs={
                     "chains": "chains.complete_links.id.ct.primary",
-                    "alphafold_data": "oa.data_processing.depth.ct.primary",
+                    "depth_data": "oa.data_processing.depth.ct.primary",
                     "identifier": "params:chains.identifier.id",
                     "num_levels": "params:chains.num_levels.ct",
                 },
@@ -95,7 +95,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
             node(
                 filter_relevant_citation_links,
                 inputs={
-                    "alphafold_data": "oa.data_processing.depth.other.primary",
+                    "depth_data": "oa.data_processing.depth.other.primary",
                     "identifier": "params:chains.identifier.id",
                     "num_levels": "params:chains.num_levels.other",
                 },
@@ -106,7 +106,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 get_papers_with_strong_chain,
                 inputs={
                     "chains": "chains.complete_links.id.other.primary",
-                    "alphafold_data": "oa.data_processing.depth.other.primary",
+                    "depth_data": "oa.data_processing.depth.other.primary",
                     "identifier": "params:chains.identifier.id",
                     "num_levels": "params:chains.num_levels.other",
                 },
@@ -117,7 +117,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 get_chain_label_papers,
                 inputs={
                     "chains": "chains.complete_links.id.other.primary",
-                    "alphafold_data": "oa.data_processing.depth.other.primary",
+                    "depth_data": "oa.data_processing.depth.other.primary",
                     "identifier": "params:chains.identifier.id",
                     "num_levels": "params:chains.num_levels.other",
                 },

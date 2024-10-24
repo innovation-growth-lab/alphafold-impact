@@ -14,7 +14,7 @@ from .utils import (
     ensure_levels,
     breaks_chain,
     transform_long,
-    transform_long_pairs,
+    transform_long_pairs
 )
 
 pd.options.mode.copy_on_write = True
@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 def filter_relevant_citation_links(
-    alphafold_data: pd.DataFrame,
+    depth_data: pd.DataFrame,
     identifier: str,
     num_levels: int,
     **kwargs,
@@ -33,7 +33,7 @@ def filter_relevant_citation_links(
     Filters and processes citation links based on relevance.
 
     Args:
-        alphafold_data (pd.DataFrame): The input DataFrame containing citation
+        depth_data (pd.DataFrame): The input DataFrame containing citation
              link data.
         identifier (str): The identifier used to filter the citation links.
         num_levels (int): The number of levels in the citation chain.
@@ -44,19 +44,19 @@ def filter_relevant_citation_links(
     """
 
     logger.info("Exploding citation links")
-    alphafold_data = alphafold_data.explode("strength")
+    depth_data = depth_data.explode("strength")
 
     # logger.info("Remove citation links with no strength")
-    # alphafold_data.dropna(subset=["strength"], inplace=True)
+    # depth_data.dropna(subset=["strength"], inplace=True)
 
     for col in ["intent", "context"]:
         logger.info("Extracting %s from citation links", col)
-        alphafold_data[col] = alphafold_data["strength"].apply(
+        depth_data[col] = depth_data["strength"].apply(
             lambda x: x[col] if x else None  # pylint: disable=cell-var-from-loop
         )
 
     # create strong variable
-    alphafold_data["intent"] = alphafold_data["intent"].apply(
+    depth_data["intent"] = depth_data["intent"].apply(
         lambda x: (
             "strong"
             if x in ["result", "methodology"]
@@ -67,35 +67,36 @@ def filter_relevant_citation_links(
     )
 
     # define & implement the custom sorting order
-    alphafold_data = sort_and_drop(alphafold_data, **kwargs)
+    depth_data = sort_and_drop(depth_data, **kwargs)
 
     if identifier == "pmid":
         # assign 99999999 PMID to Multimer paper, with OA id W3202105508
-        alphafold_data.loc[
-            alphafold_data["parent_id"] == "W3202105508", "parent_pmid"
+        depth_data.loc[
+            depth_data["parent_id"] == "W3202105508", "parent_pmid"
         ] = "99999999"
 
     logger.info("Filter nulls for relevant identifier %s", identifier)
-    alphafold_data = alphafold_data[alphafold_data[identifier].notnull()]
+    depth_data = depth_data[depth_data[identifier].notnull()]
 
     logger.info("Drop duplicates of parent_id, identifier, and intent")
-    alphafold_data.drop_duplicates(
+    depth_data.drop_duplicates(
         subset=["parent_id", identifier, "intent"], inplace=True
     )
 
     output = []
-    seeds = alphafold_data[alphafold_data["level"] == 0][
+    seeds = depth_data[depth_data["level"] == 0][
         f"parent_{identifier}"
     ].unique()
+    
     if len(seeds) == 0:
         # move level up by 1
-        alphafold_data["level"] = alphafold_data["level"] - 1
+        depth_data["level"] = depth_data["level"] - 1
 
     for seed_id in list(
-        alphafold_data[alphafold_data["level"] == 0][f"parent_{identifier}"].unique()
+        depth_data[depth_data["level"] == 0][f"parent_{identifier}"].unique()
     ):
         logger.info("Building citation chain for seed %s", seed_id)
-        data_dict = build_chain_dict(alphafold_data, identifier, seed_id, 0, num_levels)
+        data_dict = build_chain_dict(depth_data, identifier, seed_id, 0, num_levels)
         flat_rows = flatten_dict(data_dict)
         seed_df = pd.DataFrame(flat_rows)
         seed_df["seed_id"] = seed_id
@@ -114,14 +115,14 @@ def filter_relevant_citation_links(
     for i in range(num_levels):
         if i == 0:
             chains_df = chains_df.merge(
-                alphafold_data[[f"parent_{identifier}", identifier, "intent"]],
+                depth_data[[f"parent_{identifier}", identifier, "intent"]],
                 left_on=["seed_id", "level_0"],
                 right_on=[f"parent_{identifier}", identifier],
                 how="left",
             )
         else:
             chains_df = chains_df.merge(
-                alphafold_data[[f"parent_{identifier}", identifier, "intent"]],
+                depth_data[[f"parent_{identifier}", identifier, "intent"]],
                 left_on=[f"level_{i-1}", f"level_{i}"],
                 right_on=[f"parent_{identifier}", identifier],
                 how="left",
@@ -145,19 +146,6 @@ def filter_relevant_citation_links(
         )
     complete_chains_df = chains_df[~chains_df.apply(lambda row: breaks_chain(row, num_levels), axis=1)]
 
-    # # drop rows that have all four intent as nan or N/A
-    # complete_chains_df = complete_chains_df[
-    #     ~complete_chains_df[
-    #         (
-    #             ["intent_0", "intent_1", "intent_2"]
-    #             if num_levels > 2
-    #             else ["intent_0", "intent_1"]
-    #         )
-    #     ]
-    #     .applymap(lambda x: x == "N/A" or pd.isna(x))
-    #     .all(axis=1)
-    # ]
-
     # drop rows that have all four intent as nan or N/A
     columns_to_check = (
         ["intent_0", "intent_1", "intent_2"]
@@ -176,7 +164,7 @@ def filter_relevant_citation_links(
 
 def get_papers_with_strong_chain(
     chains: pd.DataFrame,
-    alphafold_data: pd.DataFrame,
+    depth_data: pd.DataFrame,
     identifier: str,
     num_levels: int,
 ) -> pd.DataFrame:
@@ -185,7 +173,7 @@ def get_papers_with_strong_chain(
 
     Args:
         chains (pd.DataFrame): DataFrame containing the chains data.
-        alphafold_data (pd.DataFrame): DataFrame containing the AlphaFold data.
+        depth_data (pd.DataFrame): DataFrame containing the AlphaFold data.
         identifier (str): Identifier used to match the chains and AlphaFold data.
         num_levels (int): Number of levels in the chains DataFrame.
 
@@ -196,29 +184,29 @@ def get_papers_with_strong_chain(
     data_ids = transform_long(chains, ["strong"], num_levels)
 
     logger.info("Merging chains with AlphaFold data")
-    alphafold_data = alphafold_data.merge(
+    depth_data = depth_data.merge(
         data_ids,
         how="inner",
         left_on=[identifier, "level"],
         right_on=["paper_id", "level"],
     )
-    return alphafold_data
+    return depth_data
 
 
 def get_chain_label_papers(
     chains: pd.DataFrame,
-    alphafold_data: pd.DataFrame,
+    depth_data: pd.DataFrame,
     identifier: str,
     num_levels: int,
 ) -> pd.DataFrame:
     """
-    Identifies and labels chains in the alphafold_data DataFrame based on the information
+    Identifies and labels chains in the depth_data DataFrame based on the information
     in the chains DataFrame.
 
     Args:
         chains (pd.DataFrame): DataFrame containing information about chains.
-        alphafold_data (pd.DataFrame): DataFrame containing alphafold data.
-        identifier (str): Identifier column name in the alphafold_data DataFrame.
+        depth_data (pd.DataFrame): DataFrame containing depth data.
+        identifier (str): Identifier column name in the depth_data DataFrame.
         num_levels (int): Number of levels in the chains DataFrame.
 
     Returns:
@@ -357,8 +345,8 @@ def get_chain_label_papers(
         "chain_label"
     ].to_dict()
 
-    # map chain_label to alphafold_data identifier, parent_{identifier}
-    alphafold_data["chain_label"] = alphafold_data.apply(
+    # map chain_label to depth_data identifier, parent_{identifier}
+    depth_data["chain_label"] = depth_data.apply(
         lambda x: chain_labels_map.get(
             (x[identifier], x[f"parent_{identifier}"]), None
         ),
@@ -366,6 +354,6 @@ def get_chain_label_papers(
     )
 
     # fillna chain_label with "other"
-    alphafold_data["chain_label"].fillna("other", inplace=True)
+    depth_data["chain_label"].fillna("other", inplace=True)
 
-    return alphafold_data
+    return depth_data
