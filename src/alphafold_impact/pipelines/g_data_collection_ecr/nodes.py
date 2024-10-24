@@ -364,20 +364,50 @@ def merge_author_data(
             len(data_loaders),
         )
         data = loader()
+        data = data[data["author_position"]=="first"]
 
-        try:
-            data.drop(
-                columns=[
-                    "concepts",
-                    "mesh_terms",
-                    "grants",
-                    "topics",
-                    "ids",
-                ]
+        # HACK: ecr data has no primary_field during collection
+        data["primary_field"] = data["topics"].apply(
+            lambda x: (
+                x[0][5]
+                if isinstance(x, np.ndarray)
+                and len(x) > 0
+                and isinstance(x[0], np.ndarray)
+                and len(x[0]) > 0
+                else None
             )
-        except:  # pylint: disable=bare-except
-            pass
+        )
 
+
+        data.drop(
+            columns=[
+                "concepts",
+                "mesh_terms",
+                "grants",
+                "topics",
+                "ids",
+            ],
+            inplace=True,
+        )
+
+        if ecr:
+            # identify any authors that have snuck in from before 2020
+            non_ecr_authors = data[
+                data["publication_date"].apply(
+                    lambda x: pd.to_datetime(x) < pd.to_datetime("2020-01-01")
+                )
+            ]["author"].unique()
+
+            # remove non-ecr authors
+            data = data[~data["author"].isin(non_ecr_authors)]
+        else:
+            authors_list = authors[authors["status"] == "not_ecr"]["candidate"].tolist()
+            non_ecr_authors = data[data["author"].isin(authors_list)]["author"].unique()
+
+            # remove non-ecr authors
+            data = data[data["author"].isin(non_ecr_authors)]
+
+        # merge author and institutions metadata
         data = data.merge(institutions, on="institution", how="left")
         data = data.merge(candidate_authors, on="author", how="left")
 
@@ -394,29 +424,10 @@ def merge_author_data(
 
         # get icite_counts
         icite_outputs = _create_cc_counts(data[["id", "doi"]], icite_data)
-
         data = data.merge(icite_outputs, on="id", how="left")
 
+        # concatenate the data
         output_data = pd.concat([output_data, data], ignore_index=True)
-
-    if ecr:
-        # identify any authors that have snuck in from before 2020
-        non_ecr_authors = output_data[
-            output_data["publication_date"].apply(
-                lambda x: pd.to_datetime(x) < pd.to_datetime("2020-01-01")
-            )
-        ]["author"].unique()
-
-        # remove non-ecr authors
-        output_data = output_data[~output_data["author"].isin(non_ecr_authors)]
-    else:
-        authors_list = authors[authors["status"] == "not_ecr"]["candidate"].tolist()
-        non_ecr_authors = output_data[output_data["author"].isin(authors_list)][
-            "author"
-        ].unique()
-
-        # remove non-ecr authors
-        output_data = output_data[output_data["author"].isin(non_ecr_authors)]
 
     return output_data
 
@@ -442,7 +453,9 @@ def aggregate_to_quarterly(data: pd.DataFrame) -> pd.DataFrame:
         mode = series.mode()
         return mode.iloc[0] if not mode.empty else np.nan
 
-    return data.groupby(["author", "quarter"]).agg(
+    return (
+        data.groupby(["author", "quarter"])
+        .agg(
             num_publications=("id", "size"),
             num_cited_by_count=("cited_by_count", "sum"),
             num_cit_0=("cit_0", "sum"),
@@ -468,7 +481,9 @@ def aggregate_to_quarterly(data: pd.DataFrame) -> pd.DataFrame:
             other=("other", "first"),
             primary_field=("primary_field", safe_mode),
             author_position=("author_position", safe_mode),
-        ).reset_index()
+        )
+        .reset_index()
+    )
 
 
 def _institution_preprocessing(institutions: pd.DataFrame) -> pd.DataFrame:
@@ -700,7 +715,8 @@ def _result_transformations(data: pd.DataFrame) -> pd.DataFrame:
             "grants",
             "topics",
             "ids",
-        ]
+        ],
+        inplace=True,
     )
 
     return data

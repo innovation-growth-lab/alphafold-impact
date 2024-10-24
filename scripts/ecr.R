@@ -43,100 +43,6 @@ bind_rows <- dplyr::bind_rows
 # DATA PREPARATION
 # ------------------------------------------------------------------------------
 
-credentials <- yaml.load_file("conf/base/credentials.yml")
-
-Sys.setenv(
-  "AWS_ACCESS_KEY_ID" = credentials$s3_credentials$key, # nolint
-  "AWS_SECRET_ACCESS_KEY" = credentials$s3_credentials$secret, # nolint
-  "AWS_DEFAULT_REGION" = "eu-west-2" # nolint
-)
-
-# Define the S3 bucket and path
-bucket <- "igl-alphafold"
-path <- "oct/04_output/ecr/regression_inputs.parquet" # nolint
-
-# Fetch the data from the S3 bucket
-ecr_data <- s3read_using(
-  FUN = arrow::read_parquet,
-  object = path,
-  bucket = bucket
-)
-
-# ------------------------------------------------------------------------------
-# Data Prep
-# ------------------------------------------------------------------------------
-
-# create a new factor variable
-ecr_data <- ecr_data %>%
-  mutate(
-    af_ct = ifelse(af > 0 & ct > 0, af + ct, 0),
-    is_af = af > 0 & ct == 0,
-    is_ct = ct > 0 & af == 0,
-    is_af_ct = af > 0 & ct > 0,
-    is_other = !(is_af | is_ct | is_af_ct)
-  )
-
-# create factors, log transforms
-ecr_data <- ecr_data %>%
-  mutate(
-    author = as.factor(author),
-    author_position = as.factor(author_position),
-    depth = as.factor(depth),
-    institution = as.factor(institution),
-    institution_type = as.factor(type),
-    institution_country_code = as.factor(country_code),
-    ln1p_cited_by_count = log1p(cited_by_count),
-    ln1p_cit_0 = log1p(cit_0),
-    ln1p_cit_1 = log1p(cit_1),
-    ln1p_cit_2 = log1p(cit_2),
-    ln1p_ca_count = log1p(ca_count),
-    ln1p_patent_count = log1p(patent_count),
-    ln1p_patent_citation = log1p(patent_citation),
-    primary_field = as.factor(primary_field),
-    publication_date = as.Date(publication_date),
-    quarter_year = paste0(
-      year(publication_date), " Q", quarter(publication_date)
-    ),
-    resolution = as.numeric(resolution),
-    R_free = as.numeric(R_free)
-  )
-
-# change primary_field value for key field
-ecr_data$primary_field <- gsub(
-  "Biochemistry, Genetics and Molecular Biology",
-  "biochem_genetics_molecular_biology",
-  ecr_data$primary_field
-)
-
-# ------------------------------------------------------------------------------
-# Sample Prep
-# ------------------------------------------------------------------------------
-
-# Define sub_samples as a list of samples
-sub_samples <- list(
-  depth_all__field_all = ecr_data,
-  depth_foundational__field_all = subset(ecr_data, depth == "foundational"),
-  depth_applied__field_all = subset(ecr_data, depth == "applied")
-)
-
-unique_depths <- c("all", unique(ecr_data$depth))
-unique_fields <- c(
-  "biochem_genetics_molecular_biology", "Medicine"
-  # "Chemistry", "Agricultural and Biological Sciences",
-  # "Immunology and Microbiology", "Health Professions", "Nursing"
-)
-
-for (depth in unique_depths) {
-  for (field in unique_fields) {
-    sample_name <- paste0("depth_", depth, "__field_", field)
-    if (depth == "all") {
-      sub_samples[[sample_name]] <- subset(ecr_data, primary_field == field)
-    } else {
-      sub_samples[[sample_name]] <- subset(ecr_data, depth == depth & primary_field == field)
-    }
-  }
-}
-
 covs <- list()
 covs[["base0"]] <- c("author_position")
 
@@ -150,10 +56,10 @@ fes[["fe1"]] <- c(
 cov_sets <- c("base0")
 fe_list <- c("fe1")
 dep_vars <- c(
-  "ln1p_cited_by_count", "ln1p_cit_0", "ln1p_cit_1"
-  # "fwci", "citation_normalized_percentile_value",
-  # "ln1p_patent_count", "ln1p_patent_citation", "ln1p_ca_count",
-  # "resolution", "R_free"
+  "ln1p_cited_by_count", "ln1p_cit_0", "ln1p_cit_1",
+  "fwci", "citation_normalized_percentile_value",
+  "ln1p_patent_count", "ln1p_patent_citation", "ln1p_ca_count",
+  "resolution", "R_free"
 )
 treat_vars <- c(
   "is_af + is_ct + is_af_ct",
@@ -414,6 +320,10 @@ coef_table <- extract_coefficients(
   )
 )
 
+# ------------------------------------------------------------------------------
+# PLOT GENERATION
+# ------------------------------------------------------------------------------
+
 generate_coef_plots <- function(coef_table, interaction_bool = TRUE) { # nolint
   # Filter the coef_table based on the interaction argument
   if (interaction_bool) {
@@ -452,129 +362,91 @@ generate_coef_plots <- function(coef_table, interaction_bool = TRUE) { # nolint
     "is_af_ctTRUE" = "AlphaFold + Counterfactual (int.)"
   )
 
+  # Split dependent variables into chunks of three
+  dep_var_subset <- dep_var_order[dep_var_order %in% coef_table$dep_var]
+  dep_var_chunks <- split(
+    dep_var_subset, ceiling(seq_along(dep_var_subset) / 3)
+  )
+
   # Iterate over unique field groups
   unique_fields <- unique(coef_table$field)
   for (single_field in unique_fields) {
-    coef_plot_data <- coef_table %>%
-      filter(treat_var %in% names(coef_labels)) %>%
-      filter(field == single_field) %>%
-      mutate(
-        dep_var = factor(dep_var, levels = dep_var_order),
-        depth = factor(depth, levels = depth_order),
-        treat_var = factor(
-          treat_var,
-          levels = names(coef_labels), labels = coef_labels
+    for (dep_vars in dep_var_chunks) {
+      coef_plot_data <- coef_table %>% # nolint
+        filter(treat_var %in% names(coef_labels)) %>% # nolint
+        filter(field == single_field) %>% # nolint
+        filter(dep_var %in% dep_vars) %>% # nolint
+        mutate( # nolint
+          dep_var = factor(dep_var, levels = dep_var_order), # nolint
+          depth = factor(depth, levels = depth_order), # nolint
+          treat_var = factor(
+            treat_var,
+            levels = names(coef_labels), labels = coef_labels
+          )
         )
+
+      # Reorder the treat_var to match the desired order
+      coef_plot_data$treat_var <- factor(
+        coef_plot_data$treat_var,
+        levels = coef_order
       )
 
-    # Reorder the treat_var to match the desired order
-    coef_plot_data$treat_var <- factor(
-      coef_plot_data$treat_var,
-      levels = coef_order
-    )
+      # Create the coefficient plot for the current field group
+      coeffplot <- ggplot( # nolint
+        coef_plot_data,
+        aes(x = estimate, y = treat_var) # nolint
+      ) +
+        geom_point( # nolint
+          aes(color = treat_var),
+          size = 3
+        ) +
+        geom_errorbarh( # nolint
+          aes(xmin = conf_low, xmax = conf_high), # nolint
+          height = 0.2
+        ) +
+        geom_vline(xintercept = 0, color = "black", linewidth = 1) + # nolint
+        facet_grid(depth ~ dep_var, scales = "fixed", space = "free_x") + # nolint
+        labs( # nolint
+          title = paste("Coefficient plot for field:", single_field), # nolint
+          x = "Estimate (with 95% CI)",
+          y = "Coefficient Variable"
+        ) +
+        theme_classic() + # nolint
+        theme( # nolint
+          axis.text.y = element_text(size = 12), # nolint
+          axis.title.x = element_text(size = 14), # nolint
+          axis.title.y = element_text(size = 14), # nolint
+          strip.text = element_text(size = 12), # nolint
+          panel.grid.major.x = element_line(linewidth = 0.2, color = "grey"), # nolint
+          panel.border = element_rect(color = "black", fill = NA, linewidth = 0.8), # nolint
+          panel.spacing = unit(2, "lines"), # nolint
+          legend.position = "none",
+          plot.margin = margin(1, 1, 1, 1, "cm") # nolint
+        )
 
-    # return(coef_plot_data)
-
-    # Create the coefficient plot for the current field group
-    coeffplot <- ggplot(
-      coef_plot_data,
-      aes(x = estimate, y = treat_var)
-    ) +
-      geom_point(
-        aes(color = treat_var),
-        size = 3
-      ) +
-      geom_errorbarh(
-        aes(xmin = conf_low, xmax = conf_high),
-        height = 0.2
-      ) +
-      geom_vline(xintercept = 0, color = "black", size = 1) +
-      facet_grid(depth ~ dep_var, scales = "fixed", space = "free_x") +
-      labs(
-        title = paste("Coefficient plot for field:", field),
-        x = "Estimate (with 95% CI)",
-        y = "Coefficient Variable"
-      ) +
-      theme_classic() + # More academic/professional theme
-      theme(
-        axis.text.y = element_text(size = 12),
-        axis.title.x = element_text(size = 14),
-        axis.title.y = element_text(size = 14),
-        strip.text = element_text(size = 12),
-        panel.grid.major.x = element_line(size = 0.2, color = "grey"),
-        panel.border = element_rect(color = "black", fill = NA, size = 0.8),
-        panel.spacing = unit(2, "lines"),
-        legend.position = "none",
-        plot.margin = margin(1, 1, 1, 1, "cm")
+      # Create the directory if it doesn't exist
+      pathdir <- paste0(
+        figures, "coef_plot/", interaction_folder, "/", single_field, "/"
       )
+      dep_var_names <- paste(dep_vars, collapse = "_")
+      outfile <- paste0(pathdir, dep_var_names, ".png")
+      message("Saving plot to: ", outfile)
+      if (!dir.exists(pathdir)) {
+        message("Creating directory: ", pathdir)
+        dir.create(pathdir, recursive = TRUE)
+      }
 
-    # Create the directory if it doesn't exist
-    pathdir <- paste0(figures, "coef_plot/", interaction_folder, "/")
-    message("Saving plot to: ", pathdir)
-    if (!dir.exists(pathdir)) {
-      message("Creating directory: ", pathdir)
-      dir.create(pathdir, recursive = TRUE)
+      # Save the plot
+      ggsave( # nolint
+        outfile, # nolint
+        coeffplot,
+        width = 20,
+        height = 10,
+        dpi = 300
+      )
     }
-
-    # Save the plot
-    ggsave(paste0(pathdir, "coef_plot_", field, ".png"), coeffplot, width = 20, height = 10, dpi = 300)
   }
 }
 
-# Example usage
-generate_coef_plots(coef_table, interaction = TRUE)
-# %%
-
-# %%
-  # unique_fields <- unique(coef_table$field)
-  # for (single_field in unique_fields) {
-  #   coef_plot_data <- coef_table %>%
-  #     filter(treat_var %in% names(coef_labels)) %>%
-  #     filter(field == single_field) %>%
-  #     mutate(
-  #       dep_var = factor(dep_var, levels = dep_var_order),
-  #       depth = factor(depth, levels = depth_order),
-  #       treat_var = factor(
-  #         treat_var,
-  #         levels = names(coef_labels), labels = coef_labels
-  #       )
-  #     )
-
-  #   # Reorder the treat_var to match the desired order
-  #   coef_plot_data$treat_var <- factor(
-  #     coef_plot_data$treat_var,
-  #     levels = coef_order
-  #   )
-
-# %%
-ggplot(
-      coef_plot_data,
-      aes(x = estimate, y = treat_var)
-    ) +
-      geom_point(
-        aes(color = treat_var),
-        size = 3
-      ) +
-      geom_errorbarh(
-        aes(xmin = conf_low, xmax = conf_high),
-        height = 0.2
-      ) +
-      geom_vline(xintercept = 0, color = "black", size = 1) +
-      facet_grid(depth ~ dep_var, scales = "fixed", space = "free_x") +
-      labs(
-        title = paste("Coefficient plot for field:", field),
-        x = "Estimate (with 95% CI)",
-        y = "Coefficient Variable"
-      ) +
-      theme_classic() + # More academic/professional theme
-      theme(
-        axis.text.y = element_text(size = 12),
-        axis.title.x = element_text(size = 14),
-        axis.title.y = element_text(size = 14),
-        strip.text = element_text(size = 12),
-        panel.grid.major.x = element_line(size = 0.2, color = "grey"),
-        panel.border = element_rect(color = "black", fill = NA, size = 0.8),
-        panel.spacing = unit(2, "lines"),
-        legend.position = "none",
-        plot.margin = margin(1, 1, 1, 1, "cm")
-      )
+generate_coef_plots(coef_table, interaction_bool = TRUE)
+generate_coef_plots(coef_table, interaction_bool = FALSE)

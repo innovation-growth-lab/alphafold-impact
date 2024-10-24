@@ -108,7 +108,7 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
             node(
                 func=merge_author_data,
                 inputs={
-                    "data_loaders": "ecr.publications.raw",
+                    "data_loaders": "nonecr.publications.raw",
                     "candidate_authors": "ecr.candidate_authors.raw",
                     "authors": "ecr.authors.raw",
                     "institutions": "ecr.institutions.raw",
@@ -119,6 +119,7 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                 },
                 outputs="nonecr.publications.primary",
                 name="merge_nonecr_data",
+                tags="debug",
             ),
             node(
                 func=aggregate_to_quarterly,
@@ -127,6 +128,7 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                 },
                 outputs="nonecr.publications.quarterly",
                 name="aggregate_nonecr_to_quarterly",
+                tags="debug",
             ),
         ],
         tags=["nonecr_pipeline"],
