@@ -40,6 +40,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                 create_publications_data,
                 inputs={
                     "data": "oa.chain_labels.id.ct.primary",
+                    "seed_papers": "chains.seed_technologies.intermediate",
                     "source": "params:publications.source.ct",
                     "mesh_terms": "nih.data_collection.mesh_terms",
                     "patents_data": "lens.data_processing.primary",
@@ -52,7 +53,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
             node(
                 create_publications_data,
                 inputs={
-                    "data": "oa.chain_labels.id.other.primary",  # "oa.data_processing.structural_biology.depth.other.intermediate",
+                    "data": "oa.chain_labels.id.other.primary",
                     "source": "params:publications.source.other",
                     "mesh_terms": "nih.data_collection.mesh_terms",
                     "patents_data": "lens.data_processing.primary",
@@ -80,7 +81,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                 },
                 outputs="publications.regression.inputs",
                 name="subset_columns_for_regression",
-            )
+            ),
         ],
         tags=["data_output_publications"],
     )

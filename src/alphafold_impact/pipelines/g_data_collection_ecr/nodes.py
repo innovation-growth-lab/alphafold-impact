@@ -110,7 +110,7 @@ def get_unique_authors(
     ).reset_index()
 
     # make source cols int
-    for col in ["af", "ct", "other"]:
+    for col in ["af", "ct_ai", "ct_noai", "other"]:
         authors[col] = authors[col].astype(int)
 
     return authors
@@ -364,7 +364,7 @@ def merge_author_data(
             len(data_loaders),
         )
         data = loader()
-        data = data[data["author_position"]=="first"]
+        data = data[data["author_position"] == "first"]
 
         # HACK: ecr data has no primary_field during collection
         data["primary_field"] = data["topics"].apply(
@@ -377,7 +377,6 @@ def merge_author_data(
                 else None
             )
         )
-
 
         data.drop(
             columns=[
@@ -477,7 +476,8 @@ def aggregate_to_quarterly(data: pd.DataFrame) -> pd.DataFrame:
             type=("type", "first"),
             depth=("depth", "first"),
             af=("af", "first"),
-            ct=("ct", "first"),
+            ct_ai=("ct_ai", "first"),
+            ct_noai=("ct_noai", "first"),
             other=("other", "first"),
             primary_field=("primary_field", safe_mode),
             author_position=("author_position", safe_mode),
@@ -501,12 +501,15 @@ def _candidates_preprocessing(candidate_authors: pd.DataFrame) -> pd.DataFrame:
     # sort candidate authors by af, ct, other
     depth_summed_data = (
         candidate_authors.groupby(["author", "depth"])
-        .agg({"af": "sum", "ct": "sum", "other": "sum"})
+        .agg({"af": "sum", "ct_ai": "sum", "ct_noai": "sum", "other": "sum"})
         .reset_index()
     )
 
     depth_summed_data["total"] = (
-        depth_summed_data["af"] + depth_summed_data["ct"] + depth_summed_data["other"]
+        depth_summed_data["af"]
+        + depth_summed_data["ct_ai"]
+        + depth_summed_data["ct_noai"]
+        + depth_summed_data["other"]
     )
 
     # Get the index of the row with the maximum total for each author
@@ -516,7 +519,7 @@ def _candidates_preprocessing(candidate_authors: pd.DataFrame) -> pd.DataFrame:
 
     summed_data = (
         candidate_authors.groupby("author")
-        .agg({"af": "sum", "ct": "sum", "other": "sum"})
+        .agg({"af": "sum", "ct_ai": "sum", "ct_noai": "sum", "other": "sum"})
         .reset_index()
     )
 

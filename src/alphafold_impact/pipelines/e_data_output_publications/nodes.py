@@ -38,6 +38,7 @@ def create_publications_data(
     patents_data: pd.DataFrame,
     pdb_submissions: pd.DataFrame,
     icite_data: pd.DataFrame,
+    **kwargs,
 ) -> pd.DataFrame:
     """
     Processes and enriches publication data with various metrics and annotations.
@@ -53,6 +54,11 @@ def create_publications_data(
     """
     if "level" in data.columns:
         data = data[data["level"] != 3]
+
+    if "seed_papers" in kwargs:
+        logger.info("Assigning seed technologies")
+        data = _assign_seed_technologies(data, kwargs["seed_papers"])
+
     try:
         data = _sort_drop(data)
     except Exception as e:  # pylint: disable=broad-except
@@ -65,6 +71,8 @@ def create_publications_data(
     mesh_terms_dict = mesh_terms.set_index("DUI")["term_group"].to_dict()
 
     data["source"] = source
+    if "seed_papers" in kwargs:
+        data["source"] = source + "_" + data["ct_tech"]
 
     # create a new column 'parent_publication_date'
     id_date_dict = data.set_index("id")["publication_date"].to_dict()
@@ -102,7 +110,6 @@ def create_publications_data(
     data["parent_id"] = data["parent_id"].astype(str)
 
     return data
-
 
 def _sort_drop(data: pd.DataFrame) -> pd.DataFrame:
     """
@@ -473,6 +480,7 @@ def _get_pdb_activity(
 
     return data
 
+
 def select_regression_columns(data: pd.DataFrame, columns: list) -> pd.DataFrame:
     """
     Selects columns relevant for regression analysis from the given DataFrame.
@@ -485,8 +493,60 @@ def select_regression_columns(data: pd.DataFrame, columns: list) -> pd.DataFrame
         pd.DataFrame: A DataFrame containing only the columns relevant for regression analysis.
     """
 
-
     # Drop columns that are not relevant for regression analysis
     regression_data = data.drop(columns=columns)
 
     return regression_data
+
+
+
+def _assign_seed_technologies(
+    data: pd.DataFrame, seed_papers: pd.DataFrame
+) -> pd.DataFrame:
+    """
+    Assigns seed technologies to the data based on the seed papers.
+
+    Args:
+        data (pd.DataFrame): The input DataFrame containing the data.
+        seed_papers (pd.DataFrame): The DataFrame containing the seed papers.
+
+    Returns:
+        pd.DataFrame: The DataFrame with the seed technologies assigned.
+    """
+
+    def create_subgroup(ct_data, ct_data_previous, level):
+        return ct_data[
+            (ct_data["level"] == level)
+            & (ct_data["parent_id"].isin(ct_data_previous["id"]))
+        ]
+
+    # create seed papers
+    ai_seeds = seed_papers[seed_papers["label"].str.contains("ai")]
+    noai_seeds = seed_papers[~seed_papers["label"].str.contains("ai")]
+
+    # initialise level 0 papers
+    ai_l0 = data[(data["parent_id"].isin(ai_seeds["parent_id"])) & (data["level"] <= 0)]
+    ai_l0["ct_tech"] = "ai"
+
+    noai_l0 = data[
+        (data["parent_id"].isin(noai_seeds["parent_id"])) & (data["level"] <= 0)
+    ]
+    noai_l0["ct_tech"] = "noai"
+
+    levels = [ai_l0, noai_l0]
+    for level in range(1, 3):
+        ai_level = create_subgroup(data, levels[-2], level)
+        ai_level["ct_tech"] = "ai"
+        noai_level = create_subgroup(data, levels[-1], level)
+        noai_level["ct_tech"] = "noai"
+        levels.extend([ai_level, noai_level])
+
+    # concatenate all levels and remove duplicates
+    data = (
+        pd.concat(levels)
+        .sort_values(["ct_tech", "level"])
+        .drop_duplicates(subset=["parent_id", "id", "level", "chain_label"])
+        .reset_index(drop=True)
+    )
+
+    return data

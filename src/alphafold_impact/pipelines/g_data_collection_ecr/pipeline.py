@@ -119,7 +119,7 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                 },
                 outputs="nonecr.publications.primary",
                 name="merge_nonecr_data",
-                tags="debug",
+                # tags="debug",
             ),
             node(
                 func=aggregate_to_quarterly,
@@ -128,7 +128,7 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                 },
                 outputs="nonecr.publications.quarterly",
                 name="aggregate_nonecr_to_quarterly",
-                tags="debug",
+                # tags="debug",
             ),
         ],
         tags=["nonecr_pipeline"],
