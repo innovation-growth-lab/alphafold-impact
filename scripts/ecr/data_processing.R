@@ -63,15 +63,19 @@ ecr_data <- s3read_using(
 # create a new factor variable
 ecr_data <- ecr_data %>%
   mutate(
-    af_ct = ifelse(af > 0 & ct > 0, af + ct, 0),
-    is_af = af > 0 & ct == 0,
-    is_ct = ct > 0 & af == 0,
-    is_af_ct = af_ct > 0,
-    is_other = !(is_af | is_ct | is_af_ct)
+    af_ct_ai = ifelse(af > 0 & ct_ai > 0, af + ct_ai, 0),
+    af_ct_noai = ifelse(af > 0 & ct_noai > 0, af + ct_noai, 0),
+    is_af = af > 0 & ct_ai == 0 & ct_noai == 0,
+    is_ct_ai = ct_ai > 0 & af == 0,
+    is_ct_noai = ct_noai > 0 & af == 0,
+    is_af_ct_ai = af_ct_ai > 0,
+    is_af_ct_noai = af_ct_noai > 0,
+    is_other = !(is_af | is_ct_ai | is_ct_noai | is_af_ct_ai | is_af_ct_noai)
   ) %>%
   mutate(
-    af = ifelse(af_ct > 0, 0, af),
-    ct = ifelse(af_ct > 0, 0, ct)
+    af = ifelse(af_ct_ai > 0 | af_ct_noai > 0, 0, af),
+    ct_ai = ifelse(af_ct_ai > 0, 0, ct_ai),
+    ct_noai = ifelse(af_ct_noai > 0, 0, ct_noai)
   )
 
 # create factors, log transforms

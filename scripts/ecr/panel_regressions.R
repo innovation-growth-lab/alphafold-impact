@@ -5,7 +5,7 @@ options(width = 250)
 
 # Check installation & load required packages
 list_of_packages <- c(
-  "tidyverse", "zoo", "fixest"
+  "tidyverse", "zoo", "fixest", "ggh4x"
 )
 new_packages <- list_of_packages[
   !(list_of_packages %in% installed.packages()[, "Package"])
@@ -60,8 +60,20 @@ dep_vars <- c(
   "resolution", "R_free"
 )
 treat_vars <- c(
-  "is_af + is_ct + is_af_ct",
-  "is_af + is_af:af + is_ct + is_ct:ct + is_af_ct + is_af_ct:af_ct"
+  "is_af + is_ct_ai + is_ct_noai + is_af_ct_ai + is_af_ct_noai",
+  paste(
+    "is_af:af",
+    "is_af:af^2",
+    "is_ct_ai:ct_ai",
+    "is_ct_ai:ct_ai^2",
+    "is_ct_noai:ct_noai",
+    "is_ct_noai:ct_noai^2",
+    "is_af_ct_ai:af_ct_ai",
+    "is_af_ct_ai:af_ct_ai^2",
+    "is_af_ct_noai:af_ct_noai",
+    "is_af_ct_noai:af_ct_noai^2",
+    sep = " + "
+  )
 )
 
 form_list <- list()
@@ -161,9 +173,71 @@ coef_table <- extract_coefficients(
   fe_list = fe_list,
   treat_vars = treat_vars,
   treat_var_interest = c(
-    "is_afTRUE", "is_afTRUE:af", "is_ctTRUE", "is_ctTRUE:ct", "is_af_ctTRUE"
+    "is_afTRUE", "is_afTRUE:af", "is_afTRUE:I(af^2)", "is_ct_aiTRUE",
+    "is_ct_aiTRUE:ct_ai", "is_ct_aiTRUE:I(ct_ai^2)", "is_ct_noaiTRUE",
+    "is_ct_noaiTRUE:ct_noai", "is_ct_noaiTRUE:I(ct_noai^2)", "is_af_ct_aiTRUE",
+    "is_af_ct_aiTRUE:is_af_ct_ai", "is_af_ct_aiTRUE:I(is_af_ct_ai^2)",
+    "is_af_ct_noaiTRUE", "is_af_ct_noaiTRUE:is_af_ct_noai",
+    "is_af_ct_noaiTRUE:I(is_af_ct_noai^2)"
   )
 )
 
-generate_coef_plots(coef_table, interaction_bool = TRUE)
-generate_coef_plots(coef_table, interaction_bool = FALSE)
+coef_order <- c(
+  "AlphaFold + Counterfactual non-AI (ext.)^2",
+  "AlphaFold + Counterfactual non-AI (ext.)",
+  "AlphaFold + Counterfactual non-AI (int.)",
+  "AlphaFold + Counterfactual AI (ext.)^2",
+  "AlphaFold + Counterfactual AI (ext.)",
+  "AlphaFold + Counterfactual AI (int.)",
+  "Counterfactual non-AI (ext.)^2",
+  "Counterfactual non-AI (ext.)",
+  "Counterfactual non-AI (int.)",
+  "Counterfactual AI (ext.)^2",
+  "Counterfactual AI (ext.)",
+  "Counterfactual AI (int.)",
+  "AlphaFold (ext.)^2",
+  "AlphaFold (ext.)",
+  "AlphaFold (int.)"
+)
+
+# Change coefficient names to more readable labels
+coef_labels <- c(
+  "is_afTRUE" = "AlphaFold (int.)",
+  "is_afTRUE:af" = "AlphaFold (ext.)",
+  "is_afTRUE:I(af^2)" = "AlphaFold (ext.)^2",
+  "is_ct_aiTRUE" = "Counterfactual AI (int.)",
+  "is_ct_aiTRUE:ct_ai" = "Counterfactual AI (ext.)",
+  "is_ct_aiTRUE:I(ct_ai^2)" = "Counterfactual AI (ext.)^2",
+  "is_ct_noaiTRUE" = "Counterfactual non-AI (int.)",
+  "is_ct_noaiTRUE:ct_noai" = "Counterfactual non-AI (ext.)",
+  "is_ct_noaiTRUE:I(ct_noai^2)" = "Counterfactual non-AI (ext.)^2",
+  "is_af_ct_aiTRUE" = "AlphaFold + Counterfactual AI (int.)",
+  "is_af_ct_aiTRUE:af_ct_ai" = "AlphaFold + Counterfactual AI (ext.)",
+  "is_af_ct_aiTRUE:I(af_ct_ai^2)" = "AlphaFold + Counterfactual AI (ext.)^2",
+  "is_af_ct_noaiTRUE" = "AlphaFold + Counterfactual non-AI (int.)",
+  "is_af_ct_noaiTRUE:af_ct_noai" = "AlphaFold + Counterfactual non-AI (ext.)", # nolint
+  "is_af_ct_noaiTRUE:I(af_ct_noai^2)" = "AlphaFold + Counterfactual non-AI (ext.)^2" # nolint
+)
+
+# results with interactions
+coef_table_interacted <- coef_table[
+  coef_table$indep_vars != "is_af_+_is_ct_ai_+_is_ct_noai_+_is_af_ct_ai_+_is_af_ct_noai", # nolint
+]
+
+generate_coef_plots(
+  coef_table_interacted,
+  coef_order,
+  coef_labels,
+  "extensive"
+)
+
+# results without interactions
+coef_table_noninteracted <- coef_table[
+  coef_table$indep_vars == "is_af_+_is_ct_ai_+_is_ct_noai_+_is_af_ct_ai_+_is_af_ct_noai", # nolint
+]
+generate_coef_plots(
+  coef_table_noninteracted,
+  coef_order,
+  coef_labels,
+  "intensive"
+)

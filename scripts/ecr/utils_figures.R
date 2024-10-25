@@ -1,4 +1,4 @@
-figures <- "data/05_model_output/figures/ecr/"
+figures <- "data/05_model_output/ecr/figures/"
 
 if (!dir.exists(figures)) {
   dir.create(figures, recursive = TRUE)
@@ -31,6 +31,7 @@ extract_coefficients <- function(results, dep_vars, subsets, cov_sets, fe_list, 
               if (!is.null(results[[result_name]])) {
                 message("Found coefficients for: ", result_name)
                 coef_info <- summary(results[[result_name]])$coeftable
+                n_obs <- summary(results[[result_name]])$nobs
 
                 # Iterate over the list of treatment variables of interest
                 for (treat_var_interest_item in treat_var_interest) {
@@ -52,7 +53,8 @@ extract_coefficients <- function(results, dep_vars, subsets, cov_sets, fe_list, 
                       estimate = coef_info[treat_var_interest_item, "Estimate"],
                       std_error = coef_info[treat_var_interest_item, "Std. Error"], # nolint
                       conf_low = coef_info[treat_var_interest_item, "Estimate"] - 1.96 * coef_info[treat_var_interest_item, "Std. Error"], # nolint
-                      conf_high = coef_info[treat_var_interest_item, "Estimate"] + 1.96 * coef_info[treat_var_interest_item, "Std. Error"] # nolint
+                      conf_high = coef_info[treat_var_interest_item, "Estimate"] + 1.96 * coef_info[treat_var_interest_item, "Std. Error"], # nolint
+                      n_obs = n_obs
                     )
                   }
                 }
@@ -71,19 +73,7 @@ extract_coefficients <- function(results, dep_vars, subsets, cov_sets, fe_list, 
 # PLOT GENERATION
 # ------------------------------------------------------------------------------
 
-generate_coef_plots <- function(coef_table, interaction_bool = TRUE) { # nolint
-  # Filter the coef_table based on the interaction argument
-  if (interaction_bool) {
-    coef_table <- coef_table[
-      coef_table$indep_vars != "is_af_+_is_ct_+_is_af_ct",
-    ]
-    interaction_folder <- "interacted"
-  } else {
-    coef_table <- coef_table[
-      coef_table$indep_vars == "is_af_+_is_ct_+_is_af_ct",
-    ]
-    interaction_folder <- "not_interacted"
-  }
+generate_coef_plots <- function(coef_table, coef_order, coef_labels, interacted) { # nolint
 
   # Set the desired order for dependent variables (x-axis) and depth (y-axis)
   dep_var_order <- c(
@@ -93,21 +83,6 @@ generate_coef_plots <- function(coef_table, interaction_bool = TRUE) { # nolint
   )
 
   depth_order <- c("depth_all", "depth_foundational", "depth_applied")
-
-  coef_order <- c(
-    "AlphaFold + Counterfactual (int.)",
-    "Counterfactual (int. x ext.)", "Counterfactual (int.)",
-    "AlphaFold (int. x ext.)", "AlphaFold (int.)"
-  )
-
-  # Change coefficient names to more readable labels
-  coef_labels <- c(
-    "is_afTRUE" = "AlphaFold (int.)",
-    "is_afTRUE:af" = "AlphaFold (int. x ext.)",
-    "is_ctTRUE" = "Counterfactual (int.)",
-    "is_ctTRUE:ct" = "Counterfactual (int. x ext.)",
-    "is_af_ctTRUE" = "AlphaFold + Counterfactual (int.)"
-  )
 
   # Split dependent variables into chunks of three
   dep_var_subset <- dep_var_order[dep_var_order %in% coef_table$dep_var]
@@ -138,7 +113,6 @@ generate_coef_plots <- function(coef_table, interaction_bool = TRUE) { # nolint
         levels = coef_order
       )
 
-      # Create the coefficient plot for the current field group
       coeffplot <- ggplot( # nolint
         coef_plot_data,
         aes(x = estimate, y = treat_var) # nolint
@@ -152,7 +126,7 @@ generate_coef_plots <- function(coef_table, interaction_bool = TRUE) { # nolint
           height = 0.2
         ) +
         geom_vline(xintercept = 0, color = "black", linewidth = 1) + # nolint
-        facet_grid(depth ~ dep_var, scales = "free", space = "free_x") + # nolint
+        ggh4x::facet_grid2(depth ~ dep_var, scales = "free", independent = "x", space = "fixed") + # nolint, adjusted here
         labs( # nolint
           title = paste("Coefficient plot for field:", single_field), # nolint
           x = "Estimate (with 95% CI)",
@@ -170,10 +144,17 @@ generate_coef_plots <- function(coef_table, interaction_bool = TRUE) { # nolint
           legend.position = "none",
           plot.margin = margin(1, 1, 1, 1, "cm") # nolint
         )
+      coeffplot <- coeffplot + geom_text( # nolint
+        data = coef_plot_data,
+        aes(label = paste0("n = ", n_obs)), # nolint
+        x = Inf, y = Inf,
+        hjust = 1.1, vjust = 1.6,
+        size = 3, color = "black"
+      )
 
       # Create the directory if it doesn't exist
       pathdir <- paste0(
-        figures, "coef_plot/", interaction_folder, "/", single_field, "/"
+        figures, "coef_plot/", interacted, "/", single_field, "/"
       )
       dep_var_names <- paste(dep_vars, collapse = "_")
       outfile <- paste0(pathdir, dep_var_names, ".png")
