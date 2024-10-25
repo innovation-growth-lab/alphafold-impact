@@ -6,6 +6,10 @@ generated using Kedro 0.19.1
 import logging
 import pandas as pd
 import numpy as np
+from joblib import Parallel, delayed
+from ..f_data_collection_foundational_labs.utils import (  # pylint: disable=E0402
+    fetch_institution_data,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -110,6 +114,7 @@ def create_publications_data(
     data["parent_id"] = data["parent_id"].astype(str)
 
     return data
+
 
 def _sort_drop(data: pd.DataFrame) -> pd.DataFrame:
     """
@@ -251,6 +256,7 @@ def _get_field_distr(data: pd.DataFrame) -> pd.DataFrame:
     """
 
     df = data.copy()
+
     df["fields"] = df["topics"].apply(
         lambda x: [y[5] for y in x] if x is not None and len(x) > 0 else []
     )
@@ -278,6 +284,18 @@ def _get_field_distr(data: pd.DataFrame) -> pd.DataFrame:
 
     # merge with data on author and time
     data = data.merge(df, on=["id"], how="left")
+
+    # add primary field
+    data["primary_field"] = data["topics"].apply(
+        lambda x: (
+            x[0][5]
+            if isinstance(x, np.ndarray)
+            and len(x) > 0
+            and isinstance(x[0], np.ndarray)
+            and len(x[0]) > 0
+            else None
+        )
+    )
 
     return data
 
@@ -444,6 +462,11 @@ def _get_pdb_activity(
         lambda x: x[-1][0] if x is not None and len(x) > 0 else None
     )
 
+    # keep last author's institution
+    data["last_author_institution"] = data["authorships"].apply(
+        lambda x: x[-1][1] if x is not None and len(x) > 0 else None
+    )
+
     # keep a list of authors
     data_e = data.copy()
     data_e["authors"] = data_e["authorships"].apply(
@@ -499,7 +522,6 @@ def select_regression_columns(data: pd.DataFrame, columns: list) -> pd.DataFrame
     return regression_data
 
 
-
 def _assign_seed_technologies(
     data: pd.DataFrame, seed_papers: pd.DataFrame
 ) -> pd.DataFrame:
@@ -550,3 +572,48 @@ def _assign_seed_technologies(
     )
 
     return data
+
+
+def get_institution_info(
+    publications: pd.DataFrame,
+) -> pd.DataFrame:
+    """
+    Fetches institution information for authors.
+
+    Args:
+        author_ids (pd.DataFrame): DataFrame containing author IDs and institution information.
+
+    Returns:
+        pd.DataFrame: DataFrame containing institution data.
+
+    """
+    institutions = publications["last_author_institution"].unique().tolist()
+
+    logger.info("Fetching publications for %d authors", len(institutions))
+
+    # slice to create parallel jobs that produce slices
+    slices = [institutions[i : i + 150] for i in range(0, len(institutions), 150)]
+
+    logger.info("Slicing authors into %d slices", len(slices))
+    institution_data_list = Parallel(n_jobs=8, verbose=10)(
+        delayed(fetch_institution_data)(institution)
+        for slice_ in slices
+        for institution in slice_
+    )
+
+    # filter out None values
+    institution_data_list = [data for data in institution_data_list if data is not None]
+
+    # convert the list of dictionaries to a DataFrame
+    data = pd.DataFrame(institution_data_list)
+
+    # merge back on author_ids
+    publications = publications.merge(
+        data,
+        left_on="last_author_institution",
+        right_on="institution",
+        how="left",
+        suffixes=("", "_institution"),
+    )
+
+    return publications

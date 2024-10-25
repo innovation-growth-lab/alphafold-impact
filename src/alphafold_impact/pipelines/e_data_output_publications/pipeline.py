@@ -9,6 +9,7 @@ from .nodes import (
     merge_individual_data,
     update_alphafold_triad,
     select_regression_columns,
+    get_institution_info
 )
 
 
@@ -70,8 +71,18 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                     "data_ct": "publications.data.ct",
                     "data_other": "publications.data.other",
                 },
+                outputs="publications.data.intermediate",
+                name="merge_publications_data",
+                tags="debug"
+            ),
+            node(
+                get_institution_info,
+                inputs={
+                    "publications": "publications.data.intermediate"
+                },
                 outputs="publications.data.outputs",
-                name="export_publications_data",
+                name="get_last_author_institution_info",
+                tags="debug"
             ),
             node(
                 select_regression_columns,
