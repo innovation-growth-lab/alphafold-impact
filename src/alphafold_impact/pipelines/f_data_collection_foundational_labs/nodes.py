@@ -626,10 +626,10 @@ def get_publications_from_labs(
                         result_type="expand",
                     )
 
-                    # force first to Int with NA tolerance
+                    # force first to float
                     df["citation_normalized_percentile_value"] = df[
                         "citation_normalized_percentile_value"
-                    ].astype(pd.Int64Dtype())
+                    ].astype(float)
 
                 except ValueError:
                     logger.warning(
