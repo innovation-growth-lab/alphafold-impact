@@ -7,6 +7,7 @@ import logging
 from typing import Dict, List, Tuple, Generator
 from kedro.io import AbstractDataset
 import pandas as pd
+import numpy as np
 from joblib import Parallel, delayed
 from sklearn.preprocessing import MinMaxScaler
 
@@ -485,6 +486,8 @@ def get_publications_from_labs(
                         "authorships",
                         "concepts",
                         "topics",
+                        "fwci",
+                        "citation_normalized_percentile",
                     ]
                 }
                 for item in children_list
@@ -556,6 +559,17 @@ def get_publications_from_labs(
                     )
                 )
 
+                df["primary_field"] = df["topics"].apply(
+                    lambda x: (
+                        x[0][5]
+                        if isinstance(x, np.ndarray)
+                        and len(x) > 0
+                        and isinstance(x[0], np.ndarray)
+                        and len(x[0]) > 0
+                        else None
+                    )
+                )
+
                 # create a list of topics
                 df["topics"] = df["topics"].apply(
                     lambda x: (
@@ -597,6 +611,25 @@ def get_publications_from_labs(
                         else None
                     )
                 )
+
+                # Extract the content of citation_normalized_percentile
+                try:
+                    df[
+                        [
+                            "citation_normalized_percentile_value",
+                            "citation_normalized_percentile_is_in_top_1_percent",
+                            "citation_normalized_percentile_is_in_top_10_percent",
+                        ]
+                    ] = df.apply(
+                        lambda x: (pd.Series(x["citation_normalized_percentile"])),
+                        axis=1,
+                        result_type="expand",
+                    )
+                except ValueError:
+                    logger.warning(
+                        "citation_normalized_percentile not found in %s",
+                        df["id"].values[0],
+                    )
 
                 # change doi to remove the url
                 df["doi"] = df["doi"].str.replace("https://doi.org/", "")
