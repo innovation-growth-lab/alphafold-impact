@@ -625,6 +625,12 @@ def get_publications_from_labs(
                         axis=1,
                         result_type="expand",
                     )
+
+                    # force first to Int with NA tolerance
+                    df["citation_normalized_percentile_value"] = df[
+                        "citation_normalized_percentile_value"
+                    ].astype(pd.Int64Dtype())
+
                 except ValueError:
                     logger.warning(
                         "citation_normalized_percentile not found in %s",
