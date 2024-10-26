@@ -650,7 +650,8 @@ def get_publications_from_labs(
 
         # force new vars to float
         for col in ["citation_normalized_percentile_value", "fwci"]:
-            df[col] = df[col].astype(float)
+            # set any values with "" as NaN
+            df[col] = df[col].replace("", np.nan).astype(float)
 
         # drop column citation_normalized_percentile
         df = df.drop(columns=["citation_normalized_percentile"])
