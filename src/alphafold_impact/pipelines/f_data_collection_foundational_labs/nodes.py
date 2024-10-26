@@ -626,11 +626,6 @@ def get_publications_from_labs(
                         result_type="expand",
                     )
 
-                    # force first to float
-                    df["citation_normalized_percentile_value"] = df[
-                        "citation_normalized_percentile_value"
-                    ].astype(float)
-
                 except ValueError:
                     logger.warning(
                         "citation_normalized_percentile not found in %s",
@@ -652,6 +647,13 @@ def get_publications_from_labs(
                 output.append(df)
 
         df = pd.concat(output)
+
+        # force new vars to float
+        for col in ["citation_normalized_percentile_value", "fwci"]:
+            df[col] = df[col].astype(float)
+
+        # drop column citation_normalized_percentile
+        df = df.drop(columns=["citation_normalized_percentile"])
 
         yield {f"s{i}": df}
 
