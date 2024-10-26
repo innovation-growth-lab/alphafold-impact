@@ -636,6 +636,11 @@ def get_publications_from_labs(
                         "citation_normalized_percentile not found in %s",
                         df["id"].values[0],
                     )
+                except TypeError:
+                    logger.warning(
+                        "citation_normalized_percentile wrong type in %s",
+                        df["id"].values[0],
+                    )
 
                 # change doi to remove the url
                 df["doi"] = df["doi"].str.replace("https://doi.org/", "")
