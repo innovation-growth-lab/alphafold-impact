@@ -478,6 +478,19 @@ def calculate_field_share(data):
     return data
 
 def calculate_primary_field(data):
+    """
+    Processes the input DataFrame to calculate the primary field for each author and time,
+    and returns the modified DataFrame with additional columns representing the count of 
+    each primary field.
+    Args:
+        data (pd.DataFrame): Input DataFrame containing columns 'author', 'time', and 'topics'.
+            'topics' should be a list of lists where each sublist contains 
+            topic information.
+    Returns:
+        pd.DataFrame: Modified DataFrame with additional columns for each primary field count,
+            prefixed with 'primary_field_'.
+    """
+
     df = data.copy()
     df["primary_field"] = df["topics"].apply(
         lambda x: x[0][5] if x is not None and len(x) > 0 else ""
@@ -642,6 +655,10 @@ def get_quarterly_aggregate_outputs(data):
             filter(lambda i: i != "nan" and i != "None", map(str, x))
         ),
         "ca_count": "sum",
+        "fwci": "mean",
+        "citation_normalized_percentile_value": "mean",
+        "citation_normalized_percentile_is_in_top_1_percent": lambda x: int(x.sum()),
+        "citation_normalized_percentile_is_in_top_10_percent": lambda x: int(x.sum()),
     }
 
     # Assume `data` is your original data
