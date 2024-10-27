@@ -26,7 +26,7 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
             node(
                 func=get_candidate_authors,
                 inputs={
-                    "alphafold_data": "oa.data_processing.depth.primary",
+                    "alphafold_data": "oa.data_processing.depth.all.primary",
                     "ct_data": "oa.data_processing.structural_biology.depth.ct.intermediate",
                     "other_data": "oa.data_processing.structural_biology.depth.other.intermediate",
                     "seed_papers": "chains.seed_technologies.intermediate",
