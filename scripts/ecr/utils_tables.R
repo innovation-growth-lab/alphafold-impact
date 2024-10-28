@@ -120,7 +120,17 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
           dict = dict_vars,
           digits = 3,
           digits.stats = 2,
-          powerBelow = -20
+          powerBelow = -20,
+          fitstat = c("n", "r2")
+        )
+
+        # force mean y to appear
+        mean_y_values <- sapply(results[result_names], function(model) {
+          mean(model$fitted.values + model$residuals)
+        })
+
+        mean_y_row <- paste0(
+          "Mean(Dep. Var.) & ", paste(sprintf("%.3f", mean_y_values), collapse = " & "), " \\\\" # nolint
         )
 
         tech_groups_latex <- c(
@@ -181,6 +191,12 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
 
         # drop lines 10-11
         etable_lines <- etable_lines[-c(10, 11, 12)]
+
+        # add mean y row in 6th last row
+        etable_lines <- append(
+          etable_lines, mean_y_row,
+          after = length(etable_lines) - 5
+        )
 
         # Combine the lines back into a single string
         etable_output <- paste(etable_lines, collapse = "\n")
