@@ -419,7 +419,7 @@ def merge_author_data(
             authors_list = authors[authors["status"] == "not_ecr"]["candidate"].tolist()
             non_ecr_authors = data[data["author"].isin(authors_list)]["author"].unique()
 
-            # remove non-ecr authors
+            # remove ecr authors
             data = data[data["author"].isin(non_ecr_authors)]
 
         # merge author and institutions metadata
