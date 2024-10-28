@@ -82,6 +82,9 @@ def create_publications_data(
     id_date_dict = data.set_index("id")["publication_date"].to_dict()
     data["parent_publication_date"] = data["parent_id"].map(id_date_dict)
 
+    # get short term citation counts
+    data = _normalise_citation_counts(data)
+
     # get fields data
     data = _get_field_distr(data)
 
@@ -573,6 +576,64 @@ def _assign_seed_technologies(
 
     return data
 
+
+def _normalise_citation_counts(data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Normalises the citation counts in the given DataFrame.
+
+    Args:
+        data (pd.DataFrame): The input DataFrame containing the data.
+
+    Returns:
+        pd.DataFrame: A DataFrame with normalised citation counts.
+    """
+
+    data = data.drop_duplicates(subset=["id"])
+
+    # explode the 'counts_by_year' column into multiple rows
+    data_exploded = data.explode("counts_by_year")
+
+    data_exploded.reset_index(drop=True, inplace=True)
+
+    # separate the dictionary into two columns: 'year' and 'cited_by_count'
+    data_exploded[["year", "cited_by_count"]] = pd.json_normalize(
+        data_exploded["counts_by_year"]
+    )
+
+    # convert the 'publication_date' column to datetime and extract the year
+    data_exploded["publication_date"] = pd.to_datetime(
+        data_exploded["publication_date"]
+    ).dt.year
+
+    # calculate the 't' value
+    data_exploded["t"] = data_exploded["year"] - data_exploded["publication_date"]
+
+    # drop the rows with NaN values in the 't' column
+    data_exploded.dropna(subset=["t"], inplace=True)
+
+    data_exploded["t"] = data_exploded["t"].astype(int)
+
+    # pivot the DataFrame to get the 't' columns
+    t_columns = data_exploded.pivot_table(
+        index="id", columns="t", values="cited_by_count", aggfunc="sum"
+    )
+
+    # remove negative columns
+    t_columns = t_columns.loc[:, (t_columns.columns >= 0)]
+
+    # Convert columns to Int64 type to accept NAs
+    t_columns = t_columns.astype(pd.Int64Dtype())
+
+    # renaming
+    t_columns.columns = ["cit_" + str(int(i)) for i in t_columns.columns]
+
+    # fill remaining NaN values in 't0' with 0
+    t_columns["cit_0"] = t_columns["cit_0"].fillna(0)
+
+    # merge the 't' DataFrame back to the original DataFrame
+    data = data.merge(t_columns, left_on="id", right_index=True, how="left")
+
+    return data
 
 def get_institution_info(
     publications: pd.DataFrame,
