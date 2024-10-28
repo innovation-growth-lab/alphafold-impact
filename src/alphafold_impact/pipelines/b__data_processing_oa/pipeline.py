@@ -15,7 +15,7 @@ from .nodes import (
     process_subfield_data,
     process_data_by_level,
     combine_levels_data,
-    combine_levels_data_connect_parents,
+    combine_levels_data_counterfactuals,
     reassign_ct_levels,
     process_data_by_level_ptd,
     concat_pq_ptd,
@@ -136,7 +136,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 name="extract_ct_sb_levels",
             ),
         ],
-        tags=["data_processing_oa", "needs_rerun"],
+        tags=["data_processing_oa"],
     )
 
     post_level2_dw_pipeline = pipeline(
@@ -159,14 +159,13 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 name="concatenate_ct_sb_partitioned",
             ),
             node(
-                func=combine_levels_data_connect_parents,
+                func=combine_levels_data_counterfactuals,
                 inputs={
                     "level1": "oa.data_processing.structural_biology.depth.reassigned.ct.intermediate",  # pylint: disable=line-too-long
                     "level2": "oa.data_collection.subfield.structural_biology.depth.2.intermediate",
                 },
                 outputs="oa.data_processing.structural_biology.depth.ct.intermediate",
                 name="combine_ct_sb_levels",
-                tags="needs_rerun",
             ),
         ],
         tags=[

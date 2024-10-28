@@ -291,7 +291,7 @@ def combine_levels_data(unique: str = "all", **kwargs) -> pd.DataFrame:
         df = df.merge(lowest_levels, on="id", suffixes=["", "_min"])
         df = df[df["level"] == df["level_min"]]
         df = df.drop(columns="level_min")
-    else:
+    elif unique == "all":
         logger.info("Removing only full duplicate rows.")
         df = df.drop_duplicates(
             subset=[
@@ -314,10 +314,9 @@ def combine_levels_data(unique: str = "all", **kwargs) -> pd.DataFrame:
     return df
 
 
-def combine_levels_data_connect_parents(unique: str = "all", **kwargs) -> pd.DataFrame:
+def combine_levels_data_counterfactuals(unique: str = "all", **kwargs) -> pd.DataFrame:
     """
-    Combines multiple dataframes into a single dataframe and removes duplicate rows
-        based on the 'id' column. It connects id to parent_ids.
+    Combines multiple dataframes into a single dataframe and removes fully duplicate rows.
 
     Parameters:
     unique (str): The method to remove duplicate rows. Options are 'id', 'level', or 'all'.
