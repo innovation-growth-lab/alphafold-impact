@@ -1,7 +1,7 @@
 # Clean out the workspace
 rm(list = ls())
 options(max.print = 1000)
-options(width = 250)
+options(width = 100)
 
 # Check installation & load required packages
 list_of_packages <- c(
@@ -63,19 +63,11 @@ ecr_data <- s3read_using(
 # create a new factor variable
 ecr_data <- ecr_data %>%
   mutate(
-    af_ct_ai = ifelse(af > 0 & ct_ai > 0, af + ct_ai, 0),
-    af_ct_noai = ifelse(af > 0 & ct_noai > 0, af + ct_noai, 0),
-    is_af = af > 0 & ct_ai == 0 & ct_noai == 0,
-    is_ct_ai = ct_ai > 0 & af == 0,
-    is_ct_noai = ct_noai > 0 & af == 0,
-    is_af_ct_ai = af_ct_ai > 0,
-    is_af_ct_noai = af_ct_noai > 0,
-    is_other = !(is_af | is_ct_ai | is_ct_noai | is_af_ct_ai | is_af_ct_noai)
-  ) %>%
-  mutate(
-    af = ifelse(af_ct_ai > 0 | af_ct_noai > 0, 0, af),
-    ct_ai = ifelse(af_ct_ai > 0, 0, ct_ai),
-    ct_noai = ifelse(af_ct_noai > 0, 0, ct_noai)
+    ct = ct_ai + ct_noai,
+    af_ind = ifelse(af > 0, 1, 0),
+    ct_ind = ifelse(ct > 0, 1, 0),
+    ct_ai_ind = ifelse(ct_ai > 0, 1, 0),
+    ct_noai_ind = ifelse(ct_noai > 0, 1, 0),
   )
 
 # create factors, log transforms
@@ -88,9 +80,11 @@ ecr_data <- ecr_data %>%
     institution_type = as.factor(type),
     institution_country_code = as.factor(country_code),
     ln1p_cited_by_count = log1p(cited_by_count),
+    ln1p_fwci = log1p(fwci),
     ln1p_cit_0 = log1p(cit_0),
     ln1p_cit_1 = log1p(cit_1),
     ln1p_cit_2 = log1p(cit_2),
+    ln1p_cit_norm_perc = log1p(citation_normalized_percentile_value),
     ln1p_ca_count = log1p(ca_count),
     ln1p_patent_count = log1p(patent_count),
     ln1p_patent_citation = log1p(patent_citation),
@@ -106,7 +100,7 @@ ecr_data <- ecr_data %>%
 # Compute the per-author number of publications at each given quarter_year
 pubs_per_quarter <- ecr_data %>%
   group_by(author, quarter_year) %>%
-  summarize(num_publications = n()) %>%
+  summarise(num_publications = n()) %>%
   ungroup()
 
 # Merge the summary back into the original ecr_data DataFrame
@@ -118,9 +112,7 @@ field_mapping <- c(
   "Biochemistry, Genetics and Molecular Biology" = "biochem_genetics_molecular_biology", # nolint
   "Medicine" = "medicine",
   "Chemistry" = "chemistry",
-  "Agricultural and Biological Sciences" = "agricultural_biological_sciences",
-  "Immunology and Microbiology" = "immunology_microbiology",
-  "Health Professions" = "health_professions"
+  "Immunology and Microbiology" = "immunology_microbiology"
 )
 
 # Apply the mapping to the primary_field column
@@ -132,29 +124,53 @@ ecr_data$primary_field <- recode(ecr_data$primary_field, !!!field_mapping)
 
 # Define sub_samples as a list of samples
 sub_samples <- list(
-  depth_all__field_all = ecr_data,
-  depth_foundational__field_all = subset(ecr_data, depth == "foundational"),
-  depth_applied__field_all = subset(ecr_data, depth == "applied")
+  depth_all__field_all__tech_all = ecr_data,
+  depth_all__field_all__tech_ct_ai = subset(
+    ecr_data, af >= 0 & ct_ai >= 0 & ct_noai == 0
+  ),
+  depth_all__field_all__tech_ct_noai = subset(
+    ecr_data, af >= 0 & ct_noai >= 0 & ct_ai == 0
+  ),
+  depth_foundational__field_all__tech_all = subset(
+    ecr_data, depth == "foundational"
+  ),
+  depth_applied__field_all__tech_all = subset(ecr_data, depth == "applied")
 )
-
+tech_groups <- c("all", "ct", "ct_ai", "ct_noai")
 unique_depths <- c("all", "foundational", "applied")
 unique_fields <- c(
   "biochem_genetics_molecular_biology", "medicine", "chemistry",
-  "agricultural_biological_sciences", "immunology_microbiology",
-  "health_professions"
+  "immunology_microbiology"
 )
+
+create_tech_group_subset <- function(data, tech_group) {
+  if (tech_group == "all") {
+    return(data)
+  } else if (tech_group == "ct") {
+    return(data %>% filter(af > 0, ct > 0)) # nolint
+  } else if (tech_group == "ct_ai") {
+    return(data %>% filter(af > 0, ct_ai > 0, ct_noai == 0)) # nolint
+  } else if (tech_group == "ct_noai") {
+    return(data %>% filter(af > 0, ct_noai > 0, ct_ai == 0)) # nolint
+  }
+}
 
 for (depth_lvl in unique_depths) {
   for (field in unique_fields) {
-    sample_name <- paste0("depth_", depth_lvl, "__field_", field)
-    if (depth_lvl == "all") {
-      sub_samples[[sample_name]] <- subset(
-        ecr_data, primary_field == field
+    for (tech_group in tech_groups) {
+      sample_name <- paste0(
+        "depth_", depth_lvl, "__field_", field, "__tech_", tech_group
       )
-    } else {
-      sub_samples[[sample_name]] <- subset(
-        ecr_data, depth == depth_lvl & primary_field == field
-      )
+      if (depth_lvl == "all") {
+        sub_samples[[sample_name]] <- create_tech_group_subset(
+          subset(ecr_data, primary_field == field), tech_group
+        )
+      } else {
+        sub_samples[[sample_name]] <- create_tech_group_subset(
+          subset(ecr_data, depth == depth_lvl & primary_field == field),
+          tech_group
+        )
+      }
     }
   }
 }

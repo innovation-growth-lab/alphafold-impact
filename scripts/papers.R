@@ -229,7 +229,7 @@ for (sub in names(sub_samples)) {
 # Define variables of interest
 variable_interest <- c(
   "treatment_af_dyn",
-  "treatment_af_dyn:strong", 
+  "treatment_af_dyn:strong",
   "treatment_af_dyn:high_pdb",
   "treatment_af_dyn:strong:high_pdb"
 )

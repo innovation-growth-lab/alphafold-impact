@@ -55,25 +55,13 @@ cov_sets <- c("base0")
 fe_list <- c("fe1")
 dep_vars <- c(
   "ln1p_cited_by_count", "ln1p_cit_0", "ln1p_cit_1",
-  "fwci", "citation_normalized_percentile_value",
+  "ln1p_fwci", "ln1p_cit_norm_perc",
   "ln1p_patent_count", "ln1p_patent_citation", "ln1p_ca_count",
   "resolution", "R_free"
 )
 treat_vars <- c(
-  "is_af + is_ct_ai + is_ct_noai + is_af_ct_ai + is_af_ct_noai",
-  paste(
-    "is_af:af",
-    "is_af:af^2",
-    "is_ct_ai:ct_ai",
-    "is_ct_ai:ct_ai^2",
-    "is_ct_noai:ct_noai",
-    "is_ct_noai:ct_noai^2",
-    "is_af_ct_ai:af_ct_ai",
-    "is_af_ct_ai:af_ct_ai^2",
-    "is_af_ct_noai:af_ct_noai",
-    "is_af_ct_noai:af_ct_noai^2",
-    sep = " + "
-  )
+  "af_ind + ct_ind", # because subgroups do not intersect (ie. ct_ai subgroups require ct_noai == 0) # nolint
+  "af + ct + af^2 + ct^2 + af:ct + af^2:ct^2"
 )
 
 form_list <- list()
@@ -85,12 +73,18 @@ for (dep_var in dep_vars) { # nolint
     for (fe in fe_list) {
       # Iterate over treatment variables
       for (treat_var in treat_vars) {
+        if (treat_var == "af_ind + ct_ind") {
+          treat_var <- paste0("af + ct")
+          label_var <- "af_ind + ct_ind"
+        } else {
+          label_var <- treat_var
+        }
         # Check if covs[[cov_set]] is empty
         if (length(covs[[cov_set]]) == 0) {
           # Create formula without '+' before '|'
           form_list[[
             paste0(
-              dep_var, "__", cov_set, "__", fe, "__", gsub(" ", "_", treat_var)
+              dep_var, "__", cov_set, "__", fe, "__", gsub(" ", "_", label_var)
             )
           ]] <- as.formula(
             paste0(
@@ -102,7 +96,7 @@ for (dep_var in dep_vars) { # nolint
           # Create formula with '+' before '|'
           form_list[[
             paste0(
-              dep_var, "__", cov_set, "__", fe, "__", gsub(" ", "_", treat_var)
+              dep_var, "__", cov_set, "__", fe, "__", gsub(" ", "_", label_var)
             )
           ]] <- as.formula(
             paste0(
@@ -124,11 +118,26 @@ for (sub in names(sub_samples)) {
   for (form in names(form_list)) {
     regression_label <- paste0(sub, "__", form)
     message("Running regression: ", regression_label)
+
+
+    # Create a local copy of the subset
+    local_data <- sub_samples[[sub]]
+
+    # If form's string includes _ind_, then rename the columns in the local copy
+    if (grepl("_ind_", form)) {
+      local_data <- local_data %>%
+        select(-af, -ct) %>%
+        rename(
+          af = af_ind,
+          ct = ct_ind
+        )
+    }
+
     results[[regression_label]] <- tryCatch(
       {
         feols(
           form_list[[form]],
-          data = sub_samples[[sub]],
+          data = local_data,
           cluster = "author"
         )
       },
@@ -157,6 +166,7 @@ generate_tables(
   cov_sets = cov_sets,
   fe_list = fe_list
 )
+
 
 # ------------------------------------------------------------------------------
 # GENERATE PLOTS
