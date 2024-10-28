@@ -638,8 +638,8 @@ def get_quarterly_aggregate_outputs(data):
     agg_funcs = {
         "cited_by_count": "sum",
         "seed": "first",
-        "ct0": "sum",
-        "ct1": "sum",
+        "cit_0": "sum",
+        "cit_1": "sum",
         "parent_time": "first",
         "pdb_share": "first",
         "resolution": "mean",
