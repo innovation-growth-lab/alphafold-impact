@@ -747,7 +747,7 @@ def _get_yearly_citations(data):
     # remove negative columns
     t_columns = t_columns.loc[:, (t_columns.columns >= 0)]
 
-    t_columns.columns = ["ct" + str(int(i)) for i in t_columns.columns]
+    t_columns.columns = ["cit_" + str(int(i)) for i in t_columns.columns]
 
     # fill remaining NaN values in 't0' with 0
     t_columns = t_columns.fillna(0)
