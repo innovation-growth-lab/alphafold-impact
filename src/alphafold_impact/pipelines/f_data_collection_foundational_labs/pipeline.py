@@ -73,6 +73,7 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                 func=assign_lab_label,
                 inputs={
                     "candidate_data": "foundational_lab.data_collection.candidates.scores.primary",
+                    "quantile_val": "params:labs.quantile.foundational",
                 },
                 outputs="foundational_lab.data_collection.assignment.primary",
                 name="assign_foundational_lab_label",

@@ -254,8 +254,8 @@ def fetch_institution_data(institution):
             }
             break
         except:  # pylint: disable=bare-except
-            logger.info("Trying again for institution %s", institution)
-            continue
+            logger.info("Error fetching for institution %s", institution)
+            return None
     return institution_data
 
 

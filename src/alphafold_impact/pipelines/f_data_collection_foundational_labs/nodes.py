@@ -295,13 +295,14 @@ def combine_lab_results(
 
 
 def assign_lab_label(
-    candidate_data: pd.DataFrame,
+    candidate_data: pd.DataFrame, quantile_val: float = 0.75
 ) -> pd.DataFrame:
     """
     Assigns lab labels to candidate data based on matching with ground truth data.
 
     Args:
         candidate_data (pd.DataFrame): The candidate data containing author information.
+        quantile_val (float): The quantile value to use for filtering the candidate data.
 
     Returns:
         pd.DataFrame: The candidate data with lab labels assigned.
@@ -372,9 +373,19 @@ def assign_lab_label(
 
     logger.info("Normalising data")
     scaler = MinMaxScaler()
-    candidate_data[["cited_by_count", "publication_count"]] = scaler.fit_transform(
-        candidate_data[["cited_by_count", "publication_count"]]
+
+    def scale_group(group):
+        group[["cited_by_count", "publication_count"]] = scaler.fit_transform(
+            group[["cited_by_count", "publication_count"]]
+        )
+        return group
+
+    candidate_data = (
+        candidate_data.groupby("year").apply(scale_group).reset_index(drop=True)
     )
+
+    # drop 2025 year
+    candidate_data = candidate_data[candidate_data["year"] != 2025]
 
     # assign weights
     weights = {
@@ -394,9 +405,9 @@ def assign_lab_label(
     )
 
     logger.info("Make final selection")
-    quantile_75 = candidate_data["score"].quantile(0.75)
+    quantile_val = candidate_data["score"].quantile(quantile_val)
     likely_pis = candidate_data.groupby(["author", "institution"]).filter(
-        is_likely_pi, quantile=quantile_75
+        is_likely_pi, quantile=quantile_val
     )
 
     return likely_pis

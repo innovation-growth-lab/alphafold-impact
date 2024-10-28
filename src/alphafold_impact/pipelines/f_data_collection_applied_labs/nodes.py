@@ -9,13 +9,11 @@ from kedro.io import AbstractDataset
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 
-from ..f_data_collection_foundational_labs.utils import ( # pylint: disable=E0402
-    appears_in_three_consecutive_years,
+from ..f_data_collection_foundational_labs.utils import (  # pylint: disable=E0402
     compute_avg_citation_count,
     compute_sample_publication_count,
     compute_apf,
     explode_author_data,
-    is_likely_pi,
 )
 
 logger = logging.getLogger(__name__)
@@ -279,6 +277,7 @@ def calculate_lab_determinants(
 
     """
     for i, (key, loader) in enumerate(dict_loader.items()):
+
         logger.info(
             "Processing data from %s. Number %s out of %s", key, i + 1, len(dict_loader)
         )
@@ -371,111 +370,3 @@ def calculate_lab_determinants(
         logger.info("Finished processing data from %s", key)
 
         yield {key: author_data}
-
-
-def assign_lab_label(
-    candidate_data: pd.DataFrame,
-) -> pd.DataFrame:
-    """
-    Assigns lab labels to candidate data based on matching with ground truth data.
-
-    Args:
-        candidate_data (pd.DataFrame): The candidate data containing author information.
-
-    Returns:
-        pd.DataFrame: The candidate data with lab labels assigned.
-
-    """
-
-    logger.info("Sorting candidate data")
-    candidate_data = candidate_data.sort_values(by=["author", "year"]).reset_index(
-        drop=True
-    )
-
-    logger.info(
-        "Filtering candidate data based on appearing in three consecutive years"
-    )
-    candidate_data["year"] = candidate_data["year"].astype(int)
-    candidate_data = candidate_data.groupby(["author", "institution"]).filter(
-        appears_in_three_consecutive_years
-    )
-
-    logger.info("Calculating mean APF")
-    candidate_data["mean_apf"] = candidate_data.groupby(["author", "institution"])[
-        "apf"
-    ].transform("mean")
-
-    logger.info("Calculating quantiles")
-    quantiles = candidate_data["mean_apf"].quantile([0.25, 0.5, 0.75])
-
-    logger.info(
-        "Filtering candidate data based on having at least one year above 75th percentile of APF"
-    )
-    candidate_data = candidate_data[
-        candidate_data.groupby(["author", "institution"])["apf"].transform(
-            lambda x: x.max() > quantiles[0.75]
-        )
-    ]
-
-    logger.info("Calculating 3-year average APF")
-    candidate_data["apf_3yr_avg"] = (
-        candidate_data.groupby(["author", "institution"])["apf"]
-        .rolling(3)
-        .mean()
-        .reset_index(level=[0, 1], drop=True)
-    )
-
-    logger.info("Filling 1 and 2 year nans")
-    candidate_data["apf_1yr_avg"] = (
-        candidate_data.groupby(["author", "institution"])["apf"]
-        .rolling(1)
-        .mean()
-        .reset_index(level=[0, 1], drop=True)
-    )
-    candidate_data["apf_2yr_avg"] = (
-        candidate_data.groupby(["author", "institution"])["apf"]
-        .rolling(2)
-        .mean()
-        .reset_index(level=[0, 1], drop=True)
-    )
-
-    # Use 1-year and 2-year averages to fill NaN in 'apf_3yr_avg'
-    candidate_data["apf_3yr_avg"] = (
-        candidate_data["apf_3yr_avg"]
-        .fillna(candidate_data["apf_2yr_avg"])
-        .fillna(candidate_data["apf_1yr_avg"])
-    )
-
-    # Drop temporary columns
-    candidate_data = candidate_data.drop(columns=["apf_1yr_avg", "apf_2yr_avg"])
-
-    logger.info("Normalising data")
-    scaler = MinMaxScaler()
-    candidate_data[["cited_by_count", "publication_count"]] = scaler.fit_transform(
-        candidate_data[["cited_by_count", "publication_count"]]
-    )
-
-    # assign weights
-    weights = {
-        "apf": 0.4,
-        "mean_apf": 0.1,
-        "apf_3yr_avg": 0.2,
-        "publication_count": 0.2,
-        "cited_by_count": 0.1,
-    }
-
-    logger.info("Calculating score")
-    candidate_data["score"] = (
-        candidate_data["apf"] * weights["apf"]
-        + candidate_data["mean_apf"] * weights["mean_apf"]
-        + candidate_data["cited_by_count"] * weights["cited_by_count"]
-        + candidate_data["publication_count"] * weights["publication_count"]
-    )
-
-    logger.info("Make final selection")
-    quantile_90 = candidate_data["score"].quantile(0.9)
-    likely_pis = candidate_data.groupby(["author", "institution"]).filter(
-        is_likely_pi, quantile=quantile_90
-    )
-
-    return likely_pis

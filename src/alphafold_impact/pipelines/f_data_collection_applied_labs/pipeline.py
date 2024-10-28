@@ -8,13 +8,13 @@ from .nodes import (  # pylint: disable=E0402
     get_candidate_authors,
     calculate_lab_determinants,
     create_candidates_map,
-    assign_lab_label,
 )
 from ..f_data_collection_foundational_labs.nodes import (  # pylint: disable=E0402
     fetch_author_publications,
     get_publications_from_labs,
     get_institution_info,
     combine_lab_results,
+    assign_lab_label,
 )
 
 
@@ -54,7 +54,7 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
             node(
                 func=calculate_lab_determinants,
                 inputs={
-                    "dict_loader": "applied_lab.data_collection.candidates.publications.intermediate",
+                    "dict_loader": "applied_lab.data_collection.candidates.publications.intermediate", # pylint: disable=line-too-long
                     "alphafold_authors": "applied_alphafold_authors",
                     "ct_ai_authors": "applied_ct_ai_authors",
                     "ct_noai_authors": "applied_ct_noai_authors",
@@ -75,6 +75,7 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                 func=assign_lab_label,
                 inputs={
                     "candidate_data": "applied_lab.data_collection.candidates.scores.primary",
+                    "quantile_val": "params:labs.quantile.applied",
                 },
                 outputs="applied_lab.data_collection.assignment.primary",
                 name="assign_applied_lab_label",
