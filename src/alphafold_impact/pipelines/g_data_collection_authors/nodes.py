@@ -58,8 +58,12 @@ def _get_candidate_authors(data: pd.DataFrame) -> pd.DataFrame:
         lambda x: "foundational" if x == "0" else "applied"
     )
 
+    # create quarter column
+    author_data["publication_date"] = pd.to_datetime(author_data["publication_date"])
+    author_data["quarter"] = author_data["publication_date"].dt.to_period("Q")
+
     author_data = (
-        author_data.groupby(["author", "institution", "depth", "source"])
+        author_data.groupby(["author", "institution", "depth", "source", "quarter"])
         .size()
         .reset_index(name="counts")
     )
@@ -83,10 +87,10 @@ def get_unique_authors(
 
     logger.info("Getting unique authors")
     authors = _get_candidate_authors(
-        publications_data[["id", "authorships", "source", "level"]]
+        publications_data[["id", "authorships", "source", "level", "publication_date"]]
     )
 
-    # Find the institution with the highest count for each author
+    logger.info("Getting unique institutions")
     top_institutions = authors.loc[
         authors.groupby(["author", "depth", "source"])["counts"].idxmax()
     ][["author", "depth", "source", "institution"]]
@@ -94,18 +98,27 @@ def get_unique_authors(
         top_institutions, on=["author", "depth", "source"]
     )
 
-    # groupby author, institution and sum
+    logger.info("Cumulative sum of counts")
     authors = (
-        authors.groupby(["author", "institution", "depth", "source"])
+        authors.groupby(["author", "depth", "source", "quarter"])[
+            "counts"
+        ]
         .sum()
         .reset_index()
     )
+    authors = authors.sort_values(
+        by=["author", "depth", "source", "quarter"]
+    )
+    authors["cumulative_counts"] = (
+        authors.groupby(["author", "depth", "source"])["counts"]
+        .cumsum()
+    )
 
-    # pivot the data
+    logger.info("Pivoting table")
     authors = authors.pivot_table(
-        index=["author", "institution", "depth"],
+        index=["author", "depth", "quarter"],
         columns="source",
-        values="counts",
+        values="cumulative_counts",
         fill_value=0,
     ).reset_index()
 
@@ -366,6 +379,9 @@ def merge_author_data(
         data = loader()
         data = data[data["author_position"] == "first"]
 
+        data["publication_date"] = pd.to_datetime(data["publication_date"])
+        data["quarter"] = data["publication_date"].dt.to_period("Q")
+
         # HACK: ecr data has no primary_field during collection
         data["primary_field"] = data["topics"].apply(
             lambda x: (
@@ -408,7 +424,7 @@ def merge_author_data(
 
         # merge author and institutions metadata
         data = data.merge(institutions, on="institution", how="left")
-        data = data.merge(candidate_authors, on="author", how="left")
+        data = data.merge(candidate_authors, on=["author", "depth", "quarter"], how="left")
 
         # get patent citations
         data["doi"] = data["doi"].apply(
@@ -443,8 +459,6 @@ def aggregate_to_quarterly(data: pd.DataFrame) -> pd.DataFrame:
         pd.DataFrame: The aggregated DataFrame with the data aggregated
             to the quarterly level.
     """
-    data["publication_date"] = pd.to_datetime(data["publication_date"])
-    data["quarter"] = data["publication_date"].dt.to_period("Q")
     for col in ["R_free", "resolution"]:
         data[col] = data[col].replace({"": np.nan}).astype("float")
 
@@ -499,36 +513,15 @@ def _institution_preprocessing(institutions: pd.DataFrame) -> pd.DataFrame:
 
 def _candidates_preprocessing(candidate_authors: pd.DataFrame) -> pd.DataFrame:
     # sort candidate authors by af, ct, other
-    depth_summed_data = (
-        candidate_authors.groupby(["author", "depth"])
-        .agg({"af": "sum", "ct_ai": "sum", "ct_noai": "sum", "other": "sum"})
-        .reset_index()
+
+    candidate_authors["total"] = (
+        candidate_authors["af"]
+        + candidate_authors["ct_ai"]
+        + candidate_authors["ct_noai"]
+        + candidate_authors["other"]
     )
 
-    depth_summed_data["total"] = (
-        depth_summed_data["af"]
-        + depth_summed_data["ct_ai"]
-        + depth_summed_data["ct_noai"]
-        + depth_summed_data["other"]
-    )
-
-    # Get the index of the row with the maximum total for each author
-    idx = depth_summed_data.groupby("author")["total"].idxmax()
-
-    max_total_data = depth_summed_data.loc[idx]
-
-    summed_data = (
-        candidate_authors.groupby("author")
-        .agg({"af": "sum", "ct_ai": "sum", "ct_noai": "sum", "other": "sum"})
-        .reset_index()
-    )
-
-    # merge the summed data with the max total data
-    max_total_data = max_total_data[["author", "depth"]].merge(
-        summed_data, on="author", how="left"
-    )
-
-    return max_total_data
+    return candidate_authors
 
 
 def _get_mesh_data(data: pd.DataFrame, mesh_terms: pd.DataFrame) -> pd.DataFrame:
