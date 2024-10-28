@@ -9,7 +9,7 @@ To run this pipeline, use the following command:
 """
 
 from kedro.pipeline import Pipeline, node, pipeline
-from alphafold_impact import settings
+from alphafold_impact import settings # pylint: disable=import-error
 
 from .nodes import (
     process_subfield_data,
@@ -104,7 +104,6 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 },
                 outputs="oa.data_collection.subfield.structural_biology.depth.1.intermediate",
                 name="concatenate_sb_partitioned",
-                tags="needs_rerun",
             ),
         ],
         tags=[
