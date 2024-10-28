@@ -46,11 +46,15 @@ field_cols <- grep("^field_", names(sub_samples$all_lvl0), value = TRUE)
 mesh_cols <- grep("^mesh_", names(sub_samples$all_lvl0), value = TRUE)
 
 covs <- list()
-covs[["base1"]] <- c(field_cols)
-covs[["base2"]] <- c(covs$base1, mesh_cols)
+covs[["base0"]] <- c(field_cols, mesh_cols, "num_publications")
 
 fes <- list()
-fes[["fe1"]] <- c("time_qtly", "group_pdb_count")
+fes[["fe0"]] <- c("quarter_year")
+fes[["fe1"]] <- c(
+  "quarter_year" # ,
+  # "institution", "institution_type", "institution_country_code"
+)
+
 
 ### Extensive ###
 
@@ -58,18 +62,15 @@ fes[["fe1"]] <- c("time_qtly", "group_pdb_count")
 dep_vars <- c(
   "cited_by_count_ln", "ca_count_ln", "patent_count_ln", "patent_citation_ln"
 )
-
-# List of covariate sets
-cov_sets <- c("base2")
-
-# List of fixed effects
+cov_sets <- c("base0")
 fe_list <- c("fe1")
-
-# List of treatment variables
-treat_vars <- c(
-  "treatment_af_dyn + treatment_af_dyn:strong + treatment_af_dyn:high_pdb + treatment_af_dyn:strong:high_pdb" # nolint
+dep_vars <- c(
+  "ln1p_cited_by_count", # "ln1p_cit_0", "ln1p_cit_1",
+  "ln1p_fwci", "ln1p_cit_norm_perc",
+  "ln1p_patent_count", "ln1p_patent_citation", "ln1p_ca_count",
+  "resolution"
 )
-
+treat_vars <- c("af + ct")
 
 form_list <- list()
 # Iterate over dependent variables
@@ -85,7 +86,7 @@ for (dep_var in dep_vars) { # nolint
           # Create formula without '+' before '|'
           form_list[[
             paste0(
-              dep_var, "_", cov_set, "_", fe, "_", gsub(" ", "_", treat_var)
+              dep_var, "__", cov_set, "__", fe, "__", gsub(" ", "_", treat_var)
             )
           ]] <- as.formula(
             paste0(
@@ -97,7 +98,7 @@ for (dep_var in dep_vars) { # nolint
           # Create formula with '+' before '|'
           form_list[[
             paste0(
-              dep_var, "_", cov_set, "_", fe, "_", gsub(" ", "_", treat_var)
+              dep_var, "__", cov_set, "__", fe, "__", gsub(" ", "_", treat_var)
             )
           ]] <- as.formula(
             paste0(
@@ -112,24 +113,37 @@ for (dep_var in dep_vars) { # nolint
   }
 }
 
+
 results <- list()
 # For each subset, compute feols
 for (sub in names(sub_samples)) {
   # For each formula, compute feols
   for (form in names(form_list)) {
-    regression_label <- paste0(sub, "_", form)
+    regression_label <- paste0(sub, "__", form)
     message("Running regression: ", regression_label)
-    results[[regression_label]] <- feols(
-      form_list[[form]],
-      data = sub_samples[[sub]],
+
+    results[[regression_label]] <- tryCatch(
+      {
+        feols(
+          form_list[[form]],
+          data = sub_samples[[sub]],
+          cluster = "author"
+        )
+      },
+      error = function(e) {
+        message("Error in regression: ", regression_label, " - ", e$message)
+        return(NULL) # Return NULL if an error occurs
+      }
     )
   }
 }
 
+
 # ------------------------------------------------------------------------------
-# TABLE GENERATION
+# GENERATE TABLES
 # ------------------------------------------------------------------------------
 
+# import from utils_tables.R
 source("scripts/papers/utils_tables.R")
 
 # Generate tables
@@ -141,4 +155,27 @@ generate_tables(
   treat_vars = treat_vars,
   cov_sets = cov_sets,
   fe_list = fe_list
+)
+
+# ------------------------------------------------------------------------------
+# GENERATE PLOTS
+# ------------------------------------------------------------------------------
+
+# import from utils_figures.R
+source("scripts/papers/utils_figures.R")
+
+coef_table <- extract_coefficients(
+  results = results,
+  dep_vars = dep_vars,
+  subsets = names(sub_samples),
+  cov_sets = cov_sets,
+  fe_list = fe_list,
+  treat_vars = treat_vars,
+  treat_var_interest = c(
+    "af", "ct"
+  )
+)
+
+generate_coef_plots(
+  coef_table
 )
