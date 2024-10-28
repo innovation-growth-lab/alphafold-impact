@@ -424,7 +424,21 @@ def merge_author_data(
 
         # merge author and institutions metadata
         data = data.merge(institutions, on="institution", how="left")
-        data = data.merge(candidate_authors, on=["author", "depth", "quarter"], how="left")
+        data = data.merge(candidate_authors, on=["author", "quarter"], how="left")
+
+        # sort by quarter, bfill and ffill for missing af. ct_ai, ct_noai, other
+        data = data.sort_values(by=["author", "quarter"])
+        data[["af", "ct_ai", "ct_noai", "other"]] = data.groupby("author")[
+            ["af", "ct_ai", "ct_noai", "other"]
+        ].ffill().fillna(0).astype(int)
+
+        # fill depth with whatever value groupby author is not NAN
+        data["depth"] = data.groupby("author")["depth"].transform(
+            lambda x: x.ffill().bfill()
+        )
+
+        # drop if depth still nan
+        data = data.dropna(subset=["depth"])
 
         # get patent citations
         data["doi"] = data["doi"].apply(
@@ -512,16 +526,42 @@ def _institution_preprocessing(institutions: pd.DataFrame) -> pd.DataFrame:
 
 
 def _candidates_preprocessing(candidate_authors: pd.DataFrame) -> pd.DataFrame:
+    """
+    Create a DataFrame with the maximum total for each author. Assign
+    the depth of the maximum total to the author based on the depth
+    with the maximum total.
+    """
     # sort candidate authors by af, ct, other
-
-    candidate_authors["total"] = (
-        candidate_authors["af"]
-        + candidate_authors["ct_ai"]
-        + candidate_authors["ct_noai"]
-        + candidate_authors["other"]
+    depth_summed_data = (
+        candidate_authors.groupby(["author", "depth"])
+        .agg({"af": "sum", "ct_ai": "sum", "ct_noai": "sum", "other": "sum"})
+        .reset_index()
     )
 
-    return candidate_authors
+    depth_summed_data["total"] = (
+        depth_summed_data["af"]
+        + depth_summed_data["ct_ai"]
+        + depth_summed_data["ct_noai"]
+        + depth_summed_data["other"]
+    )
+
+    # Get the index of the row with the maximum total for each author
+    idx = depth_summed_data.groupby("author")["total"].idxmax()
+
+    max_total_data = depth_summed_data.loc[idx]
+
+    summed_data = (
+        candidate_authors.groupby(["author", "quarter"])
+        .agg({"af": "sum", "ct_ai": "sum", "ct_noai": "sum", "other": "sum"})
+        .reset_index()
+    )
+
+    # merge the summed data with the max total data
+    max_total_data = max_total_data[["author", "depth"]].merge(
+        summed_data, on="author", how="left"
+    )
+
+    return max_total_data
 
 
 def _get_mesh_data(data: pd.DataFrame, mesh_terms: pd.DataFrame) -> pd.DataFrame:
