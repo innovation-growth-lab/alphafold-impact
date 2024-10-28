@@ -47,7 +47,7 @@ Sys.setenv(
 
 # Define the S3 bucket and path
 bucket <- "igl-alphafold"
-path <- "oct/04_output/publications/regression_inputs.parquet" # nolint
+path <- "oct/04_output/publications/outputs.parquet" # nolint
 
 
 # Fetch the data from the S3 bucket
@@ -117,9 +117,7 @@ field_mapping <- c(
   "Biochemistry, Genetics and Molecular Biology" = "biochem_genetics_molecular_biology", # nolint
   "Medicine" = "medicine",
   "Chemistry" = "chemistry",
-  "Agricultural and Biological Sciences" = "agricultural_biological_sciences",
-  "Immunology and Microbiology" = "immunology_microbiology",
-  "Health Professions" = "health_professions"
+  "Immunology and Microbiology" = "immunology_microbiology"
 )
 
 # Apply the mapping to the primary_field column
@@ -141,9 +139,8 @@ tech_groups <- c(
 )
 unique_depths <- c("all", "foundational", "applied")
 unique_fields <- c(
-  "biochem_genetics_molecular_biology", "medicine", "chemistry",
-  "agricultural_biological_sciences", "immunology_microbiology",
-  "health_professions"
+  "biochem_genetics_molecular_biology", "medicine", 
+  "chemistry", "immunology_microbiology"
 )
 
 percentile_75_pdb <- quantile(papers$group_pdb_count, 0.75)
