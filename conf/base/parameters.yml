@@ -425,6 +425,9 @@ labs:
     api:
       mailto: data_analytics@nesta.org.uk
       perpage: "200"
+  quantile:
+    foundational: 0.75
+    applied: 0.90
 
 ecr:
   data_collection:
