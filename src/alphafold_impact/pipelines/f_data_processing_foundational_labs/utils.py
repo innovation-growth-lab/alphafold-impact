@@ -754,10 +754,10 @@ def _get_yearly_citations(data):
     t_columns.reset_index(inplace=True)
 
     # merge the 't' DataFrame back to the original DataFrame
-    data = data.merge(t_columns[["id", "ct0", "ct1", "ct2"]], on="id", how="left")
+    data = data.merge(t_columns[["id", "cit_0", "cit_1"]], on="id", how="left")
 
     # fill ct0 and ct1 with nan
-    data["ct0"] = data["ct0"].fillna(0)
-    data["ct1"] = data["ct1"].fillna(0)
+    data["cit_0"] = data["cit_0"].fillna(0)
+    data["cit_1"] = data["cit_1"].fillna(0)
 
     return data

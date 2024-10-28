@@ -7,7 +7,6 @@ import logging
 from typing import Dict, List, Tuple, Generator
 from kedro.io import AbstractDataset
 import pandas as pd
-from sklearn.preprocessing import MinMaxScaler
 
 from ..f_data_collection_foundational_labs.utils import (  # pylint: disable=E0402
     compute_avg_citation_count,
