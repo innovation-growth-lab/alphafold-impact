@@ -39,7 +39,7 @@ extract_coefficients <- function(results, dep_vars, subsets, cov_sets, fe_list, 
                     parts <- strsplit(result_name, "__")[[1]]
                     depth <- parts[1]
                     field <- parts[2]
-                    tech <- parts[3]
+                    pdb <- parts[3]
                     dep_var <- parts[4]
                     cov_set <- parts[5]
                     fe <- parts[6]
@@ -48,7 +48,7 @@ extract_coefficients <- function(results, dep_vars, subsets, cov_sets, fe_list, 
                     coef_data[[length(coef_data) + 1]] <- data.frame(
                       depth = depth,
                       field = field,
-                      tech = tech,
+                      pdb = pdb,
                       treat_var = treat_var_interest_item,
                       dep_var = dep_var,
                       indep_vars = indep_vars,
@@ -77,17 +77,16 @@ extract_coefficients <- function(results, dep_vars, subsets, cov_sets, fe_list, 
 
 # --- Variable definitions ---
 # Set desired orders for variables and names
-tech_group_order <- c("tech_all", "tech_ct_ai", "tech_ct_noai")
+pdb_group_order <- c("pdb_all", "pdb_high")
 depth_order <- c("depth_all", "depth_foundational", "depth_applied")
 
 indep_vars_order <- c(
-  "af_ind_+_ct_ind_+_af:ct_ind",
-  "af_+_ct_+_af^2_+_ct^2_+_af:ct_+_af^2:ct^2"
+  "af_ind_+_ct_ai_ind_+_ct_noai_ind_+_af:ct_ai_ind+_af:ct_noai_ind"
 )
 
 coef_order <- c(
-  "af:ct", "ct", "af",
-  "af:ct_ind", "ct_ind", "af_ind"
+  "af:ct_noai", "af:ct_ai", "ct_noai", "ct_ai", "af",
+  "af:ct_noai_ind", "af:ct_ai_ind", "ct_noai_ind", "ct_ai_ind", "af_ind"
 )
 
 dep_var_labels <- c(
@@ -104,11 +103,15 @@ dep_var_labels <- c(
 
 coef_labels <- c(
   "af_ind" = "AlphaFold (ext.)",
-  "ct_ind" = "Counterfactual (ext.)",
-  "af:ct_ind" = "AlphaFold + Counterfactual (ext.)",
+  "ct_ai_ind" = "Counterfactual AI (ext.)",
+  "ct_noai_ind" = "Counterfactual no AI (ext.)",
+  "af:ct_ai_ind" = "AlphaFold + Counterfactual AI (ext.)",
+  "af:ct_noai_ind" = "AlphaFold + Counterfactual no AI (ext.)",
   "af" = "AlphaFold (int.)",
-  "ct" = "Counterfactual (int.)",
-  "af:ct" = "AlphaFold + Counterfactual (int.)"
+  "ct_ai" = "Counterfactual AI (int.)",
+  "ct_noai" = "Counterfactual no AI (int.)",
+  "af:ct_ai" = "AlphaFold + Counterfactual AI (int.)",
+  "af:ct_noai" = "AlphaFold + Counterfactual no AI (int.)"
 )
 
 # --- Function to generate coefficient plots ---
@@ -140,8 +143,8 @@ generate_coef_plots <- function(coef_table) { # nolint
             filter(treat_var %in% names(coef_labels), field == single_field, dep_var == single_dep_var) %>% # nolint
             mutate( # nolint
               depth = factor(gsub("depth_", "", depth), levels = gsub("depth_", "", depth_order)), # nolint
-              tech = factor(gsub("tech_", "", tech), levels = gsub("tech_", "", tech_group_order)), # nolint
-              tech = recode(tech, "all" = "All Technologies", "ct_ai" = "Counterfactual AI", "ct_noai" = "Counterfactual No AI"), # nolint
+              pdb = factor(gsub("pdb_", "", pdb), levels = gsub("pdb_", "", pdb_group_order)), # nolint
+              pdb = recode(pdb, "all" = "All PDB", "high" = "High PDB"), # nolint
               depth = recode(depth, "all" = "All Fields", "foundational" = "Foundational", "applied" = "Applied"), # nolint
               treat_var = factor(
                 treat_var,
@@ -177,7 +180,7 @@ generate_coef_plots <- function(coef_table) { # nolint
             ) +
             geom_hline(yintercept = 3.5, color = "gray", linetype = "dashed", linewidth = 1) + # nolint
             geom_vline(xintercept = 0, color = "black", linewidth = 1) + # nolint
-            ggh4x::facet_grid2(depth ~ tech, scales = "free", independent = "x", space = "fixed") + # nolint
+            ggh4x::facet_grid2(depth ~ pdb, scales = "free", independent = "x", space = "fixed") + # nolint
             labs( # nolint
               title = paste("Dependent Variable:", single_dep_var),
               subtitle = paste("Field:", field_label), # nolint

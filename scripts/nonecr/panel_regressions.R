@@ -38,11 +38,6 @@ bind_rows <- dplyr::bind_rows
 # ------------------------------------------------------------------------------
 sub_samples <- readRDS(paste0(pathdir, "sub_samples.rds"))
 
-# create interaction of af_ind and ct_ind
-sub_samples <- lapply(sub_samples, function(x) {
-  x$"af:ct_ind" <- x$af_ind * x$ct_ind
-  x
-})
 # ------------------------------------------------------------------------------
 # DATA PREPARATION
 # ------------------------------------------------------------------------------
@@ -67,10 +62,9 @@ dep_vars <- c(
 )
 
 for (dep_var_out in dep_vars) {
-
   treat_vars <- c(
-    "af_ind + ct_ind + af:ct_ind", # because subgroups do not intersect (ie. ct_ai subgroups require ct_noai == 0) # nolint
-    "af + ct + af^2 + ct^2 + af:ct + af^2:ct^2"
+    "af_ind + ct_ai_ind + ct_noai_ind + af:ct_ai_ind + af:ct_noai_ind", # because subgroups do not intersect (ie. ct_ai subgroups require ct_noai == 0) # nolint
+    "af + ct_ai + ct_noai + af:ct_ai + af:ct_noai"
   )
 
   form_list <- list()
@@ -78,18 +72,25 @@ for (dep_var_out in dep_vars) {
   for (dep_var in dep_var_out) { # nolint
     # Iterate over covariate sets
     for (cov_set in cov_sets) {
+      local_covs <- covs[[cov_set]]
+      # if dep_var is num_publications, remove it from covs
+      if (dep_var == "num_publications") {
+        local_covs <- covs[[cov_set]][-which(covs[[cov_set]] == "num_publications")] # nolint
+      } else {
+        local_covs <- covs[[cov_set]]
+      }
       # Iterate over fixed effects
       for (fe in fe_list) {
         # Iterate over treatment variables
         for (treat_var in treat_vars) {
-          if (treat_var == "af_ind + ct_ind + af:ct_ind") {
-            treat_var <- paste0("af + ct + af:ct")
-            label_var <- "af_ind + ct_ind + af:ct_ind"
+          if (treat_var == "af_ind + ct_ai_ind + ct_noai_ind + af:ct_ai_ind + af:ct_noai_ind") {
+            treat_var <- paste0("af + ct_ai + ct_noai + af:ct_ai + af:ct_noai")
+            label_var <- "af_ind + ct_ai_ind + ct_noai_ind + af:ct_ai_ind + af:ct_noai_ind"
           } else {
             label_var <- treat_var
           }
           # Check if covs[[cov_set]] is empty
-          if (length(covs[[cov_set]]) == 0) {
+          if (length(local_covs) == 0) {
             # Create formula without '+' before '|'
             form_list[[
               paste0(
@@ -110,7 +111,7 @@ for (dep_var_out in dep_vars) {
             ]] <- as.formula(
               paste0(
                 dep_var, " ~ ", treat_var, " +",
-                paste0(covs[[cov_set]], collapse = " + "),
+                paste0(local_covs, collapse = " + "),
                 "|", paste0(fes[[fe]], collapse = " + ")
               )
             )
@@ -135,10 +136,11 @@ for (dep_var_out in dep_vars) {
       # If form's string includes _ind_, then rename the columns
       if (grepl("_ind_", form)) {
         local_data <- local_data %>%
-          select(-af, -ct) %>%
+          select(-af, -ct_ai, -ct_noai) %>%
           rename(
             af = af_ind,
-            ct = ct_ind
+            ct_ai = ct_ai_ind,
+            ct_noai = ct_noai_ind
           )
       }
 
@@ -192,7 +194,7 @@ for (dep_var_out in dep_vars) {
     treat_vars = treat_vars,
     treat_var_interest = c(
       "af", "af_ind", "ct", "ct_ind",
-      "I(af^2)", "I(ct^2)", "af:ct", "I(af^2):I(ct^2)"
+      "af:ct"
     )
   )
 

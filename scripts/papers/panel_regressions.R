@@ -68,7 +68,7 @@ dep_vars <- c(
   "ln1p_cited_by_count", # "ln1p_cit_0", "ln1p_cit_1",
   "ln1p_fwci", "ln1p_cit_norm_perc",
   "ln1p_patent_count", "ln1p_patent_citation", "ln1p_ca_count",
-  "resolution"
+  "resolution", "num_publications"
 )
 treat_vars <- c("af + ct")
 
@@ -77,12 +77,19 @@ form_list <- list()
 for (dep_var in dep_vars) { # nolint
   # Iterate over covariate sets
   for (cov_set in cov_sets) {
+    local_covs <- covs[[cov_set]]
+    # if dep_var is num_publications, remove it from covs
+    if (dep_var == "num_publications") {
+      local_covs <- covs[[cov_set]][-which(covs[[cov_set]] == "num_publications")] # nolint
+    } else {
+      local_covs <- covs[[cov_set]]
+    }
     # Iterate over fixed effects
     for (fe in fe_list) {
       # Iterate over treatment variables
       for (treat_var in treat_vars) {
         # Check if covs[[cov_set]] is empty
-        if (length(covs[[cov_set]]) == 0) {
+        if (length(local_covs) == 0) {
           # Create formula without '+' before '|'
           form_list[[
             paste0(
@@ -103,7 +110,7 @@ for (dep_var in dep_vars) { # nolint
           ]] <- as.formula(
             paste0(
               dep_var, " ~ ", treat_var, " +",
-              paste0(covs[[cov_set]], collapse = " + "),
+              paste0(local_covs, collapse = " + "),
               "|", paste0(fes[[fe]], collapse = " + ")
             )
           )

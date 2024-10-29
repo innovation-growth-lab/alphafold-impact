@@ -68,8 +68,17 @@ nonecr_data <- nonecr_data %>%
     ct_ind = ifelse(ct > 0, 1, 0),
     ct_ai_ind = ifelse(ct_ai > 0, 1, 0),
     ct_noai_ind = ifelse(ct_noai > 0, 1, 0),
+    "af:ct_ai_ind" = ifelse(af > 0 & ct_ai > 0, 1, 0),
+    "af:ct_noai_ind" = ifelse(af > 0 & ct_noai > 0, 1, 0),
   )
 
+# fill type, country_code, institution NA as "unknown"
+nonecr_data <- nonecr_data %>%
+  mutate(
+    type = ifelse(is.na(type), "unknown", type),
+    country_code = ifelse(is.na(country_code), "unknown", country_code),
+    institution = ifelse(is.na(institution), "unknown", institution)
+  )
 # create factors, log transforms
 nonecr_data <- nonecr_data %>%
   mutate(
@@ -93,9 +102,11 @@ nonecr_data <- nonecr_data %>%
     quarter_year = paste0(
       year(publication_date), " Q", quarter(publication_date)
     ),
+    year = as.integer(str_sub(publication_date, 1, 4)),
     resolution = as.numeric(resolution),
     R_free = as.numeric(R_free)
   )
+
 
 # Compute the per-author number of publications at each given quarter_year
 pubs_per_quarter <- nonecr_data %>%
@@ -118,15 +129,34 @@ field_mapping <- c(
 # Apply the mapping to the primary_field column
 nonecr_data$primary_field <- recode(nonecr_data$primary_field, !!!field_mapping)
 
+# work to create high pdb normal pdb
+filtered_nonecr_data <- nonecr_data %>%
+  filter(year < 2021)
+
+# Group by pi_id and count the non-NA R_free values for each pi_id
+pdb_count_data <- filtered_nonecr_data %>%
+  group_by(author) %>%
+  summarise(pdb_count = sum(!is.na(R_free))) %>%
+  ungroup()
+
+pdb_count_data <- pdb_count_data %>%
+  mutate(
+    high_pdb = ifelse(
+      pdb_count > quantile(pdb_count, 0.75, na.rm = TRUE),
+      1, 0
+    )
+  )
+
+# Merge the resulting count back into the original DataFrame
+nonecr_data <- nonecr_data %>%
+  left_join(pdb_count_data, by = "author")
+
 # ------------------------------------------------------------------------------
 # Sample Prep
 # ------------------------------------------------------------------------------
 # Define sub_samples as a list of samples
-sub_samples <- list(
-  depth_all__field_all__tech_all = nonecr_data
-)
-
-tech_groups <- c("all", "ct_ai", "ct_noai")
+sub_samples <- list()
+pdb_groups <- c("all", "high")
 unique_depths <- c("all", "foundational", "applied")
 unique_fields <- c(
   "biochem_genetics_molecular_biology",
@@ -135,49 +165,39 @@ unique_fields <- c(
   "immunology_microbiology"
 )
 
-create_tech_group_subset <- function(data, tech_group) {
-  if (tech_group == "all") {
-    return(data)
-  } else if (tech_group == "ct_ai") {
-    return(data %>% filter(af >= 0, ct_ai >= 0, ct_noai == 0)) # nolint
-  } else if (tech_group == "ct_noai") {
-    return(data %>% filter(af >= 0, ct_noai >= 0, ct_ai == 0)) # nolint
-  }
-}
-
-# Create subsets for all combinations of depth, field, and tech_group
-for (depth_lvl in unique_depths) {
+# Create subsets for all combinations of depth, field, and pdb_group
+for (depth_lvl in unique_depths) { # nolint
   for (field in c("all", unique_fields)) {
-    for (tech_group in tech_groups) {
+    for (pdb_group in pdb_groups) {
       sample_name <- paste0(
-        "depth_", depth_lvl, "__field_", field, "__tech_", tech_group
+        "depth_", depth_lvl, "__field_",
+        field, "__pdb_", pdb_group
       )
-      if (field == "all") {
-        if (depth_lvl == "all") {
-          sub_samples[[sample_name]] <- create_tech_group_subset(
-            nonecr_data, tech_group
-          )
-        } else {
-          sub_samples[[sample_name]] <- create_tech_group_subset(
-            subset(nonecr_data, depth == depth_lvl), tech_group
-          )
-        }
-      } else {
-        if (depth_lvl == "all") {
-          sub_samples[[sample_name]] <- create_tech_group_subset(
-            subset(nonecr_data, primary_field == field), tech_group
-          )
-        } else {
-          sub_samples[[sample_name]] <- create_tech_group_subset(
-            subset(nonecr_data, depth == depth_lvl & primary_field == field),
-            tech_group
-          )
-        }
+      message("Creating sample: ", sample_name)
+
+      # Start with the full dataset
+      sub_sample <- nonecr_data
+
+      # Apply depth filter
+      if (depth_lvl != "all") {
+        sub_sample <- subset(sub_sample, depth == depth_lvl)
       }
+
+      # Apply field filter
+      if (field != "all") {
+        sub_sample <- subset(sub_sample, primary_field == field)
+      }
+
+      # Apply pdb_group filter
+      if (pdb_group == "high") {
+        sub_sample <- subset(sub_sample, high_pdb == 1)
+      }
+
+      # Store the subset
+      sub_samples[[sample_name]] <- sub_sample
     }
   }
 }
-
 # ------------------------------------------------------------------------------
 # Save data
 # ------------------------------------------------------------------------------

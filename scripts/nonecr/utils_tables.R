@@ -65,7 +65,7 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
 
   # Generate all possible depth-field combinations
   depth_field_pairs <- expand.grid(unique_depths, unique_fields)
-  tech_groups <- c("tech_all", "tech_ct_ai", "tech_ct_noai")
+  pdb_groups <- c("pdb_all", "pdb_high")
 
   for (dep_var in dep_vars) {
     file_name <- table_info[[dep_var]]$file_name
@@ -76,14 +76,15 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
       field <- depth_field_pairs[i, 2]
 
       result_names <- c()
-      for (tech_group in tech_groups) {
+      for (pdb_group in pdb_groups) {
         # Iterate over covariate sets, fixed effects, and treatment variables # nolint
         for (cov_set in cov_sets) {
           for (fe in fe_list) {
             for (treat_var in treat_vars) {
               # Build the result name
               result_name <- paste0(
-                depth, "__", field, "__", tech_group, "__", dep_var, "__", cov_set, "__", fe, "__", gsub(" ", "_", treat_var) # nolint
+                depth, "__", field, "__", pdb_group, "__",
+                dep_var, "__", cov_set, "__", fe, "__", gsub(" ", "_", treat_var) # nolint
               )
               # Check if result exists
               if (result_name %in% names(results)) {
@@ -133,45 +134,49 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
           "Mean(Dep. Var.) & ", paste(sprintf("%.3f", mean_y_values), collapse = " & "), " \\\\" # nolint
         )
 
-        tech_groups_latex <- c(
-          "All Technologies",
-          "Counterfactual AI",
-          "Counterfactual No AI"
-        )
+        # tech_groups_latex <- c(
+        #   "All Technologies",
+        #   "Counterfactual AI",
+        #   "Counterfactual No AI"
+        # )
 
-        # Add tech_group headers and \cmidrule after row 5
-        tech_group_headers <- paste0(
-          "\\multicolumn{2}{c}{", tech_groups_latex, "}"
-        )
-        tech_group_headers <- paste0(
-          " & ", paste(tech_group_headers, collapse = " & "), " \\\\"
-        )
+        # # Add tech_group headers and \cmidrule after row 5
+        # tech_group_headers <- paste0(
+        #   "\\multicolumn{4}{c}{", tech_groups_latex, "}"
+        # )
+        # tech_group_headers <- paste0(
+        #   " & ", paste(tech_group_headers, collapse = " & "), " \\\\"
+        # )
 
-        tech_group_cmidrules <- paste0(
-          "\\cmidrule(lr){",
-          seq(2, length(tech_groups_latex) * 2 + 1, by = 2), "-",
-          seq(3, length(tech_groups_latex) * 2 + 1, by = 2), "}"
-        )
-        tech_group_cmidrules <- paste0(
-          "\\cmidrule(lr){1-1}", paste(tech_group_cmidrules, collapse = " ")
-        )
+        # tech_group_cmidrules <- paste0(
+        #   "\\cmidrule(lr){",
+        #   seq(2, length(tech_groups_latex) * 4 + 1, by = 4), "-",
+        #   seq(5, length(tech_groups_latex) * 4 + 1, by = 4), "}"
+        # )
+        # tech_group_cmidrules <- paste0(
+        #   paste(tech_group_cmidrules, collapse = " ")
+        # )
 
-        # "Extensive", "Intensive", repeated as many times as tech_groups
+        # pdb headers
+        pdb_headers <- "\\multicolumn{2}{c}{All PDB} & \\multicolumn{2}{c}{High PDB} \\\\"
+        pdb_cmidrules <- "\\cmidrule(lr){2-3} \\cmidrule(lr){4-5}"
+
         coefficient_headers <- paste0(
           rep(
             "\\multicolumn{1}{c}{Extensive} & \\multicolumn{1}{c}{Intensive}",
-            length(tech_groups_latex)
+            2
           )
         )
+
         coefficient_headers <- paste0(
           "Variables & ", paste(coefficient_headers, collapse = " & "), " \\\\"
         )
 
         coefficient_cmidrules <- paste0(
-          "\\cmidrule(lr){", seq(2, length(tech_groups) * 2 + 1, by = 2), "-",
-          seq(2, length(tech_groups) * 2 + 1, by = 2), "} \\cmidrule(lr){",
-          seq(3, length(tech_groups) * 2 + 1, by = 2), "-",
-          seq(3, length(tech_groups) * 2 + 1, by = 2), "}"
+          "\\cmidrule(lr){", seq(2, 5, by = 2), "-",
+          seq(2, 5, by = 2), "} \\cmidrule(lr){",
+          seq(3, 5, by = 2), "-",
+          seq(3, 5, by = 2), "}"
         )
         coefficient_cmidrules <- paste0(
           "\\cmidrule(lr){1-1}",
@@ -181,11 +186,15 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
         # Split the etable output into lines
         etable_lines <- unlist(strsplit(etable_output, "\n"))
 
-        # Insert tech_group headers after row 5
-        etable_lines <- append(etable_lines, tech_group_headers, after = 5)
-        etable_lines <- append(etable_lines, tech_group_cmidrules, after = 6)
+        # # Insert tech_group headers after row 5
+        # etable_lines <- append(etable_lines, tech_group_headers, after = 5)
+        # etable_lines <- append(etable_lines, tech_group_cmidrules, after = 6)
 
-        # Insert coefficient headers after row 7
+        # Insert pdb headers after row 6
+        etable_lines <- append(etable_lines, pdb_headers, after = 5)
+        etable_lines <- append(etable_lines, pdb_cmidrules, after = 6)
+
+        # Insert coefficient headers after row 8
         etable_lines <- append(etable_lines, coefficient_headers, after = 7)
         etable_lines <- append(etable_lines, coefficient_cmidrules, after = 8)
 
