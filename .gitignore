@@ -12,8 +12,14 @@ conf/**/*credentials*
 data/**
 
 # except their sub-folders
-!data/**/
+!data/05_model_output/
+!data/05_model_output/**
 
+# but do ignore subsamples
+data/05_model_output/**/*subsamples*
+data/05_model_output/**/*sub_samples*
+data/05_model_output/*subsamples*
+data/05_model_output/*sub_samples*
 # also keep all .gitkeep files
 !.gitkeep
 

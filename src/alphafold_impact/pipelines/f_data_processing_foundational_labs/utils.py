@@ -10,7 +10,7 @@ Entrez.email = "david.ampudia@nesta.org.uk"
 
 logger = logging.getLogger(__name__)
 
-QUARTER_MAPPING = { # HACK
+QUARTER_MAPPING = {  # HACK
     "2015Q3": -9,
     "2015Q4": -8,
     "2016Q1": -7,
@@ -47,6 +47,7 @@ QUARTER_MAPPING = { # HACK
     "2023Q4": 24,
     "2024Q1": 25,
 }
+
 
 def get_entrez_ptype_pmid(pmid: str) -> str:
     """
@@ -157,6 +158,56 @@ def preprocess_for_staggered_design(
     final_data["time"] = final_data["time"].astype(int)
 
     return final_data
+
+
+def get_cum_sums(pi_data, publication_data):
+    """
+    Calculate the cumulative sums of counts for each PI in the given data.
+
+    Args:
+        pi_data (pd.DataFrame): The input data containing information about PIs.
+        publication_data (pd.DataFrame): The publication data containing information
+        about publications.
+
+    Returns:
+        pd.DataFrame: The data with cumulative sums of counts for each PI.
+    """
+    pi_relevant_pubs = publication_data.merge(
+        pi_data[["id", "pi_id", "quarter"]], on="id", how="inner"
+    )
+
+    pi_relevant_pubs = (
+        pi_relevant_pubs.groupby(["pi_id", "source", "quarter"])
+        .size()
+        .reset_index(name="counts")
+    )
+    pi_relevant_pubs = pi_relevant_pubs.sort_values(by=["pi_id", "source", "quarter"])
+    pi_relevant_pubs["cumulative_counts"] = pi_relevant_pubs.groupby(
+        ["pi_id", "source"]
+    )["counts"].cumsum()
+
+    pi_relevant_pubs = pi_relevant_pubs.pivot_table(
+        index=["pi_id", "quarter"],
+        columns="source",
+        values="cumulative_counts",
+        fill_value=0,
+    ).reset_index()
+
+    for col in ["af", "ct_ai", "ct_noai", "other"]:
+        pi_relevant_pubs.rename(columns={col: "cum_" + col}, inplace=True)
+        pi_relevant_pubs["cum_" + col] = pi_relevant_pubs["cum_" + col].astype(int)
+
+    pi_data = pi_data.merge(pi_relevant_pubs, on=["pi_id", "quarter"], how="left")
+
+    # sort by pi_id and quarter
+    pi_data = pi_data.sort_values(by=["pi_id", "quarter"])
+
+    # ffill the four columns
+    pi_data[["cum_af", "cum_ct_ai", "cum_ct_noai", "cum_other"]] = pi_data[
+        ["cum_af", "cum_ct_ai", "cum_ct_noai", "cum_other"]
+    ].ffill().fillna(0).astype(int)
+
+    return pi_data
 
 
 def get_intent(publications_data) -> dict:
@@ -477,14 +528,15 @@ def calculate_field_share(data):
 
     return data
 
+
 def calculate_primary_field(data):
     """
     Processes the input DataFrame to calculate the primary field for each author and time,
-    and returns the modified DataFrame with additional columns representing the count of 
+    and returns the modified DataFrame with additional columns representing the count of
     each primary field.
     Args:
         data (pd.DataFrame): Input DataFrame containing columns 'author', 'time', and 'topics'.
-            'topics' should be a list of lists where each sublist contains 
+            'topics' should be a list of lists where each sublist contains
             topic information.
     Returns:
         pd.DataFrame: Modified DataFrame with additional columns for each primary field count,
@@ -492,12 +544,11 @@ def calculate_primary_field(data):
     """
 
     df = data.copy()
-    df["primary_field"] = df["topics"].apply(
-        lambda x: x[0][5] if x is not None and len(x) > 0 else ""
-    )
 
     # groupby and calculate count
-    df = df.groupby(["author", "time", "primary_field"]).size().reset_index(name="count")
+    df = (
+        df.groupby(["author", "time", "primary_field"]).size().reset_index(name="count")
+    )
 
     # pivot the DataFrame to get one column for each primary field
     df = df.pivot(index=["author", "time"], columns="primary_field", values="count")
@@ -659,6 +710,10 @@ def get_quarterly_aggregate_outputs(data):
         "citation_normalized_percentile_value": "mean",
         "citation_normalized_percentile_is_in_top_1_percent": lambda x: int(x.sum()),
         "citation_normalized_percentile_is_in_top_10_percent": lambda x: int(x.sum()),
+        "cum_af": "first",
+        "cum_ct_ai": "first",
+        "cum_ct_noai": "first",
+        "cum_other": "first",
     }
 
     # Assume `data` is your original data

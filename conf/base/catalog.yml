@@ -228,6 +228,10 @@ publications.data.other:
   <<: *_pq
   filepath: s3://igl-alphafold/oct/04_output/publications/other.parquet
 
+publications.data.intermediate:
+  <<: *_pq
+  filepath: s3://igl-alphafold/oct/02_intermediate/publications/outputs.parquet
+
 publications.data.outputs:
   <<: *_pq
   filepath: s3://igl-alphafold/oct/04_output/publications/outputs.parquet

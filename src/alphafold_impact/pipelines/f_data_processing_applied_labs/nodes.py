@@ -8,6 +8,7 @@ import pandas as pd
 from kedro.io import AbstractDataset
 from ..f_data_processing_foundational_labs.utils import (  # pylint: disable=relative-beyond-top-level
     get_intent,
+    get_cum_sums,
     preprocess_for_staggered_design,
     get_pdb_activity,
     collect_covid_references,
@@ -104,6 +105,11 @@ def get_applied_lab_staggered_outputs(
         # drop rows with publication_date older than 2017-06-01
         data_batch = data_batch[data_batch["publication_date"] >= "2015-06-01"]
 
+        # adding primary field for paper
+        data_batch["primary_field"] = data_batch["topics"].apply(
+            lambda x: x[0][5] if x is not None and len(x) > 0 else ""
+        )
+
         # transform concepts to be a list of the ids (ie first item in sublists)
         data_batch["concepts"] = data_batch["concepts"].apply(
             lambda x: [y[0] for y in x] if x is not None else []
@@ -119,11 +125,15 @@ def get_applied_lab_staggered_outputs(
         )
 
         data_batch["publication_date"] = pd.to_datetime(data_batch["publication_date"])
+        data_batch["quarter"] = data_batch["publication_date"].dt.to_period("Q")
 
         logger.info("Merging data with level0 data")
         data_processed = preprocess_for_staggered_design(
             data_batch, applied_publications
         )
+
+        logger.info("Calculate cumulative sums")
+        data_processed = get_cum_sums(data_processed, applied_publications)
 
         logger.info("Merging data with pdb_submissions data")
         data_processed = get_pdb_activity(data_processed, pdb_submissions)

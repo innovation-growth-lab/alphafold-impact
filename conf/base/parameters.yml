@@ -494,17 +494,12 @@ publications:
   columns_to_drop:
     - authorships
     - strength
-    - group_resolution
-    - resolution
     - doi
     - parent_publication_date
     - CPCs
-    - last_author
     - pmid
-    - R_free
     - parent_level
     - topics
-    - group_R_free
     - concepts
     - parent_id
     - parent_pmid

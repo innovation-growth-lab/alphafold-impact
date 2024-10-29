@@ -8,6 +8,7 @@ import pandas as pd
 from kedro.io import AbstractDataset
 from .utils import (
     get_intent,
+    get_cum_sums,
     preprocess_for_staggered_design,
     get_pdb_activity,
     collect_covid_references,
@@ -111,6 +112,12 @@ def get_foundational_lab_staggered_outputs(
             lambda x: [y[0] for y in x] if x is not None else []
         )
 
+        # adding primary field for paper
+        data_batch["primary_field"] = data_batch["topics"].apply(
+            lambda x: x[0][5] if x is not None and len(x) > 0 else ""
+        )
+
+
         logger.info("Merging data with mapping information")
         mapping_df.drop_duplicates(subset="author", inplace=True)
         data_batch = data_batch.merge(
@@ -121,11 +128,15 @@ def get_foundational_lab_staggered_outputs(
         )
 
         data_batch["publication_date"] = pd.to_datetime(data_batch["publication_date"])
+        data_batch["quarter"] = data_batch["publication_date"].dt.to_period("Q")
 
         logger.info("Merging data with level0 data")
         data_processed = preprocess_for_staggered_design(
             data_batch, foundational_publications
         )
+
+        logger.info("Calculate cumulative sums")
+        data_processed = get_cum_sums(data_processed, foundational_publications)
 
         logger.info("Merging data with pdb_submissions data")
         data_processed = get_pdb_activity(data_processed, pdb_submissions)
