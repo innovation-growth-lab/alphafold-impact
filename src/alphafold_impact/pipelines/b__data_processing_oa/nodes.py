@@ -72,6 +72,7 @@ def _json_loader(
                     "publication_date",
                     "mesh_terms",
                     "cited_by_count",
+                    "counts_by_year",
                     "authorships",
                     "topics",
                     "concepts",
@@ -246,6 +247,7 @@ def process_data_by_level(data: Dict[str, AbstractDataset], level: int) -> pd.Da
             "publication_date",
             "mesh_terms",
             "cited_by_count",
+            "counts_by_year",
             "authorships",
             "topics",
             "concepts",
@@ -304,6 +306,7 @@ def combine_levels_data(unique: str = "all", **kwargs) -> pd.DataFrame:
                     "authorships",
                     "topics",
                     "concepts",
+                    "counts_by_year",
                 ]
             ]
         )
@@ -351,6 +354,7 @@ def combine_levels_data_counterfactuals(unique: str = "all", **kwargs) -> pd.Dat
                 "authorships",
                 "topics",
                 "concepts",
+                "counts_by_year"
             ]
         ]
     )
@@ -395,6 +399,7 @@ def process_data_by_level_ptd(
                     "publication_date",
                     "mesh_terms",
                     "cited_by_count",
+                    "counts_by_year",
                     "authorships",
                     "topics",
                     "concepts",
@@ -470,6 +475,7 @@ def process_subfield_data(data: Dict[str, AbstractDataset]) -> pd.DataFrame:
                     "publication_date",
                     "mesh_terms",
                     "cited_by_count",
+                    "counts_by_year",
                     "authorships",
                     "topics",
                     "concepts",
@@ -613,6 +619,7 @@ def process_subfield_data(data: Dict[str, AbstractDataset]) -> pd.DataFrame:
             "publication_date",
             "mesh_terms",
             "cited_by_count",
+            "counts_by_year",
             "authorships",
             "concepts",
             "topics",
