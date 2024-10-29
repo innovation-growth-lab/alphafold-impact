@@ -1,0 +1,42 @@
+
+\begingroup
+\centering
+\begin{tabular}{lcccccccccccccccccc}
+   \tabularnewline \midrule \midrule
+   Dependent Variable: & \multicolumn{18}{c}{cit\_1}\\
+    & \multicolumn{3}{c}{all} & \multicolumn{3}{c}{af\_ct} & \multicolumn{3}{c}{af\_ct\_ai} & \multicolumn{3}{c}{af\_ct\_noai} & \multicolumn{3}{c}{af\_ct\_w\_high\_pdb} & \multicolumn{3}{c}{af\_ct\_cem} \\ 
+   Model:                                                            & (1)      & (2)      & (3)      & (4)      & (5)      & (6)      & (7)      & (8)      & (9)      & (10)     & (11)     & (12)     & (13)     & (14)     & (15)     & (16)         & (17)     & (18)\\  
+   \midrule
+   \emph{Variables}\\
+   treatment\_af\_dyn                                                & 0.0308   & 0.0190   & -0.0107  & 0.0354   & 0.0215   & -0.0039  & 0.0042   & -0.0082  & -0.0323  & 0.0448   & 0.0307   & 0.0060   & 0.0511   & 0.1320   & 0.0711   & 0.0862$^{*}$ & 0.0601   & 0.0783\\   
+                                                                     & (0.0202) & (0.0341) & (0.0523) & (0.0266) & (0.0384) & (0.0554) & (0.0303) & (0.0412) & (0.0577) & (0.0289) & (0.0403) & (0.0568) & (0.0536) & (0.0847) & (0.1064) & (0.0441)     & (0.0622) & (0.0793)\\   
+   treatment\_af\_dyn $\times$ intent\_strong                        &          & 0.0216   & 0.0552   &          & 0.0281   & 0.0568   &          & 0.0258   & 0.0530   &          & 0.0290   & 0.0570   &          & -0.1251  & -0.0565  &              & 0.0927   & 0.0638\\   
+                                                                     &          & (0.0384) & (0.0596) &          & (0.0389) & (0.0602) &          & (0.0391) & (0.0607) &          & (0.0392) & (0.0605) &          & (0.0786) & (0.1143) &              & (0.0635) & (0.1035)\\   
+   treatment\_af\_dyn $\times$ ext\_af                               &          & -0.0014  & 0.0213   &          & -0.0027  & 0.0168   &          & -0.0026  & 0.0158   &          & -0.0029  & 0.0161   &          & 0.0076   & 0.0461   &              & -0.0141  & -0.0278\\   
+                                                                     &          & (0.0094) & (0.0326) &          & (0.0096) & (0.0327) &          & (0.0096) & (0.0330) &          & (0.0095) & (0.0324) &          & (0.0184) & (0.0512) &              & (0.0252) & (0.0462)\\   
+   treatment\_af\_dyn $\times$ intent\_strong $\times$ ext\_af       &          &          & -0.0245  &          &          & -0.0209  &          &          & -0.0198  &          &          & -0.0204  &          &          & -0.0414  &              &          & 0.0194\\   
+                                                                     &          &          & (0.0340) &          &          & (0.0342) &          &          & (0.0345) &          &          & (0.0338) &          &          & (0.0548) &              &          & (0.0551)\\   
+   \midrule
+   \emph{Fixed-effects}\\
+   pi\_id                                                            & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes          & Yes      & Yes\\  
+   covid\_share\_2020                                                & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes          & Yes      & Yes\\  
+   time\_qtly                                                        & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes          & Yes      & Yes\\  
+   country                                                           & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes          & Yes      & Yes\\  
+   institution\_type                                                 & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes          & Yes      & Yes\\  
+   institution\_works\_count                                         & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes          & Yes      & Yes\\  
+   institution\_cited\_by\_count                                     & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes          & Yes      & Yes\\  
+   institution\_2yr\_mean\_citedness                                 & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes          & Yes      & Yes\\  
+   institution\_h\_index                                             & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes          & Yes      & Yes\\  
+   institution\_i10\_index                                           & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes          & Yes      & Yes\\  
+   \midrule
+   \emph{Fit statistics}\\
+   Observations                                                      & 84,463   & 84,463   & 84,463   & 36,490   & 36,490   & 36,490   & 29,585   & 29,585   & 29,585   & 31,731   & 31,731   & 31,731   & 10,386   & 10,386   & 10,386   & 12,948       & 12,948   & 12,948\\  
+   R$^2$                                                             & 0.54508  & 0.54509  & 0.54509  & 0.55414  & 0.55415  & 0.55416  & 0.55492  & 0.55493  & 0.55493  & 0.55566  & 0.55567  & 0.55568  & 0.58983  & 0.58998  & 0.59001  & 0.44931      & 0.44946  & 0.44947\\  
+   Within R$^2$                                                      & 0.19988  & 0.19988  & 0.19989  & 0.21088  & 0.21090  & 0.21091  & 0.21471  & 0.21473  & 0.21474  & 0.21828  & 0.21830  & 0.21831  & 0.30091  & 0.30118  & 0.30122  & 0.23065      & 0.23086  & 0.23087\\  
+   \midrule \midrule
+   \multicolumn{19}{l}{\emph{Clustered (pi\_id) standard-errors in parentheses}}\\
+   \multicolumn{19}{l}{\emph{Signif. Codes: ***: 0.01, **: 0.05, *: 0.1}}\\
+\end{tabular}
+\par\endgroup
+
+

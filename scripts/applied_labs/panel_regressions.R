@@ -20,8 +20,8 @@ invisible(lapply(list_of_packages, library, character.only = TRUE))
 
 # Set working directory and paths
 setwd("~/projects/alphafold-impact/")
-figures <- "data/05_model_output/figures/applied/"
-tables <- "data/05_model_output/tables/applied/"
+figures <- "data/05_model_output/applied_labs/figures/"
+tables <- "data/05_model_output/applied_labs/tables/"
 
 # Create directories if they do not exist
 if (!dir.exists(figures)) {
@@ -69,8 +69,9 @@ fes[["fe1"]] <- c(fes$fe0, "time_qtly", "country", institution_cols)
 # List of dependent variables
 dep_vars <- c(
   "ca_count",
-  "num_publications", "ct0", "ct1", "cited_by_count",
-  "patent_count", "patent_citation"
+  "num_publications", "cit_0", "cit_1", "cited_by_count",
+  "patent_count", "patent_citation",
+  "resolution", "R_free"
 )
 
 # List of covariate sets
@@ -179,13 +180,13 @@ table_info <- list(
     vars_to_keep = variable_interest,
     file_name = "04_patent_citation_translational.tex"
   ),
-  "ct0" = list(
+  "cit_0" = list(
     vars_to_keep = variable_interest,
-    file_name = "05_ct0_productivity.tex"
+    file_name = "05_cit_0_productivity.tex"
   ),
-  "ct1" = list(
+  "cit_1" = list(
     vars_to_keep = variable_interest,
-    file_name = "06_ct1_productivity.tex"
+    file_name = "06_cit_1_productivity.tex"
   ),
   "num_publications" = list(
     vars_to_keep = variable_interest,
@@ -194,6 +195,14 @@ table_info <- list(
   "cited_by_count_std" = list(
     vars_to_keep = variable_interest,
     file_name = "08_cited_by_count_std_productivity.tex"
+  ),
+  "resolution" = list(
+    vars_to_keep = variable_interest,
+    file_name = "09_resolution.tex"
+  ),
+  "R_free" = list(
+    vars_to_keep = variable_interest,
+    file_name = "10_R_free.tex"
   )
 )
 
@@ -245,8 +254,8 @@ generate_tables <- function(dep_vars, table_info, subsets, cov_sets, fe_list, tr
 generate_tables(
   dep_vars = c(
     "ca_count", "tcc",
-    "num_publications", "ct0", "ct1", "cited_by_count_std",
-    "patent_count", "patent_citation"
+    "num_publications", "cit_0", "cit_1", "cited_by_count_std",
+    "patent_count", "patent_citation", "resolution", "R_free"
   ),
   table_info = table_info,
   subsets = subsets,

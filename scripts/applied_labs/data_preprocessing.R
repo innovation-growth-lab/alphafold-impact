@@ -64,8 +64,8 @@ sb_data_qtly <- sb_data_qtly %>%
     .direction = "downup"
   ) %>%
   replace_na(list(
-    num_publications = 0, cited_by_count = 0, ct0 = 0, ct1 = 0,
-    ca_count = 0, patent_count = 0, pdb_share = 0, # resolution = 0, R_free = 0,
+    num_publications = 0, cited_by_count = 0, cit_0 = 0, cit_1 = 0,
+    ca_count = 0, patent_count = 0, pdb_share = 0, resolution = 0, R_free = 0,
     covid_share_2020 = 0, ext_af = 0,
     institution_country_code = "OTH", institution_type = "other",
     intent = "unknown"
@@ -157,8 +157,8 @@ sb_data_qtly <- sb_data_qtly %>%
     num_publications = log1p(num_publications),
     ca_count = log1p(ca_count),
     patent_count = log1p(patent_count),
-    ct0 = log1p(ct0),
-    ct1 = log1p(ct1),
+    cit_0 = log1p(cit_0),
+    cit_1 = log1p(cit_1),
     cited_by_count = log1p(cited_by_count),
     patent_citation = log1p(patent_citation)
   )
@@ -242,7 +242,7 @@ sub_samples <- list(
 
 # Define the columns to be used for matching
 cols <- c(
-  "num_publications", "cited_by_count", "ct0", "ct1", "pdb_share",
+  "num_publications", "cited_by_count", "cit_0", "cit_1", "pdb_share",
   "protein_share", "experimental_share", "patent_count",
   "field_biochemistry_genetics_and_molecular_biology",
   "mesh_C", "covid_share_2020"
