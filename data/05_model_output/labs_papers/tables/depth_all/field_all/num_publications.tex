@@ -1,0 +1,29 @@
+\begingroup
+\centering
+\begin{tabular}{lcccccc}
+   \tabularnewline \midrule \midrule
+   Dependent Variable: & \multicolumn{6}{c}{num\_publications}\\
+ & \multicolumn{2}{c}{All Technologies} & \multicolumn{2}{c}{Counterfactual AI} & \multicolumn{2}{c}{Counterfactual No AI} \\
+\cmidrule(lr){1-1}\cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7}
+Variables & \multicolumn{1}{c}{All} & \multicolumn{1}{c}{High PDB} & \multicolumn{1}{c}{All} & \multicolumn{1}{c}{High PDB} & \multicolumn{1}{c}{All} & \multicolumn{1}{c}{High PDB} \\
+\cmidrule(lr){1-1}\cmidrule(lr){2-2} \cmidrule(lr){3-3} \cmidrule(lr){4-4} \cmidrule(lr){5-5} \cmidrule(lr){6-6} \cmidrule(lr){7-7}
+   AlphaFold                    & -12.6$^{*}$ & -19.7$^{**}$ & -19.9$^{**}$ & -23.1$^{**}$ & -13.1$^{*}$ & -18.5$^{*}$\\   
+                                & (6.70)      & (9.31)       & (9.67)       & (10.5)       & (7.06)      & (9.89)\\   
+   Counterfactual               & 0.355       & -2.12        & 11.4         & -21.9        & 0.157       & -1.70\\   
+                                & (1.69)      & (3.13)       & (11.3)       & (15.4)       & (1.80)      & (4.09)\\   
+   \midrule
+   \emph{Fixed-effects}\\
+   quarter\_year                & Yes         & Yes          & Yes          & Yes          & Yes         & Yes\\  
+   institution                  & Yes         & Yes          & Yes          & Yes          & Yes         & Yes\\  
+   institution\_type            & Yes         & Yes          & Yes          & Yes          & Yes         & Yes\\  
+   institution\_country\_code   & Yes         & Yes          & Yes          & Yes          & Yes         & Yes\\  
+   \midrule
+   \emph{Fit statistics}\\
+   Observations                 & 1,167,264   & 170,090      & 953,544      & 141,036      & 1,065,023   & 154,647\\  
+   R$^2$                        & 0.63        & 0.89         & 0.65         & 0.91         & 0.64        & 0.90\\  
+Mean(Dep. Var.) & 399.995 & 910.639 & 481.516 & 1073.971 & 418.769 & 997.064 \\
+   \midrule \midrule
+   \multicolumn{7}{l}{\emph{Clustered (pi\_id) standard-errors in parentheses}}\\
+   \multicolumn{7}{l}{\emph{Signif. Codes: ***: 0.01, **: 0.05, *: 0.1}}\\
+\end{tabular}
+\par\endgroup

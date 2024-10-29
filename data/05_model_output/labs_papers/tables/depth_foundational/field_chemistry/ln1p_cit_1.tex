@@ -1,0 +1,29 @@
+\begingroup
+\centering
+\begin{tabular}{lcccccc}
+   \tabularnewline \midrule \midrule
+   Dependent Variable: & \multicolumn{6}{c}{ln1p\_cit\_1}\\
+ & \multicolumn{2}{c}{All Technologies} & \multicolumn{2}{c}{Counterfactual AI} & \multicolumn{2}{c}{Counterfactual No AI} \\
+\cmidrule(lr){1-1}\cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7}
+Variables & \multicolumn{1}{c}{All} & \multicolumn{1}{c}{High PDB} & \multicolumn{1}{c}{All} & \multicolumn{1}{c}{High PDB} & \multicolumn{1}{c}{All} & \multicolumn{1}{c}{High PDB} \\
+\cmidrule(lr){1-1}\cmidrule(lr){2-2} \cmidrule(lr){3-3} \cmidrule(lr){4-4} \cmidrule(lr){5-5} \cmidrule(lr){6-6} \cmidrule(lr){7-7}
+   AlphaFold                    & 0.004   & 0.030   & -0.0006       & 0.025   & -0.003  & 0.033\\   
+                                & (0.011) & (0.026) & (0.013)       & (0.026) & (0.012) & (0.029)\\   
+   Counterfactual               & -0.014  & -0.051  & -0.091$^{**}$ & -0.052  & 0.014   & -0.055\\   
+                                & (0.017) & (0.037) & (0.036)       & (0.055) & (0.018) & (0.050)\\   
+   \midrule
+   \emph{Fixed-effects}\\
+   quarter\_year                & Yes     & Yes     & Yes           & Yes     & Yes     & Yes\\  
+   institution                  & Yes     & Yes     & Yes           & Yes     & Yes     & Yes\\  
+   institution\_type            & Yes     & Yes     & Yes           & Yes     & Yes     & Yes\\  
+   institution\_country\_code   & Yes     & Yes     & Yes           & Yes     & Yes     & Yes\\  
+   \midrule
+   \emph{Fit statistics}\\
+   Observations                 & 13,462  & 5,071   & 12,296        & 4,781   & 11,472  & 3,903\\  
+   R$^2$                        & 0.22    & 0.27    & 0.23          & 0.27    & 0.20    & 0.22\\  
+Mean(Dep. Var.) & 0.844 & 0.637 & 0.838 & 0.624 & 0.905 & 0.759 \\
+   \midrule \midrule
+   \multicolumn{7}{l}{\emph{Clustered (pi\_id) standard-errors in parentheses}}\\
+   \multicolumn{7}{l}{\emph{Signif. Codes: ***: 0.01, **: 0.05, *: 0.1}}\\
+\end{tabular}
+\par\endgroup

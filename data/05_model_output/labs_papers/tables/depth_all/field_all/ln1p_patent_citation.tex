@@ -1,0 +1,29 @@
+\begingroup
+\centering
+\begin{tabular}{lcccccc}
+   \tabularnewline \midrule \midrule
+   Dependent Variable: & \multicolumn{6}{c}{ln1p\_patent\_citation}\\
+ & \multicolumn{2}{c}{All Technologies} & \multicolumn{2}{c}{Counterfactual AI} & \multicolumn{2}{c}{Counterfactual No AI} \\
+\cmidrule(lr){1-1}\cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7}
+Variables & \multicolumn{1}{c}{All} & \multicolumn{1}{c}{High PDB} & \multicolumn{1}{c}{All} & \multicolumn{1}{c}{High PDB} & \multicolumn{1}{c}{All} & \multicolumn{1}{c}{High PDB} \\
+\cmidrule(lr){1-1}\cmidrule(lr){2-2} \cmidrule(lr){3-3} \cmidrule(lr){4-4} \cmidrule(lr){5-5} \cmidrule(lr){6-6} \cmidrule(lr){7-7}
+   AlphaFold                    & 0.004   & 0.004   & 0.008$^{**}$ & 0.006   & 0.006$^{*}$ & 0.005\\   
+                                & (0.003) & (0.010) & (0.003)      & (0.014) & (0.003)     & (0.010)\\   
+   Counterfactual               & 0.003   & 0.0003  & 0.009        & 0.014   & 0.003       & 0.0009\\   
+                                & (0.003) & (0.003) & (0.016)      & (0.048) & (0.003)     & (0.003)\\   
+   \midrule
+   \emph{Fixed-effects}\\
+   quarter\_year                & Yes     & Yes     & Yes          & Yes     & Yes         & Yes\\  
+   institution                  & Yes     & Yes     & Yes          & Yes     & Yes         & Yes\\  
+   institution\_type            & Yes     & Yes     & Yes          & Yes     & Yes         & Yes\\  
+   institution\_country\_code   & Yes     & Yes     & Yes          & Yes     & Yes         & Yes\\  
+   \midrule
+   \emph{Fit statistics}\\
+   Observations                 & 32,406  & 8,135   & 25,965       & 6,600   & 29,879      & 7,379\\  
+   R$^2$                        & 0.13    & 0.17    & 0.13         & 0.16    & 0.13        & 0.18\\  
+Mean(Dep. Var.) & 0.639 & 0.752 & 0.647 & 0.752 & 0.638 & 0.756 \\
+   \midrule \midrule
+   \multicolumn{7}{l}{\emph{Clustered (pi\_id) standard-errors in parentheses}}\\
+   \multicolumn{7}{l}{\emph{Signif. Codes: ***: 0.01, **: 0.05, *: 0.1}}\\
+\end{tabular}
+\par\endgroup
