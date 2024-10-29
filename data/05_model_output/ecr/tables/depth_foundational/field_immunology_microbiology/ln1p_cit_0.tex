@@ -1,0 +1,31 @@
+\begingroup
+\centering
+\begin{tabular}{lcccc}
+   \tabularnewline \midrule \midrule
+   Dependent Variable: & \multicolumn{4}{c}{ln1p\_cit\_0}\\
+ & \multicolumn{2}{c}{All Technologies} & \multicolumn{2}{c}{Counterfactual AI} & \multicolumn{2}{c}{Counterfactual No AI} \\
+\cmidrule(lr){1-1}\cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7}
+Variables & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} \\
+\cmidrule(lr){1-1}\cmidrule(lr){2-2} \cmidrule(lr){3-3} \cmidrule(lr){4-4} \cmidrule(lr){5-5} \cmidrule(lr){6-6} \cmidrule(lr){7-7}
+   AlphaFold                    & 1.69      & 2.32$^{***}$   & 1.55$^{*}$ &   \\   
+                                & (9,924.3) & (0.078)        & (0.903)    &   \\   
+   AlphaFold square             &           & -0.357$^{***}$ & -0.100     &   \\   
+                                &           & (0.026)        & (0.301)    &   \\   
+   Counterfactual               &           &                &            & -0.164\\   
+                                &           &                &            & (0.157)\\   
+   \midrule
+   \emph{Fixed-effects}\\
+   quarter\_year                & Yes       & Yes            & Yes        & Yes\\  
+   institution                  & Yes       & Yes            & Yes        & Yes\\  
+   institution\_type            & Yes       & Yes            & Yes        & Yes\\  
+   institution\_country\_code   & Yes       & Yes            & Yes        & Yes\\  
+   \midrule
+   \emph{Fit statistics}\\
+   Observations                 & 66        & 66             & 55         & 58\\  
+   R$^2$                        & 0.99      & 1.0            & 1.0        & 1.0\\  
+Mean(Dep. Var.) & 0.480 & 0.480 & 0.526 & 0.523 \\
+   \midrule \midrule
+   \multicolumn{5}{l}{\emph{Clustered (author) standard-errors in parentheses}}\\
+   \multicolumn{5}{l}{\emph{Signif. Codes: ***: 0.01, **: 0.05, *: 0.1}}\\
+\end{tabular}
+\par\endgroup

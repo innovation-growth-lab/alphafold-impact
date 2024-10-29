@@ -1,0 +1,33 @@
+\begingroup
+\centering
+\begin{tabular}{lcccccc}
+   \tabularnewline \midrule \midrule
+   Dependent Variable: & \multicolumn{6}{c}{ln1p\_patent\_citation}\\
+ & \multicolumn{2}{c}{All Technologies} & \multicolumn{2}{c}{Counterfactual AI} & \multicolumn{2}{c}{Counterfactual No AI} \\
+\cmidrule(lr){1-1}\cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7}
+Variables & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} \\
+\cmidrule(lr){1-1}\cmidrule(lr){2-2} \cmidrule(lr){3-3} \cmidrule(lr){4-4} \cmidrule(lr){5-5} \cmidrule(lr){6-6} \cmidrule(lr){7-7}
+   AlphaFold                          & 0.316   & 0.303   & 0.314   & 0.296   & 0.278   & 0.278\\   
+                                      & (0.209) & (0.209) & (0.209) & (0.207) & (0.206) & (0.206)\\   
+   Counterfactual                     & -0.037  & -0.295  & 0.239   & 0.010   & -0.312  & -0.241\\   
+                                      & (0.325) & (0.414) & (0.325) & (0.433) & (0.371) & (0.786)\\   
+   AlphaFold $\times$ Counterfactual  & -0.767  & -0.420  &         &         & -0.455  &   \\   
+                                      & (0.549) & (0.279) &         &         & (0.571) &   \\   
+   Counterfactual square              &         & 0.161   &         & 0.067   &         & -0.071\\   
+                                      &         & (0.129) &         & (0.135) &         & (0.438)\\   
+   \midrule
+   \emph{Fixed-effects}\\
+   quarter\_year                      & Yes     & Yes     & Yes     & Yes     & Yes     & Yes\\  
+   institution                        & Yes     & Yes     & Yes     & Yes     & Yes     & Yes\\  
+   institution\_type                  & Yes     & Yes     & Yes     & Yes     & Yes     & Yes\\  
+   institution\_country\_code         & Yes     & Yes     & Yes     & Yes     & Yes     & Yes\\  
+   \midrule
+   \emph{Fit statistics}\\
+   Observations                       & 1,194   & 1,194   & 1,185   & 1,185   & 1,189   & 1,189\\  
+   R$^2$                              & 0.72    & 0.72    & 0.72    & 0.72    & 0.72    & 0.72\\  
+Mean(Dep. Var.) & 0.453 & 0.453 & 0.455 & 0.455 & 0.454 & 0.454 \\
+   \midrule \midrule
+   \multicolumn{7}{l}{\emph{Clustered (author) standard-errors in parentheses}}\\
+   \multicolumn{7}{l}{\emph{Signif. Codes: ***: 0.01, **: 0.05, *: 0.1}}\\
+\end{tabular}
+\par\endgroup

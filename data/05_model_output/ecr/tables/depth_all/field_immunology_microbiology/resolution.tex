@@ -1,0 +1,27 @@
+\begingroup
+\centering
+\begin{tabular}{lcc}
+   \tabularnewline \midrule \midrule
+   Dependent Variable: & \multicolumn{2}{c}{resolution}\\
+ & \multicolumn{2}{c}{All Technologies} & \multicolumn{2}{c}{Counterfactual AI} & \multicolumn{2}{c}{Counterfactual No AI} \\
+\cmidrule(lr){1-1}\cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7}
+Variables & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} \\
+\cmidrule(lr){1-1}\cmidrule(lr){2-2} \cmidrule(lr){3-3} \cmidrule(lr){4-4} \cmidrule(lr){5-5} \cmidrule(lr){6-6} \cmidrule(lr){7-7}
+   I(af\^2) $\times$ I(ct\^2)    & 0.007$^{***}$ & 0.004$^{***}$\\   
+                                 & (0.00001)     & (0.00001)\\   
+   \midrule
+   \emph{Fixed-effects}\\
+   quarter\_year                 & Yes           & Yes\\  
+   institution                   & Yes           & Yes\\  
+   institution\_type             & Yes           & Yes\\  
+   institution\_country\_code    & Yes           & Yes\\  
+   \midrule
+   \emph{Fit statistics}\\
+   Observations                  & 60            & 56\\  
+   R$^2$                         & 0.99          & 0.99\\  
+Mean(Dep. Var.) & 2.533 & 2.556 \\
+   \midrule \midrule
+   \multicolumn{3}{l}{\emph{Clustered (author) standard-errors in parentheses}}\\
+   \multicolumn{3}{l}{\emph{Signif. Codes: ***: 0.01, **: 0.05, *: 0.1}}\\
+\end{tabular}
+\par\endgroup

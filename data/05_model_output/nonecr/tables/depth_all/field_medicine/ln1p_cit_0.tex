@@ -1,0 +1,37 @@
+\begingroup
+\centering
+\begin{tabular}{lcccccc}
+   \tabularnewline \midrule \midrule
+   Dependent Variable: & \multicolumn{6}{c}{ln1p\_cit\_0}\\
+ & \multicolumn{2}{c}{All Technologies} & \multicolumn{2}{c}{Counterfactual AI} & \multicolumn{2}{c}{Counterfactual No AI} \\
+\cmidrule(lr){1-1}\cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7}
+Variables & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} \\
+\cmidrule(lr){1-1}\cmidrule(lr){2-2} \cmidrule(lr){3-3} \cmidrule(lr){4-4} \cmidrule(lr){5-5} \cmidrule(lr){6-6} \cmidrule(lr){7-7}
+   AlphaFold                          & 0.126$^{***}$ & 0.041$^{***}$     & 0.088$^{***}$ & 0.043$^{***}$   & 0.124$^{***}$ & 0.042$^{***}$\\   
+                                      & (0.005)       & (0.003)           & (0.005)       & (0.003)         & (0.005)       & (0.003)\\   
+   Counterfactual                     & 0.158$^{***}$ & 0.056$^{***}$     & 0.055$^{***}$ & 0.038$^{***}$   & 0.170$^{***}$ & 0.059$^{***}$\\   
+                                      & (0.005)       & (0.003)           & (0.010)       & (0.008)         & (0.005)       & (0.003)\\   
+   AlphaFold $\times$ Counterfactual  & 0.037$^{**}$  & -0.002$^{***}$    & 0.015         & -0.003          & 0.051$^{***}$ & -0.003$^{***}$\\   
+                                      & (0.016)       & (0.0003)          & (0.031)       & (0.003)         & (0.018)       & (0.0004)\\   
+   AlphaFold square                   &               & -0.0007$^{***}$   &               & -0.0008$^{***}$ &               & -0.0007$^{***}$\\   
+                                      &               & (0.0001)          &               & (0.0002)        &               & (0.0001)\\   
+   Counterfactual square              &               & -0.0008$^{***}$   &               & -0.001          &               & -0.0009$^{***}$\\   
+                                      &               & (0.0002)          &               & (0.002)         &               & (0.0002)\\   
+   I(af\^2) $\times$ I(ct\^2)         &               & 0.0000007$^{***}$ &               & 0.000002        &               & 0.0000009$^{***}$\\   
+                                      &               & (0.00000009)      &               & (0.000003)      &               & (0.0000002)\\   
+   \midrule
+   \emph{Fixed-effects}\\
+   quarter\_year                      & Yes           & Yes               & Yes           & Yes             & Yes           & Yes\\  
+   institution                        & Yes           & Yes               & Yes           & Yes             & Yes           & Yes\\  
+   institution\_type                  & Yes           & Yes               & Yes           & Yes             & Yes           & Yes\\  
+   institution\_country\_code         & Yes           & Yes               & Yes           & Yes             & Yes           & Yes\\  
+   \midrule
+   \emph{Fit statistics}\\
+   Observations                       & 649,790       & 649,790           & 586,308       & 586,308         & 639,427       & 639,427\\  
+   R$^2$                              & 0.23          & 0.23              & 0.22          & 0.22            & 0.23          & 0.23\\  
+Mean(Dep. Var.) & 0.591 & 0.591 & 0.569 & 0.569 & 0.589 & 0.589 \\
+   \midrule \midrule
+   \multicolumn{7}{l}{\emph{Clustered (author) standard-errors in parentheses}}\\
+   \multicolumn{7}{l}{\emph{Signif. Codes: ***: 0.01, **: 0.05, *: 0.1}}\\
+\end{tabular}
+\par\endgroup

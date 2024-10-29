@@ -1,0 +1,35 @@
+\begingroup
+\centering
+\begin{tabular}{lcccccc}
+   \tabularnewline \midrule \midrule
+   Dependent Variable: & \multicolumn{6}{c}{resolution}\\
+ & \multicolumn{2}{c}{All Technologies} & \multicolumn{2}{c}{Counterfactual AI} & \multicolumn{2}{c}{Counterfactual No AI} \\
+\cmidrule(lr){1-1}\cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7}
+Variables & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} \\
+\cmidrule(lr){1-1}\cmidrule(lr){2-2} \cmidrule(lr){3-3} \cmidrule(lr){4-4} \cmidrule(lr){5-5} \cmidrule(lr){6-6} \cmidrule(lr){7-7}
+   AlphaFold                          & 0.193   & 0.437      & 0.193   & 0.437   & 0.211     & 0.319\\   
+                                      & (0.307) & (0.516)    & (0.310) & (0.516) & (0.282)   & (0.481)\\   
+   Counterfactual                     & 0.0005  & 0.334      & 0.0005  & -0.191  & 0.449     & 0.626\\   
+                                      & (0.511) & (19,575.8) & (0.516) & (0.456) & (9,935.1) & (0.807)\\   
+   AlphaFold $\times$ Counterfactual  & 0.800   & 0.501      &         &         & 0.192     &   \\   
+                                      & (0.872) & (0.455)    &         &         & (9,934.8) &   \\   
+   AlphaFold square                   &         & -0.181     &         & -0.181  &           & -0.109\\   
+                                      &         & (0.173)    &         & (0.173) &           & (0.159)\\   
+   Counterfactual square              &         & -0.525     &         &         &           &   \\   
+                                      &         & (19,575.8) &         &         &           &   \\   
+   \midrule
+   \emph{Fixed-effects}\\
+   quarter\_year                      & Yes     & Yes        & Yes     & Yes     & Yes       & Yes\\  
+   institution                        & Yes     & Yes        & Yes     & Yes     & Yes       & Yes\\  
+   institution\_type                  & Yes     & Yes        & Yes     & Yes     & Yes       & Yes\\  
+   institution\_country\_code         & Yes     & Yes        & Yes     & Yes     & Yes       & Yes\\  
+   \midrule
+   \emph{Fit statistics}\\
+   Observations                       & 246     & 246        & 241     & 241     & 239       & 239\\  
+   R$^2$                              & 0.95    & 0.95       & 0.95    & 0.95    & 0.96      & 0.96\\  
+Mean(Dep. Var.) & 2.051 & 2.051 & 2.037 & 2.037 & 2.054 & 2.054 \\
+   \midrule \midrule
+   \multicolumn{7}{l}{\emph{Clustered (author) standard-errors in parentheses}}\\
+   \multicolumn{7}{l}{\emph{Signif. Codes: ***: 0.01, **: 0.05, *: 0.1}}\\
+\end{tabular}
+\par\endgroup

@@ -1,0 +1,33 @@
+\begingroup
+\centering
+\begin{tabular}{lcccccc}
+   \tabularnewline \midrule \midrule
+   Dependent Variable: & \multicolumn{6}{c}{ln1p\_patent\_citation}\\
+ & \multicolumn{2}{c}{All Technologies} & \multicolumn{2}{c}{Counterfactual AI} & \multicolumn{2}{c}{Counterfactual No AI} \\
+\cmidrule(lr){1-1}\cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7}
+Variables & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} \\
+\cmidrule(lr){1-1}\cmidrule(lr){2-2} \cmidrule(lr){3-3} \cmidrule(lr){4-4} \cmidrule(lr){5-5} \cmidrule(lr){6-6} \cmidrule(lr){7-7}
+   AlphaFold                    & -0.267 & -0.238  & -0.308 & -0.308  & -0.186 & -0.171\\   
+                                & (1.31) & (1.70)  & (1.98) & (2.44)  & (1.46) & (1.97)\\   
+   Counterfactual               & 0.125  & 0.164   & 0.069  & 0.043   & 0.119  & 0.137\\   
+                                & (1.05) & (1.13)  & (2.16) & (2.30)  & (1.46) & (1.53)\\   
+   AlphaFold square             &        & 0.019   &        & 0.041   &        & 0.011\\   
+                                &        & (0.399) &        & (0.548) &        & (0.454)\\   
+   Counterfactual square        &        & -0.039  &        &         &        & -0.031\\   
+                                &        & (0.200) &        &         &        & (0.278)\\   
+   \midrule
+   \emph{Fixed-effects}\\
+   quarter\_year                & Yes    & Yes     & Yes    & Yes     & Yes    & Yes\\  
+   institution                  & Yes    & Yes     & Yes    & Yes     & Yes    & Yes\\  
+   institution\_type            & Yes    & Yes     & Yes    & Yes     & Yes    & Yes\\  
+   institution\_country\_code   & Yes    & Yes     & Yes    & Yes     & Yes    & Yes\\  
+   \midrule
+   \emph{Fit statistics}\\
+   Observations                 & 418    & 418     & 379    & 379     & 405    & 405\\  
+   R$^2$                        & 0.80   & 0.80    & 0.78   & 0.78    & 0.80   & 0.80\\  
+Mean(Dep. Var.) & 0.269 & 0.269 & 0.259 & 0.259 & 0.268 & 0.268 \\
+   \midrule \midrule
+   \multicolumn{7}{l}{\emph{Clustered (author) standard-errors in parentheses}}\\
+   \multicolumn{7}{l}{\emph{Signif. Codes: ***: 0.01, **: 0.05, *: 0.1}}\\
+\end{tabular}
+\par\endgroup

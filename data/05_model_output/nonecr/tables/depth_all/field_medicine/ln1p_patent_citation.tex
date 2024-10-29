@@ -1,0 +1,37 @@
+\begingroup
+\centering
+\begin{tabular}{lcccccc}
+   \tabularnewline \midrule \midrule
+   Dependent Variable: & \multicolumn{6}{c}{ln1p\_patent\_citation}\\
+ & \multicolumn{2}{c}{All Technologies} & \multicolumn{2}{c}{Counterfactual AI} & \multicolumn{2}{c}{Counterfactual No AI} \\
+\cmidrule(lr){1-1}\cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7}
+Variables & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} \\
+\cmidrule(lr){1-1}\cmidrule(lr){2-2} \cmidrule(lr){3-3} \cmidrule(lr){4-4} \cmidrule(lr){5-5} \cmidrule(lr){6-6} \cmidrule(lr){7-7}
+   AlphaFold                          & 0.051   & 0.024         & 0.025   & -0.014  & 0.051   & 0.006\\   
+                                      & (0.118) & (0.067)       & (0.124) & (0.111) & (0.119) & (0.068)\\   
+   Counterfactual                     & 0.056   & 0.042$^{**}$  & 0.139   & 0.215   & 0.054   & 0.040$^{*}$\\   
+                                      & (0.057) & (0.021)       & (0.241) & (0.534) & (0.058) & (0.021)\\   
+   AlphaFold $\times$ Counterfactual  & -0.117  & 0.005         & -0.062  & -0.306  & -0.163  & 0.005\\   
+                                      & (0.210) & (0.003)       & (0.380) & (0.370) & (0.222) & (0.003)\\   
+   AlphaFold square                   &         & -0.008        &         & -0.003  &         & -0.007\\   
+                                      &         & (0.008)       &         & (0.013) &         & (0.008)\\   
+   Counterfactual square              &         & -0.003$^{**}$ &         & -0.079  &         & -0.003$^{**}$\\   
+                                      &         & (0.001)       &         & (0.305) &         & (0.001)\\   
+   I(af\^2) $\times$ I(ct\^2)         &         & 0.000002      &         & 0.026   &         & 0.000002\\   
+                                      &         & (0.000003)    &         & (0.026) &         & (0.000003)\\   
+   \midrule
+   \emph{Fixed-effects}\\
+   quarter\_year                      & Yes     & Yes           & Yes     & Yes     & Yes     & Yes\\  
+   institution                        & Yes     & Yes           & Yes     & Yes     & Yes     & Yes\\  
+   institution\_type                  & Yes     & Yes           & Yes     & Yes     & Yes     & Yes\\  
+   institution\_country\_code         & Yes     & Yes           & Yes     & Yes     & Yes     & Yes\\  
+   \midrule
+   \emph{Fit statistics}\\
+   Observations                       & 11,776  & 11,776        & 10,829  & 10,829  & 11,737  & 11,737\\  
+   R$^2$                              & 0.37    & 0.37          & 0.39    & 0.39    & 0.37    & 0.37\\  
+Mean(Dep. Var.) & 0.554 & 0.554 & 0.562 & 0.562 & 0.556 & 0.556 \\
+   \midrule \midrule
+   \multicolumn{7}{l}{\emph{Clustered (author) standard-errors in parentheses}}\\
+   \multicolumn{7}{l}{\emph{Signif. Codes: ***: 0.01, **: 0.05, *: 0.1}}\\
+\end{tabular}
+\par\endgroup

@@ -1,0 +1,26 @@
+\begingroup
+\centering
+\begin{tabular}{lcccccc}
+   \tabularnewline \midrule \midrule
+   Dependent Variable: & \multicolumn{6}{c}{ln1p\_cited\_by\_count}\\
+ & \multicolumn{2}{c}{All Technologies} & \multicolumn{2}{c}{Counterfactual AI} & \multicolumn{2}{c}{Counterfactual No AI} \\
+\cmidrule(lr){1-1}\cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7}
+Variables & \multicolumn{1}{c}{All} & \multicolumn{1}{c}{High PDB} & \multicolumn{1}{c}{All} & \multicolumn{1}{c}{High PDB} & \multicolumn{1}{c}{All} & \multicolumn{1}{c}{High PDB} \\
+\cmidrule(lr){1-1}\cmidrule(lr){2-2} \cmidrule(lr){3-3} \cmidrule(lr){4-4} \cmidrule(lr){5-5} \cmidrule(lr){6-6} \cmidrule(lr){7-7}
+   AlphaFold      & 0.156$^{***}$ & 0.199$^{***}$ & 0.139$^{***}$ & 0.171$^{***}$ & 0.157$^{***}$ & 0.197$^{***}$\\   
+                  & (0.006)       & (0.014)       & (0.006)       & (0.014)       & (0.006)       & (0.014)\\   
+   Counterfactual & 0.090$^{***}$ & 0.220$^{***}$ & 0.039$^{***}$ & 0.012         & 0.097$^{***}$ & 0.251$^{***}$\\   
+                  & (0.007)       & (0.014)       & (0.011)       & (0.024)       & (0.007)       & (0.015)\\   
+   \midrule
+   \emph{Fixed-effects}\\
+   quarter\_year  & Yes           & Yes           & Yes           & Yes           & Yes           & Yes\\  
+   \midrule
+   \emph{Fit statistics}\\
+   Observations   & 175,979       & 48,857        & 133,479       & 36,172        & 168,693       & 46,978\\  
+   R$^2$          & 0.37          & 0.37          & 0.37          & 0.37          & 0.37          & 0.38\\  
+Mean(Dep. Var.) & 1.112 & 1.391 & 1.002 & 1.213 & 1.117 & 1.396 \\
+   \midrule \midrule
+   \multicolumn{7}{l}{\emph{Clustered (author) standard-errors in parentheses}}\\
+   \multicolumn{7}{l}{\emph{Signif. Codes: ***: 0.01, **: 0.05, *: 0.1}}\\
+\end{tabular}
+\par\endgroup
