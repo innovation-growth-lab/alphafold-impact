@@ -100,19 +100,14 @@ def get_unique_authors(
 
     logger.info("Cumulative sum of counts")
     authors = (
-        authors.groupby(["author", "depth", "source", "quarter"])[
-            "counts"
-        ]
+        authors.groupby(["author", "depth", "source", "quarter"])["counts"]
         .sum()
         .reset_index()
     )
-    authors = authors.sort_values(
-        by=["author", "depth", "source", "quarter"]
-    )
-    authors["cumulative_counts"] = (
-        authors.groupby(["author", "depth", "source"])["counts"]
-        .cumsum()
-    )
+    authors = authors.sort_values(by=["author", "depth", "source", "quarter"])
+    authors["cumulative_counts"] = authors.groupby(["author", "depth", "source"])[
+        "counts"
+    ].cumsum()
 
     logger.info("Pivoting table")
     authors = authors.pivot_table(
@@ -377,6 +372,12 @@ def merge_author_data(
             len(data_loaders),
         )
         data = loader()
+
+        # define high_pdb authors
+        data = _define_high_pdb_authors(data, pdb_submissions)
+
+
+        # get first author data
         data = data[data["author_position"] == "first"]
 
         data["publication_date"] = pd.to_datetime(data["publication_date"])
@@ -428,9 +429,12 @@ def merge_author_data(
 
         # sort by quarter, bfill and ffill for missing af. ct_ai, ct_noai, other
         data = data.sort_values(by=["author", "quarter"])
-        data[["af", "ct_ai", "ct_noai", "other"]] = data.groupby("author")[
-            ["af", "ct_ai", "ct_noai", "other"]
-        ].ffill().fillna(0).astype(int)
+        data[["af", "ct_ai", "ct_noai", "other"]] = (
+            data.groupby("author")[["af", "ct_ai", "ct_noai", "other"]]
+            .ffill()
+            .fillna(0)
+            .astype(int)
+        )
 
         # fill depth with whatever value groupby author is not NAN
         data["depth"] = data.groupby("author")["depth"].transform(
@@ -450,7 +454,7 @@ def merge_author_data(
         data = data.merge(
             pdb_submissions[["id", "resolution", "R_free"]], on="id", how="left"
         )
-
+        
         # get icite_counts
         icite_outputs = _create_cc_counts(data[["id", "doi"]], icite_data)
         data = data.merge(icite_outputs, on="id", how="left")
@@ -563,6 +567,45 @@ def _candidates_preprocessing(candidate_authors: pd.DataFrame) -> pd.DataFrame:
 
     return max_total_data
 
+
+def _define_high_pdb_authors(
+    data: pd.DataFrame, pdb_submissions: pd.DataFrame
+) -> pd.DataFrame:
+    """
+    Define high PDB authors based on the publication counts in the
+    fourth quantile.
+
+    Args:
+        data (pd.DataFrame): The input DataFrame containing the data.
+        pdb_submissions (pd.DataFrame): The DataFrame containing the PDB submissions.
+
+    Returns:
+        pd.DataFrame: The updated DataFrame with the 'high_pdb' column.
+    """
+
+    data_db = data[["id", "author", "publication_date"]].merge(
+        pdb_submissions, on="id", how="inner"
+    )
+
+    # Filter data_db to include only publications before 2021
+    data_db_pre_2021 = data_db[data_db["publication_date"] < "2021-01-01"]
+
+    # Group by author and count the number of publications for each author
+    author_pub_counts = data_db_pre_2021.groupby("author")["id"].count().reset_index()
+    author_pub_counts = author_pub_counts.rename(columns={"id": "pub_count"})
+
+    # Calculate the 75th percentile (fourth quantile) of the publication counts
+    quantile_75 = author_pub_counts["pub_count"].quantile(0.75)
+
+    # Create a high_pdb variable for authors with publication counts in the fourth quantile
+    author_pub_counts["high_pdb"] = author_pub_counts["pub_count"] >= quantile_75
+
+    # Merge this information back into the data DataFrame
+    data = data.merge(
+        author_pub_counts[["author", "high_pdb"]], on="author", how="left"
+    )
+
+    return data
 
 def _get_mesh_data(data: pd.DataFrame, mesh_terms: pd.DataFrame) -> pd.DataFrame:
 
