@@ -203,9 +203,12 @@ def get_cum_sums(pi_data, publication_data):
     pi_data = pi_data.sort_values(by=["pi_id", "quarter"])
 
     # ffill the four columns
-    pi_data[["cum_af", "cum_ct_ai", "cum_ct_noai", "cum_other"]] = pi_data[
-        ["cum_af", "cum_ct_ai", "cum_ct_noai", "cum_other"]
-    ].ffill().fillna(0).astype(int)
+    pi_data[["cum_af", "cum_ct_ai", "cum_ct_noai", "cum_other"]] = (
+        pi_data[["cum_af", "cum_ct_ai", "cum_ct_noai", "cum_other"]]
+        .ffill()
+        .fillna(0)
+        .astype(int)
+    )
 
     return pi_data
 
@@ -331,6 +334,13 @@ def get_pdb_activity(data, pdb_submissions):
     # Drop the intermediate 'pdb_count' column if no longer needed
     data_merged.drop(columns=["pdb_count"], inplace=True)
 
+    # get individual pdb_submission for each id
+    data_merged = data_merged.merge(
+        pdb_submissions[["id"]], on="id", how="left", indicator=True
+    )
+    data_merged["pdb_submission"] = data_merged["_merge"] == "both"
+    data_merged.drop(columns=["_merge"], inplace=True)
+    
     return data_merged
 
 
@@ -693,6 +703,7 @@ def get_quarterly_aggregate_outputs(data):
         "cit_1": "sum",
         "parent_time": "first",
         "pdb_share": "first",
+        "pdb_submission": "sum",
         "resolution": "mean",
         "R_free": "mean",
         "intent": "first",
