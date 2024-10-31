@@ -58,7 +58,7 @@ dep_vars <- c(
   "ln1p_cited_by_count", "ln1p_cit_0", "ln1p_cit_1",
   "ln1p_fwci", "logit_cit_norm_perc",
   "ln1p_patent_count", "ln1p_patent_citation", "ln1p_ca_count",
-  "resolution"
+  "resolution", "R_free", "pdb_submission"
 )
 
 for (dep_var_out in dep_vars) { # nolint
@@ -144,7 +144,7 @@ for (dep_var_out in dep_vars) { # nolint
           )
       }
 
-      # extract the dependent variable using form split by __, first element
+      # consider skipping regression if saturated
       dep_var <- strsplit(form, "__")[[1]][1]
 
       non_na_data <- local_data[!is.na(local_data[[dep_var]]), ]
@@ -167,19 +167,38 @@ for (dep_var_out in dep_vars) { # nolint
         next
       }
 
-      results[[regression_label]] <- tryCatch(
-        {
-          feols(
-            form_list[[form]],
-            data = local_data,
-            cluster = "author"
-          )
-        },
-        error = function(e) {
-          message("Error in regression: ", regression_label, " - ", e$message)
-          return(NULL) # Return NULL if an error occurs
-        }
-      )
+      # run the regression as linear, but make an exception for pdb_submission
+      if (dep_var == "pdb_submission") {
+        results[[regression_label]] <- tryCatch(
+          {
+            feols(
+              form_list[[form]],
+              data = local_data,
+              cluster = "author",
+              family = binomial(link = "logit")
+            )
+          },
+          error = function(e) {
+            message("Error in regression: ", regression_label, " - ", e$message)
+            return(NULL) # Return NULL if an error occurs
+          }
+        )
+      } else {
+        # run the regression
+        results[[regression_label]] <- tryCatch(
+          {
+            feols(
+              form_list[[form]],
+              data = local_data,
+              cluster = "author"
+            )
+          },
+          error = function(e) {
+            message("Error in regression: ", regression_label, " - ", e$message)
+            return(NULL) # Return NULL if an error occurs
+          }
+        )
+      }
     }
   }
 

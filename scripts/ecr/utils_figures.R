@@ -103,7 +103,9 @@ dep_var_labels <- c(
   "ln1p_patent_count" = "ln (1 + Patent count)",
   "ln1p_patent_citation" = "ln (1 + Patent citation count)",
   "ln1p_ca_count" = "ln (1 + CA count)",
-  "resolution" = "Resolution"
+  "resolution" = "Resolution",
+  "R_free" = "R free",
+  "pdb_submission" = "PDB submission"
 )
 
 coef_labels <- c(
@@ -170,7 +172,7 @@ generate_coef_plots <- function(coef_table) { # nolint
 
         # drop depth_pdb with Foundational and High PDB
         coef_plot_data <- coef_plot_data %>% # nolint
-          filter(!(depth == "Foundational" & pdb == "High PDB")) # nolint
+          filter(!(pdb == "High PDB")) # nolint
 
         # Check if coef_plot_data is empty
         if (nrow(coef_plot_data) == 0) {

@@ -38,6 +38,9 @@ table_info <- list(
   ),
   "R_free" = list(
     file_name = "R_free.tex"
+  ),
+  "pdb_submission" = list(
+    file_name = "pdb_submission.tex"
   )
 )
 
@@ -64,7 +67,6 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
 
     # Iterate over subsets
     for (depth in depths) {
-
       result_names <- c()
       for (field in fields) {
         for (pdb_group in pdb_groups) {

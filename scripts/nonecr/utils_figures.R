@@ -103,7 +103,9 @@ dep_var_labels <- c(
   "ln1p_patent_count" = "ln (1 + Patent count)",
   "ln1p_patent_citation" = "ln (1 + Patent citation count)",
   "ln1p_ca_count" = "ln (1 + CA count)",
-  "resolution" = "Resolution"
+  "resolution" = "Resolution",
+  "R_free" = "R free",
+  "pdb_submission" = "PDB submission"
 )
 
 coef_labels <- c(
