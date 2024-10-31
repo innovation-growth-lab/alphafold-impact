@@ -1,7 +1,6 @@
 # Clean out the workspace
 rm(list = ls())
 options(max.print = 1000)
-options(width = 100)
 
 # Check installation & load required packages
 list_of_packages <- c(
