@@ -83,7 +83,7 @@ def create_publications_data(
     data["parent_publication_date"] = data["parent_id"].map(id_date_dict)
 
     # get short term citation counts
-    data = _normalise_citation_counts(data)
+    # data = _normalise_citation_counts(data)
 
     # get fields data
     data = _get_field_distr(data)
@@ -424,6 +424,7 @@ def _get_pdb_activity(
     pdb_submissions_e = pdb_submissions.explode("authors")
     pdb_submissions_e.drop_duplicates(subset=["id", "authors"], inplace=True)
 
+
     # compute count, average resolution, and R_free per authors
     pdb_submissions_grouped_count = (
         pdb_submissions_e.groupby(["authors"])
@@ -432,18 +433,6 @@ def _get_pdb_activity(
         )
         .reset_index()
     )
-
-    # drop missing R_free and resolution values
-    pdb_submissions_e["R_free"] = pd.to_numeric(
-        pdb_submissions_e["R_free"], errors="coerce"
-    )
-    pdb_submissions_e["resolution"] = pd.to_numeric(
-        pdb_submissions_e["resolution"], errors="coerce"
-    )
-    pdb_submissions_e = pdb_submissions_e[
-        pdb_submissions_e["R_free"].notnull()
-        & pdb_submissions_e["resolution"].notnull()
-    ]
 
     # compute average resolution and R_free per authors
     pdb_submissions_grouped_chars = (
@@ -463,11 +452,6 @@ def _get_pdb_activity(
     # keep last author from data authorships
     data["last_author"] = data["authorships"].apply(
         lambda x: x[-1][0] if x is not None and len(x) > 0 else None
-    )
-
-    # keep last author's institution
-    data["last_author_institution"] = data["authorships"].apply(
-        lambda x: x[-1][1] if x is not None and len(x) > 0 else None
     )
 
     # keep a list of authors

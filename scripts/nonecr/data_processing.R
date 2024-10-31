@@ -94,6 +94,10 @@ nonecr_data <- nonecr_data %>%
     ln1p_cit_1 = log1p(cit_1),
     ln1p_cit_2 = log1p(cit_2),
     ln1p_cit_norm_perc = log1p(citation_normalized_percentile_value),
+    logit_cit_norm_perc = log(
+      citation_normalized_percentile_value /
+        (1 - citation_normalized_percentile_value)
+    ),
     ln1p_ca_count = log1p(ca_count),
     ln1p_patent_count = log1p(patent_count),
     ln1p_patent_citation = log1p(patent_citation),
@@ -120,54 +124,28 @@ nonecr_data <- nonecr_data %>%
 
 # Define the mapping of old values to new values
 field_mapping <- c(
-  "Biochemistry, Genetics and Molecular Biology" = "biochem_genetics_molecular_biology", # nolint
-  "Medicine" = "medicine",
-  "Chemistry" = "chemistry",
-  "Immunology and Microbiology" = "immunology_microbiology"
+  "Biochemistry, Genetics and Molecular Biology" = "Molecular Biology"
 )
 
 # Apply the mapping to the primary_field column
 nonecr_data$primary_field <- recode(nonecr_data$primary_field, !!!field_mapping)
-
-# work to create high pdb normal pdb
-filtered_nonecr_data <- nonecr_data %>%
-  filter(year < 2021)
-
-# Group by pi_id and count the non-NA R_free values for each pi_id
-pdb_count_data <- filtered_nonecr_data %>%
-  group_by(author) %>%
-  summarise(pdb_count = sum(!is.na(R_free))) %>%
-  ungroup()
-
-pdb_count_data <- pdb_count_data %>%
-  mutate(
-    high_pdb = ifelse(
-      pdb_count > quantile(pdb_count, 0.75, na.rm = TRUE),
-      1, 0
-    )
-  )
-
-# Merge the resulting count back into the original DataFrame
-nonecr_data <- nonecr_data %>%
-  left_join(pdb_count_data, by = "author")
 
 # ------------------------------------------------------------------------------
 # Sample Prep
 # ------------------------------------------------------------------------------
 # Define sub_samples as a list of samples
 sub_samples <- list()
-pdb_groups <- c("all", "high")
-unique_depths <- c("all", "foundational", "applied")
+pdb_groups <- c("All PDB", "High PDB")
+unique_depths <- c("All Groups", "Foundational", "Applied")
 unique_fields <- c(
-  "biochem_genetics_molecular_biology",
-  "medicine",
-  "chemistry",
-  "immunology_microbiology"
+  "All Fields",
+  "Molecular Biology",
+  "Medicine"
 )
 
 # Create subsets for all combinations of depth, field, and pdb_group
 for (depth_lvl in unique_depths) { # nolint
-  for (field in c("all", unique_fields)) {
+  for (field in unique_fields) {
     for (pdb_group in pdb_groups) {
       sample_name <- paste0(
         "depth_", depth_lvl, "__field_",
@@ -179,17 +157,19 @@ for (depth_lvl in unique_depths) { # nolint
       sub_sample <- nonecr_data
 
       # Apply depth filter
-      if (depth_lvl != "all") {
-        sub_sample <- subset(sub_sample, depth == depth_lvl)
+      if (depth_lvl == "Foundational") {
+        sub_sample <- subset(sub_sample, depth == "foundational")
+      } else if (depth_lvl == "Applied") {
+        sub_sample <- subset(sub_sample, depth == "applied")
       }
 
       # Apply field filter
-      if (field != "all") {
+      if (field != "All Fields") {
         sub_sample <- subset(sub_sample, primary_field == field)
       }
 
       # Apply pdb_group filter
-      if (pdb_group == "high") {
+      if (pdb_group == "High PDB") {
         sub_sample <- subset(sub_sample, high_pdb == 1)
       }
 
@@ -198,6 +178,7 @@ for (depth_lvl in unique_depths) { # nolint
     }
   }
 }
+
 # ------------------------------------------------------------------------------
 # Save data
 # ------------------------------------------------------------------------------

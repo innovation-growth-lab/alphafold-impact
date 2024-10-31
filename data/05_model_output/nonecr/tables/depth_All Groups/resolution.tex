@@ -1,0 +1,37 @@
+\begingroup
+\centering
+\begin{tabular}{lcccccccccccc}
+   \tabularnewline \midrule \midrule
+   Dependent Variable: & \multicolumn{12}{c}{resolution}\\
+ & \multicolumn{4}{c}{All Fields} & \multicolumn{4}{c}{Molecular Biology} & \multicolumn{4}{c}{Medicine} \\
+\cmidrule(lr){2-5} \cmidrule(lr){6-9} \cmidrule(lr){10-13}
+ & \multicolumn{2}{c}{All PDB} & \multicolumn{2}{c}{High PDB} & \multicolumn{2}{c}{All PDB} & \multicolumn{2}{c}{High PDB} & \multicolumn{2}{c}{All PDB} & \multicolumn{2}{c}{High PDB} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7} \cmidrule(lr){8-9} \cmidrule(lr){10-11} \cmidrule(lr){12-13}
+Variables & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} \\
+\cmidrule(lr){1-1}\cmidrule(lr){2-2} \cmidrule(lr){3-3} \cmidrule(lr){4-4} \cmidrule(lr){5-5} \cmidrule(lr){6-6} \cmidrule(lr){7-7} \cmidrule(lr){8-8} \cmidrule(lr){9-9} \cmidrule(lr){10-10} \cmidrule(lr){11-11} \cmidrule(lr){12-12} \cmidrule(lr){13-13}
+   AlphaFold                                & 0.143$^{**}$ & 0.011       & 0.142$^{*}$ & 0.005       & 0.258$^{***}$ & 0.056$^{*}$ & 0.180   & 0.048   & 0.055   & -0.003  & 0.008   & -0.003\\   
+                                            & (0.060)      & (0.010)     & (0.078)     & (0.009)     & (0.089)       & (0.034)     & (0.132) & (0.041) & (0.122) & (0.008) & (0.220) & (0.007)\\   
+   Counterfactual AI                        & 0.177        & 0.097       & 0.127       & 0.107       & 0.264         & 0.136       & 0.286   & 0.209   & -0.047  & 0.101   & -0.176  & -0.065\\   
+                                            & (0.130)      & (0.067)     & (0.148)     & (0.119)     & (0.220)       & (0.112)     & (0.246) & (0.166) & (0.146) & (0.136) & (0.188) & (0.073)\\   
+   Counterfactual No AI                     & -0.064       & -0.005      & -0.068      & -0.012      & -0.110        & -0.028      & -0.127  & 0.022   & 0.091   & 0.018   & -0.047  & 0.010\\   
+                                            & (0.077)      & (0.014)     & (0.095)     & (0.017)     & (0.144)       & (0.053)     & (0.167) & (0.040) & (0.103) & (0.018) & (0.173) & (0.021)\\   
+   AlphaFold $\times$ Counterfactual AI     & -0.169       & -0.025      & -0.273      & -0.035      & -0.220        & -0.041      & -0.387  & -0.056  & 0.329   & -0.031  & 0.038   & -0.017\\   
+                                            & (0.181)      & (0.019)     & (0.213)     & (0.029)     & (0.246)       & (0.030)     & (0.382) & (0.043) & (0.475) & (0.040) & (0.363) & (0.037)\\   
+   AlphaFold $\times$ Counterfactual No AI  & 0.104        & 0.002$^{*}$ & -0.022      & 0.002$^{*}$ & 0.213         & 0.003       & 0.386   & -0.018  & -0.110  & -0.0007 & -0.115  & -0.006\\   
+                                            & (0.146)      & (0.001)     & (0.146)     & (0.001)     & (0.283)       & (0.020)     & (0.305) & (0.020) & (0.269) & (0.006) & (0.254) & (0.004)\\   
+   \midrule
+   \emph{Fixed-effects}\\
+   quarter\_year                            & Yes          & Yes         & Yes         & Yes         & Yes           & Yes         & Yes     & Yes     & Yes     & Yes     & Yes     & Yes\\  
+   institution                              & Yes          & Yes         & Yes         & Yes         & Yes           & Yes         & Yes     & Yes     & Yes     & Yes     & Yes     & Yes\\  
+   institution\_type                        & Yes          & Yes         & Yes         & Yes         & Yes           & Yes         & Yes     & Yes     & Yes     & Yes     & Yes     & Yes\\  
+   institution\_country\_code               & Yes          & Yes         & Yes         & Yes         & Yes           & Yes         & Yes     & Yes     & Yes     & Yes     & Yes     & Yes\\  
+   \midrule
+   \emph{Fit statistics}\\
+   Observations                             & 10,701       & 10,701      & 5,308       & 5,308       & 5,600         & 5,600       & 2,755   & 2,755   & 2,418   & 2,418   & 1,188   & 1,188\\  
+   R$^2$                                    & 0.22         & 0.22        & 0.26        & 0.26        & 0.24          & 0.24        & 0.29    & 0.29    & 0.45    & 0.45    & 0.52    & 0.53\\  
+Mean(Dep. Var.) & 2.626 & 2.626 & 2.597 & 2.597 & 2.689 & 2.689 & 2.649 & 2.649 & 2.662 & 2.662 & 2.667 & 2.667 \\
+   \midrule \midrule
+   \multicolumn{13}{l}{\emph{Clustered (author) standard-errors in parentheses}}\\
+   \multicolumn{13}{l}{\emph{Signif. Codes: ***: 0.01, **: 0.05, *: 0.1}}\\
+\end{tabular}
+\par\endgroup

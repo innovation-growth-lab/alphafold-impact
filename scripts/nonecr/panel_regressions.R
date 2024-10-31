@@ -56,12 +56,12 @@ cov_sets <- c("base0")
 fe_list <- c("fe1")
 dep_vars <- c(
   "ln1p_cited_by_count", "ln1p_cit_0", "ln1p_cit_1",
-  "ln1p_fwci", "ln1p_cit_norm_perc",
+  "ln1p_fwci", "logit_cit_norm_perc",
   "ln1p_patent_count", "ln1p_patent_citation", "ln1p_ca_count",
   "resolution"
 )
 
-for (dep_var_out in dep_vars) {
+for (dep_var_out in dep_vars) { # nolint
   treat_vars <- c(
     "af_ind + ct_ai_ind + ct_noai_ind + af:ct_ai_ind + af:ct_noai_ind", # because subgroups do not intersect (ie. ct_ai subgroups require ct_noai == 0) # nolint
     "af + ct_ai + ct_noai + af:ct_ai + af:ct_noai"
@@ -83,9 +83,9 @@ for (dep_var_out in dep_vars) {
       for (fe in fe_list) {
         # Iterate over treatment variables
         for (treat_var in treat_vars) {
-          if (treat_var == "af_ind + ct_ai_ind + ct_noai_ind + af:ct_ai_ind + af:ct_noai_ind") {
+          if (treat_var == "af_ind + ct_ai_ind + ct_noai_ind + af:ct_ai_ind + af:ct_noai_ind") { # nolint
             treat_var <- paste0("af + ct_ai + ct_noai + af:ct_ai + af:ct_noai")
-            label_var <- "af_ind + ct_ai_ind + ct_noai_ind + af:ct_ai_ind + af:ct_noai_ind"
+            label_var <- "af_ind + ct_ai_ind + ct_noai_ind + af:ct_ai_ind + af:ct_noai_ind" # nolint
           } else {
             label_var <- treat_var
           }
@@ -193,8 +193,8 @@ for (dep_var_out in dep_vars) {
     fe_list = fe_list,
     treat_vars = treat_vars,
     treat_var_interest = c(
-      "af", "af_ind", "ct", "ct_ind",
-      "af:ct"
+      "af", "af_ind", "ct_ai_ind", "ct_noai_ind", "ct_ai", "ct_noai",
+      "af:ct_ai", "af:ct_noai"
     )
   )
 

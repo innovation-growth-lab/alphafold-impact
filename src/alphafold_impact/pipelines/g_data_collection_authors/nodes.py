@@ -376,7 +376,6 @@ def merge_author_data(
         # define high_pdb authors
         data = _define_high_pdb_authors(data, pdb_submissions)
 
-
         # get first author data
         data = data[data["author_position"] == "first"]
 
@@ -583,9 +582,11 @@ def _define_high_pdb_authors(
         pd.DataFrame: The updated DataFrame with the 'high_pdb' column.
     """
 
-    data_db = data[["id", "author", "publication_date"]].merge(
+    data_db = data[["id", "author"]].merge(
         pdb_submissions, on="id", how="inner"
     )
+
+    data_db["pdb_submission"] = True
 
     # Filter data_db to include only publications before 2021
     data_db_pre_2021 = data_db[data_db["publication_date"] < "2021-01-01"]
@@ -604,6 +605,10 @@ def _define_high_pdb_authors(
     data = data.merge(
         author_pub_counts[["author", "high_pdb"]], on="author", how="left"
     )
+
+    # Merge data_db to include pdb_submission column
+    data = data.merge(data_db[["id", "pdb_submission"]], on="id", how="left")
+    data.fillna({"pdb_submission": False}, inplace=True)
 
     return data
 
