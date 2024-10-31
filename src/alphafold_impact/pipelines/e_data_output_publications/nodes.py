@@ -484,8 +484,9 @@ def _get_pdb_activity(
     ]
 
     data = data.merge(
-        pdb_submissions[["id", "resolution", "R_free"]], on="id", how="left"
+        pdb_submissions[["id", "resolution", "R_free"]], on="id", how="left", indicator=True
     )
+    data["pdb_submission"] = data["_merge"] == "both"
     data = data.merge(data_e_grouped, on="id", how="left")
 
     return data
