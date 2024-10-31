@@ -73,7 +73,6 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                 },
                 outputs="publications.data.intermediate",
                 name="merge_publications_data",
-                tags="debug"
             ),
             node(
                 get_institution_info,
