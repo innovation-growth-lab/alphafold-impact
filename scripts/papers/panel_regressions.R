@@ -51,26 +51,28 @@ covs[["base0"]] <- c(field_cols, mesh_cols, "num_publications")
 fes <- list()
 fes[["fe0"]] <- c("quarter_year")
 fes[["fe1"]] <- c(
-  "quarter_year" # ,
-  # "institution", "institution_type", "institution_country_code"
+  "quarter_year",
+  "institution", "institution_type", "institution_country_code"
 )
 
 
 ### Extensive ###
 
-# List of dependent variables
-dep_vars <- c(
-  "cited_by_count_ln", "ca_count_ln", "patent_count_ln", "patent_citation_ln"
-)
 cov_sets <- c("base0")
 fe_list <- c("fe1")
 dep_vars <- c(
-  "ln1p_cited_by_count", # "ln1p_cit_0", "ln1p_cit_1",
-  "ln1p_fwci", "ln1p_cit_norm_perc",
+  "ln1p_cited_by_count",
+  "ln1p_fwci", "logit_cit_norm_perc",
   "ln1p_patent_count", "ln1p_patent_citation", "ln1p_ca_count",
-  "resolution", "num_publications"
+  "resolution", "R_free", "pdb_submission"
 )
-treat_vars <- c("af + ct")
+treat_vars <- paste(
+  c(
+    "af", "af:strong", "ct_ai", "ct_noai",
+    "ct_ai:strong", "ct_noai:strong"
+  ),
+  collapse = " + "
+)
 
 form_list <- list()
 # Iterate over dependent variables
@@ -127,24 +129,66 @@ for (sub in names(sub_samples)) {
   # For each formula, compute feols
   for (form in names(form_list)) {
     regression_label <- paste0(sub, "__", form)
+
+    # consider skipping regression if saturated
+    dep_var <- strsplit(form, "__")[[1]][1]
+
+    non_na_data <- sub_samples[[sub]][!is.na(sub_samples[[sub]][[dep_var]]), ]
+
+    # compute the unique number of quarter_year
+    n_quarters <- length(unique(non_na_data$quarter_year))
+    n_institutions <- length(unique(non_na_data$institution))
+    n_institution_types <- length(unique(non_na_data$institution_type))
+    n_institution_countries <- length(
+      unique(non_na_data$institution_country_code)
+    )
+
+    if (
+      n_quarters + n_institutions +
+        n_institution_types + n_institution_countries
+      > nrow(non_na_data)
+    ) {
+      message("Skipping regression: ", regression_label)
+      results[[regression_label]] <- NULL
+      next
+    }
+
     message("Running regression: ", regression_label)
 
-    results[[regression_label]] <- tryCatch(
-      {
-        feols(
-          form_list[[form]],
-          data = sub_samples[[sub]],
-          cluster = "author"
-        )
-      },
-      error = function(e) {
-        message("Error in regression: ", regression_label, " - ", e$message)
-        return(NULL) # Return NULL if an error occurs
-      }
-    )
+    # run the regression as linear, but make an exception for pdb_submission
+    if (dep_var == "pdb_submission") {
+      results[[regression_label]] <- tryCatch(
+        {
+          feols(
+            form_list[[form]],
+            data = sub_samples[[sub]],
+            cluster = "author",
+            family = binomial(link = "logit")
+          )
+        },
+        error = function(e) {
+          message("Error in regression: ", regression_label, " - ", e$message)
+          return(NULL) # Return NULL if an error occurs
+        }
+      )
+    } else {
+      # run the regression
+      results[[regression_label]] <- tryCatch(
+        {
+          feols(
+            form_list[[form]],
+            data = sub_samples[[sub]],
+            cluster = "author"
+          )
+        },
+        error = function(e) {
+          message("Error in regression: ", regression_label, " - ", e$message)
+          return(NULL) # Return NULL if an error occurs
+        }
+      )
+    }
   }
 }
-
 
 # ------------------------------------------------------------------------------
 # GENERATE TABLES
@@ -179,7 +223,8 @@ coef_table <- extract_coefficients(
   fe_list = fe_list,
   treat_vars = treat_vars,
   treat_var_interest = c(
-    "af", "ct"
+    "strong1:ct_noai", "strong1:ct_ai",
+    "af:strong1", "ct_noai", "ct_ai", "af"
   )
 )
 

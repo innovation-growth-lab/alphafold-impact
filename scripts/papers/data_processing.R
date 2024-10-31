@@ -4,8 +4,7 @@ options(max.print = 1000)
 
 # Check installation & load required packages
 list_of_packages <- c(
-  "arrow", "tidyverse", "MatchIt", "fastDummies", "aws.s3",
-  "yaml", "zoo"
+  "arrow", "tidyverse", "aws.s3", "yaml", "zoo"
 )
 new_packages <- list_of_packages[
   !(list_of_packages %in% installed.packages()[, "Package"])
@@ -60,14 +59,22 @@ papers <- s3read_using(
 # Replace commas in column names
 colnames(papers) <- gsub(",", "", colnames(papers))
 
-# for duplicate ids, keep first
-papers <- papers %>% distinct(id, .keep_all = TRUE)
+# for duplicate ids, keep first. fill few nas
+papers <- papers %>%
+  distinct(id, .keep_all = TRUE) %>%
+  mutate(
+    type = ifelse(is.na(type), "unknown", type),
+    country_code = ifelse(is.na(country_code), "unknown", country_code),
+    institution = ifelse(is.na(institution), "unknown", institution),
+    institution = ifelse(is.na(institution), "unknown", institution),
+    pdb_submission = ifelse(pdb_submission > 0, 1, 0)
+  )
 
 # Create 'strong' variable
 papers <- papers %>%
   mutate(
     strong = if_else(chain_label %in% c("strong", "partial_strong"), 1, 0),
-    strong = replace_na(strong, 0),
+    # strong = replace_na(strong, 0), # nolint
     strong = as.factor(strong),
     depth = as.factor(if_else(level == 0, "foundational", "applied")),
     af = if_else(source == "af", 1, 0),
@@ -82,6 +89,10 @@ papers <- papers %>%
     # ln1p_cit_0 = log1p(cit_0), # nolint
     # ln1p_cit_1 = log1p(cit_1), # nolint
     ln1p_cit_norm_perc = log1p(citation_normalized_percentile_value),
+    logit_cit_norm_perc = log(
+      citation_normalized_percentile_value /
+        (1 - citation_normalized_percentile_value)
+    ),
     ln1p_ca_count = log1p(ca_count),
     ln1p_patent_count = log1p(patent_count),
     ln1p_patent_citation = log1p(patent_citation),
@@ -89,6 +100,7 @@ papers <- papers %>%
     publication_date = as.Date(publication_date),
     resolution = as.numeric(resolution),
     R_free = as.numeric(R_free),
+    year = as.integer(str_sub(publication_date, 1, 4)),
     quarter_year = paste0(
       year(publication_date), " Q", quarter(publication_date)
     ),
@@ -111,11 +123,9 @@ papers <- papers %>%
   mutate(across(starts_with("field_"), ~ replace_na(., 0))) %>%
   mutate(across(starts_with("mesh_"), ~ replace_na(., 0)))
 
+# Define the mapping of old values to new values
 field_mapping <- c(
-  "Biochemistry, Genetics and Molecular Biology" = "biochem_genetics_molecular_biology", # nolint
-  "Medicine" = "medicine",
-  "Chemistry" = "chemistry",
-  "Immunology and Microbiology" = "immunology_microbiology"
+  "Biochemistry, Genetics and Molecular Biology" = "Molecular Biology"
 )
 
 papers$primary_field <- recode(papers$primary_field, !!!field_mapping)
@@ -137,61 +147,46 @@ papers <- papers %>%
 
 # Define sub_samples as a list of samples
 sub_samples <- list()
-pdb_groups <- c("all", "high")
-tech_groups <- c("all", "ct_ai", "ct_noai")
-unique_depths <- c("all", "foundational", "applied")
+pdb_groups <- c("All PDB", "High PDB")
+unique_depths <- c("All Groups", "Foundational", "Applied")
 unique_fields <- c(
-  "biochem_genetics_molecular_biology",
-  "medicine",
-  "chemistry",
-  "immunology_microbiology"
+  "All Fields",
+  "Molecular Biology",
+  "Medicine"
 )
 
-create_tech_group_subset <- function(data, tech_group) {
-  if (tech_group == "all") {
-    return(data)
-  } else if (tech_group == "ct_ai") {
-    return(data %>% filter(af >= 0, ct_ai >= 0, ct_noai == 0)) # nolint
-  } else if (tech_group == "ct_noai") {
-    return(data %>% filter(af >= 0, ct_noai >= 0, ct_ai == 0)) # nolint
-  }
-}
-
-# Create subsets for all combinations of depth, field, tech_group, and pdb_group
+# Create subsets for all combinations of depth, field, and pdb_group
 for (depth_lvl in unique_depths) { # nolint
-  for (field in c("all", unique_fields)) {
-    for (tech_group in tech_groups) {
-      for (pdb_group in pdb_groups) {
-        sample_name <- paste0(
-          "depth_", depth_lvl, "__field_",
-          field, "__tech_", tech_group, "__pdb_", pdb_group
-        )
-        if (field == "all") {
-          if (depth_lvl == "all") {
-            sub_sample <- create_tech_group_subset(papers, tech_group)
-          } else {
-            sub_sample <- create_tech_group_subset(
-              subset(papers, depth == depth_lvl), tech_group
-            )
-          }
-        } else {
-          if (depth_lvl == "all") {
-            sub_sample <- create_tech_group_subset(
-              subset(papers, primary_field == field), tech_group
-            )
-          } else {
-            sub_sample <- create_tech_group_subset(
-              subset(papers, depth == depth_lvl & primary_field == field),
-              tech_group
-            )
-          }
-        }
-        # Filter based on pdb_group
-        if (pdb_group == "high") {
-          sub_sample <- subset(sub_sample, high_pdb == 1)
-        }
-        sub_samples[[sample_name]] <- sub_sample
+  for (field in unique_fields) {
+    for (pdb_group in pdb_groups) {
+      sample_name <- paste0(
+        "depth_", depth_lvl, "__field_",
+        field, "__pdb_", pdb_group
+      )
+      message("Creating sample: ", sample_name)
+
+      # Start with the full dataset
+      sub_sample <- papers
+
+      # Apply depth filter
+      if (depth_lvl == "Foundational") {
+        sub_sample <- subset(sub_sample, depth == "foundational")
+      } else if (depth_lvl == "Applied") {
+        sub_sample <- subset(sub_sample, depth == "applied")
       }
+
+      # Apply field filter
+      if (field != "All Fields") {
+        sub_sample <- subset(sub_sample, primary_field == field)
+      }
+
+      # Apply pdb_group filter
+      if (pdb_group == "High PDB") {
+        sub_sample <- subset(sub_sample, high_pdb == 1)
+      }
+
+      # Store the subset
+      sub_samples[[sample_name]] <- sub_sample
     }
   }
 }
