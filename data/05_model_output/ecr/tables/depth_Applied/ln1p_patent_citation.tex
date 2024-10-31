@@ -1,0 +1,37 @@
+\begingroup
+\centering
+\begin{tabular}{lcccccc}
+   \tabularnewline \midrule \midrule
+   Dependent Variable: & \multicolumn{6}{c}{ln1p\_patent\_citation}\\
+ & \multicolumn{4}{c}{All Fields} & \multicolumn{4}{c}{Molecular Biology} & \multicolumn{4}{c}{Medicine} \\
+\cmidrule(lr){2-5} \cmidrule(lr){6-9} \cmidrule(lr){10-13}
+ & \multicolumn{2}{c}{All PDB} & \multicolumn{2}{c}{High PDB} & \multicolumn{2}{c}{All PDB} & \multicolumn{2}{c}{High PDB} & \multicolumn{2}{c}{All PDB} & \multicolumn{2}{c}{High PDB} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7} \cmidrule(lr){8-9} \cmidrule(lr){10-11} \cmidrule(lr){12-13}
+Variables & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} \\
+\cmidrule(lr){1-1}\cmidrule(lr){2-2} \cmidrule(lr){3-3} \cmidrule(lr){4-4} \cmidrule(lr){5-5} \cmidrule(lr){6-6} \cmidrule(lr){7-7} \cmidrule(lr){8-8} \cmidrule(lr){9-9} \cmidrule(lr){10-10} \cmidrule(lr){11-11} \cmidrule(lr){12-12} \cmidrule(lr){13-13}
+   AlphaFold                                & -0.071  & -0.019        & -0.353      & -0.206      & -0.225  & -0.182\\   
+                                            & (0.120) & (0.045)       & (0.873)     & (0.447)     & (0.406) & (0.168)\\   
+   Counterfactual AI                        & 0.167   & 0.090         & -0.018      & -0.066      & -0.720  & -0.504\\   
+                                            & (0.217) & (0.149)       & (0.931)     & (0.661)     & (0.548) & (0.593)\\   
+   Counterfactual No AI                     & 0.148   & 0.061$^{**}$  & 0.178       & 0.017       & 0.334   & 0.047\\   
+                                            & (0.147) & (0.028)       & (0.865)     & (0.227)     & (0.492) & (0.118)\\   
+   AlphaFold $\times$ Counterfactual AI     & 0.548   & 0.863$^{***}$ & 0.304       & 0.133       &         &   \\   
+                                            & (0.375) & (0.242)       & (189,557.4) & (189,704.3) &         &   \\   
+   AlphaFold $\times$ Counterfactual No AI  & 0.202   & -0.007        &             &             & 0.073   & 0.008\\   
+                                            & (0.311) & (0.006)       &             &             & (1.02)  & (0.130)\\   
+   \midrule
+   \emph{Fixed-effects}\\
+   quarter\_year                            & Yes     & Yes           & Yes         & Yes         & Yes     & Yes\\  
+   institution                              & Yes     & Yes           & Yes         & Yes         & Yes     & Yes\\  
+   institution\_type                        & Yes     & Yes           & Yes         & Yes         & Yes     & Yes\\  
+   institution\_country\_code               & Yes     & Yes           & Yes         & Yes         & Yes     & Yes\\  
+   \midrule
+   \emph{Fit statistics}\\
+   Observations                             & 1,546   & 1,546         & 435         & 435         & 534     & 534\\  
+   R$^2$                                    & 0.61    & 0.61          & 0.76        & 0.76        & 0.76    & 0.76\\  
+Mean(Dep. Var.) & 0.322 & 0.322 & 0.274 & 0.274 & 0.351 & 0.351 \\
+   \midrule \midrule
+   \multicolumn{7}{l}{\emph{Clustered (author) standard-errors in parentheses}}\\
+   \multicolumn{7}{l}{\emph{Signif. Codes: ***: 0.01, **: 0.05, *: 0.1}}\\
+\end{tabular}
+\par\endgroup

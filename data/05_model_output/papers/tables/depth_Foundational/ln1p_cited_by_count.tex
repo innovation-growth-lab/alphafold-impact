@@ -1,0 +1,39 @@
+\begingroup
+\centering
+\begin{tabular}{lcccccc}
+   \tabularnewline \midrule \midrule
+   Dependent Variable: & \multicolumn{6}{c}{ln1p\_cited\_by\_count}\\
+ & \multicolumn{4}{c}{All Fields} & \multicolumn{4}{c}{Molecular Biology} & \multicolumn{4}{c}{Medicine} \\
+\cmidrule(lr){2-5} \cmidrule(lr){6-9} \cmidrule(lr){10-13}
+ & \multicolumn{2}{c}{All PDB} & \multicolumn{2}{c}{High PDB} & \multicolumn{2}{c}{All PDB} & \multicolumn{2}{c}{High PDB} & \multicolumn{2}{c}{All PDB} & \multicolumn{2}{c}{High PDB} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7} \cmidrule(lr){8-9} \cmidrule(lr){10-11} \cmidrule(lr){12-13}
+Variables & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} \\
+\cmidrule(lr){1-1}\cmidrule(lr){2-2} \cmidrule(lr){3-3} \cmidrule(lr){4-4} \cmidrule(lr){5-5} \cmidrule(lr){6-6} \cmidrule(lr){7-7} \cmidrule(lr){8-8} \cmidrule(lr){9-9} \cmidrule(lr){10-10} \cmidrule(lr){11-11} \cmidrule(lr){12-12} \cmidrule(lr){13-13}
+   AlphaFold                              & 0.695$^{***}$  & 0.830$^{***}$ & 0.672$^{***}$ & 0.812$^{***}$ & 0.672$^{***}$ & 0.893$^{***}$\\   
+                                          & (0.029)        & (0.044)       & (0.042)       & (0.060)       & (0.091)       & (0.150)\\   
+   Counterfactual AI                      & 0.657$^{***}$  & 0.827$^{***}$ & 0.709$^{***}$ & 0.900$^{***}$ & 0.565$^{***}$ & 0.788$^{***}$\\   
+                                          & (0.039)        & (0.059)       & (0.058)       & (0.082)       & (0.138)       & (0.221)\\   
+   Counterfactual No AI                   & 0.719$^{***}$  & 0.903$^{***}$ & 0.718$^{***}$ & 0.906$^{***}$ & 0.893$^{***}$ & 1.09$^{***}$\\   
+                                          & (0.036)        & (0.057)       & (0.053)       & (0.080)       & (0.104)       & (0.183)\\   
+   AlphaFold $\times$ strong1             & -0.070$^{***}$ & -0.064$^{**}$ & -0.063$^{*}$  & -0.041        & -0.070        & -0.132\\   
+                                          & (0.025)        & (0.032)       & (0.036)       & (0.047)       & (0.077)       & (0.098)\\   
+   strong1 $\times$ Counterfactual AI     & 0.069          & 0.001         & 0.056         & 0.003         & 0.157         & 0.135\\   
+                                          & (0.056)        & (0.081)       & (0.085)       & (0.111)       & (0.194)       & (0.305)\\   
+   strong1 $\times$ Counterfactual No AI  & 0.096$^{*}$    & 0.110         & 0.087         & 0.107         & 0.060         & 0.047\\   
+                                          & (0.057)        & (0.093)       & (0.085)       & (0.130)       & (0.145)       & (0.217)\\   
+   \midrule
+   \emph{Fixed-effects}\\
+   quarter\_year                          & Yes            & Yes           & Yes           & Yes           & Yes           & Yes\\  
+   institution                            & Yes            & Yes           & Yes           & Yes           & Yes           & Yes\\  
+   institution\_type                      & Yes            & Yes           & Yes           & Yes           & Yes           & Yes\\  
+   institution\_country\_code             & Yes            & Yes           & Yes           & Yes           & Yes           & Yes\\  
+   \midrule
+   \emph{Fit statistics}\\
+   Observations                           & 27,288         & 14,868        & 14,529        & 8,666         & 4,641         & 2,556\\  
+   R$^2$                                  & 0.40           & 0.39          & 0.41          & 0.41          & 0.57          & 0.57\\  
+Mean(Dep. Var.) & 1.389 & 1.553 & 1.410 & 1.566 & 1.436 & 1.598 \\
+   \midrule \midrule
+   \multicolumn{7}{l}{\emph{Clustered (author) standard-errors in parentheses}}\\
+   \multicolumn{7}{l}{\emph{Signif. Codes: ***: 0.01, **: 0.05, *: 0.1}}\\
+\end{tabular}
+\par\endgroup
