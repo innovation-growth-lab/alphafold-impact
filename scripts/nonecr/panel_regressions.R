@@ -144,6 +144,29 @@ for (dep_var_out in dep_vars) { # nolint
           )
       }
 
+      # extract the dependent variable using form split by __, first element
+      dep_var <- strsplit(form, "__")[[1]][1]
+
+      non_na_data <- local_data[!is.na(local_data[[dep_var]]), ]
+
+      # compute the unique number of quarter_year
+      n_quarters <- length(unique(non_na_data$quarter_year))
+      n_institutions <- length(unique(non_na_data$institution))
+      n_institution_types <- length(unique(non_na_data$institution_type))
+      n_institution_countries <- length(
+        unique(non_na_data$institution_country_code)
+      )
+
+      if (
+        n_quarters + n_institutions +
+          n_institution_types + n_institution_countries
+        > nrow(non_na_data)
+      ) {
+        message("Skipping regression: ", regression_label)
+        results[[regression_label]] <- NULL
+        next
+      }
+
       results[[regression_label]] <- tryCatch(
         {
           feols(
@@ -167,15 +190,22 @@ for (dep_var_out in dep_vars) { # nolint
   # import from utils_tables.R
   source("scripts/nonecr/utils_tables.R")
 
-  # Generate tables
-  generate_tables(
-    results = results,
-    dep_vars = dep_var_out,
-    table_info = table_info,
-    subsets = names(sub_samples),
-    treat_vars = treat_vars,
-    cov_sets = cov_sets,
-    fe_list = fe_list
+  tryCatch(
+    {
+      # Generate tables
+      generate_tables(
+        results = results,
+        dep_vars = dep_var_out,
+        table_info = table_info,
+        subsets = names(sub_samples),
+        treat_vars = treat_vars,
+        cov_sets = cov_sets,
+        fe_list = fe_list
+      )
+    },
+    error = function(e) {
+      message("Error in generating tables: ", e$message)
+    }
   )
 
   # ----------------------------------------------------------------------------

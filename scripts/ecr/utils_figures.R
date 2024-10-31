@@ -231,7 +231,7 @@ generate_coef_plots <- function(coef_table) { # nolint
           data = coef_plot_data %>% filter(str_detect(treat_var, "ext\\.")), # nolint
           aes(label = paste0("n = ", n_obs)), # nolint
           x = Inf, y = Inf,
-          hjust = 1.1, vjust = 26.6,
+          hjust = 1.1, vjust = 29.5,
           size = 3, color = "black"
         )
 
@@ -246,11 +246,14 @@ generate_coef_plots <- function(coef_table) { # nolint
           dir.create(pathdir, recursive = TRUE)
         }
 
+        n_y_facet_rows <- length(unique(coef_plot_data$depth_pdb))
+        plot_height <- n_y_facet_rows * 3.5 # nolint
+
         ggsave( # nolint
           outfile, # nolint
           coeffplot,
           width = 15,
-          height = 15,
+          height = plot_height,
           dpi = 300
         )
       },

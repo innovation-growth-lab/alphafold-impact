@@ -160,7 +160,7 @@ generate_coef_plots <- function(coef_table) { # nolint
             depth = factor(gsub("depth_", "", depth), levels = gsub("depth_", "", depth_order)), # nolint
             pdb = factor(gsub("pdb_", "", pdb), levels = gsub("pdb_", "", pdb_group_order)), # nolint
             field = factor(gsub("field_", "", field), levels = gsub("field_", "", field_order)), # nolint
-            depth_pdb = factor(paste(depth, pdb, sep = " - "), levels = paste(depth_order, pdb_group_order, sep = " - ")), # nolint
+            depth_pdb = factor(paste(depth, pdb, sep = " - "), levels = unique(paste(depth, pdb, sep = " - "))), # nolint
             treat_var = factor(
               treat_var,
               levels = coef_order
@@ -227,7 +227,7 @@ generate_coef_plots <- function(coef_table) { # nolint
           data = coef_plot_data %>% filter(str_detect(treat_var, "ext\\.")), # nolint
           aes(label = paste0("n = ", n_obs)), # nolint
           x = Inf, y = Inf,
-          hjust = 1.1, vjust = 26.6,
+          hjust = 1.1, vjust = 29.5,
           size = 3, color = "black"
         )
 
@@ -242,11 +242,14 @@ generate_coef_plots <- function(coef_table) { # nolint
           dir.create(pathdir, recursive = TRUE)
         }
 
+        n_y_facet_rows <- length(unique(coef_plot_data$depth_pdb))
+        plot_height <- n_y_facet_rows * 3.5 # nolint
+
         ggsave( # nolint
           outfile, # nolint
           coeffplot,
           width = 15,
-          height = 15,
+          height = plot_height,
           dpi = 300
         )
       },
