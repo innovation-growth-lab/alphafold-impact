@@ -77,7 +77,6 @@ nonecr_data <- nonecr_data %>%
     type = ifelse(is.na(type), "unknown", type),
     country_code = ifelse(is.na(country_code), "unknown", country_code),
     institution = ifelse(is.na(institution), "unknown", institution),
-    institution = ifelse(is.na(institution), "unknown", institution),
     pdb_submission = ifelse(pdb_submission > 0, 1, 0)
   )
 # create factors, log transforms

@@ -114,13 +114,7 @@ coef_labels <- c(
   "ct_noai_ind" = "Counterfactual no AI (ext.)",
   "af" = "AlphaFold (int.)",
   "ct_ai" = "Counterfactual AI (int.)",
-  "ct_noai" = "Counterfactual no AI (int.)",
-  "af_ind_high" = "AlphaFold (ext.)",
-  "ct_ai_ind_high" = "Counterfactual AI (ext.)",
-  "ct_noai_ind_high" = "Counterfactual no AI (ext.)",
-  "af_high" = "AlphaFold (int.)",
-  "ct_ai_high" = "Counterfactual AI (int.)",
-  "ct_noai_high" = "Counterfactual no AI (int.)"
+  "ct_noai" = "Counterfactual no AI (int.)"
 )
 
 strip_colors <- c(
@@ -142,11 +136,6 @@ generate_coef_plots <- function(coef_table) { # nolint
       treat_var = ifelse(
         grepl("_ind", indep_vars), # nolint
         paste0(treat_var, "_ind"), # nolint
-        treat_var
-      ),
-      treat_var = ifelse(
-        grepl("pdb_High PDB", pdb), # nolint
-        paste0(treat_var, "_high"), # nolint
         treat_var
       )
     )
