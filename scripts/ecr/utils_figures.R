@@ -87,11 +87,11 @@ field_order <- c(
 
 
 coef_order <- c(
-  "af:ct_noai", "af:ct_ai", "ct_noai", "ct_ai", "af",
-  "af:ct_noai_ind", "af:ct_ai_ind", "ct_noai_ind", "ct_ai_ind", "af_ind",
-  "af:ct_noai_high", "af:ct_ai_high", "ct_noai_high", "ct_ai_high", "af_high",
-  "af:ct_noai_ind_high", "af:ct_ai_ind_high", "ct_noai_ind_high",
-  "ct_ai_ind_high", "af_ind_high"
+  "af:ct_noai", "af:ct_ai", "ct_noai:strong1",
+  "ct_ai:strong1", "ct_noai", "ct_ai", "af:strong1", "af",
+  "af:ct_noai_ind", "af:ct_ai_ind",
+  "ct_noai:strong1_ind", "ct_ai:strong1_ind",
+  "ct_noai_ind", "ct_ai_ind", "af:strong1_ind", "af_ind"
 )
 
 dep_var_labels <- c(
@@ -110,11 +110,17 @@ dep_var_labels <- c(
 
 coef_labels <- c(
   "af_ind" = "AlphaFold (ext.)",
+  "af:strong1_ind" = "AlphaFold (ext.) - Strong",
   "ct_ai_ind" = "Counterfactual AI (ext.)",
   "ct_noai_ind" = "Counterfactual no AI (ext.)",
+  # "ct_ai:strong1_ind" = "Counterfactual AI (ext.) - Strong", # nolint
+  # "ct_noai:strong1_ind" = "Counterfactual no AI (ext.) - Strong", # nolint
   "af" = "AlphaFold (int.)",
+  "af:strong1" = "AlphaFold (int.) - Strong",
   "ct_ai" = "Counterfactual AI (int.)",
   "ct_noai" = "Counterfactual no AI (int.)"
+  # "ct_ai:strong1" = "Counterfactual AI (int.) - Strong", # nolint
+  # "ct_noai:strong1" = "Counterfactual no AI (int.) - Strong" # nolint
 )
 
 strip_colors <- c(
@@ -161,7 +167,7 @@ generate_coef_plots <- function(coef_table) { # nolint
 
         # drop depth_pdb with Foundational and High PDB
         coef_plot_data <- coef_plot_data %>% # nolint
-          filter(!(pdb == "High PDB")) # nolint
+          filter(!(depth == "Foundational" & pdb == "High PDB")) # nolint
 
         # Check if coef_plot_data is empty
         if (nrow(coef_plot_data) == 0) {
@@ -185,7 +191,7 @@ generate_coef_plots <- function(coef_table) { # nolint
             aes(xmin = conf_low, xmax = conf_high), # nolint
             height = 0.2, linewidth = 0.5 # thinner for 5% significance
           ) +
-          geom_hline(yintercept = 3.5, color = "gray", linetype = "dashed", linewidth = 1) + # nolint
+          geom_hline(yintercept = 4.5, color = "gray", linetype = "dashed", linewidth = 1) + # nolint
           geom_vline(xintercept = 0, color = "black", linewidth = 1) + # nolint
           ggh4x::facet_grid2(
             depth_pdb ~ field,

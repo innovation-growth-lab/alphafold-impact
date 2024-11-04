@@ -47,7 +47,8 @@ table_info <- list(
 dict_vars <- c(
   "af" = "AlphaFold",
   "ct_ai" = "Counterfactual AI",
-  "ct_noai" = "Counterfactual No AI"
+  "ct_noai" = "Counterfactual No AI",
+  "strong1" = "Strong"
 )
 
 # Function to generate tables

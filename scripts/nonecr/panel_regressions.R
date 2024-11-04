@@ -48,7 +48,7 @@ covs[["base0"]] <- c("num_publications")
 fes <- list()
 fes[["fe0"]] <- c("quarter_year")
 fes[["fe1"]] <- c(
-  "quarter_year", "institution", "institution_type",
+  "author", "quarter_year", "institution", "institution_type",
   "institution_country_code"
 )
 
@@ -63,8 +63,8 @@ dep_vars <- c(
 
 for (dep_var_out in dep_vars) { # nolint
   treat_vars <- c(
-    "af_ind + ct_ai_ind + ct_noai_ind + af:ct_ai_ind + af:ct_noai_ind", # because subgroups do not intersect (ie. ct_ai subgroups require ct_noai == 0) # nolint
-    "af + ct_ai + ct_noai + af:ct_ai + af:ct_noai"
+    "af_ind + ct_ai_ind + ct_noai_ind + af:strong_ind + ct_ai:strong_ind + ct_noai:strong_ind + af:ct_ai_ind + af:ct_noai_ind", # nolint
+    "af + ct_ai + ct_noai + af:strong + ct_ai:strong + ct_noai:strong + af:ct_ai + af:ct_noai" # nolint
   )
 
   form_list <- list()
@@ -83,9 +83,9 @@ for (dep_var_out in dep_vars) { # nolint
       for (fe in fe_list) {
         # Iterate over treatment variables
         for (treat_var in treat_vars) {
-          if (treat_var == "af_ind + ct_ai_ind + ct_noai_ind + af:ct_ai_ind + af:ct_noai_ind") { # nolint
-            treat_var <- paste0("af + ct_ai + ct_noai + af:ct_ai + af:ct_noai")
-            label_var <- "af_ind + ct_ai_ind + ct_noai_ind + af:ct_ai_ind + af:ct_noai_ind" # nolint
+          if (treat_var == "af_ind + ct_ai_ind + ct_noai_ind + af:strong_ind + ct_ai:strong_ind + ct_noai:strong_ind + af:ct_ai_ind + af:ct_noai_ind") { # nolint
+            treat_var <- paste0("af + ct_ai + ct_noai + af:strong + ct_ai:strong + ct_noai:strong + af:ct_ai + af:ct_noai") # nolint
+            label_var <- "af_ind + ct_ai_ind + ct_noai_ind + af:strong_ind + ct_ai:strong_ind + ct_noai:strong_ind + af:ct_ai_ind + af:ct_noai_ind" # nolint
           } else {
             label_var <- treat_var
           }
@@ -150,6 +150,7 @@ for (dep_var_out in dep_vars) { # nolint
       non_na_data <- local_data[!is.na(local_data[[dep_var]]), ]
 
       # compute the unique number of quarter_year
+      n_authors <- length(unique(non_na_data$author))
       n_quarters <- length(unique(non_na_data$quarter_year))
       n_institutions <- length(unique(non_na_data$institution))
       n_institution_types <- length(unique(non_na_data$institution_type))
@@ -158,7 +159,7 @@ for (dep_var_out in dep_vars) { # nolint
       )
 
       if (
-        n_quarters + n_institutions +
+        n_authors + n_quarters + n_institutions +
           n_institution_types + n_institution_countries
         > nrow(non_na_data)
       ) {
@@ -174,7 +175,7 @@ for (dep_var_out in dep_vars) { # nolint
             feols(
               form_list[[form]],
               data = local_data,
-              cluster = "author",
+              cluster = c("author", "quarter_year"),
               family = binomial(link = "logit")
             )
           },
@@ -190,7 +191,7 @@ for (dep_var_out in dep_vars) { # nolint
             feols(
               form_list[[form]],
               data = local_data,
-              cluster = "author"
+              cluster = c("author", "quarter_year")
             )
           },
           error = function(e) {
@@ -243,7 +244,7 @@ for (dep_var_out in dep_vars) { # nolint
     treat_vars = treat_vars,
     treat_var_interest = c(
       "af", "af_ind", "ct_ai_ind", "ct_noai_ind", "ct_ai", "ct_noai",
-      "af:ct_ai", "af:ct_noai"
+      "af:ct_ai", "af:ct_noai", "af:strong1", "ct_ai:strong1", "ct_noai:strong1"
     )
   )
 

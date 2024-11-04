@@ -86,6 +86,9 @@ ecr_data <- ecr_data %>%
   mutate(
     author = as.factor(author),
     author_position = as.factor(author_position),
+    strong = as.factor(
+      if_else(chain_label %in% c("strong", "partial_strong"), 1, 0)
+    ),
     depth = as.factor(depth),
     institution = as.factor(institution),
     institution_type = as.factor(type),
