@@ -20,7 +20,7 @@ invisible(lapply(list_of_packages, library, character.only = TRUE))
 
 # Set working directory
 setwd("~/projects/alphafold-impact/")
-pathdir <- "data/05_model_output/ecr/"
+pathdir <- "data/05_model_output/ecr/articles/"
 
 # Create directories if they do not exist
 if (!dir.exists(pathdir)) {
@@ -87,7 +87,9 @@ ecr_data <- ecr_data %>%
     author = as.factor(author),
     author_position = as.factor(author_position),
     strong = as.factor(
-      if_else(chain_label %in% c("strong", "partial_strong"), 1, 0)
+      if_else(chain_label %in% c("strong", "partial_strong"), 1,
+        if_else(chain_label %in% c("no_data", "unknown"), NA_integer_, 0)
+      )
     ),
     depth = as.factor(depth),
     institution = as.factor(institution),
@@ -187,4 +189,4 @@ for (depth_lvl in unique_depths) { # nolint
 # ------------------------------------------------------------------------------
 # Save data
 # ------------------------------------------------------------------------------
-saveRDS(sub_samples, paste0(pathdir, "sub_samples.rds"))
+saveRDS(sub_samples, paste0(pathdir, "data/sub_samples.rds"))

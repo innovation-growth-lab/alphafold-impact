@@ -1,4 +1,4 @@
-figures <- "data/05_model_output/ecr/figures/"
+figures <- "data/05_model_output/ecr/articles/figures/"
 
 if (!dir.exists(figures)) {
   dir.create(figures, recursive = TRUE)
@@ -165,9 +165,13 @@ generate_coef_plots <- function(coef_table) { # nolint
             treat_var = recode(treat_var, !!!coef_labels) # nolint
           )
 
-        # drop depth_pdb with Foundational and High PDB
-        coef_plot_data <- coef_plot_data %>% # nolint
-          filter(!(depth == "Foundational" & pdb == "High PDB")) # nolint
+        # drop levels in column depth_pdb if they have zero values
+        present_levels <- levels(
+          coef_plot_data$depth_pdb
+        )[levels(coef_plot_data$depth_pdb) %in%
+            unique(coef_plot_data$depth_pdb[coef_plot_data$depth_pdb != ""])]
+
+        present_strip_colors <- strip_colors[present_levels]
 
         # Check if coef_plot_data is empty
         if (nrow(coef_plot_data) == 0) {
@@ -200,7 +204,7 @@ generate_coef_plots <- function(coef_table) { # nolint
             space = "fixed",
             strip = ggh4x::strip_themed(
               background_y = ggh4x::elem_list_rect(
-                fill = strip_colors[levels(coef_plot_data$depth_pdb)]
+                fill = present_strip_colors
               )
             )
           ) + # nolint
