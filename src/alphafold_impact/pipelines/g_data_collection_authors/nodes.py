@@ -95,9 +95,7 @@ def _get_candidate_authors(data: pd.DataFrame) -> pd.DataFrame:
     )
 
     # merge chain label
-    author_data = author_data.merge(
-        author_labels, on="author", how="left"
-    )
+    author_data = author_data.merge(author_labels, on="author", how="left")
 
     return author_data
 
@@ -544,7 +542,7 @@ def aggregate_to_quarterly(data: pd.DataFrame) -> pd.DataFrame:
             ca_count=("ca_count", "sum"),
             resolution=("resolution", "mean"),
             R_free=("R_free", "mean"),
-            num_publications_pdb=("R_free", lambda x: x.notna().sum()),
+            num_publications_pdb=("pdb_submission", "sum"),
             institution=("institution", "first"),
             institution_cited_by_count=("institution_cited_by_count", "first"),
             country_code=("country_code", "first"),
@@ -557,6 +555,7 @@ def aggregate_to_quarterly(data: pd.DataFrame) -> pd.DataFrame:
             primary_field=("primary_field", safe_mode),
             author_position=("author_position", safe_mode),
             chain_label=("chain_label", safe_mode),
+            high_pdb=("high_pdb", "first"),
         )
         .reset_index()
     )
@@ -613,7 +612,9 @@ def _candidates_preprocessing(candidate_authors: pd.DataFrame) -> pd.DataFrame:
     )
 
     # Calculate the relative relevance
-    relative_sums["relative_relevance"] = relative_sums["total"] / relative_sums["total_depth"]
+    relative_sums["relative_relevance"] = (
+        relative_sums["total"] / relative_sums["total_depth"]
+    )
 
     # Get the index of the row with the maximum relative relevance for each author
     idx = relative_sums.groupby("author")["relative_relevance"].idxmax()
