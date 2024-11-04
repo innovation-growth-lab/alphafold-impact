@@ -53,10 +53,11 @@ def _get_candidate_authors(data: pd.DataFrame) -> pd.DataFrame:
 
     # drop A9999999999
     author_data = author_data[~(author_data["author"] == "A9999999999")]
+    author_data["level"] = author_data["level"].astype(int)
 
     # create "foundational" or "applied" column
     author_data["depth"] = author_data["level"].apply(
-        lambda x: "foundational" if x == "0" else "applied"
+        lambda x: "foundational" if x == 0 else "applied"
     )
 
     # create quarter column
@@ -79,11 +80,12 @@ def _get_candidate_authors(data: pd.DataFrame) -> pd.DataFrame:
     )
 
     author_labels = (
-        author_data[["sort_order", "author", "chain_label"]]
-        .sort_values("sort_order")
+        author_data[["sort_order", "author", "chain_label", "level"]]
+        .sort_values(["level", "sort_order"])
         .groupby(["author"])
         .first()
         .reset_index()
+        .drop(columns=["sort_order", "level"])
     )
 
     author_data = (
@@ -94,7 +96,7 @@ def _get_candidate_authors(data: pd.DataFrame) -> pd.DataFrame:
 
     # merge chain label
     author_data = author_data.merge(
-        author_labels[["author", "chain_label"]], on="author", how="left"
+        author_labels, on="author", how="left"
     )
 
     return author_data
@@ -573,41 +575,64 @@ def _institution_preprocessing(institutions: pd.DataFrame) -> pd.DataFrame:
 
 def _candidates_preprocessing(candidate_authors: pd.DataFrame) -> pd.DataFrame:
     """
-    Create a DataFrame with the maximum total for each author. Assign
-    the depth of the maximum total to the author based on the depth
-    with the maximum total.
+    Create a DataFrame with the relative sum for each author in each depth.
+    Assign the depth to the author based on the relative sum where the author
+    is represented most often.
     """
-    # sort candidate authors by af, ct, other
-    depth_summed_data = (
+    # Calculate the total sum for each depth
+    total_depth_sums = (
+        candidate_authors.groupby("depth")
+        .agg({"af": "sum", "ct_ai": "sum", "ct_noai": "sum", "other": "sum"})
+        .reset_index()
+    )
+
+    total_depth_sums["total"] = (
+        total_depth_sums["af"]
+        + total_depth_sums["ct_ai"]
+        + total_depth_sums["ct_noai"]
+        + total_depth_sums["other"]
+    )
+
+    # Calculate the relative sum for each author in each depth
+    author_depth_sums = (
         candidate_authors.groupby(["author", "depth"])
         .agg({"af": "sum", "ct_ai": "sum", "ct_noai": "sum", "other": "sum"})
         .reset_index()
     )
 
-    depth_summed_data["total"] = (
-        depth_summed_data["af"]
-        + depth_summed_data["ct_ai"]
-        + depth_summed_data["ct_noai"]
-        + depth_summed_data["other"]
+    author_depth_sums["total"] = (
+        author_depth_sums["af"]
+        + author_depth_sums["ct_ai"]
+        + author_depth_sums["ct_noai"]
+        + author_depth_sums["other"]
     )
 
-    # Get the index of the row with the maximum total for each author
-    idx = depth_summed_data.groupby("author")["total"].idxmax()
+    # Merge the total depth sums with the author depth sums
+    relative_sums = author_depth_sums.merge(
+        total_depth_sums[["depth", "total"]], on="depth", suffixes=("", "_depth")
+    )
 
-    max_total_data = depth_summed_data.loc[idx]
+    # Calculate the relative relevance
+    relative_sums["relative_relevance"] = relative_sums["total"] / relative_sums["total_depth"]
 
+    # Get the index of the row with the maximum relative relevance for each author
+    idx = relative_sums.groupby("author")["relative_relevance"].idxmax()
+
+    max_relative_data = relative_sums.loc[idx]
+
+    # Group by author and quarter to sum the values
     summed_data = (
         candidate_authors.groupby(["author", "quarter"])
         .agg({"af": "sum", "ct_ai": "sum", "ct_noai": "sum", "other": "sum"})
         .reset_index()
     )
 
-    # merge the summed data with the max total data
-    max_total_data = max_total_data[["author", "depth"]].merge(
+    # Merge the summed data with the max relative data
+    max_relative_data = max_relative_data[["author", "depth"]].merge(
         summed_data, on="author", how="left"
     )
 
-    return max_total_data
+    return max_relative_data
 
 
 def _define_high_pdb_authors(
