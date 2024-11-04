@@ -48,6 +48,7 @@ def _get_candidate_authors(data: pd.DataFrame) -> pd.DataFrame:
         .dropna(subset=["author"])
         .drop_duplicates(subset=["id", "author"])
         .reset_index(drop=True)
+        .drop(columns=["authorships"])
     )
 
     # drop A9999999999
@@ -62,10 +63,38 @@ def _get_candidate_authors(data: pd.DataFrame) -> pd.DataFrame:
     author_data["publication_date"] = pd.to_datetime(author_data["publication_date"])
     author_data["quarter"] = author_data["publication_date"].dt.to_period("Q")
 
+    # create a chain strength unique label
+    sort_order = {
+        "strong": 0,
+        "partial_strong": 1,
+        "mixed": 2,
+        "weak": 3,
+        "partial_weak": 4,
+        "unknown": 5,
+        "no_data": 6,
+    }
+    author_data["sort_order"] = author_data.apply(
+        lambda row: -1 if row["level"] == -1 else sort_order.get(row["chain_label"], 7),
+        axis=1,
+    )
+
+    author_labels = (
+        author_data[["sort_order", "author", "chain_label"]]
+        .sort_values("sort_order")
+        .groupby(["author"])
+        .first()
+        .reset_index()
+    )
+
     author_data = (
         author_data.groupby(["author", "institution", "depth", "source", "quarter"])
         .size()
         .reset_index(name="counts")
+    )
+
+    # merge chain label
+    author_data = author_data.merge(
+        author_labels[["author", "chain_label"]], on="author", how="left"
     )
 
     return author_data
@@ -87,8 +116,12 @@ def get_unique_authors(
 
     logger.info("Getting unique authors")
     authors = _get_candidate_authors(
-        publications_data[["id", "authorships", "source", "level", "publication_date"]]
+        publications_data[
+            ["id", "authorships", "source", "level", "publication_date", "chain_label"]
+        ]
     )
+
+    author_chain_labels = authors[["author", "chain_label"]].drop_duplicates()
 
     logger.info("Getting unique institutions")
     top_institutions = authors.loc[
@@ -116,6 +149,8 @@ def get_unique_authors(
         values="cumulative_counts",
         fill_value=0,
     ).reset_index()
+
+    authors = authors.merge(author_chain_labels, on="author", how="left")
 
     # make source cols int
     for col in ["af", "ct_ai", "ct_noai", "other"]:
@@ -360,6 +395,10 @@ def merge_author_data(
             - The first DataFrame contains the merged ECR data.
             - The second DataFrame contains the reduced ECR data for regression analysis.
     """
+    unique_authors = candidate_authors[["author", "chain_label"]].drop_duplicates(
+        subset=["author"]
+    )
+    candidate_authors = candidate_authors.drop(columns=["chain_label"])
 
     institutions = _institution_preprocessing(institutions)
     candidate_authors = _candidates_preprocessing(candidate_authors)
@@ -453,13 +492,16 @@ def merge_author_data(
         data = data.merge(
             pdb_submissions[["id", "resolution", "R_free"]], on="id", how="left"
         )
-        
+
         # get icite_counts
         icite_outputs = _create_cc_counts(data[["id", "doi"]], icite_data)
         data = data.merge(icite_outputs, on="id", how="left")
 
         # concatenate the data
         output_data = pd.concat([output_data, data], ignore_index=True)
+
+    # merge the unique authors with the output data
+    output_data = output_data.merge(unique_authors, on="author", how="left")
 
     return output_data
 
@@ -512,6 +554,7 @@ def aggregate_to_quarterly(data: pd.DataFrame) -> pd.DataFrame:
             other=("other", "first"),
             primary_field=("primary_field", safe_mode),
             author_position=("author_position", safe_mode),
+            chain_label=("chain_label", safe_mode),
         )
         .reset_index()
     )
@@ -582,9 +625,7 @@ def _define_high_pdb_authors(
         pd.DataFrame: The updated DataFrame with the 'high_pdb' column.
     """
 
-    data_db = data[["id", "author"]].merge(
-        pdb_submissions, on="id", how="inner"
-    )
+    data_db = data[["id", "author"]].merge(pdb_submissions, on="id", how="inner")
 
     data_db["pdb_submission"] = True
 
@@ -611,6 +652,7 @@ def _define_high_pdb_authors(
     data.fillna({"pdb_submission": False}, inplace=True)
 
     return data
+
 
 def _get_mesh_data(data: pd.DataFrame, mesh_terms: pd.DataFrame) -> pd.DataFrame:
 
