@@ -20,7 +20,7 @@ invisible(lapply(list_of_packages, library, character.only = TRUE))
 
 # Set working directory
 setwd("~/projects/alphafold-impact/")
-pathdir <- "data/05_model_output/ecr/articles/"
+pathdir <- "data/05_model_output/ecr/articles/data/"
 
 # Create directories if they do not exist
 if (!dir.exists(pathdir)) {
@@ -78,6 +78,7 @@ ecr_data <- ecr_data %>%
     type = ifelse(is.na(type), "unknown", type),
     country_code = ifelse(is.na(country_code), "unknown", country_code),
     institution = ifelse(is.na(institution), "unknown", institution),
+    high_pdb = as.factor(ifelse(is.na(high_pdb), 0, high_pdb)),
     pdb_submission = ifelse(pdb_submission > 0, 1, 0)
   )
 
@@ -143,6 +144,7 @@ ecr_data$primary_field <- recode(ecr_data$primary_field, !!!field_mapping)
 # Define sub_samples as a list of samples
 sub_samples <- list()
 pdb_groups <- c("All PDB", "High PDB")
+strength_groups <- c("General Use", "Methodological Use")
 unique_depths <- c("All Groups", "Foundational", "Applied")
 unique_fields <- c(
   "All Fields",
@@ -153,35 +155,42 @@ unique_fields <- c(
 # Create subsets for all combinations of depth, field, and pdb_group
 for (depth_lvl in unique_depths) { # nolint
   for (field in unique_fields) {
-    for (pdb_group in pdb_groups) {
-      sample_name <- paste0(
-        "depth_", depth_lvl, "__field_",
-        field, "__pdb_", pdb_group
-      )
-      message("Creating sample: ", sample_name)
+    for (strength_group in strength_groups) {
+      for (pdb_group in pdb_groups) {
+        sample_name <- paste0(
+          "depth_", depth_lvl, "__field_",
+          field, "__use_", strength_group, "__pdb_", pdb_group
+        )
+        message("Creating sample: ", sample_name)
 
-      # Start with the full dataset
-      sub_sample <- ecr_data
+        # Start with the full dataset
+        sub_sample <- ecr_data
 
-      # Apply depth filter
-      if (depth_lvl == "Foundational") {
-        sub_sample <- subset(sub_sample, depth == "foundational")
-      } else if (depth_lvl == "Applied") {
-        sub_sample <- subset(sub_sample, depth == "applied")
+        # Apply depth filter
+        if (depth_lvl == "Foundational") {
+          sub_sample <- subset(sub_sample, depth == "foundational")
+        } else if (depth_lvl == "Applied") {
+          sub_sample <- subset(sub_sample, depth == "applied")
+        }
+
+        # Apply field filter
+        if (field != "All Fields") {
+          sub_sample <- subset(sub_sample, primary_field == field)
+        }
+
+        # Apply strength_group filter
+        if (strength_group == "Methodological Use") {
+          sub_sample <- subset(sub_sample, strong == 1)
+        }
+
+        # Apply pdb_group filter
+        if (pdb_group == "High PDB") {
+          sub_sample <- subset(sub_sample, high_pdb == 1)
+        }
+
+        # Store the subset
+        sub_samples[[sample_name]] <- sub_sample
       }
-
-      # Apply field filter
-      if (field != "All Fields") {
-        sub_sample <- subset(sub_sample, primary_field == field)
-      }
-
-      # Apply pdb_group filter
-      if (pdb_group == "High PDB") {
-        sub_sample <- subset(sub_sample, high_pdb == 1)
-      }
-
-      # Store the subset
-      sub_samples[[sample_name]] <- sub_sample
     }
   }
 }
@@ -189,4 +198,4 @@ for (depth_lvl in unique_depths) { # nolint
 # ------------------------------------------------------------------------------
 # Save data
 # ------------------------------------------------------------------------------
-saveRDS(sub_samples, paste0(pathdir, "data/sub_samples.rds"))
+saveRDS(sub_samples, paste0(pathdir, "sub_samples.rds"))

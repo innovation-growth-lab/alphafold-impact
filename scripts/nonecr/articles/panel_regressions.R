@@ -20,7 +20,7 @@ invisible(lapply(list_of_packages, library, character.only = TRUE))
 
 # Set working directory
 setwd("~/projects/alphafold-impact/")
-pathdir <- "data/05_model_output/nonecr/"
+pathdir <- "data/05_model_output/nonecr/articles"
 
 # Create directories if they do not exist
 if (!dir.exists(pathdir)) {
@@ -36,7 +36,7 @@ bind_rows <- dplyr::bind_rows
 # ------------------------------------------------------------------------------
 # LOAD DATA
 # ------------------------------------------------------------------------------
-sub_samples <- readRDS(paste0(pathdir, "sub_samples.rds"))
+sub_samples <- readRDS(paste0(pathdir, "data/sub_samples.rds"))
 
 # ------------------------------------------------------------------------------
 # DATA PREPARATION
@@ -63,8 +63,8 @@ dep_vars <- c(
 
 for (dep_var_out in dep_vars) { # nolint
   treat_vars <- c(
-    "af_ind + ct_ai_ind + ct_noai_ind + af:strong_ind + ct_ai:strong_ind + ct_noai:strong_ind + af:ct_ai_ind + af:ct_noai_ind", # nolint
-    "af + ct_ai + ct_noai + af:strong + ct_ai:strong + ct_noai:strong + af:ct_ai + af:ct_noai" # nolint
+    "af_ind + ct_ai_ind + ct_noai_ind + af:ct_ai_ind + af:ct_noai_ind", # nolint
+    "af + ct_ai + ct_noai + af:ct_ai + af:ct_noai" # nolint
   )
 
   form_list <- list()
@@ -83,9 +83,9 @@ for (dep_var_out in dep_vars) { # nolint
       for (fe in fe_list) {
         # Iterate over treatment variables
         for (treat_var in treat_vars) {
-          if (treat_var == "af_ind + ct_ai_ind + ct_noai_ind + af:strong_ind + ct_ai:strong_ind + ct_noai:strong_ind + af:ct_ai_ind + af:ct_noai_ind") { # nolint
-            treat_var <- paste0("af + ct_ai + ct_noai + af:strong + ct_ai:strong + ct_noai:strong + af:ct_ai + af:ct_noai") # nolint
-            label_var <- "af_ind + ct_ai_ind + ct_noai_ind + af:strong_ind + ct_ai:strong_ind + ct_noai:strong_ind + af:ct_ai_ind + af:ct_noai_ind" # nolint
+          if (treat_var == "af_ind + ct_ai_ind + ct_noai_ind + af:ct_ai_ind + af:ct_noai_ind") { # nolint
+            treat_var <- paste0("af + ct_ai + ct_noai + af:ct_ai + af:ct_noai") # nolint
+            label_var <- "af_ind + ct_ai_ind + ct_noai_ind + af:ct_ai_ind + af:ct_noai_ind" # nolint
           } else {
             label_var <- treat_var
           }
@@ -208,7 +208,7 @@ for (dep_var_out in dep_vars) { # nolint
   # ----------------------------------------------------------------------------
 
   # import from utils_tables.R
-  source("scripts/nonecr/utils_tables.R")
+  source("scripts/nonecr/articles/utils_tables.R")
 
   tryCatch(
     {
@@ -233,22 +233,29 @@ for (dep_var_out in dep_vars) { # nolint
   # ----------------------------------------------------------------------------
 
   # import from utils_figures.R
-  source("scripts/nonecr/utils_figures.R")
+  source("scripts/nonecr/articles/utils_figures.R")
+  message("Generating plots")
+  tryCatch(
+    {
+      coef_table <- extract_coefficients(
+        results = results,
+        dep_vars = dep_var_out,
+        subsets = names(sub_samples),
+        cov_sets = cov_sets,
+        fe_list = fe_list,
+        treat_vars = treat_vars,
+        treat_var_interest = c(
+          "af", "af_ind", "ct_ai_ind", "ct_noai_ind", "ct_ai", "ct_noai",
+          "af:ct_ai", "af:ct_noai" # nolint
+        )
+      )
 
-  coef_table <- extract_coefficients(
-    results = results,
-    dep_vars = dep_var_out,
-    subsets = names(sub_samples),
-    cov_sets = cov_sets,
-    fe_list = fe_list,
-    treat_vars = treat_vars,
-    treat_var_interest = c(
-      "af", "af_ind", "ct_ai_ind", "ct_noai_ind", "ct_ai", "ct_noai",
-      "af:ct_ai", "af:ct_noai", "af:strong1", "ct_ai:strong1", "ct_noai:strong1"
-    )
-  )
-
-  generate_coef_plots(
-    coef_table
+      generate_coef_plots(
+        coef_table
+      )
+    },
+    error = function(e) {
+      message("Error in generating plots: ", e$message)
+    }
   )
 }
