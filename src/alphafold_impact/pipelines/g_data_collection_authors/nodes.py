@@ -80,8 +80,8 @@ def _get_candidate_authors(data: pd.DataFrame) -> pd.DataFrame:
     )
 
     author_labels = (
-        author_data[["sort_order", "author", "chain_label", "level"]]
-        .sort_values(["level", "sort_order"])
+        author_data[["sort_order", "quarter", "author", "chain_label", "level"]]
+        .sort_values(["level", "quarter", "sort_order"])
         .groupby(["author"])
         .first()
         .reset_index()
@@ -95,7 +95,7 @@ def _get_candidate_authors(data: pd.DataFrame) -> pd.DataFrame:
     )
 
     # merge chain label
-    author_data = author_data.merge(author_labels, on="author", how="left")
+    author_data = author_data.merge(author_labels, on=["author", "quarter"], how="left")
 
     return author_data
 
