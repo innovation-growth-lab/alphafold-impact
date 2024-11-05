@@ -584,7 +584,6 @@ def aggregate_to_quarterly(data: pd.DataFrame) -> pd.DataFrame:
             strong_other=("strong_other", safe_mode),
             primary_field=("primary_field", safe_mode),
             author_position=("author_position", safe_mode),
-            chain_label=("chain_label", safe_mode),
             high_pdb=("high_pdb", "first"),
         )
         .reset_index()
