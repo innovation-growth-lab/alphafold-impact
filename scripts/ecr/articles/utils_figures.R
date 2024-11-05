@@ -9,7 +9,7 @@ if (!dir.exists(figures)) {
 # ------------------------------------------------------------------------------
 
 extract_coefficients <- function(results, dep_vars, subsets, cov_sets, fe_list, treat_vars, treat_var_interest = c("is_af")) { # nolint
-  
+
   coef_data <- list()
   # Iterate over dependent variables
   for (dep_var in dep_vars) {

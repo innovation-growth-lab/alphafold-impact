@@ -85,8 +85,6 @@ papers <- papers %>%
     institution_country_code = as.factor(country_code),
     ln1p_cited_by_count = log1p(cited_by_count),
     ln1p_fwci = log1p(fwci), # nolint
-    # ln1p_cit_0 = log1p(cit_0), # nolint
-    # ln1p_cit_1 = log1p(cit_1), # nolint
     ln1p_cit_norm_perc = log1p(citation_normalized_percentile_value),
     logit_cit_norm_perc = log(
       citation_normalized_percentile_value /
@@ -147,6 +145,7 @@ papers <- papers %>%
 # Define sub_samples as a list of samples
 sub_samples <- list()
 pdb_groups <- c("All PDB", "High PDB")
+strength_groups <- c("General Use", "Methodological Use")
 unique_depths <- c("All Groups", "Foundational", "Applied")
 unique_fields <- c(
   "All Fields",
@@ -157,38 +156,46 @@ unique_fields <- c(
 # Create subsets for all combinations of depth, field, and pdb_group
 for (depth_lvl in unique_depths) { # nolint
   for (field in unique_fields) {
-    for (pdb_group in pdb_groups) {
-      sample_name <- paste0(
-        "depth_", depth_lvl, "__field_",
-        field, "__pdb_", pdb_group
-      )
-      message("Creating sample: ", sample_name)
+    for (strength_group in strength_groups) {
+      for (pdb_group in pdb_groups) {
+        sample_name <- paste0(
+          "depth_", depth_lvl, "__field_",
+          field, "__use_", strength_group, "__pdb_", pdb_group
+        )
+        message("Creating sample: ", sample_name)
 
-      # Start with the full dataset
-      sub_sample <- papers
+        # Start with the full dataset
+        sub_sample <- papers
 
-      # Apply depth filter
-      if (depth_lvl == "Foundational") {
-        sub_sample <- subset(sub_sample, depth == "foundational")
-      } else if (depth_lvl == "Applied") {
-        sub_sample <- subset(sub_sample, depth == "applied")
+        # Apply depth filter
+        if (depth_lvl == "Foundational") {
+          sub_sample <- subset(sub_sample, depth == "foundational")
+        } else if (depth_lvl == "Applied") {
+          sub_sample <- subset(sub_sample, depth == "applied")
+        }
+
+        # Apply field filter
+        if (field != "All Fields") {
+          sub_sample <- subset(sub_sample, primary_field == field)
+        }
+
+        # Apply strength_group filter
+        if (strength_group == "Methodological Use") {
+          sub_sample <- subset(sub_sample, strong == 1)
+        }
+
+        # Apply pdb_group filter
+        if (pdb_group == "High PDB") {
+          sub_sample <- subset(sub_sample, high_pdb == 1)
+        }
+
+        # Store the subset
+        sub_samples[[sample_name]] <- sub_sample
       }
-
-      # Apply field filter
-      if (field != "All Fields") {
-        sub_sample <- subset(sub_sample, primary_field == field)
-      }
-
-      # Apply pdb_group filter
-      if (pdb_group == "High PDB") {
-        sub_sample <- subset(sub_sample, high_pdb == 1)
-      }
-
-      # Store the subset
-      sub_samples[[sample_name]] <- sub_sample
     }
   }
 }
+
 # ------------------------------------------------------------------------------
 # Save data
 # ------------------------------------------------------------------------------
