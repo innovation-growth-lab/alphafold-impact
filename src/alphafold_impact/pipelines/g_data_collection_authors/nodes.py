@@ -15,7 +15,7 @@ from ..e_data_output_publications.nodes import (  # pylint: disable=E0402
     get_patent_citations,
 )
 
-
+pd.set_option('future.no_silent_downcasting', True)
 logger = logging.getLogger(__name__)
 
 
@@ -102,19 +102,6 @@ def _get_candidate_authors(data: pd.DataFrame) -> pd.DataFrame:
     ]
 
     author_labels["strong"] = author_labels["source"]
-
-    # # merge chain label
-    # author_data_out = author_data_out.merge(
-    #     author_labels[["author", "quarter", "source", "strong"]],
-    #     on=["author", "quarter", "source"],
-    #     how="left",
-    # )
-
-    # # bfill with False, then ffill with last value
-    # author_data_out.sort_values(by=["author", "quarter", "source"], inplace=True)
-    # # author_data_out["strong"] = author_data_out.groupby(["author", "source"])["strong"].apply(
-    # #     lambda x: x.bfill().fillna(False).ffill()
-    # # )
 
     return author_data_out, author_labels
 
@@ -415,10 +402,29 @@ def merge_author_data(
             - The first DataFrame contains the merged ECR data.
             - The second DataFrame contains the reduced ECR data for regression analysis.
     """
-    unique_authors = candidate_authors[["author", "chain_label"]].drop_duplicates(
-        subset=["author"]
+    logger.info("Preparing labels for end-of-loop merge")
+    label_cols = [col for col in candidate_authors.columns if col.startswith("strong")]
+    author_labels = candidate_authors[
+        ["author", "quarter"]
+        + label_cols
+    ].drop_duplicates(subset=["author", "quarter"])
+
+    # sort by author and quarter
+    author_labels = author_labels.sort_values(by=["author", "quarter"])
+
+    # ffill strong labels
+    author_labels[
+        [col for col in author_labels.columns if col.startswith("strong")]
+    ] = author_labels[
+        ["author"] + label_cols
+    ].groupby("author").ffill().fillna(0)
+
+    for col in label_cols:
+        author_labels[col] = author_labels[col].astype(int)
+
+    candidate_authors = candidate_authors.drop(
+        columns=[col for col in candidate_authors.columns if col.startswith("strong")]
     )
-    candidate_authors = candidate_authors.drop(columns=["chain_label"])
 
     institutions = _institution_preprocessing(institutions)
     candidate_authors = _candidates_preprocessing(candidate_authors)
@@ -521,7 +527,7 @@ def merge_author_data(
         output_data = pd.concat([output_data, data], ignore_index=True)
 
     # merge the unique authors with the output data
-    output_data = output_data.merge(unique_authors, on="author", how="left")
+    output_data = output_data.merge(author_labels, on=["author", "quarter"], how="left")
 
     return output_data
 
@@ -956,23 +962,30 @@ def _normalise_citation_counts(data: pd.DataFrame) -> pd.DataFrame:
 
     return data
 
+
 def _pivot_labels(data):
     strength_labels_wide = data.pivot_table(
         index=["author", "quarter"], columns="source", values="strong", aggfunc="first"
     )
+
+    # relabel
     strength_labels_wide.columns = [
         f"strong_{col}" for col in strength_labels_wide.columns
     ]
     cols = [col for col in strength_labels_wide.columns]
+
+    # sort
     strength_labels_wide = strength_labels_wide.reset_index().sort_values(
         by=["author", "quarter"]
     )
 
-    strength_labels_wide[cols] = strength_labels_wide.groupby("author")[cols].ffill()
-
     for col in cols:
-        strength_labels_wide[col] = np.where(
-            strength_labels_wide[col].notnull(), 1, 0
-        )
+        strength_labels_wide[col] = np.where(strength_labels_wide[col].notnull(), 1, 0)
+
+    # get the cumulative sum of counts
+    strength_labels_wide[cols] = strength_labels_wide.groupby("author")[cols].cumsum()
+
+    # forward fill
+    strength_labels_wide[cols] = strength_labels_wide.groupby("author")[cols].ffill()
 
     return strength_labels_wide
