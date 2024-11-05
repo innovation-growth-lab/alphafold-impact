@@ -1,0 +1,38 @@
+\begingroup
+\centering
+\begin{tabular}{lcccccccccccc}
+   \tabularnewline \midrule \midrule
+   Dependent Variable: & \multicolumn{12}{c}{ln1p\_cit\_0}\\
+ & \multicolumn{4}{c}{All Fields} & \multicolumn{4}{c}{Molecular Biology} & \multicolumn{4}{c}{Medicine} \\
+\cmidrule(lr){2-5} \cmidrule(lr){6-9} \cmidrule(lr){10-13}
+ & \multicolumn{2}{c}{General} & \multicolumn{2}{c}{Methodological} & \multicolumn{2}{c}{General} & \multicolumn{2}{c}{Methodological} & \multicolumn{2}{c}{General} & \multicolumn{2}{c}{Methodological} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7} \cmidrule(lr){8-9} \cmidrule(lr){10-11} \cmidrule(lr){12-13}
+Variables & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} \\
+\cmidrule(lr){1-1}\cmidrule(lr){2-2} \cmidrule(lr){3-3} \cmidrule(lr){4-4} \cmidrule(lr){5-5} \cmidrule(lr){6-6} \cmidrule(lr){7-7} \cmidrule(lr){8-8} \cmidrule(lr){9-9} \cmidrule(lr){10-10} \cmidrule(lr){11-11} \cmidrule(lr){12-12} \cmidrule(lr){13-13}
+   AlphaFold                                & -0.018       & -0.030$^{**}$ & 0.025        & -0.025$^{**}$ & 0.120   & -0.0010 & 0.218   & 0.005   & -0.052  & -0.038      & -0.106  & -0.035\\   
+                                            & (0.057)      & (0.012)       & (0.087)      & (0.012)       & (0.109) & (0.010) & (0.166) & (0.013) & (0.187) & (0.026)     & (0.269) & (0.025)\\   
+   Counterfactual AI                        & 0.036        & 0.016         & 0.103        & 0.037         & -0.024  & 0.005   & 0.025   & 0.026   & -0.144  & -0.118      & -0.061  & -0.106\\   
+                                            & (0.079)      & (0.037)       & (0.118)      & (0.043)       & (0.137) & (0.072) & (0.148) & (0.081) & (0.348) & (0.110)     & (0.438) & (0.112)\\   
+   Counterfactual No AI                     & 0.200$^{*}$  & 0.002         & 0.290$^{**}$ & 0.003         & -0.015  & -0.028  & 0.062   & 0.002   & 0.284   & -0.009      & 0.297   & -0.007\\   
+                                            & (0.106)      & (0.013)       & (0.134)      & (0.013)       & (0.131) & (0.041) & (0.161) & (0.044) & (0.200) & (0.017)     & (0.248) & (0.018)\\   
+   AlphaFold $\times$ Counterfactual AI     & 0.080        & 0.001         & 0.048        & 0.0005        & 0.291   & -0.002  & 0.219   & -0.003  & 0.318   & 0.060$^{*}$ & 0.288   & 0.062$^{*}$\\   
+                                            & (0.172)      & (0.002)       & (0.228)      & (0.002)       & (0.230) & (0.002) & (0.258) & (0.002) & (0.605) & (0.032)     & (0.651) & (0.032)\\   
+   AlphaFold $\times$ Counterfactual No AI  & -0.262$^{*}$ & -0.0002       & -0.339$^{*}$ & -0.0003       & -0.185  & -0.004  & -0.289  & -0.010  & -0.392  & 0.002       & -0.382  & 0.001\\   
+                                            & (0.136)      & (0.0008)      & (0.172)      & (0.0009)      & (0.201) & (0.010) & (0.250) & (0.011) & (0.291) & (0.002)     & (0.338) & (0.002)\\   
+   \midrule
+   \emph{Fixed-effects}\\
+   author                                   & Yes          & Yes           & Yes          & Yes           & Yes     & Yes     & Yes     & Yes     & Yes     & Yes         & Yes     & Yes\\  
+   quarter                                  & Yes          & Yes           & Yes          & Yes           & Yes     & Yes     & Yes     & Yes     & Yes     & Yes         & Yes     & Yes\\  
+   institution                              & Yes          & Yes           & Yes          & Yes           & Yes     & Yes     & Yes     & Yes     & Yes     & Yes         & Yes     & Yes\\  
+   institution\_type                        & Yes          & Yes           & Yes          & Yes           & Yes     & Yes     & Yes     & Yes     & Yes     & Yes         & Yes     & Yes\\  
+   institution\_country\_code               & Yes          & Yes           & Yes          & Yes           & Yes     & Yes     & Yes     & Yes     & Yes     & Yes         & Yes     & Yes\\  
+   \midrule
+   \emph{Fit statistics}\\
+   Observations                             & 7,186        & 7,186         & 4,141        & 4,141         & 2,734   & 2,734   & 1,451   & 1,451   & 1,923   & 1,923       & 1,282   & 1,282\\  
+   R$^2$                                    & 0.62         & 0.62          & 0.63         & 0.62          & 0.73    & 0.73    & 0.75    & 0.75    & 0.76    & 0.76        & 0.76    & 0.76\\  
+Mean(Dep. Var.) & 0.757 & 0.757 & 0.820 & 0.820 & 0.711 & 0.711 & 0.730 & 0.730 & 0.979 & 0.979 & 1.113 & 1.113 \\
+   \midrule \midrule
+   \multicolumn{13}{l}{\emph{Clustered (author \& quarter) standard-errors in parentheses}}\\
+   \multicolumn{13}{l}{\emph{Signif. Codes: ***: 0.01, **: 0.05, *: 0.1}}\\
+\end{tabular}
+\par\endgroup
