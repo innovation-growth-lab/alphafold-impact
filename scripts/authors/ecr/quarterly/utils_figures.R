@@ -1,4 +1,4 @@
-figures <- "data/05_model_output/nonecr/quarterly/figures/"
+figures <- "data/05_model_output/authors/ecr/quarterly/figures/"
 
 if (!dir.exists(figures)) {
   dir.create(figures, recursive = TRUE)

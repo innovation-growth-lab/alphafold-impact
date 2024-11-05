@@ -20,7 +20,7 @@ invisible(lapply(list_of_packages, library, character.only = TRUE))
 
 # Set working directory
 setwd("~/projects/alphafold-impact/")
-pathdir <- "data/05_model_output/ecr/articles/"
+pathdir <- "data/05_model_output/authors/nonecr/articles/"
 
 # Create directories if they do not exist
 if (!dir.exists(pathdir)) {
@@ -208,8 +208,8 @@ for (dep_var_out in dep_vars) { # nolint
   # ----------------------------------------------------------------------------
 
   # import from utils_tables.R
-  source("scripts/ecr/articles/utils_tables.R")
-  message("Generating tables")
+  source("scripts/authors/nonecr/articles/utils_tables.R")
+
   tryCatch(
     {
       # Generate tables
@@ -233,7 +233,7 @@ for (dep_var_out in dep_vars) { # nolint
   # ----------------------------------------------------------------------------
 
   # import from utils_figures.R
-  source("scripts/ecr/articles/utils_figures.R")
+  source("scripts/authors/nonecr/articles/utils_figures.R")
   message("Generating plots")
   tryCatch(
     {

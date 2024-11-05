@@ -20,7 +20,7 @@ invisible(lapply(list_of_packages, library, character.only = TRUE))
 
 # Set working directory
 setwd("~/projects/alphafold-impact/")
-pathdir <- "data/05_model_output/ecr/quarterly/"
+pathdir <- "data/05_model_output/authors/ecr/articles/"
 
 # Create directories if they do not exist
 if (!dir.exists(pathdir)) {
@@ -46,20 +46,19 @@ covs <- list()
 covs[["base0"]] <- c("num_publications")
 
 fes <- list()
-fes[["fe0"]] <- c("quarter")
+fes[["fe0"]] <- c("quarter_year")
 fes[["fe1"]] <- c(
-  "author", "quarter", "institution", "institution_type",
+  "author", "quarter_year", "institution", "institution_type",
   "institution_country_code"
 )
 
 cov_sets <- c("base0")
 fe_list <- c("fe1")
 dep_vars <- c(
-  # "ln1p_cited_by_count", "ln1p_cit_0", "ln1p_cit_1",
-  # "ln1p_fwci", "logit_cit_norm_perc",
-  # "ln1p_patent_count", "ln1p_patent_citation", "ln1p_ca_count",
-  # "resolution", "R_free", 
-  "num_publications_pdb", "num_publications"
+  "ln1p_cited_by_count", "ln1p_cit_0", "ln1p_cit_1",
+  "ln1p_fwci", "logit_cit_norm_perc",
+  "ln1p_patent_count", "ln1p_patent_citation", "ln1p_ca_count",
+  "resolution", "R_free", "pdb_submission"
 )
 
 for (dep_var_out in dep_vars) { # nolint
@@ -152,7 +151,7 @@ for (dep_var_out in dep_vars) { # nolint
 
       # compute the unique number of quarter_year
       n_authors <- length(unique(non_na_data$author))
-      n_quarters <- length(unique(non_na_data$quarter))
+      n_quarters <- length(unique(non_na_data$quarter_year))
       n_institutions <- length(unique(non_na_data$institution))
       n_institution_types <- length(unique(non_na_data$institution_type))
       n_institution_countries <- length(
@@ -192,7 +191,7 @@ for (dep_var_out in dep_vars) { # nolint
             feols(
               form_list[[form]],
               data = local_data,
-              cluster = c("author", "quarter")
+              cluster = c("author", "quarter_year")
             )
           },
           error = function(e) {
@@ -209,7 +208,7 @@ for (dep_var_out in dep_vars) { # nolint
   # ----------------------------------------------------------------------------
 
   # import from utils_tables.R
-  source("scripts/ecr/quarterly/utils_tables.R")
+  source("scripts/authors/ecr/articles/utils_tables.R")
   message("Generating tables")
   tryCatch(
     {
@@ -234,7 +233,7 @@ for (dep_var_out in dep_vars) { # nolint
   # ----------------------------------------------------------------------------
 
   # import from utils_figures.R
-  source("scripts/ecr/quarterly/utils_figures.R")
+  source("scripts/authors/ecr/articles/utils_figures.R")
   message("Generating plots")
   tryCatch(
     {
@@ -260,4 +259,3 @@ for (dep_var_out in dep_vars) { # nolint
     }
   )
 }
-

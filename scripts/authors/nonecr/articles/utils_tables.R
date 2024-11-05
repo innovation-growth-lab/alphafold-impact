@@ -1,5 +1,5 @@
 options(scipen = 999)
-tables <- "data/05_model_output/ecr/quarterly/tables/"
+tables <- "data/05_model_output/authors/nonecr/articles/tables/"
 if (!dir.exists(tables)) {
   dir.create(tables, recursive = TRUE)
 }
@@ -39,11 +39,8 @@ table_info <- list(
   "R_free" = list(
     file_name = "R_free.tex"
   ),
-  "num_publications_pdb" = list(
+  "pdb_submission" = list(
     file_name = "pdb_submission.tex"
-  ),
-  "num_publications" = list(
-    file_name = "num_publications.tex"
   )
 )
 

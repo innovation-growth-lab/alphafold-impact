@@ -20,7 +20,7 @@ invisible(lapply(list_of_packages, library, character.only = TRUE))
 
 # Set working directory
 setwd("~/projects/alphafold-impact/")
-pathdir <- "data/05_model_output/nonecr/quarterly/"
+pathdir <- "data/05_model_output/authors/ecr/quarterly/"
 
 # Create directories if they do not exist
 if (!dir.exists(pathdir)) {
@@ -55,10 +55,11 @@ fes[["fe1"]] <- c(
 cov_sets <- c("base0")
 fe_list <- c("fe1")
 dep_vars <- c(
-  "ln1p_cited_by_count", "ln1p_cit_0", "ln1p_cit_1",
-  "ln1p_fwci", "logit_cit_norm_perc",
-  "ln1p_patent_count", "ln1p_patent_citation", "ln1p_ca_count",
-  "resolution", "R_free", "num_publications_pdb", "num_publications"
+  # "ln1p_cited_by_count", "ln1p_cit_0", "ln1p_cit_1",
+  # "ln1p_fwci", "logit_cit_norm_perc",
+  # "ln1p_patent_count", "ln1p_patent_citation", "ln1p_ca_count",
+  # "resolution", "R_free", 
+  "num_publications_pdb", "num_publications"
 )
 
 for (dep_var_out in dep_vars) { # nolint
@@ -208,7 +209,7 @@ for (dep_var_out in dep_vars) { # nolint
   # ----------------------------------------------------------------------------
 
   # import from utils_tables.R
-  source("scripts/nonecr/quarterly/utils_tables.R")
+  source("scripts/authors/ecr/quarterly/utils_tables.R")
   message("Generating tables")
   tryCatch(
     {
@@ -233,7 +234,7 @@ for (dep_var_out in dep_vars) { # nolint
   # ----------------------------------------------------------------------------
 
   # import from utils_figures.R
-  source("scripts/nonecr/quarterly/utils_figures.R")
+  source("scripts/authors/ecr/quarterly/utils_figures.R")
   message("Generating plots")
   tryCatch(
     {
@@ -259,3 +260,4 @@ for (dep_var_out in dep_vars) { # nolint
     }
   )
 }
+

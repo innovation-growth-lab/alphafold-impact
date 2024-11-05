@@ -20,7 +20,7 @@ invisible(lapply(list_of_packages, library, character.only = TRUE))
 
 # Set working directory
 setwd("~/projects/alphafold-impact/")
-pathdir <- "data/05_model_output/nonecr/quarterly/data/"
+pathdir <- "data/05_model_output/authors/nonecr/quarterly/data/"
 
 # Create directories if they do not exist
 if (!dir.exists(pathdir)) {
