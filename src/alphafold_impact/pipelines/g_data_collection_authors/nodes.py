@@ -81,8 +81,8 @@ def _get_candidate_authors(data: pd.DataFrame) -> pd.DataFrame:
 
     author_labels = (
         author_data[["sort_order", "quarter", "author", "chain_label", "level"]]
-        .sort_values(["level", "quarter", "sort_order"])
-        .groupby(["author"])
+        .sort_values(["level", "sort_order"])
+        .groupby(["author", "quarter"])
         .first()
         .reset_index()
         .drop(columns=["sort_order", "level"])
