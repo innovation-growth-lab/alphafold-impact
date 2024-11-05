@@ -9,8 +9,8 @@ if (!dir.exists(figures)) {
 # ------------------------------------------------------------------------------
 
 extract_coefficients <- function(results, dep_vars, subsets, cov_sets, fe_list, treat_vars, treat_var_interest = c("is_af")) { # nolint
-  coef_data <- list()
 
+  coef_data <- list()
   # Iterate over dependent variables
   for (dep_var in dep_vars) {
     # Iterate over subsets
@@ -39,18 +39,16 @@ extract_coefficients <- function(results, dep_vars, subsets, cov_sets, fe_list, 
                     parts <- strsplit(result_name, "__")[[1]] # nolint
                     depth_c <- parts[1]
                     field_c <- parts[2]
-                    strength_c <- parts[3]
-                    pdb_c <- parts[4]
-                    dep_var_c <- parts[5]
-                    cov_set_c <- parts[6] # nolint
-                    fe_c <- parts[7] # nolint
-                    indep_vars_c <- parts[8]
+                    subgroup_c <- parts[3]
+                    dep_var_c <- parts[4]
+                    cov_set_c <- parts[5] # nolint
+                    fe_c <- parts[6] # nolint
+                    indep_vars_c <- parts[7]
 
                     coef_data[[length(coef_data) + 1]] <- data.frame(
                       depth = depth_c,
                       field = field_c,
-                      pdb = pdb_c,
-                      strength = strength_c,
+                      subgroup = subgroup_c,
                       treat_var = treat_var_interest_item,
                       dep_var = dep_var_c,
                       indep_vars = indep_vars_c,
@@ -79,8 +77,7 @@ extract_coefficients <- function(results, dep_vars, subsets, cov_sets, fe_list, 
 
 # --- Variable definitions ---
 # Set desired orders for variables and names
-pdb_group_order <- c("All PDB", "High PDB")
-strength_group_order <- c("General Use", "Methodological Use")
+subgroup_order <- c("All PDB", "High PDB", "CEM")
 depth_order <- c("All Groups", "Foundational", "Applied")
 field_order <- c(
   "field_All Fields",
@@ -90,11 +87,10 @@ field_order <- c(
 
 
 coef_order <- c(
-  "af:ct_noai", "af:ct_ai", "ct_noai:high_pdb1", "af:high_pdb1",
-  "ct_ai:high_pdb1", "ct_noai", "ct_ai", "af",
-  "af:ct_noai_ind", "af:ct_ai_ind",
-  "ct_noai:high_pdb1_ind", "ct_ai:high_pdb1_ind", "af:high_pdb1_ind",
-  "ct_noai_ind", "ct_ai_ind", "af_ind"
+  "strong_af:strong_ct_noai", "strong_af:strong_ct_ai", "strong_ct_noai", "strong_ct_ai", "strong_af", # nolint
+  "af:ct_noai", "af:ct_ai", "ct_noai", "ct_ai", "af",
+  "strong_af:strong_ct_noai_ind", "strong_af:strong_ct_ai_ind", "strong_ct_noai_ind", "strong_ct_ai_ind", "strong_af_ind", # nolint
+  "af:ct_noai_ind", "af:ct_ai_ind", "ct_noai_ind", "ct_ai_ind", "af_ind"
 )
 
 dep_var_labels <- c(
@@ -115,24 +111,27 @@ coef_labels <- c(
   "af_ind" = "AlphaFold (ext.)",
   "ct_ai_ind" = "Counterfactual AI (ext.)",
   "ct_noai_ind" = "Counterfactual no AI (ext.)",
-  "af:high_pdb1_ind" = "AlphaFold (ext.) - High PDB",
-  "ct_ai:high_pdb1_ind" = "Counterfactual AI (ext.) - High PDB", # nolint
-  "ct_noai:high_pdb1_ind" = "Counterfactual no AI (ext.) - High PDB", # nolint
+  "strong_af_ind" = "AlphaFold - Method (ext.)",
+  "strong_ct_ai_ind" = "Counterfactual AI - Method (ext.)",
+  "strong_ct_noai_ind" = "Counterfactual no AI - Method (ext.)",
   "af" = "AlphaFold (int.)",
   "ct_ai" = "Counterfactual AI (int.)",
   "ct_noai" = "Counterfactual no AI (int.)",
-  "af:high_pdb1" = "AlphaFold (int.) - High PDB",
-  "ct_ai:high_pdb1" = "Counterfactual AI (int.) - High PDB", # nolint
-  "ct_noai:high_pdb1" = "Counterfactual no AI (int.) - High PDB" # nolint
+  "strong_af" = "AlphaFold - Method (int.)",
+  "strong_ct_ai" = "Counterfactual AI - Method (int.)",
+  "strong_ct_noai" = "Counterfactual no AI - Method (int.)"
 )
 
 strip_colors <- c(
-  "All Groups - General Use" = "lightyellow",
-  "All Groups - Methodological Use" = "lightyellow",
-  "Foundational - General Use" = "lightcoral",
-  "Foundational - Methodological Use" = "lightcoral",
-  "Applied - General Use" = "lightblue",
-  "Applied - Methodological Use" = "lightblue"
+  "All Groups - All PDB" = "lightyellow",
+  "All Groups - High PDB" = "lightyellow",
+  "All Groups - CEM" = "lightyellow",
+  "Foundational - All PDB" = "lightcoral",
+  "Foundational - High PDB" = "lightcoral",
+  "Foundational - CEM" = "lightcoral",
+  "Applied - All PDB" = "lightblue",
+  "Applied - High PDB" = "lightblue",
+  "Applied - CEM" = "lightblue"
 )
 
 # --- Function to generate coefficient plots ---
@@ -152,16 +151,16 @@ generate_coef_plots <- function(coef_table) { # nolint
   unique_dep_vars <- unique(coef_table$dep_var)
 
   for (single_dep_var in unique_dep_vars) {
-    for (single_pdb in pdb_group_order) {
+    for (single_subgroup in subgroup_order) {
       tryCatch(
         {
           coef_plot_data <- coef_table %>% # nolint
-            filter(treat_var %in% names(coef_labels), dep_var == single_dep_var, pdb == paste0("pdb_", single_pdb, sep="")) %>% # nolint
+            filter(treat_var %in% names(coef_labels), dep_var == single_dep_var, subgroup == paste0("subgroup_", single_subgroup, sep="")) %>% # nolint
             mutate( # nolint
               depth = factor(gsub("depth_", "", depth), levels = gsub("depth_", "", depth_order)), # nolint
-              strength = factor(gsub("use_", "", strength), levels = gsub("use_", "", strength_group_order)), # nolint
               field = factor(gsub("field_", "", field), levels = gsub("field_", "", field_order)), # nolint
-              depth_strength = factor(paste(depth, strength, sep = " - "), levels = unique(paste(depth, strength, sep = " - "))), # nolint
+              subgroup = factor(gsub("subgroup_", "", subgroup), levels = gsub("subgroup_", "", subgroup_order)), # nolint
+              depth_subgroup = factor(paste(depth, subgroup, sep = " - "), levels = unique(paste(depth, subgroup, sep = " - "))), # nolint
               treat_var = factor(
                 treat_var,
                 levels = coef_order
@@ -169,11 +168,11 @@ generate_coef_plots <- function(coef_table) { # nolint
               treat_var = recode(treat_var, !!!coef_labels) # nolint
             )
 
-          # drop levels in column depth_strength if they have zero values
+          # drop levels in column depth_subgroup if they have zero values
           present_levels <- levels(
-            coef_plot_data$depth_strength
-          )[levels(coef_plot_data$depth_strength) %in%
-            unique(coef_plot_data$depth_strength[coef_plot_data$depth_strength != ""])] # nolint
+            coef_plot_data$depth_subgroup
+          )[levels(coef_plot_data$depth_subgroup) %in%
+            unique(coef_plot_data$depth_subgroup[coef_plot_data$depth_subgroup != ""])] # nolint
           present_strip_colors <- strip_colors[present_levels]
 
           # Check if coef_plot_data is empty
@@ -198,10 +197,10 @@ generate_coef_plots <- function(coef_table) { # nolint
               aes(xmin = conf_low, xmax = conf_high), # nolint
               height = 0.2, linewidth = 0.5 # thinner for 5% significance
             ) +
-            geom_hline(yintercept = 3.5, color = "gray", linetype = "dashed", linewidth = 1) + # nolint
+            geom_hline(yintercept = 6.5, color = "gray", linetype = "dashed", linewidth = 1) + # nolint
             geom_vline(xintercept = 0, color = "black", linewidth = 1) + # nolint
             ggh4x::facet_grid2(
-              depth_strength ~ field,
+              depth_subgroup ~ field,
               scales = "free",
               independent = "x",
               space = "fixed",
@@ -212,7 +211,7 @@ generate_coef_plots <- function(coef_table) { # nolint
               )
             ) + # nolint
             labs( # nolint
-              title = paste("Dependent Variable:", single_dep_var),
+              title = paste("Dependent Variable:", single_dep_var, " - ", single_subgroup), # nolint
               # subtitle = paste("Field:", field_label), # nolint
               x = "Estimate (with 95% CI)",
               y = "Coefficient Variable"
@@ -230,18 +229,18 @@ generate_coef_plots <- function(coef_table) { # nolint
               plot.margin = margin(1, 1, 1, 1, "cm") # nolint
             )
 
-          # add counts of obs (strength all and ext.)
+          # add counts of obs (subgroup all and ext.)
           coeffplot <- coeffplot + geom_text( # nolint
             data = coef_plot_data %>% filter(str_detect(treat_var, "ext\\.")), # nolint
             aes(label = paste0("n = ", n_obs)), # nolint
             x = Inf, y = Inf,
-            hjust = 1.1, vjust = 29.5,
+            hjust = 1.1, vjust = 39.5,
             size = 3, color = "black"
           )
 
           # Create the directory if it doesn't exist
           pathdir <- paste0(
-            figures, "coef_plot/", single_pdb, "/"
+            figures, "coef_plot/", single_subgroup, "/"
           )
           outfile <- paste0(pathdir, single_dep_var, ".png")
           message("Saving plot to: ", outfile)
@@ -250,8 +249,8 @@ generate_coef_plots <- function(coef_table) { # nolint
             dir.create(pathdir, recursive = TRUE)
           }
 
-          n_y_facet_rows <- length(unique(coef_plot_data$depth_strength))
-          plot_height <- n_y_facet_rows * 3.5 # nolint
+          n_y_facet_rows <- length(unique(coef_plot_data$depth_subgroup))
+          plot_height <- n_y_facet_rows * 4.5 # nolint
 
           ggsave( # nolint
             outfile, # nolint

@@ -58,13 +58,13 @@ dep_vars <- c(
   "ln1p_cited_by_count", "ln1p_cit_0", "ln1p_cit_1",
   "ln1p_fwci", "logit_cit_norm_perc",
   "ln1p_patent_count", "ln1p_patent_citation", "ln1p_ca_count",
-  "resolution", "R_free", "num_publications_pdb", "num_publications"
+  "resolution", "R_free", "pdb_submission"
 )
 
 for (dep_var_out in dep_vars) { # nolint
   treat_vars <- c(
-    "af_ind + ct_ai_ind + ct_noai_ind + af:ct_ai_ind + af:ct_noai_ind", # nolint
-    "af + ct_ai + ct_noai + af:ct_ai + af:ct_noai" # nolint
+    "af_ind + ct_ai_ind + ct_noai_ind + af:ct_ai_ind + af:ct_noai_ind + strong_af_ind + strong_ct_ai_ind + strong_ct_noai_ind + strong_af:strong_ct_ai_ind + strong_af:strong_ct_noai_ind", # nolint
+    "af + ct_ai + ct_noai + af:ct_ai + af:ct_noai + strong_af + strong_ct_ai + strong_ct_noai + strong_af:strong_ct_ai + strong_af:strong_ct_noai" # nolint
   )
 
   form_list <- list()
@@ -83,9 +83,9 @@ for (dep_var_out in dep_vars) { # nolint
       for (fe in fe_list) {
         # Iterate over treatment variables
         for (treat_var in treat_vars) {
-          if (treat_var == "af_ind + ct_ai_ind + ct_noai_ind + af:ct_ai_ind + af:ct_noai_ind") { # nolint
-            treat_var <- paste0("af + ct_ai + ct_noai + af:ct_ai + af:ct_noai") # nolint
-            label_var <- "af_ind + ct_ai_ind + ct_noai_ind + af:ct_ai_ind + af:ct_noai_ind" # nolint
+          if (treat_var == "af_ind + ct_ai_ind + ct_noai_ind + af:ct_ai_ind + af:ct_noai_ind + strong_af_ind + strong_ct_ai_ind + strong_ct_noai_ind + strong_af:strong_ct_ai_ind + strong_af:strong_ct_noai_ind") { # nolint
+            treat_var <- paste0("af + ct_ai + ct_noai + af:ct_ai + af:ct_noai + strong_af + strong_ct_ai + strong_ct_noai + strong_af:strong_ct_ai + strong_af:strong_ct_noai") # nolint
+            label_var <- "af_ind + ct_ai_ind + ct_noai_ind + af:ct_ai_ind + af:ct_noai_ind + strong_af_ind + strong_ct_ai_ind + strong_ct_noai_ind + strong_af:strong_ct_ai_ind + strong_af:strong_ct_noai_ind" # nolint
           } else {
             label_var <- treat_var
           }
@@ -129,7 +129,6 @@ for (dep_var_out in dep_vars) { # nolint
       regression_label <- paste0(sub, "__", form)
       message("Running regression: ", regression_label)
 
-
       # Create a local copy of the subset
       local_data <- sub_samples[[sub]]
 
@@ -149,7 +148,7 @@ for (dep_var_out in dep_vars) { # nolint
 
       non_na_data <- local_data[!is.na(local_data[[dep_var]]), ]
 
-      # compute the unique number of quarter_year
+      # compute the unique number of quarter
       n_authors <- length(unique(non_na_data$author))
       n_quarters <- length(unique(non_na_data$quarter))
       n_institutions <- length(unique(non_na_data$institution))
@@ -164,7 +163,10 @@ for (dep_var_out in dep_vars) { # nolint
         > nrow(non_na_data)
       ) {
         message("Skipping regression: ", regression_label)
-        results[[regression_label]] <- NULL
+        results[[regression_label]] <- feols(
+          as.formula(paste(dep_var, "~ 1")),
+          data = local_data
+        )
         next
       }
 
@@ -175,13 +177,13 @@ for (dep_var_out in dep_vars) { # nolint
             feols(
               form_list[[form]],
               data = local_data,
-              cluster = c("author", "quarter_year"),
+              cluster = c("author", "quarter"),
               family = binomial(link = "logit")
             )
           },
           error = function(e) {
             message("Error in regression: ", regression_label, " - ", e$message)
-            return(NULL) # Return NULL if an error occurs
+            return(feols(as.formula(paste(dep_var, "~ 1")), data = local_data))
           }
         )
       } else {
@@ -196,7 +198,7 @@ for (dep_var_out in dep_vars) { # nolint
           },
           error = function(e) {
             message("Error in regression: ", regression_label, " - ", e$message)
-            return(NULL) # Return NULL if an error occurs
+            return(feols(as.formula(paste(dep_var, "~ 1")), data = local_data))
           }
         )
       }
@@ -208,7 +210,7 @@ for (dep_var_out in dep_vars) { # nolint
   # ----------------------------------------------------------------------------
 
   # import from utils_tables.R
-  source("scripts/nonecr/quarterly/utils_tables.R")
+  source("scripts/authors/nonecr/quarterly/utils_tables.R")
   message("Generating tables")
   tryCatch(
     {
@@ -233,7 +235,7 @@ for (dep_var_out in dep_vars) { # nolint
   # ----------------------------------------------------------------------------
 
   # import from utils_figures.R
-  source("scripts/nonecr/quarterly/utils_figures.R")
+  source("scripts/authors/nonecr/quarterly/utils_figures.R")
   message("Generating plots")
   tryCatch(
     {
@@ -246,7 +248,11 @@ for (dep_var_out in dep_vars) { # nolint
         treat_vars = treat_vars,
         treat_var_interest = c(
           "af", "af_ind", "ct_ai_ind", "ct_noai_ind", "ct_ai", "ct_noai",
-          "af:ct_ai", "af:ct_noai" # nolint
+          "af:ct_ai", "af:ct_noai",
+          "strong_af", "strong_ct_ai", "strong_ct_noai",
+          "strong_af:strong_ct_ai", "strong_af:strong_ct_noai",
+          "strong_af_ind", "strong_ct_ai_ind", "strong_ct_noai_ind",
+          "strong_af:strong_ct_ai_ind", "strong_af:strong_ct_noai_ind"
         )
       )
 

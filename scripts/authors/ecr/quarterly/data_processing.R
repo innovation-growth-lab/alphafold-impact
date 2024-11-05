@@ -137,7 +137,7 @@ ecr_data_cem <- ecr_data %>%
   mutate(af_ind = max(af_ind)) %>%
   ungroup() %>%
   filter(complete.cases(cit_0, cit_1)) %>%
-  filter(quarter_year %in% c("2020 Q1", "2020 Q2", "2020 Q3", "2020 Q4")) %>%
+  filter(quarter %in% 200:204) %>%
   select(af_ind, author, cols) %>%
   group_by(author) %>%
   summarise(
