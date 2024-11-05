@@ -5,7 +5,7 @@ options(width = 100)
 
 # Check installation & load required packages
 list_of_packages <- c(
-  "arrow", "tidyverse", "aws.s3", "yaml", "zoo"
+  "arrow", "tidyverse", "aws.s3", "yaml", "zoo", "MatchIt"
 )
 new_packages <- list_of_packages[
   !(list_of_packages %in% installed.packages()[, "Package"])
@@ -63,6 +63,9 @@ ecr_data <- s3read_using(
 # create a new factor variable
 ecr_data <- ecr_data %>%
   mutate(
+    strong_af = ifelse(is.na(strong_af), 0, strong_af),
+    strong_ct_ai = ifelse(is.na(strong_ct_ai), 0, strong_ct_ai),
+    strong_ct_noai = ifelse(is.na(strong_ct_noai), 0, strong_ct_noai),
     ct = ct_ai + ct_noai,
     af_ind = ifelse(af > 0, 1, 0),
     ct_ind = ifelse(ct > 0, 1, 0),
@@ -70,6 +73,11 @@ ecr_data <- ecr_data %>%
     ct_noai_ind = ifelse(ct_noai > 0, 1, 0),
     "af:ct_ai_ind" = ifelse(af > 0 & ct_ai > 0, 1, 0),
     "af:ct_noai_ind" = ifelse(af > 0 & ct_noai > 0, 1, 0),
+    strong_af_ind = ifelse(strong_af > 0, 1, 0),
+    strong_ct_ai_ind = ifelse(strong_ct_ai > 0, 1, 0),
+    strong_ct_noai_ind = ifelse(strong_ct_noai > 0, 1, 0),
+    "strong_af:strong_ct_ai_ind" = ifelse(strong_af > 0 & strong_ct_ai > 0, 1, 0), # nolint
+    "strong_af:strong_ct_noai_ind" = ifelse(strong_af > 0 & strong_ct_noai > 0, 1, 0) # nolint
   )
 
 # fill type, country_code, institution NA as "unknown"
@@ -87,11 +95,6 @@ ecr_data <- ecr_data %>%
   mutate(
     author = as.factor(author),
     author_position = as.factor(author_position),
-    strong = as.factor(
-      if_else(chain_label %in% c("strong", "partial_strong"), 1,
-        if_else(chain_label %in% c("no_data", "unknown"), NA_integer_, 0)
-      )
-    ),
     depth = as.factor(depth),
     institution = as.factor(institution),
     institution_type = as.factor(type),
@@ -139,12 +142,34 @@ field_mapping <- c(
 ecr_data$primary_field <- recode(ecr_data$primary_field, !!!field_mapping)
 
 # ------------------------------------------------------------------------------
+# CEM (Coarsened Exact Matching)
+# ------------------------------------------------------------------------------
+
+# Define the columns to be used for matching
+cols <- c(
+  "num_publications", "cited_by_count", "cit_0", "cit_1", "patent_count"
+)
+
+# Filter and prepare data for collapsing
+ecr_data_cem <- ecr_data %>%
+  group_by(author) %>%
+  mutate(af_ind = max(af_ind)) %>%
+  ungroup() %>%
+  filter(complete.cases(cit_0, cit_1)) %>%
+  filter(quarter_year %in% c("2020 Q1", "2020 Q2", "2020 Q3", "2020 Q4")) %>%
+  select(af_ind, author, cols) %>%
+  group_by(author) %>%
+  summarise(
+    af_ind = max(af_ind),
+    across(cols, \(x) mean(x, na.rm = TRUE))
+  )
+
+# ------------------------------------------------------------------------------
 # Sample Prep
 # ------------------------------------------------------------------------------
 # Define sub_samples as a list of samples
 sub_samples <- list()
-pdb_groups <- c("All PDB", "High PDB")
-strength_groups <- c("General Use", "Methodological Use")
+sub_groups <- c("All PDB", "High PDB", "CEM")
 unique_depths <- c("All Groups", "Foundational", "Applied")
 unique_fields <- c(
   "All Fields",
@@ -152,45 +177,54 @@ unique_fields <- c(
   "Medicine"
 )
 
-# Create subsets for all combinations of depth, field, and pdb_group
+# Create subsets for all combinations of depth, field, and sub_group
 for (depth_lvl in unique_depths) { # nolint
   for (field in unique_fields) {
-    for (strength_group in strength_groups) {
-      for (pdb_group in pdb_groups) {
-        sample_name <- paste0(
-          "depth_", depth_lvl, "__field_",
-          field, "__use_", strength_group, "__pdb_", pdb_group
-        )
-        message("Creating sample: ", sample_name)
+    for (sub_group in sub_groups) {
+      sample_name <- paste0(
+        "depth_", depth_lvl, "__field_",
+        field, "__subgroup_", sub_group
+      )
+      message("Creating sample: ", sample_name)
 
-        # Start with the full dataset
-        sub_sample <- ecr_data
+      # Start with the full dataset
+      sub_sample <- ecr_data
 
-        # Apply depth filter
-        if (depth_lvl == "Foundational") {
-          sub_sample <- subset(sub_sample, depth == "foundational")
-        } else if (depth_lvl == "Applied") {
-          sub_sample <- subset(sub_sample, depth == "applied")
-        }
-
-        # Apply field filter
-        if (field != "All Fields") {
-          sub_sample <- subset(sub_sample, primary_field == field)
-        }
-
-        # Apply strength_group filter
-        if (strength_group == "Methodological Use") {
-          sub_sample <- subset(sub_sample, strong == 1)
-        }
-
-        # Apply pdb_group filter
-        if (pdb_group == "High PDB") {
-          sub_sample <- subset(sub_sample, high_pdb == 1)
-        }
-
-        # Store the subset
-        sub_samples[[sample_name]] <- sub_sample
+      # Apply depth filter
+      if (depth_lvl == "Foundational") {
+        sub_sample <- subset(sub_sample, depth == "foundational")
+      } else if (depth_lvl == "Applied") {
+        sub_sample <- subset(sub_sample, depth == "applied")
       }
+
+      # Apply field filter
+      if (field != "All Fields") {
+        sub_sample <- subset(sub_sample, primary_field == field)
+      }
+
+      # Apply sub_group filter
+      if (sub_group == "High PDB") {
+        sub_sample <- subset(sub_sample, high_pdb == 1)
+      }
+
+      if (sub_group == "CEM") {
+        # CEM matching on the collapsed data
+        match_out_af <- matchit(
+          as.formula(paste0("af_ind ~ ", paste0(cols, collapse = " + "))),
+          data = ecr_data_cem, method = "cem", k2k = TRUE
+        )
+
+        # Store matched data
+        cem_data <- match.data(match_out_af)
+
+        # Sample based on the matched group
+        qtly_cem <- ecr_data %>% semi_join(cem_data, by = "author")
+        sub_sample <- qtly_cem
+
+      }
+
+      # Store the subset
+      sub_samples[[sample_name]] <- sub_sample
     }
   }
 }
