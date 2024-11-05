@@ -64,7 +64,13 @@ def _get_candidate_authors(data: pd.DataFrame) -> pd.DataFrame:
     author_data["publication_date"] = pd.to_datetime(author_data["publication_date"])
     author_data["quarter"] = author_data["publication_date"].dt.to_period("Q")
 
-    # create a chain strength unique label
+    author_data_out = (
+        author_data.groupby(["author", "institution", "depth", "source", "quarter"])
+        .size()
+        .reset_index(name="counts")
+    )
+
+    logger.info("Getting chain labels")
     sort_order = {
         "strong": 0,
         "partial_strong": 1,
@@ -80,24 +86,37 @@ def _get_candidate_authors(data: pd.DataFrame) -> pd.DataFrame:
     )
 
     author_labels = (
-        author_data[["sort_order", "quarter", "author", "chain_label", "level"]]
+        author_data[
+            ["sort_order", "quarter", "author", "chain_label", "level", "source"]
+        ]
         .sort_values(["level", "sort_order"])
-        .groupby(["author", "quarter"])
+        .groupby(["author", "quarter", "source"])
         .first()
         .reset_index()
         .drop(columns=["sort_order", "level"])
     )
 
-    author_data = (
-        author_data.groupby(["author", "institution", "depth", "source", "quarter"])
-        .size()
-        .reset_index(name="counts")
-    )
+    # keep rows with strong or partial storng chain labels
+    author_labels = author_labels[
+        author_labels["chain_label"].isin(["strong", "partial_strong"])
+    ]
 
-    # merge chain label
-    author_data = author_data.merge(author_labels, on=["author", "quarter"], how="left")
+    author_labels["strong"] = author_labels["source"]
 
-    return author_data
+    # # merge chain label
+    # author_data_out = author_data_out.merge(
+    #     author_labels[["author", "quarter", "source", "strong"]],
+    #     on=["author", "quarter", "source"],
+    #     how="left",
+    # )
+
+    # # bfill with False, then ffill with last value
+    # author_data_out.sort_values(by=["author", "quarter", "source"], inplace=True)
+    # # author_data_out["strong"] = author_data_out.groupby(["author", "source"])["strong"].apply(
+    # #     lambda x: x.bfill().fillna(False).ffill()
+    # # )
+
+    return author_data_out, author_labels
 
 
 def get_unique_authors(
@@ -115,13 +134,11 @@ def get_unique_authors(
     """
 
     logger.info("Getting unique authors")
-    authors = _get_candidate_authors(
+    authors, strength_labels = _get_candidate_authors(
         publications_data[
             ["id", "authorships", "source", "level", "publication_date", "chain_label"]
         ]
     )
-
-    author_chain_labels = authors[["author", "chain_label"]].drop_duplicates()
 
     logger.info("Getting unique institutions")
     top_institutions = authors.loc[
@@ -150,11 +167,14 @@ def get_unique_authors(
         fill_value=0,
     ).reset_index()
 
-    authors = authors.merge(author_chain_labels, on="author", how="left")
-
     # make source cols int
     for col in ["af", "ct_ai", "ct_noai", "other"]:
         authors[col] = authors[col].astype(int)
+
+    logger.info("Pivoting labels")
+    strength_labels_wide = _pivot_labels(strength_labels)
+
+    authors = authors.merge(strength_labels_wide, on=["author", "quarter"], how="left")
 
     return authors
 
@@ -552,6 +572,10 @@ def aggregate_to_quarterly(data: pd.DataFrame) -> pd.DataFrame:
             ct_ai=("ct_ai", "first"),
             ct_noai=("ct_noai", "first"),
             other=("other", "first"),
+            strong_af=("strong_af", safe_mode),
+            strong_ct_ai=("strong_ct_ai", safe_mode),
+            strong_ct_noai=("strong_ct_noai", safe_mode),
+            strong_other=("strong_other", safe_mode),
             primary_field=("primary_field", safe_mode),
             author_position=("author_position", safe_mode),
             chain_label=("chain_label", safe_mode),
@@ -931,3 +955,24 @@ def _normalise_citation_counts(data: pd.DataFrame) -> pd.DataFrame:
     data = data.merge(t_columns, left_on="id", right_index=True, how="left")
 
     return data
+
+def _pivot_labels(data):
+    strength_labels_wide = data.pivot_table(
+        index=["author", "quarter"], columns="source", values="strong", aggfunc="first"
+    )
+    strength_labels_wide.columns = [
+        f"strong_{col}" for col in strength_labels_wide.columns
+    ]
+    cols = [col for col in strength_labels_wide.columns]
+    strength_labels_wide = strength_labels_wide.reset_index().sort_values(
+        by=["author", "quarter"]
+    )
+
+    strength_labels_wide[cols] = strength_labels_wide.groupby("author")[cols].ffill()
+
+    for col in cols:
+        strength_labels_wide[col] = np.where(
+            strength_labels_wide[col].notnull(), 1, 0
+        )
+
+    return strength_labels_wide
