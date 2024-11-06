@@ -158,6 +158,43 @@ unique_fields <- c(
   "Medicine"
 )
 
+nonecr_data <- nonecr_data %>%
+  select(c(
+    "num_publications",
+    "quarter",
+    "author",
+    "institution",
+    "institution_type",
+    "institution_country_code",
+    "ln1p_cited_by_count",
+    "ln1p_cit_0",
+    "ln1p_cit_1",
+    "ln1p_fwci",
+    "logit_cit_norm_perc",
+    "ln1p_patent_count",
+    "ln1p_patent_citation",
+    "ln1p_ca_count",
+    "resolution",
+    "R_free",
+    "pdb_submission",
+    "af_ind",
+    "ct_ai_ind",
+    "ct_noai_ind",
+    "af",
+    "ct_ai",
+    "ct_noai",
+    "strong_af_ind",
+    "strong_ct_ai_ind",
+    "strong_ct_noai_ind",
+    "strong_af",
+    "strong_ct_ai",
+    "strong_ct_noai",
+    "depth",
+    "primary_field",
+    "high_pdb"
+  ))
+
+
 # Create subsets for all combinations of depth, field, and sub_group
 for (depth_lvl in unique_depths) { # nolint
   for (field in unique_fields) {
