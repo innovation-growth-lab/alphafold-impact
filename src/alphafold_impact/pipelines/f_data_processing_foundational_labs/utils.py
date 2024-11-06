@@ -213,6 +213,80 @@ def get_cum_sums(pi_data, publication_data):
     return pi_data
 
 
+def get_strong_cum_sums(pi_data: pd.DataFrame, publication_data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculate the cumulative sums of strong counts for each PI in the given data.
+
+    Args:
+        pi_data (pd.DataFrame): The input data containing information about PIs.
+        publication_data (pd.DataFrame): The publication data containing information
+
+    Returns:
+        pd.DataFrame: The data with cumulative sums of strong counts for each PI.
+    """
+    strong_publications = publication_data[
+        publication_data["chain_label"].isin(["strong", "partial_strong"])
+    ]
+
+    pi_relevant_pubs = strong_publications.merge(
+        pi_data[["id", "pi_id", "quarter"]], on="id", how="inner"
+    )
+
+    pi_relevant_pubs = (
+        pi_relevant_pubs.groupby(["pi_id", "source", "quarter"])
+        .size()
+        .reset_index(name="counts")
+    )
+
+    pi_relevant_pubs = pi_relevant_pubs.sort_values(by=["pi_id", "source", "quarter"])
+
+    pi_relevant_pubs["cumulative_counts"] = pi_relevant_pubs.groupby(
+        ["pi_id", "source"]
+    )["counts"].cumsum()
+
+    pi_relevant_pubs = pi_relevant_pubs.pivot_table(
+        index=["pi_id", "quarter"],
+        columns="source",
+        values="cumulative_counts",
+        fill_value=0,
+    ).reset_index()
+
+    for col in ["af", "ct_ai", "ct_noai", "other"]:
+        pi_relevant_pubs.rename(columns={col: "strong_cumul_" + col}, inplace=True)
+        pi_relevant_pubs["strong_cumul_" + col] = pi_relevant_pubs[
+            "strong_cumul_" + col
+        ].astype(int)
+
+    pi_data = pi_data.merge(pi_relevant_pubs, on=["pi_id", "quarter"], how="left")
+
+    # sort by pi_id and quarter
+    pi_data = pi_data.sort_values(by=["pi_id", "quarter"])
+
+    # ffill the four columns
+    pi_data[
+        [
+            "strong_cumul_af",
+            "strong_cumul_ct_ai",
+            "strong_cumul_ct_noai",
+            "strong_cumul_other",
+        ]
+    ] = (
+        pi_data[
+            [
+                "strong_cumul_af",
+                "strong_cumul_ct_ai",
+                "strong_cumul_ct_noai",
+                "strong_cumul_other",
+            ]
+        ]
+        .ffill()
+        .fillna(0)
+        .astype(int)
+    )
+
+    return pi_data
+
+
 def get_intent(publications_data) -> dict:
     """
     Get the intent of the links for each publication in the given data.
@@ -340,7 +414,7 @@ def get_pdb_activity(data, pdb_submissions):
     )
     data_merged["pdb_submission"] = data_merged["_merge"] == "both"
     data_merged.drop(columns=["_merge"], inplace=True)
-    
+
     return data_merged
 
 

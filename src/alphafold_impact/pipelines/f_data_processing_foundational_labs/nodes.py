@@ -9,6 +9,7 @@ from kedro.io import AbstractDataset
 from .utils import (
     get_intent,
     get_cum_sums,
+    get_strong_cum_sums,
     preprocess_for_staggered_design,
     get_pdb_activity,
     collect_covid_references,
@@ -137,6 +138,7 @@ def get_foundational_lab_staggered_outputs(
 
         logger.info("Calculate cumulative sums")
         data_processed = get_cum_sums(data_processed, foundational_publications)
+        data_processed = get_strong_cum_sums(data_processed, foundational_publications)
 
         logger.info("Merging data with pdb_submissions data")
         data_processed = get_pdb_activity(data_processed, pdb_submissions)
