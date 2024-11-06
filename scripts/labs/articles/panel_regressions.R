@@ -52,7 +52,12 @@ fes <- list()
 fes[["fe0"]] <- c("quarter_year")
 fes[["fe1"]] <- c(
   "pi_id", "quarter_year", "institution", "institution_type",
-  "institution_country_code"
+  "institution_cited_by_count",
+  "institution_2yr_mean_citedness",
+  "institution_h_index",
+  "institution_i10_index",
+  "institution_country_code",
+  "covid_share_2020"
 )
 
 cov_sets <- c("base0")

@@ -290,6 +290,22 @@ applied_labs_data$primary_field <- recode(
 
 papers_lab_data <- bind_rows(foundational_labs_data, applied_labs_data)
 
+# last changes
+papers_lab_data <- papers_lab_data %>%
+  group_by(pi_id) %>%
+  fill(
+    seed, intent, institution_country_code, covid_share_2020,
+    starts_with("institution_"),
+    .direction = "downup"
+  ) %>%
+  ungroup() %>%
+  replace_na(list(
+    num_publications = 0, cited_by_count = 0,
+    institution_country_code = "OTH", institution_type = "other",
+    intent = "unknown"
+  ))
+
+
 # ------------------------------------------------------------------------------
 # CEM (Coarsened Exact Matching)
 # ------------------------------------------------------------------------------
@@ -329,6 +345,10 @@ papers_lab_data <- papers_lab_data %>%
     "institution",
     "institution_type",
     "institution_country_code",
+    "institution_cited_by_count",
+    "institution_2yr_mean_citedness",
+    "institution_h_index",
+    "institution_i10_index",
     "ln1p_cited_by_count",
     "ln1p_cit_0",
     "ln1p_cit_1",
@@ -356,7 +376,8 @@ papers_lab_data <- papers_lab_data %>%
     "primary_field",
     "high_pdb",
     grep("^field_", names(papers_lab_data), value = TRUE),
-    grep("^mesh_", names(papers_lab_data), value = TRUE)
+    grep("^mesh_", names(papers_lab_data), value = TRUE),
+    "covid_share_2020"
   )
 
 colnames(papers_lab_data) <- gsub(",", "", colnames(papers_lab_data))
