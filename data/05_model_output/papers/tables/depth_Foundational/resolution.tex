@@ -1,0 +1,38 @@
+\begingroup
+\centering
+\begin{tabular}{lccccccccc}
+   \tabularnewline \midrule \midrule
+   Dependent Variable: & \multicolumn{9}{c}{resolution}\\
+ & \multicolumn{6}{c}{All Fields} & \multicolumn{6}{c}{Molecular Biology} & \multicolumn{6}{c}{Medicine} \\
+\cmidrule(lr){2-7} \cmidrule(lr){8-13} \cmidrule(lr){14-19}
+ & \multicolumn{2}{c}{All PDB} & \multicolumn{2}{c}{High PDB} & \multicolumn{2}{c}{CEM} & \multicolumn{2}{c}{All PDB} & \multicolumn{2}{c}{High PDB} & \multicolumn{2}{c}{CEM} & \multicolumn{2}{c}{All PDB} & \multicolumn{2}{c}{High PDB} & \multicolumn{2}{c}{CEM} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7} \cmidrule(lr){8-9} \cmidrule(lr){10-11} \cmidrule(lr){12-13} \cmidrule(lr){14-15} \cmidrule(lr){16-17} \cmidrule(lr){18-19}
+Variables & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} \\
+\cmidrule(lr){1-1}\cmidrule(lr){2-2} \cmidrule(lr){3-3} \cmidrule(lr){4-4} \cmidrule(lr){5-5} \cmidrule(lr){6-6} \cmidrule(lr){7-7} \cmidrule(lr){8-8} \cmidrule(lr){9-9} \cmidrule(lr){10-10} \cmidrule(lr){11-11} \cmidrule(lr){12-12} \cmidrule(lr){13-13} \cmidrule(lr){14-14} \cmidrule(lr){15-15} \cmidrule(lr){16-16} \cmidrule(lr){17-17} \cmidrule(lr){18-18} \cmidrule(lr){19-19}
+   AlphaFold                              &     &     & 0.141   &     &     & 0.141   &     &     & 0.141\\   
+                                          &     &     & (0.116) &     &     & (0.116) &     &     & (0.116)\\   
+   Counterfactual AI                      &     &     & 0.158   &     &     & 0.158   &     &     & 0.158\\   
+                                          &     &     & (0.217) &     &     & (0.217) &     &     & (0.217)\\   
+   Counterfactual No AI                   &     &     & 0.028   &     &     & 0.028   &     &     & 0.028\\   
+                                          &     &     & (0.077) &     &     & (0.077) &     &     & (0.077)\\   
+   AlphaFold $\times$ strong1             &     &     & 0.065   &     &     & 0.065   &     &     & 0.065\\   
+                                          &     &     & (0.130) &     &     & (0.130) &     &     & (0.130)\\   
+   Counterfactual AI $\times$ strong1     &     &     & 0.263   &     &     & 0.263   &     &     & 0.263\\   
+                                          &     &     & (0.316) &     &     & (0.316) &     &     & (0.316)\\   
+   Counterfactual No AI $\times$ strong1  &     &     & -0.043  &     &     & -0.043  &     &     & -0.043\\   
+                                          &     &     & (0.169) &     &     & (0.169) &     &     & (0.169)\\   
+   \midrule
+   \emph{Fixed-effects}\\
+   quarter\_year                          &     &     & Yes     &     &     & Yes     &     &     & Yes\\  
+   institution                            &     &     & Yes     &     &     & Yes     &     &     & Yes\\  
+   institution\_type                      &     &     & Yes     &     &     & Yes     &     &     & Yes\\  
+   institution\_country\_code             &     &     & Yes     &     &     & Yes     &     &     & Yes\\  
+   \midrule
+   \emph{Fit statistics}\\
+   Observations                           & 2   & 2   & 3,478   & 2   & 2   & 3,478   & 2   & 2   & 3,478\\  
+Mean(Dep. Var.) & 0.500 & 0.500 & 2.871 & 0.500 & 0.500 & 2.871 & 0.500 & 0.500 & 2.871 \\
+   R$^2$                                  &     &     & 0.23    &     &     & 0.23    &     &     & 0.23\\  
+   \midrule \midrule
+   \multicolumn{10}{l}{\emph{Signif. Codes: ***: 0.01, **: 0.05, *: 0.1}}\\
+\end{tabular}
+\par\endgroup
