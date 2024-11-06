@@ -4,7 +4,7 @@ options(max.print = 1000)
 
 # Check installation & load required packages
 list_of_packages <- c(
-  "arrow", "tidyverse", "aws.s3", "yaml", "zoo"
+  "arrow", "tidyverse", "aws.s3", "yaml", "zoo", "MatchIt"
 )
 new_packages <- list_of_packages[
   !(list_of_packages %in% installed.packages()[, "Package"])
@@ -19,7 +19,7 @@ invisible(lapply(list_of_packages, library, character.only = TRUE))
 
 # Set working directory
 setwd("~/projects/alphafold-impact/")
-pathdir <- "data/05_model_output/papers/"
+pathdir <- "data/05_model_output/papers/data/"
 
 # Create directories if they do not exist
 if (!dir.exists(pathdir)) {
@@ -72,9 +72,7 @@ papers <- papers %>%
 # Create 'strong' variable
 papers <- papers %>%
   mutate(
-    strong = if_else(chain_label %in% c("strong", "partial_strong"), 1, 0),
-    # strong = replace_na(strong, 0), # nolint
-    strong = as.factor(strong),
+    strong = as.factor(if_else(chain_label %in% c("strong", "partial_strong"), 1, 0)), # nolint
     depth = as.factor(if_else(level == 0, "foundational", "applied")),
     af = if_else(source == "af", 1, 0),
     ct = if_else(source %in% c("ct_ai", "ct_noai"), 1, 0),
@@ -102,7 +100,7 @@ papers <- papers %>%
       year(publication_date), " Q", quarter(publication_date)
     ),
   ) %>%
-  rename(author = last_author, tech_group = source)
+  rename(author = last_author)
 
 
 pubs_per_quarter <- papers %>%
@@ -139,13 +137,35 @@ papers <- papers %>%
   )) # nolint
 
 # ------------------------------------------------------------------------------
+# CEM (Coarsened Exact Matching)
+# ------------------------------------------------------------------------------
+
+# Define the columns to be used for matching
+cols <- c(
+  "cited_by_count", "fwci", "citation_normalized_percentile_value", "patent_count"
+)
+
+# Filter and prepare data for collapsing
+papers_cem <- papers %>%
+  group_by(author) %>%
+  mutate(af = max(af)) %>%
+  ungroup() %>%
+  filter(complete.cases(fwci, citation_normalized_percentile_value)) %>%
+  filter(quarter_year %in% c("2021 Q2", "2021 Q3", "2021 Q4", "2022 Q1")) %>%
+  select(af, author, cols) %>%
+  group_by(author) %>%
+  summarise(
+    af = max(af),
+    across(cols, \(x) mean(x, na.rm = TRUE))
+  )
+
+# ------------------------------------------------------------------------------
 # SUBSET
 # ------------------------------------------------------------------------------
 
 # Define sub_samples as a list of samples
 sub_samples <- list()
-pdb_groups <- c("All PDB", "High PDB")
-strength_groups <- c("General Use", "Methodological Use")
+sub_groups <- c("All PDB", "High PDB", "CEM")
 unique_depths <- c("All Groups", "Foundational", "Applied")
 unique_fields <- c(
   "All Fields",
@@ -153,45 +173,82 @@ unique_fields <- c(
   "Medicine"
 )
 
-# Create subsets for all combinations of depth, field, and pdb_group
+papers <- papers %>%
+  select(c(
+    "num_publications",
+    "quarter_year",
+    "author",
+    "institution",
+    "institution_type",
+    "institution_country_code",
+    "ln1p_cited_by_count",
+    "ln1p_fwci",
+    "logit_cit_norm_perc",
+    "ln1p_patent_count",
+    "ln1p_patent_citation",
+    "ln1p_ca_count",
+    "resolution",
+    "R_free",
+    "pdb_submission",
+    "af",
+    "ct_ai",
+    "ct_noai",
+    "strong",
+    "depth",
+    "primary_field",
+    "high_pdb",
+    grep("^field_", names(sub_samples$all_lvl0), value = TRUE),
+    grep("^mesh_", names(sub_samples$all_lvl0), value = TRUE)
+  ))
+
+# Create subsets for all combinations of depth, field, and sub_group
 for (depth_lvl in unique_depths) { # nolint
   for (field in unique_fields) {
-    for (strength_group in strength_groups) {
-      for (pdb_group in pdb_groups) {
-        sample_name <- paste0(
-          "depth_", depth_lvl, "__field_",
-          field, "__use_", strength_group, "__pdb_", pdb_group
-        )
-        message("Creating sample: ", sample_name)
+    for (sub_group in sub_groups) {
+      sample_name <- paste0(
+        "depth_", depth_lvl, "__field_",
+        field, "__subgroup_", sub_group
+      )
+      message("Creating sample: ", sample_name)
 
-        # Start with the full dataset
-        sub_sample <- papers
+      # Start with the full dataset
+      sub_sample <- papers
 
-        # Apply depth filter
-        if (depth_lvl == "Foundational") {
-          sub_sample <- subset(sub_sample, depth == "foundational")
-        } else if (depth_lvl == "Applied") {
-          sub_sample <- subset(sub_sample, depth == "applied")
-        }
-
-        # Apply field filter
-        if (field != "All Fields") {
-          sub_sample <- subset(sub_sample, primary_field == field)
-        }
-
-        # Apply strength_group filter
-        if (strength_group == "Methodological Use") {
-          sub_sample <- subset(sub_sample, strong == 1)
-        }
-
-        # Apply pdb_group filter
-        if (pdb_group == "High PDB") {
-          sub_sample <- subset(sub_sample, high_pdb == 1)
-        }
-
-        # Store the subset
-        sub_samples[[sample_name]] <- sub_sample
+      # Apply depth filter
+      if (depth_lvl == "Foundational") {
+        sub_sample <- subset(sub_sample, depth == "foundational")
+      } else if (depth_lvl == "Applied") {
+        sub_sample <- subset(sub_sample, depth == "applied")
       }
+
+      # Apply field filter
+      if (field != "All Fields") {
+        sub_sample <- subset(sub_sample, primary_field == field)
+      }
+
+      # Apply sub_group filter
+      if (sub_group == "High PDB") {
+        sub_sample <- subset(sub_sample, high_pdb == 1)
+      }
+
+      if (sub_group == "CEM") {
+        # CEM matching on the collapsed data
+        match_out_af <- matchit(
+          as.formula(paste0("af ~ ", paste0(cols, collapse = " + "))),
+          data = papers_cem, method = "cem", k2k = TRUE
+        )
+
+        # Store matched data
+        cem_data <- match.data(match_out_af)
+
+        # Sample based on the matched group
+        qtly_cem <- papers %>% semi_join(cem_data, by = "author")
+        sub_sample <- qtly_cem
+
+      }
+
+      # Store the subset
+      sub_samples[[sample_name]] <- sub_sample
     }
   }
 }

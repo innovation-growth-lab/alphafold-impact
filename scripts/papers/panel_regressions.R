@@ -36,7 +36,7 @@ bind_rows <- dplyr::bind_rows
 # ------------------------------------------------------------------------------
 # LOAD DATA
 # ------------------------------------------------------------------------------
-sub_samples <- readRDS(paste0(pathdir, "sub_samples.rds"))
+sub_samples <- readRDS(paste0(pathdir, "data/sub_samples.rds"))
 
 # ------------------------------------------------------------------------------
 # DATA PREPARATION
@@ -68,7 +68,8 @@ dep_vars <- c(
 )
 treat_vars <- paste(
   c(
-    "af", "ct_ai", "ct_noai"
+    "af", "ct_ai", "ct_noai", "af:strong", "ct_ai:strong", 
+    "ct_noai:strong", "af:ct_ai", "af:ct_noai"
   ),
   collapse = " + "
 )
@@ -79,12 +80,6 @@ for (dep_var_out in dep_vars) { # nolint
     # Iterate over covariate sets
     for (cov_set in cov_sets) {
       local_covs <- covs[[cov_set]]
-      # if dep_var is num_publications, remove it from covs
-      if (dep_var == "num_publications") {
-        local_covs <- covs[[cov_set]][-which(covs[[cov_set]] == "num_publications")] # nolint
-      } else {
-        local_covs <- covs[[cov_set]]
-      }
       # Iterate over fixed effects
       for (fe in fe_list) {
         # Iterate over treatment variables
@@ -153,7 +148,12 @@ for (dep_var_out in dep_vars) { # nolint
         > nrow(non_na_data)
       ) {
         message("Skipping regression: ", regression_label)
-        results[[regression_label]] <- NULL
+        placeholder_data <- data.frame(dep_var = c(0, 1))
+        colnames(placeholder_data) <- dep_var
+        results[[regression_label]] <- feols(
+          as.formula(paste(dep_var, "~ 1")),
+          data = placeholder_data
+        )
         next
       }
 
@@ -170,7 +170,12 @@ for (dep_var_out in dep_vars) { # nolint
           },
           error = function(e) {
             message("Error in regression: ", regression_label, " - ", e$message)
-            return(NULL) # Return NULL if an error occurs
+            placeholder_data <- data.frame(dep_var = c(0, 1))
+            colnames(placeholder_data) <- dep_var
+            return(feols(
+              as.formula(paste(dep_var, "~ 1")),
+              data = placeholder_data
+            ))
           }
         )
       } else {
@@ -185,7 +190,12 @@ for (dep_var_out in dep_vars) { # nolint
           },
           error = function(e) {
             message("Error in regression: ", regression_label, " - ", e$message)
-            return(NULL) # Return NULL if an error occurs
+            placeholder_data <- data.frame(dep_var = c(0, 1))
+            colnames(placeholder_data) <- dep_var
+            return(feols(
+              as.formula(paste(dep_var, "~ 1")),
+              data = placeholder_data
+            ))
           }
         )
       }
@@ -233,7 +243,8 @@ for (dep_var_out in dep_vars) { # nolint
         fe_list = fe_list,
         treat_vars = treat_vars,
         treat_var_interest = c(
-          "af", "ct_ai", "ct_noai"
+          "af", "ct_ai", "ct_noai", "af:strong1", 
+          "ct_ai:strong1", "ct_noai:strong1"
         )
       )
 
