@@ -1,5 +1,5 @@
 options(scipen = 999)
-tables <- "data/05_model_output/quarterly/nonecr/articles/tables/"
+tables <- "data/05_model_output/authors/nonecr/quarterly/tables/"
 if (!dir.exists(tables)) {
   dir.create(tables, recursive = TRUE)
 }
