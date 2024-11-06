@@ -163,9 +163,11 @@ for (dep_var_out in dep_vars) { # nolint
         > nrow(non_na_data)
       ) {
         message("Skipping regression: ", regression_label)
+        placeholder_data <- data.frame(dep_var = c(0, 1))
+        colnames(placeholder_data) <- dep_var
         results[[regression_label]] <- feols(
           as.formula(paste(dep_var, "~ 1")),
-          data = local_data
+          data = placeholder_data
         )
         next
       }
@@ -183,7 +185,12 @@ for (dep_var_out in dep_vars) { # nolint
           },
           error = function(e) {
             message("Error in regression: ", regression_label, " - ", e$message)
-            return(feols(as.formula(paste(dep_var, "~ 1")), data = local_data))
+            placeholder_data <- data.frame(dep_var = c(0, 1))
+            colnames(placeholder_data) <- dep_var
+            return(feols(
+              as.formula(paste(dep_var, "~ 1")),
+              data = placeholder_data
+            ))
           }
         )
       } else {
@@ -198,7 +205,12 @@ for (dep_var_out in dep_vars) { # nolint
           },
           error = function(e) {
             message("Error in regression: ", regression_label, " - ", e$message)
-            return(feols(as.formula(paste(dep_var, "~ 1")), data = local_data))
+            placeholder_data <- data.frame(dep_var = c(0, 1))
+            colnames(placeholder_data) <- dep_var
+            return(feols(
+              as.formula(paste(dep_var, "~ 1")),
+              data = placeholder_data
+            ))
           }
         )
       }
