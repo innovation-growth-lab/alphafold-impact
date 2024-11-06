@@ -55,10 +55,7 @@ fes[["fe1"]] <- c(
 cov_sets <- c("base0")
 fe_list <- c("fe1")
 dep_vars <- c(
-  "ln1p_cited_by_count", "ln1p_cit_0", "ln1p_cit_1",
-  "ln1p_fwci", "logit_cit_norm_perc",
-  "ln1p_patent_count", "ln1p_patent_citation", "ln1p_ca_count",
-  "resolution", "R_free", "pdb_submission"
+  "num_publications"
 )
 
 for (dep_var_out in dep_vars) { # nolint
