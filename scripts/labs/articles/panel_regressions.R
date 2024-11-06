@@ -42,43 +42,11 @@ sub_samples <- readRDS(paste0(pathdir, "data/sub_samples.rds"))
 # DATA PREPARATION
 # ------------------------------------------------------------------------------
 
-field_cols <- grep("^field_", names(sub_samples$all_lvl0), value = TRUE)
-mesh_cols <- grep("^mesh_", names(sub_samples$all_lvl0), value = TRUE)
+mesh_cols <- grep("^mesh_", names(sub_samples[[1]]), value = TRUE)
+field_cols <- grep("^field_", names(sub_samples[[1]]), value = TRUE)
 
 covs <- list()
-covs[["base0"]] <- c(field_cols, mesh_cols, "num_publications")
-
-fes <- list()
-fes[["fe0"]] <- c("quarter_year")
-fes[["fe1"]] <- c(
-  "quarter_year",
-  "institution", "institution_type", "institution_country_code"
-)
-
-
-### Extensive ###
-
-cov_sets <- c("base0")
-fe_list <- c("fe1")
-dep_vars <- c(
-  "ln1p_cited_by_count",
-  "ln1p_fwci", "logit_cit_norm_perc",
-  "ln1p_patent_count", "ln1p_patent_citation", "ln1p_ca_count",
-  "resolution", "R_free", "pdb_submission"
-)
-treat_vars <- paste(
-  c(
-    "af_ind + ct_ai_ind + ct_noai_ind + af:ct_ai_ind + af:ct_noai_ind + strong_af_ind + strong_ct_ai_ind + strong_ct_noai_ind + strong_af:strong_ct_ai_ind + strong_af:strong_ct_noai_ind", # nolint
-    "af + ct_ai + ct_noai + af:ct_ai + af:ct_noai + strong_af + strong_ct_ai + strong_ct_noai + strong_af:strong_ct_ai + strong_af:strong_ct_noai" # nolint
-  ),
-  collapse = " + "
-)
-# ------------------------------------------------------------------------------
-# DATA PREPARATION
-# ------------------------------------------------------------------------------
-
-covs <- list()
-covs[["base0"]] <- c("num_publications")
+covs[["base0"]] <- c("num_publications", mesh_cols, field_cols)
 
 fes <- list()
 fes[["fe0"]] <- c("quarter_year")
@@ -157,6 +125,7 @@ for (dep_var_out in dep_vars) { # nolint
   }
 
   results <- list()
+  gc()
   # For each subset, compute feols
   for (sub in names(sub_samples)) {
     # For each formula, compute feols

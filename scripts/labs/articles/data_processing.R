@@ -359,6 +359,8 @@ papers_lab_data <- papers_lab_data %>%
     grep("^mesh_", names(papers_lab_data), value = TRUE)
   )
 
+colnames(papers_lab_data) <- gsub(",", "", colnames(papers_lab_data))
+
 # free up memory, drop the individual dataframes
 rm(foundational_labs_data, applied_labs_data)
 gc()
