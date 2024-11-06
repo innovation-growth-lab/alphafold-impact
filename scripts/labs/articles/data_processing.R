@@ -294,17 +294,15 @@ papers_lab_data <- bind_rows(foundational_labs_data, applied_labs_data)
 papers_lab_data <- papers_lab_data %>%
   group_by(pi_id) %>%
   fill(
-    seed, intent, institution_country_code, covid_share_2020,
+    institution_country_code, covid_share_2020,
     starts_with("institution_"),
     .direction = "downup"
-  ) %>%
-  ungroup() %>%
-  replace_na(list(
-    num_publications = 0, cited_by_count = 0,
-    institution_country_code = "OTH", institution_type = "other",
-    intent = "unknown"
-  ))
+  )
 
+papers_lab_data <- papers_lab_data %>%
+  filter(complete.cases(
+    quarter_year, primary_field, starts_with("field_"), starts_with("mesh_")
+  ))
 
 # ------------------------------------------------------------------------------
 # CEM (Coarsened Exact Matching)
