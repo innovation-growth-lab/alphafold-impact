@@ -9,6 +9,39 @@ if (!dir.exists(tables)) {
 # ------------------------------------------------------------------------------
 
 table_info <- list(
+  "ln1p_cited_by_count" = list(
+    file_name = "ln1p_cited_by_count.tex"
+  ),
+  "ln1p_cit_0" = list(
+    file_name = "ln1p_cit_0.tex"
+  ),
+  "ln1p_cit_1" = list(
+    file_name = "ln1p_cit_1.tex"
+  ),
+  "ln1p_fwci" = list(
+    file_name = "ln1p_fwci.tex"
+  ),
+  "logit_cit_norm_perc" = list(
+    file_name = "logit_cit_norm_perc.tex"
+  ),
+  "ln1p_patent_count" = list(
+    file_name = "ln1p_patent_count.tex"
+  ),
+  "ln1p_patent_citation" = list(
+    file_name = "ln1p_patent_citation.tex"
+  ),
+  "ln1p_ca_count" = list(
+    file_name = "ln1p_ca_count.tex"
+  ),
+  "resolution" = list(
+    file_name = "resolution.tex"
+  ),
+  "R_free" = list(
+    file_name = "R_free.tex"
+  ),
+  "pdb_submission" = list(
+    file_name = "pdb_submission.tex"
+  ),
   "num_publications" = list(
     file_name = "num_publications.tex"
   )
