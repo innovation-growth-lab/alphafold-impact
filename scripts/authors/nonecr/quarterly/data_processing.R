@@ -236,8 +236,7 @@ for (depth_lvl in unique_depths) { # nolint
         cem_data <- match.data(match_out_af)
 
         # Sample based on the matched group
-        qtly_cem <- nonecr_data %>% semi_join(cem_data, by = "author")
-        sub_sample <- qtly_cem
+        sub_sample <- sub_sample %>% semi_join(cem_data, by = "author")
 
       }
 
