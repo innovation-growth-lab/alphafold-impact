@@ -1,0 +1,47 @@
+\begingroup
+\centering
+\begin{tabular}{lcccccccccccccccccc}
+   \tabularnewline \midrule \midrule
+   Dependent Variable: & \multicolumn{18}{c}{logit\_cit\_norm\_perc}\\
+ & \multicolumn{6}{c}{All Fields} & \multicolumn{6}{c}{Molecular Biology} & \multicolumn{6}{c}{Medicine} \\
+\cmidrule(lr){2-7} \cmidrule(lr){8-13} \cmidrule(lr){14-19}
+ & \multicolumn{2}{c}{All PDB} & \multicolumn{2}{c}{High PDB} & \multicolumn{2}{c}{CEM} & \multicolumn{2}{c}{All PDB} & \multicolumn{2}{c}{High PDB} & \multicolumn{2}{c}{CEM} & \multicolumn{2}{c}{All PDB} & \multicolumn{2}{c}{High PDB} & \multicolumn{2}{c}{CEM} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7} \cmidrule(lr){8-9} \cmidrule(lr){10-11} \cmidrule(lr){12-13} \cmidrule(lr){14-15} \cmidrule(lr){16-17} \cmidrule(lr){18-19}
+Variables & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} \\
+\cmidrule(lr){1-1}\cmidrule(lr){2-2} \cmidrule(lr){3-3} \cmidrule(lr){4-4} \cmidrule(lr){5-5} \cmidrule(lr){6-6} \cmidrule(lr){7-7} \cmidrule(lr){8-8} \cmidrule(lr){9-9} \cmidrule(lr){10-10} \cmidrule(lr){11-11} \cmidrule(lr){12-12} \cmidrule(lr){13-13} \cmidrule(lr){14-14} \cmidrule(lr){15-15} \cmidrule(lr){16-16} \cmidrule(lr){17-17} \cmidrule(lr){18-18} \cmidrule(lr){19-19}
+   AlphaFold                                                  & -0.187        & -0.031        & 0.877  & 0.245   & 0.292       & 0.076       & -0.169      & -0.075       &     &      & -0.339 & 0.010  &      &      &      &      & -0.145  & -0.235\\   
+                                                              & (0.269)       & (0.090)       & (1.94) & (1.01)  & (0.409)     & (0.167)     & (0.572)     & (0.162)      &     &      & (NaN)  & (NaN)  &      &      &      &      & (1.59)  & (0.908)\\   
+   Counterfactual AI                                          & 0.239         & 0.065         & -3.60  & -2.69   & 0.043       & -0.148      & -0.242      & -0.160       &     &      & -0.909 & -0.206 &      &      &      &      & 0.450   & 0.689\\   
+                                                              & (0.361)       & (0.199)       & (7.74) & (7.68)  & (0.831)     & (0.450)     & (0.704)     & (0.349)      &     &      & (NaN)  & (NaN)  &      &      &      &      & (4.46)  & (2.20)\\   
+   Counterfactual No AI                                       & -0.116        & -0.030        & 0.318  & 0.084   & -0.363      & -0.053      & -0.215      & -0.084       &     &      & -0.681 & -0.339 &      &      &      &      & -0.223  & 0.113\\   
+                                                              & (0.366)       & (0.151)       & (3.09) & (0.884) & (0.622)     & (0.211)     & (0.694)     & (0.316)      &     &      & (NaN)  & (NaN)  &      &      &      &      & (1.34)  & (0.424)\\   
+   AlphaFold - Method                                         & 0.246         & 0.254         & -0.020 & -0.098  & 0.208       & 0.185       & 0.580       & 0.638$^{*}$  &     &      & 1.09   & 0.965  &      &      &      &      & -0.553  & -0.298\\   
+                                                              & (0.182)       & (0.156)       & (1.21) & (1.39)  & (0.328)     & (0.307)     & (0.345)     & (0.349)      &     &      & (NaN)  & (NaN)  &      &      &      &      & (0.935) & (1.12)\\   
+   Counterfactual AI - Method                                 & -0.122        & -0.136        & 10.6   & 9.44    & 0.454       & 0.579       & -0.062      & 0.031        &     &      & 0.811  & 0.824  &      &      &      &      & -2.73   & -3.82\\   
+                                                              & (0.372)       & (0.387)       & (9.29) & (9.24)  & (0.645)     & (0.737)     & (0.461)     & (0.506)      &     &      & (NaN)  & (NaN)  &      &      &      &      & (3.77)  & (5.56)\\   
+   Counterfactual No AI - Method                              & -0.108        & -0.174        & -0.237 & -0.241  & -0.017      & -0.141      & 0.565       & 0.486        &     &      & 1.81   & 1.67   &      &      &      &      & 0.140   & -0.109\\   
+                                                              & (0.402)       & (0.407)       & (5.20) & (5.62)  & (0.600)     & (0.610)     & (0.870)     & (0.949)      &     &      & (NaN)  & (NaN)  &      &      &      &      & (1.20)  & (0.976)\\   
+   AlphaFold $\times$ Counterfactual AI                       & -1.35$^{**}$  & -0.246$^{*}$  &        &         & -2.19$^{*}$ & -0.265      & -1.07       & -0.031       &     &      & -1.92  & -0.029 &      &      &      &      &         &   \\   
+                                                              & (0.605)       & (0.126)       &        &         & (1.19)      & (0.251)     & (1.53)      & (0.348)      &     &      & (NaN)  & (NaN)  &      &      &      &      &         &   \\   
+   AlphaFold $\times$ Counterfactual No AI                    & -0.324        & 0.087$^{*}$   & 0.836  & 1.87    & -0.212      & 0.073$^{*}$ & -0.225      & 0.074        &     &      & 1.27   & 1.03   &      &      &      &      & -2.12   & 0.033\\   
+                                                              & (0.692)       & (0.046)       & (8.01) & (2.85)  & (1.26)      & (0.035)     & (1.35)      & (0.135)      &     &      & (NaN)  & (NaN)  &      &      &      &      & (2.61)  & (0.259)\\   
+   AlphaFold - Method $\times$ Counterfactual AI - Method     & -0.129        & -0.110        &        &         & -0.114      & -0.207      & 0.124       & 0.107        &     &      & -0.258 & -0.173 &      &      &      &      &         &   \\   
+                                                              & (0.286)       & (0.279)       &        &         & (0.377)     & (0.372)     & (0.473)     & (0.456)      &     &      & (NaN)  & (NaN)  &      &      &      &      &         &   \\   
+   AlphaFold - Method $\times$ Counterfactual No AI - Method  & -1.03$^{***}$ & -1.08$^{***}$ & -4.58  & -7.35   & -0.870      & -0.882      & -1.84$^{*}$ & -2.00$^{**}$ &     &      & -1.76  & -1.62  &      &      &      &      & 1.10    & 1.49\\   
+                                                              & (0.339)       & (0.341)       & (4.67) & (5.43)  & (0.551)     & (0.559)     & (0.913)     & (0.944)      &     &      & (NaN)  & (NaN)  &      &      &      &      & (1.26)  & (1.18)\\   
+   \midrule
+   \emph{Fixed-effects}\\
+   author                                                     & Yes           & Yes           & Yes    & Yes     & Yes         & Yes         & Yes         & Yes          &     &      & Yes    & Yes    &      &      &      &      & Yes     & Yes\\  
+   quarter                                                    & Yes           & Yes           & Yes    & Yes     & Yes         & Yes         & Yes         & Yes          &     &      & Yes    & Yes    &      &      &      &      & Yes     & Yes\\  
+   institution                                                & Yes           & Yes           & Yes    & Yes     & Yes         & Yes         & Yes         & Yes          &     &      & Yes    & Yes    &      &      &      &      & Yes     & Yes\\  
+   institution\_type                                          & Yes           & Yes           & Yes    & Yes     & Yes         & Yes         & Yes         & Yes          &     &      & Yes    & Yes    &      &      &      &      & Yes     & Yes\\  
+   institution\_country\_code                                 & Yes           & Yes           & Yes    & Yes     & Yes         & Yes         & Yes         & Yes          &     &      & Yes    & Yes    &      &      &      &      & Yes     & Yes\\  
+   \midrule
+   \emph{Fit statistics}\\
+   Observations                                               & 10,786        & 10,786        & 256    & 256     & 2,814       & 2,814       & 4,707       & 4,707        & 2   & 2    & 1,151  & 1,151  & 2    & 2    & 2    & 2    & 541     & 541\\  
+Mean(Dep. Var.) & 3.737 & 3.737 & 3.987 & 3.987 & 3.608 & 3.608 & 3.875 & 3.875 & 0.500 & 0.500 & 3.992 & 3.992 & 0.500 & 0.500 & 0.500 & 0.500 & 3.550 & 3.550 \\
+   R$^2$                                                      & 0.69          & 0.69          & 0.67   & 0.67    & 0.59        & 0.59        & 0.78        & 0.78         &     &      & 0.70   & 0.70   &      &      &      &      & 0.70    & 0.70\\  
+   \midrule \midrule
+   \multicolumn{19}{l}{\emph{Signif. Codes: ***: 0.01, **: 0.05, *: 0.1}}\\
+\end{tabular}
+\par\endgroup
