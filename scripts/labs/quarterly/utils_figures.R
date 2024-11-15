@@ -79,13 +79,13 @@ extract_coefficients <- function(results, dep_vars, subsets, cov_sets, fe_list, 
 # Set desired orders for variables and names
 subgroup_order <- c("All PDB", "High PDB", "CEM")
 depth_order <- c(
-  # "All Groups", "Foundational", 
+  "All Groups", "Foundational", 
   "Applied"
   )
 field_order <- c(
   "field_All Fields",
-  # "field_Molecular Biology",
-  # "field_Medicine"
+  "field_Molecular Biology",
+  "field_Medicine"
 )
 
 
