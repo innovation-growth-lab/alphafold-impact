@@ -78,17 +78,20 @@ extract_coefficients <- function(results, dep_vars, subsets, cov_sets, fe_list, 
 # --- Variable definitions ---
 # Set desired orders for variables and names
 subgroup_order <- c("All PDB", "High PDB", "CEM")
-depth_order <- c("All Groups", "Foundational", "Applied")
+depth_order <- c(
+  # "All Groups", "Foundational", 
+  "Applied"
+  )
 field_order <- c(
   "field_All Fields",
-  "field_Molecular Biology",
-  "field_Medicine"
+  # "field_Molecular Biology",
+  # "field_Medicine"
 )
 
 
 coef_order <- c(
-  "strong_af:strong_ct_noai", "strong_af:strong_ct_ai", "strong_ct_noai", "strong_ct_ai", "strong_af", # nolint
-  "af:ct_noai", "af:ct_ai", "ct_noai", "ct_ai", "af",
+  # "strong_af:strong_ct_noai", "strong_af:strong_ct_ai", "strong_ct_noai", "strong_ct_ai", "strong_af", # nolint
+  # "af:ct_noai", "af:ct_ai", "ct_noai", "ct_ai", "af",
   "strong_af:strong_ct_noai_ind", "strong_af:strong_ct_ai_ind", "strong_ct_noai_ind", "strong_ct_ai_ind", "strong_af_ind", # nolint
   "af:ct_noai_ind", "af:ct_ai_ind", "ct_noai_ind", "ct_ai_ind", "af_ind"
 )
@@ -197,7 +200,7 @@ generate_coef_plots <- function(coef_table) { # nolint
               aes(xmin = conf_low, xmax = conf_high), # nolint
               height = 0.2, linewidth = 0.5 # thinner for 5% significance
             ) +
-            geom_hline(yintercept = 6.5, color = "gray", linetype = "dashed", linewidth = 1) + # nolint
+            # geom_hline(yintercept = 6.5, color = "gray", linetype = "dashed", linewidth = 1) + # nolint
             geom_vline(xintercept = 0, color = "black", linewidth = 1) + # nolint
             ggh4x::facet_grid2(
               depth_subgroup ~ field,

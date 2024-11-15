@@ -63,19 +63,18 @@ fes[["fe1"]] <- c(
 cov_sets <- c("base0")
 fe_list <- c("fe1")
 dep_vars <- c(
-  "num_publications",
-  "ln1p_cited_by_count", "ln1p_cit_0", "ln1p_cit_1",
-  "ln1p_fwci", "logit_cit_norm_perc",
-  "ln1p_patent_count", "ln1p_patent_citation", "ln1p_ca_count",
-  "resolution", "R_free", "pdb_submission"
+  # "num_publications",
+  # "ln1p_cited_by_count", "ln1p_cit_0", "ln1p_cit_1",
+  # "ln1p_fwci", "logit_cit_norm_perc",
+  # "ln1p_patent_count", "ln1p_patent_citation", 
+  "ln1p_ca_count"
+  # "resolution", "R_free", "pdb_submission"
 )
 
 for (dep_var_out in dep_vars) { # nolint
   treat_vars <- c(
-    "af_ind + ct_ai_ind + ct_noai_ind + af:ct_ai_ind + af:ct_noai_ind + strong_af_ind + strong_ct_ai_ind + strong_ct_noai_ind + strong_af:strong_ct_ai_ind + strong_af:strong_ct_noai_ind", # nolint
-    "af + ct_ai + ct_noai + af:ct_ai + af:ct_noai + strong_af + strong_ct_ai + strong_ct_noai + strong_af:strong_ct_ai + strong_af:strong_ct_noai" # nolint
+    "af_ind + ct_ai_ind + ct_noai_ind + af:ct_ai_ind + af:ct_noai_ind + strong_af_ind + strong_ct_ai_ind + strong_ct_noai_ind + strong_af:strong_ct_ai_ind + strong_af:strong_ct_noai_ind" # nolint  )
   )
-
   form_list <- list()
   # Iterate over dependent variables
   for (dep_var in dep_var_out) { # nolint
@@ -257,10 +256,7 @@ for (dep_var_out in dep_vars) { # nolint
         fe_list = fe_list,
         treat_vars = treat_vars,
         treat_var_interest = c(
-          "af", "af_ind", "ct_ai_ind", "ct_noai_ind", "ct_ai", "ct_noai",
-          "af:ct_ai", "af:ct_noai",
-          "strong_af", "strong_ct_ai", "strong_ct_noai",
-          "strong_af:strong_ct_ai", "strong_af:strong_ct_noai",
+          "af", "af_ind", "ct_ai_ind", "ct_noai_ind",
           "strong_af_ind", "strong_ct_ai_ind", "strong_ct_noai_ind",
           "strong_af:strong_ct_ai_ind", "strong_af:strong_ct_noai_ind"
         )
