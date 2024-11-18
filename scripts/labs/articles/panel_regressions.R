@@ -38,6 +38,8 @@ bind_rows <- dplyr::bind_rows
 # ------------------------------------------------------------------------------
 sub_samples <- readRDS(paste0(pathdir, "data/sub_samples.rds"))
 
+# # drop sub_samples with name not including _CEM_
+# sub_samples <- sub_samples[grep("_CEM", names(sub_samples))] # nolint
 # ------------------------------------------------------------------------------
 # DATA PREPARATION
 # ------------------------------------------------------------------------------
@@ -46,18 +48,23 @@ mesh_cols <- grep("^mesh_", names(sub_samples[[1]]), value = TRUE)
 field_cols <- grep("^field_", names(sub_samples[[1]]), value = TRUE)
 
 covs <- list()
-covs[["base0"]] <- c("num_publications", mesh_cols, field_cols)
-
-fes <- list()
-fes[["fe0"]] <- c("quarter_year")
-fes[["fe1"]] <- c(
-  "pi_id", "quarter_year", "institution", "institution_type",
+covs[["base0"]] <- c(
+  "num_publications",
+  mesh_cols,
+  field_cols,
+  "institution_type",
   "institution_cited_by_count",
   "institution_2yr_mean_citedness",
   "institution_h_index",
   "institution_i10_index",
   "institution_country_code",
   "covid_share_2020"
+)
+
+fes <- list()
+fes[["fe0"]] <- c("quarter_year")
+fes[["fe1"]] <- c(
+  "pi_id", "quarter_year"
 )
 
 cov_sets <- c("base0")
@@ -71,8 +78,7 @@ dep_vars <- c(
 
 for (dep_var_out in dep_vars) { # nolint
   treat_vars <- c(
-    "af_ind + ct_ai_ind + ct_noai_ind + af:ct_ai_ind + af:ct_noai_ind + strong_af_ind + strong_ct_ai_ind + strong_ct_noai_ind + strong_af:strong_ct_ai_ind + strong_af:strong_ct_noai_ind", # nolint
-    "af + ct_ai + ct_noai + af:ct_ai + af:ct_noai + strong_af + strong_ct_ai + strong_ct_noai + strong_af:strong_ct_ai + strong_af:strong_ct_noai" # nolint
+    "af_ind + ct_ai_ind + ct_noai_ind + af:ct_ai_ind + af:ct_noai_ind + strong_af_ind + strong_ct_ai_ind + strong_ct_noai_ind + strong_af:strong_ct_ai_ind + strong_af:strong_ct_noai_ind" # nolint
   )
 
   form_list <- list()

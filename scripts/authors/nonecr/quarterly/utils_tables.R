@@ -42,6 +42,9 @@ table_info <- list(
   "pdb_submission" = list(
     file_name = "pdb_submission.tex"
   ),
+  "num_publications_pdb" = list(
+    file_name = "num_publications_pdb.tex"
+  ),
   "num_publications" = list(
     file_name = "num_publications.tex"
   )

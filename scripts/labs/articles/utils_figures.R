@@ -197,7 +197,6 @@ generate_coef_plots <- function(coef_table) { # nolint
               aes(xmin = conf_low, xmax = conf_high), # nolint
               height = 0.2, linewidth = 0.5 # thinner for 5% significance
             ) +
-            geom_hline(yintercept = 6.5, color = "gray", linetype = "dashed", linewidth = 1) + # nolint
             geom_vline(xintercept = 0, color = "black", linewidth = 1) + # nolint
             ggh4x::facet_grid2(
               depth_subgroup ~ field,

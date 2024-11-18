@@ -44,6 +44,9 @@ table_info <- list(
   ),
   "num_publications" = list(
     file_name = "num_publications.tex"
+  ),
+  "num_publications_pdb" = list(
+    file_name = "num_publications_pdb.tex"
   )
 )
 

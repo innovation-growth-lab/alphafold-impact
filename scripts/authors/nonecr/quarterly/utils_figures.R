@@ -104,7 +104,8 @@ dep_var_labels <- c(
   "ln1p_ca_count" = "ln (1 + CA count)",
   "resolution" = "Resolution",
   "R_free" = "R free",
-  "pdb_submission" = "PDB submission"
+  "pdb_submission" = "PDB submission",
+  "num_publications_pdb" = "Number of PDB submissions"
 )
 
 coef_labels <- c(
@@ -197,7 +198,6 @@ generate_coef_plots <- function(coef_table) { # nolint
               aes(xmin = conf_low, xmax = conf_high), # nolint
               height = 0.2, linewidth = 0.5 # thinner for 5% significance
             ) +
-            geom_hline(yintercept = 6.5, color = "gray", linetype = "dashed", linewidth = 1) + # nolint
             geom_vline(xintercept = 0, color = "black", linewidth = 1) + # nolint
             ggh4x::facet_grid2(
               depth_subgroup ~ field,

@@ -48,7 +48,7 @@ covs[["base0"]] <- c("num_publications")
 fes <- list()
 fes[["fe0"]] <- c("quarter")
 fes[["fe1"]] <- c(
-  "author", "quarter", "institution", "institution_type",
+  "author", "quarter", "institution_type",
   "institution_country_code"
 )
 
@@ -59,13 +59,12 @@ dep_vars <- c(
   "ln1p_cited_by_count", "ln1p_cit_0", "ln1p_cit_1",
   "ln1p_fwci", "logit_cit_norm_perc",
   "ln1p_patent_count", "ln1p_patent_citation", "ln1p_ca_count",
-  "resolution", "R_free", "pdb_submission"
+  "resolution", "R_free", "num_publications_pdb"
 )
 
 for (dep_var_out in dep_vars) { # nolint
   treat_vars <- c(
-    "af_ind + ct_ai_ind + ct_noai_ind + af:ct_ai_ind + af:ct_noai_ind + strong_af_ind + strong_ct_ai_ind + strong_ct_noai_ind + strong_af:strong_ct_ai_ind + strong_af:strong_ct_noai_ind", # nolint
-    "af + ct_ai + ct_noai + af:ct_ai + af:ct_noai + strong_af + strong_ct_ai + strong_ct_noai + strong_af:strong_ct_ai + strong_af:strong_ct_noai" # nolint
+    "af_ind + ct_ai_ind + ct_noai_ind + af:ct_ai_ind + af:ct_noai_ind + strong_af_ind + strong_ct_ai_ind + strong_ct_noai_ind + strong_af:strong_ct_ai_ind + strong_af:strong_ct_noai_ind" # nolint
   )
 
   form_list <- list()
@@ -152,14 +151,13 @@ for (dep_var_out in dep_vars) { # nolint
       # compute the unique number of quarter
       n_authors <- length(unique(non_na_data$author))
       n_quarters <- length(unique(non_na_data$quarter))
-      n_institutions <- length(unique(non_na_data$institution))
       n_institution_types <- length(unique(non_na_data$institution_type))
       n_institution_countries <- length(
         unique(non_na_data$institution_country_code)
       )
 
       if (
-        n_authors + n_quarters + n_institutions +
+        n_authors + n_quarters + 
           n_institution_types + n_institution_countries
         > nrow(non_na_data)
       ) {
@@ -248,13 +246,23 @@ for (dep_var_out in dep_vars) { # nolint
         fe_list = fe_list,
         treat_vars = treat_vars,
         treat_var_interest = c(
-          "af", "af_ind", "ct_ai_ind", "ct_noai_ind", "ct_ai", "ct_noai",
+          "af", "ct_ai", "ct_noai",
           "af:ct_ai", "af:ct_noai",
           "strong_af", "strong_ct_ai", "strong_ct_noai",
-          "strong_af:strong_ct_ai", "strong_af:strong_ct_noai",
-          "strong_af_ind", "strong_ct_ai_ind", "strong_ct_noai_ind",
-          "strong_af:strong_ct_ai_ind", "strong_af:strong_ct_noai_ind"
+          "strong_af:strong_ct_ai", "strong_af:strong_ct_noai"
         )
+      )
+
+      # save coef_table
+      coefplot_dir <- paste0(pathdir, "coef_tables/")
+
+      if (!dir.exists(coefplot_dir)) {
+        dir.create(coefplot_dir, recursive = TRUE)
+      }
+
+      saveRDS(
+        coef_table,
+        paste0(coefplot_dir, dep_var_out, "_coef_table.rds")
       )
 
       generate_coef_plots(
