@@ -15,7 +15,7 @@ from ..e_data_output_publications.nodes import (  # pylint: disable=E0402
     get_patent_citations,
 )
 
-pd.set_option('future.no_silent_downcasting', True)
+pd.set_option("future.no_silent_downcasting", True)
 logger = logging.getLogger(__name__)
 
 
@@ -386,6 +386,7 @@ def merge_author_data(
     patents_data: pd.DataFrame,
     pdb_submissions: pd.DataFrame,
     icite_data: pd.DataFrame,
+    mesh_terms: pd.DataFrame,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     Merges ECR (Early Career Researcher) data with institution information, and
@@ -405,8 +406,7 @@ def merge_author_data(
     logger.info("Preparing labels for end-of-loop merge")
     label_cols = [col for col in candidate_authors.columns if col.startswith("strong")]
     author_labels = candidate_authors[
-        ["author", "quarter"]
-        + label_cols
+        ["author", "quarter"] + label_cols
     ].drop_duplicates(subset=["author", "quarter"])
 
     # sort by author and quarter
@@ -415,9 +415,7 @@ def merge_author_data(
     # ffill strong labels
     author_labels[
         [col for col in author_labels.columns if col.startswith("strong")]
-    ] = author_labels[
-        ["author"] + label_cols
-    ].groupby("author").ffill().fillna(0)
+    ] = (author_labels[["author"] + label_cols].groupby("author").ffill().fillna(0))
 
     for col in label_cols:
         author_labels[col] = author_labels[col].astype(int)
@@ -429,6 +427,8 @@ def merge_author_data(
     institutions = _institution_preprocessing(institutions)
     candidate_authors = _candidates_preprocessing(candidate_authors)
 
+    mesh_terms_dict = mesh_terms.set_index("DUI")["term_group"].to_dict()
+
     output_data = pd.DataFrame()
     for i, loader in enumerate(data_loaders.values()):
         logger.info(
@@ -438,7 +438,7 @@ def merge_author_data(
         )
         data = loader()
 
-        # define high_pdb authors
+        logger.info("Getting high PDB authors")
         data = _define_high_pdb_authors(data, pdb_submissions)
 
         # get first author data
@@ -458,6 +458,15 @@ def merge_author_data(
                 else None
             )
         )
+
+        logger.info("Calculating field share")
+        data = calculate_field_share(data)
+
+        logger.info("Calculating mesh balance")
+        data = calculate_mesh_balance(data, mesh_terms_dict)
+
+        logger.info("Collecting COVID references")
+        data = collect_covid_references(data)
 
         data.drop(
             columns=[
@@ -530,64 +539,6 @@ def merge_author_data(
     output_data = output_data.merge(author_labels, on=["author", "quarter"], how="left")
 
     return output_data
-
-
-def aggregate_to_quarterly(data: pd.DataFrame) -> pd.DataFrame:
-    """
-    Aggregates the input data to the quarterly level.
-
-    Args:
-        data (pd.DataFrame): The input DataFrame containing the data
-            to be aggregated.
-
-    Returns:
-        pd.DataFrame: The aggregated DataFrame with the data aggregated
-            to the quarterly level.
-    """
-    for col in ["R_free", "resolution"]:
-        data[col] = data[col].replace({"": np.nan}).astype("float")
-
-    def safe_mode(series):
-        mode = series.mode()
-        return mode.iloc[0] if not mode.empty else np.nan
-
-    return (
-        data.groupby(["author", "quarter"])
-        .agg(
-            num_publications=("id", "size"),
-            num_cited_by_count=("cited_by_count", "sum"),
-            num_cit_0=("cit_0", "sum"),
-            num_cit_1=("cit_1", "sum"),
-            cited_by_count=("cited_by_count", "mean"),
-            cit_0=("cit_0", "mean"),
-            cit_1=("cit_1", "mean"),
-            fwci=("fwci", "mean"),
-            percentile_value=("citation_normalized_percentile_value", "mean"),
-            patent_count=("patent_count", "sum"),
-            patent_citation=("patent_citation", "sum"),
-            ca_count=("ca_count", "sum"),
-            resolution=("resolution", "mean"),
-            R_free=("R_free", "mean"),
-            num_publications_pdb=("pdb_submission", "sum"),
-            institution=("institution", "first"),
-            institution_cited_by_count=("institution_cited_by_count", "first"),
-            country_code=("country_code", "first"),
-            type=("type", "first"),
-            depth=("depth", "first"),
-            af=("af", "first"),
-            ct_ai=("ct_ai", "first"),
-            ct_noai=("ct_noai", "first"),
-            other=("other", "first"),
-            strong_af=("strong_af", safe_mode),
-            strong_ct_ai=("strong_ct_ai", safe_mode),
-            strong_ct_noai=("strong_ct_noai", safe_mode),
-            strong_other=("strong_other", safe_mode),
-            primary_field=("primary_field", safe_mode),
-            author_position=("author_position", safe_mode),
-            high_pdb=("high_pdb", "first"),
-        )
-        .reset_index()
-    )
 
 
 def _institution_preprocessing(institutions: pd.DataFrame) -> pd.DataFrame:
@@ -709,41 +660,246 @@ def _define_high_pdb_authors(
     return data
 
 
-def _get_mesh_data(data: pd.DataFrame, mesh_terms: pd.DataFrame) -> pd.DataFrame:
+def calculate_field_share(data):
+    """
+    Calculate the share of each subfield for each author in a DataFrame.
 
-    mesh_terms["term_group"] = mesh_terms["tree_number"].apply(
-        lambda x: str(x)[:1] if x is not None else None
-    )
-    mesh_tag_class_dict = mesh_terms.set_index("DUI")["term_group"].to_dict()
+    Args:
+        df (pandas.DataFrame): The input DataFrame containing the data.
 
-    data["major_mesh_terms"] = data["mesh_terms"].apply(
-        lambda x: (
-            _extract_mesh_terms(x, True, mesh_tag_class_dict)
-            if isinstance(x, np.ndarray)
-            else []
-        )
+    Returns:
+        pandas.DataFrame: The resulting DataFrame with the share of each subfield for each author.
+    """
+    df = data.copy()
+    df["fields"] = df["topics"].apply(
+        lambda x: [y[5] for y in x] if x is not None and len(x) > 0 else []
     )
-    data["minor_mesh_terms"] = data["mesh_terms"].apply(
-        lambda x: (
-            _extract_mesh_terms(x, False, mesh_tag_class_dict)
-            if isinstance(x, np.ndarray)
-            else []
-        )
+    # explode the subfields column into multiple rows
+    df = df.explode("fields")
+    # group by author and subfields and calculate the count
+    df = df.groupby(["author", "quarter", "fields"]).size().reset_index(name="count")
+    # calculate the total count for each author
+    total_count = df.groupby("author")["count"].sum()
+    # calculate the share of each subfield
+    df["share"] = df.apply(
+        lambda row: row["count"] / total_count[row["author"]], axis=1
     )
+    # pivot the DataFrame to get one column for each subfield
+    df = df.pivot(index=["author", "quarter"], columns="fields", values="share")
+
+    # reset index
+    df.reset_index(inplace=True)
+
+    # fill NaN values with 0
+    df = df.fillna(0)
+
+    # only keep first 10 characters of the subfield
+    df.columns = [
+        col[:10] if col != "author" and col != "quarter" else col for col in df.columns
+    ]
+
+    # change column names to be camel case, and prefix with "field_"
+    df.columns = [
+        (
+            "field_" + col.lower().replace(" ", "_")
+            if col != "author" and col != "quarter"
+            else col
+        )
+        for col in df.columns
+    ]
+
+    # try to drop "field_" column
+    if "field_" in df.columns:
+        df = df.drop(columns=["field_"])
+
+    # merge with data on author and time
+    data = data.merge(df, on=["author", "quarter"], how="left")
+
+    data.drop(columns=["topics"], inplace=True)
 
     return data
 
 
-def _extract_mesh_terms(mesh_terms, is_major, mesh_dict):
-    terms = []
-    for term in mesh_terms:
-        if term["is_major_topic"] == is_major:
-            descriptor_ui = term["descriptor_ui"]
-            descriptor_name = term["descriptor_name"]
-            mesh_class = mesh_dict.get(descriptor_ui, None)
-            methods = term["qualifier_name"]
-            terms.append([descriptor_name, mesh_class, methods])
-    return terms
+def calculate_mesh_balance(
+    data: pd.DataFrame, mesh_terms: pd.DataFrame
+) -> pd.DataFrame:
+    """
+    Calculate the balance of mesh terms for each author over time.
+
+        Args:
+        data (pd.DataFrame): A DataFrame containing author data with columns 'author',
+          'time', and 'mesh_terms'.
+        mesh_terms (pd.DataFrame): A DataFrame containing mesh terms and their
+          corresponding groups.
+    Returns:
+        pd.DataFrame: A DataFrame with the original data and additional columns for
+          each mesh term's share, prefixed with 'mesh_'.
+    """
+
+    df = data.copy()
+
+    # transform mesh_terms by mapping to term_group
+    df["mesh_terms"] = df["mesh_terms"].apply(
+        lambda x: [y[0] for y in x] if x is not None else []
+    )
+    df["mesh_terms"] = df["mesh_terms"].apply(
+        lambda x: [mesh_terms.get(y, "") for y in x] if x is not None else []
+    )
+
+    # explode the mesh_terms column into multiple rows
+    df = df.explode("mesh_terms")
+
+    # group by author and mesh_terms and calculate the count
+    df = (
+        df.groupby(["author", "quarter", "mesh_terms"]).size().reset_index(name="count")
+    )
+
+    # calculate the total count for each author
+    total_count = df.groupby("author")["count"].sum()
+
+    # calculate the share of each mesh term
+    df["share"] = df.apply(
+        lambda row: row["count"] / total_count[row["author"]], axis=1
+    )
+
+    # pivot the DataFrame to get one column for each mesh term
+    df = df.pivot(index=["author", "quarter"], columns="mesh_terms", values="share")
+
+    # reset index
+    df.reset_index(inplace=True)
+
+    # change column names to be camel case, and prefix with "mesh_"
+    df.columns = [
+        "mesh_" + col if col != "author" and col != "quarter" else col
+        for col in df.columns
+    ]
+
+    # fill NaN values with 0
+    df = df.fillna(0)
+
+    # try to drop "mesh_" column
+    if "mesh_" in df.columns:
+        df = df.drop(columns=["mesh_"])
+
+    # merge with data on author and time
+    data = data.merge(df, on=["author", "quarter"], how="left")
+
+    data.drop(columns=["mesh_terms"], inplace=True)
+
+    return data
+
+
+def collect_covid_references(data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Collects and calculates the share of COVID-19 related concepts for each principal
+     investigator (author) in the provided DataFrame for the months of September to
+     December 2020.
+
+    Args:
+      data (pd.DataFrame): A DataFrame containing at least the following columns:
+    Returns:
+      pd.DataFrame: The original DataFrame with an additional column "covid_share_2020"
+    """
+
+    data_2020 = data[data["quarter"].isin(["2020Q1", "2020Q2", "2020Q3", "2020Q4"])]
+
+    data_2020["covid_2020"] = data_2020["concepts"].apply(
+        lambda x: (any(element == "C524204448" for element in x))
+    )
+
+    # Group the filtered dataframe by author and calculate the share of COVID concepts
+    covid_share_2020 = (
+        data_2020.groupby("author")["covid_2020"].sum()
+        / data_2020.groupby("author")["covid_2020"].count()
+    )
+
+    # Convert the Series to a DataFrame
+    covid_share_2020 = covid_share_2020.reset_index()
+
+    # Rename the column
+    covid_share_2020.columns = ["author", "covid_share_2020"]
+
+    # Create a dictionary from the DataFrame
+    covid_share_dict = dict(
+        zip(covid_share_2020["author"], covid_share_2020["covid_share_2020"])
+    )
+
+    data["covid_share_2020"] = data["author"].map(covid_share_dict)
+
+    data.drop(columns=["concepts"], inplace=True)
+
+    return data
+
+
+def aggregate_to_quarterly(data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Aggregates the input data to the quarterly level.
+
+    Args:
+        data (pd.DataFrame): The input DataFrame containing the data
+            to be aggregated.
+
+    Returns:
+        pd.DataFrame: The aggregated DataFrame with the data aggregated
+            to the quarterly level.
+    """
+    for col in ["R_free", "resolution"]:
+        data[col] = data[col].replace({"": np.nan}).astype("float")
+
+    def safe_mode(series):
+        mode = series.mode()
+        return mode.iloc[0] if not mode.empty else np.nan
+
+    # aggregation dictionaryy
+    agg_dict = {
+        "num_publications": ("id", "size"),
+        "num_cited_by_count": ("cited_by_count", "sum"),
+        "num_cit_0": ("cit_0", "sum"),
+        "num_cit_1": ("cit_1", "sum"),
+        "cited_by_count": ("cited_by_count", "mean"),
+        "cit_0": ("cit_0", "mean"),
+        "cit_1": ("cit_1", "mean"),
+        "fwci": ("fwci", "mean"),
+        "percentile_value": ("citation_normalized_percentile_value", "mean"),
+        "patent_count": ("patent_count", "sum"),
+        "patent_citation": ("patent_citation", "sum"),
+        "ca_count": ("ca_count", "sum"),
+        "resolution": ("resolution", "mean"),
+        "R_free": ("R_free", "mean"),
+        "num_publications_pdb": ("pdb_submission", "sum"),
+        "institution": ("institution", "first"),
+        "institution_cited_by_count": ("institution_cited_by_count", "first"),
+        "country_code": ("country_code", "first"),
+        "type": ("type", "first"),
+        "depth": ("depth", "first"),
+        "af": ("af", "first"),
+        "ct_ai": ("ct_ai", "first"),
+        "ct_noai": ("ct_noai", "first"),
+        "other": ("other", "first"),
+        "strong_af": ("strong_af", safe_mode),
+        "strong_ct_ai": ("strong_ct_ai", safe_mode),
+        "strong_ct_noai": ("strong_ct_noai", safe_mode),
+        "strong_other": ("strong_other", safe_mode),
+        "primary_field": ("primary_field", safe_mode),
+        "author_position": ("author_position", safe_mode),
+        "high_pdb": ("high_pdb", "first"),
+    }
+
+    # add fields, mesh, covid
+    additional_columns = [
+        col
+        for col in data.columns
+        if col.startswith("field_") or col.startswith("mesh_")
+    ]
+    additional_columns.append("covid_share_2020")
+
+    for col in additional_columns:
+        agg_dict[col] = (col, "first")
+
+    # group by author and quarter, aggregate calcs
+    output_data = data.groupby(["author", "quarter"]).agg(**agg_dict).reset_index()
+
+    return output_data
 
 
 def _create_cc_counts(data, icite_data):
@@ -891,10 +1047,10 @@ def _result_transformations(data: pd.DataFrame) -> pd.DataFrame:
 
     data.drop(
         columns=[
-            "concepts",
-            "mesh_terms",
+            # "concepts",
+            # "mesh_terms",
             "grants",
-            "topics",
+            # "topics",
             "ids",
         ],
         inplace=True,
