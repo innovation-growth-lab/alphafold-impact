@@ -46,34 +46,34 @@ mesh_cols <- grep("^mesh_", names(sub_samples[[1]]), value = TRUE)
 field_cols <- grep("^field_", names(sub_samples[[1]]), value = TRUE)
 
 covs <- list()
-covs[["base0"]] <- c("num_publications", field_cols, mesh_cols)
-
-fes <- list()
-fes[["fe0"]] <- c("quarter_year")
-fes[["fe1"]] <- c(
-  "pi_id", "quarter_year", "institution_type",
+covs[["base0"]] <- c(
+  field_cols, mesh_cols, "institution_type",
   "institution_cited_by_count",
   "institution_2yr_mean_citedness",
   "institution_h_index",
   "institution_i10_index",
   "institution_country_code",
-  "covid_share_2020"
+  "covid_share_2020",
+  "ln1p_num_publications"
 )
+
+fes <- list()
+fes[["fe0"]] <- c("quarter_year")
+fes[["fe1"]] <- c("pi_id", "quarter_year")
 
 cov_sets <- c("base0")
 fe_list <- c("fe1")
 dep_vars <- c(
-  # "num_publications",
-  # "ln1p_cited_by_count", "ln1p_cit_0", "ln1p_cit_1",
-  # "ln1p_fwci", "logit_cit_norm_perc",
-  # "ln1p_patent_count", "ln1p_patent_citation", 
-  "ln1p_ca_count"
-  # "resolution", "R_free", "pdb_submission"
+  "ln1p_num_publications",
+  "ln1p_cited_by_count", "ln1p_cit_0", "ln1p_cit_1",
+  "ln1p_fwci", "logit_cit_norm_perc",
+  "ln1p_patent_count", "ln1p_patent_citation",
+  "ln1p_ca_count", "resolution", "R_free", "ln1p_num_pdb_submissions"
 )
 
 for (dep_var_out in dep_vars) { # nolint
   treat_vars <- c(
-    "af_ind + ct_ai_ind + ct_noai_ind + af:ct_ai_ind + af:ct_noai_ind + strong_af_ind + strong_ct_ai_ind + strong_ct_noai_ind + strong_af:strong_ct_ai_ind + strong_af:strong_ct_noai_ind" # nolint  )
+    "af_ind + ct_ai_ind + ct_noai_ind + strong_af_ind + strong_ct_ai_ind + strong_ct_noai_ind" # nolint  )
   )
   form_list <- list()
   # Iterate over dependent variables
@@ -82,8 +82,8 @@ for (dep_var_out in dep_vars) { # nolint
     for (cov_set in cov_sets) {
       local_covs <- covs[[cov_set]]
       # if dep_var is num_publications, remove it from covs
-      if (dep_var == "num_publications") {
-        local_covs <- covs[[cov_set]][-which(covs[[cov_set]] == "num_publications")] # nolint
+      if (dep_var == "ln1p_num_publications") {
+        local_covs <- covs[[cov_set]][-which(covs[[cov_set]] == "ln1p_num_publications")] # nolint
       } else {
         local_covs <- covs[[cov_set]]
       }
@@ -91,9 +91,9 @@ for (dep_var_out in dep_vars) { # nolint
       for (fe in fe_list) {
         # Iterate over treatment variables
         for (treat_var in treat_vars) {
-          if (treat_var == "af_ind + ct_ai_ind + ct_noai_ind + af:ct_ai_ind + af:ct_noai_ind + strong_af_ind + strong_ct_ai_ind + strong_ct_noai_ind + strong_af:strong_ct_ai_ind + strong_af:strong_ct_noai_ind") { # nolint
-            treat_var <- paste0("af + ct_ai + ct_noai + af:ct_ai + af:ct_noai + strong_af + strong_ct_ai + strong_ct_noai + strong_af:strong_ct_ai + strong_af:strong_ct_noai") # nolint
-            label_var <- "af_ind + ct_ai_ind + ct_noai_ind + af:ct_ai_ind + af:ct_noai_ind + strong_af_ind + strong_ct_ai_ind + strong_ct_noai_ind + strong_af:strong_ct_ai_ind + strong_af:strong_ct_noai_ind" # nolint
+          if (treat_var == "af_ind + ct_ai_ind + ct_noai_ind + strong_af_ind + strong_ct_ai_ind + strong_ct_noai_ind") { # nolint
+            treat_var <- paste0("af + ct_ai + ct_noai + strong_af + strong_ct_ai + strong_ct_noai") # nolint
+            label_var <- "af_ind + ct_ai_ind + ct_noai_ind + strong_af_ind + strong_ct_ai_ind + strong_ct_noai_ind" # nolint
           } else {
             label_var <- treat_var
           }
@@ -160,15 +160,9 @@ for (dep_var_out in dep_vars) { # nolint
       # compute the unique number of quarter_year
       n_pi_ids <- length(unique(non_na_data$pi_id))
       n_quarters <- length(unique(non_na_data$quarter_year))
-      n_institutions <- length(unique(non_na_data$institution))
-      n_institution_types <- length(unique(non_na_data$institution_type))
-      n_institution_countries <- length(
-        unique(non_na_data$institution_country_code)
-      )
 
       if (
-        n_pi_ids + n_quarters + n_institutions +
-          n_institution_types + n_institution_countries
+        n_pi_ids + n_quarters
         > nrow(non_na_data)
       ) {
         message("Skipping regression: ", regression_label)
@@ -180,7 +174,7 @@ for (dep_var_out in dep_vars) { # nolint
       }
 
       # run the regression as linear, but make an exception for pdb_submission
-      if (dep_var == "pdb_submission") {
+      if (dep_var == "ln1p_num_pdb_submissions") {
         results[[regression_label]] <- tryCatch(
           {
             feols(
@@ -256,9 +250,8 @@ for (dep_var_out in dep_vars) { # nolint
         fe_list = fe_list,
         treat_vars = treat_vars,
         treat_var_interest = c(
-          "af", "af_ind", "ct_ai_ind", "ct_noai_ind",
-          "strong_af_ind", "strong_ct_ai_ind", "strong_ct_noai_ind",
-          "strong_af:strong_ct_ai_ind", "strong_af:strong_ct_noai_ind"
+          "af", "af", "ct_ai", "ct_noai",
+          "strong_af", "strong_ct_ai", "strong_ct_noai"
         )
       )
 

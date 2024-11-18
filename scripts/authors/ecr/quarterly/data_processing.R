@@ -1,7 +1,7 @@
 # Clean out the workspace
 rm(list = ls())
 options(max.print = 1000)
-options(width = 100)
+options(width = 1000)
 
 # Check installation & load required packages
 list_of_packages <- c(
@@ -80,13 +80,48 @@ ecr_data <- ecr_data %>%
     "strong_af:strong_ct_noai_ind" = ifelse(strong_af > 0 & strong_ct_noai > 0, 1, 0) # nolint
   )
 
-# fill type, country_code, institution NA as "unknown"
+# creating quantiles for institution controls
 ecr_data <- ecr_data %>%
   mutate(
-    type = ifelse(is.na(type), "unknown", type),
-    country_code = ifelse(is.na(country_code), "unknown", country_code),
-    institution = ifelse(is.na(institution), "unknown", institution),
-    high_pdb = as.factor(ifelse(is.na(high_pdb), 0, high_pdb))
+    institution_2yr_mean_citedness = factor(
+      ntile(institution_2yr_mean_citedness, 4)
+    ),
+    institution_h_index = factor(ntile(institution_h_index, 4)),
+    institution_i10_index = factor(ntile(institution_i10_index, 4)),
+    institution_cited_by_count = factor(
+      ntile(institution_cited_by_count, 4)
+    )
+  )
+
+# fill with nan
+ecr_data <- ecr_data %>%
+  mutate(
+    institution_type = ifelse(
+      is.na(institution_type), "unknown", institution_type
+    ),
+    institution_country_code = ifelse(
+      is.na(institution_country_code), "unknown", institution_country_code
+    ),
+    institution_2yr_mean_citedness = ifelse(
+      is.na(institution_2yr_mean_citedness), "unknown",
+      institution_2yr_mean_citedness
+    ),
+    institution_h_index = ifelse(
+      is.na(institution_h_index), "unknown", institution_h_index
+    ),
+    institution_i10_index = ifelse(
+      is.na(institution_i10_index), "unknown", institution_i10_index
+    ),
+    institution_cited_by_count = ifelse(
+      is.na(institution_cited_by_count), "unknown",
+      institution_cited_by_count
+    ),
+    institution = ifelse(is.na(institution_works_count), 0, institution_works_count), # nolint
+    ca_count = ifelse(is.na(ca_count), 0, ca_count),
+    high_pdb = as.factor(ifelse(is.na(high_pdb), 0, high_pdb)),
+    covid_share_2020 = ifelse(is.na(covid_share_2020), 0, covid_share_2020),
+    across(starts_with("field_"), ~ ifelse(is.na(.), 0, .)),
+    across(starts_with("mesh_"), ~ ifelse(is.na(.), 0, .))
   )
 
 # create factors, log transforms
@@ -96,8 +131,8 @@ ecr_data <- ecr_data %>%
     author_position = as.factor(author_position),
     depth = as.factor(depth),
     institution = as.factor(institution),
-    institution_type = as.factor(type),
-    institution_country_code = as.factor(country_code),
+    institution_type = as.factor(institution_type),
+    institution_country_code = as.factor(institution_country_code),
     ln1p_cited_by_count = log1p(cited_by_count),
     ln1p_fwci = log1p(fwci),
     ln1p_cit_0 = log1p(cit_0),
@@ -107,6 +142,8 @@ ecr_data <- ecr_data %>%
       percentile_value /
         (1 - percentile_value)
     ),
+    ln1p_num_publications = log1p(num_publications),
+    ln1p_num_pdb_submissions = log1p(num_publications_pdb),
     ln1p_ca_count = log1p(ca_count),
     ln1p_patent_count = log1p(patent_count),
     ln1p_patent_citation = log1p(patent_citation),
@@ -127,45 +164,49 @@ ecr_data$primary_field <- recode(ecr_data$primary_field, !!!field_mapping)
 # ------------------------------------------------------------------------------
 
 # Define the columns to be used for matching
-cols <- c(
-  "num_publications", "cited_by_count", "cit_0", "cit_1", "patent_count"
+coarse_cols <- c(
+  "ln1p_cited_by_count", "ln1p_num_publications", "covid_share_2020"
 )
 
+exact_cols <- c("institution_type", "institution_country_code", "high_pdb")
+
+mode_function <- function(x) {
+  ux <- unique(x)
+  ux[which.max(tabulate(match(x, ux)))]
+}
+
 # Filter and prepare data for collapsing
-ecr_data_cem <- ecr_data %>%
+quarterly_cem <- ecr_data %>%
   group_by(author) %>%
   mutate(af_ind = max(af_ind)) %>%
   ungroup() %>%
-  filter(complete.cases(cit_0, cit_1)) %>%
+  filter(complete.cases(across(coarse_cols))) %>%
   filter(quarter %in% 200:204) %>%
-  select(af_ind, author, cols) %>%
+  select(af_ind, author, all_of(coarse_cols), all_of(exact_cols)) %>%
   group_by(author) %>%
   summarise(
     af_ind = max(af_ind),
-    across(cols, \(x) mean(x, na.rm = TRUE))
+    across(coarse_cols, \(x) mean(x, na.rm = TRUE)),
+    across(exact_cols, mode_function)
   )
 
 # ------------------------------------------------------------------------------
 # Sample Prep
 # ------------------------------------------------------------------------------
 # Define sub_samples as a list of samples
-sub_samples <- list()
-sub_groups <- c("All PDB", "High PDB", "CEM")
-unique_depths <- c("All Groups", "Foundational", "Applied")
-unique_fields <- c(
-  "All Fields",
-  "Molecular Biology",
-  "Medicine"
-)
 
 ecr_data <- ecr_data %>%
-  select(c(
-    "num_publications",
+  select(
     "quarter",
     "author",
     "institution",
     "institution_type",
     "institution_country_code",
+    "institution_cited_by_count",
+    "institution_2yr_mean_citedness",
+    "institution_h_index",
+    "institution_i10_index",
+    "ln1p_num_publications",
     "ln1p_cited_by_count",
     "ln1p_cit_0",
     "ln1p_cit_1",
@@ -176,7 +217,7 @@ ecr_data <- ecr_data %>%
     "ln1p_ca_count",
     "resolution",
     "R_free",
-    "pdb_submission",
+    "ln1p_num_pdb_submissions",
     "af_ind",
     "ct_ai_ind",
     "ct_noai_ind",
@@ -191,9 +232,23 @@ ecr_data <- ecr_data %>%
     "strong_ct_noai",
     "depth",
     "primary_field",
-    "high_pdb"
-  ))
+    "high_pdb",
+    "covid_share_2020",
+    grep("^field_", names(ecr_data), value = TRUE),
+    grep("^mesh_", names(ecr_data), value = TRUE)
+  )
 
+colnames(ecr_data) <- gsub(",", "", colnames(ecr_data))
+
+# Define sub_samples as a list of samples
+sub_samples <- list()
+sub_groups <- c("All PDB", "All PDB - CEM", "High PDB", "High PDB - CEM")
+unique_depths <- c("All Groups", "Foundational", "Applied")
+unique_fields <- c(
+  "All Fields",
+  "Molecular Biology",
+  "Medicine"
+)
 
 # Create subsets for all combinations of depth, field, and sub_group
 for (depth_lvl in unique_depths) { # nolint
@@ -221,24 +276,42 @@ for (depth_lvl in unique_depths) { # nolint
       }
 
       # Apply sub_group filter
-      if (sub_group == "High PDB") {
+      if (grepl("High PDB", sub_group)) {
         sub_sample <- subset(sub_sample, high_pdb == 1)
       }
 
-      if (sub_group == "CEM") {
-        # CEM matching on the collapsed data
-        match_out_af <- matchit(
-          as.formula(paste0("af_ind ~ ", paste0(cols, collapse = " + "))),
-          data = ecr_data_cem, method = "cem", k2k = TRUE
+      if (grepl("CEM", sub_group)) {
+        # CEM matching on the collapsed data using coarse_cols
+        match_out_af_coarse <- matchit(
+          as.formula(paste0(
+            "af_ind ~ ",
+            paste0(coarse_cols, collapse = " + ")
+          )),
+          data = quarterly_cem, method = "cem", k2k = FALSE
         )
 
-        # Store matched data
-        cem_data <- match.data(match_out_af)
+        # Store matched data for coarse_cols
+        cem_data_coarse <- match.data(match_out_af_coarse)
 
-        # Sample based on the matched group
-        sub_sample <- sub_sample %>% semi_join(cem_data, by = "author")
+        # Exact matching on the collapsed data using exact_cols
+        match_out_af_exact <- matchit(
+          as.formula(paste0("af_ind ~ ", paste0(exact_cols, collapse = " + "))),
+          data = quarterly_cem, method = "exact"
+        )
 
+        # Store matched data for exact_cols
+        cem_data_exact <- match.data(match_out_af_exact)
+
+        # Combine the matched results
+        combined_cem_data <- intersect(
+          cem_data_coarse$author,
+          cem_data_exact$author
+        )
+
+        # Sample based on the combined matched group
+        sub_sample <- sub_sample %>% filter(author %in% combined_cem_data)
       }
+
 
       # Store the subset
       sub_samples[[sample_name]] <- sub_sample

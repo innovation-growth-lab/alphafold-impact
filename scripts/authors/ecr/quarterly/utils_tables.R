@@ -42,11 +42,11 @@ table_info <- list(
   "pdb_submission" = list(
     file_name = "pdb_submission.tex"
   ),
-  "num_publications" = list(
-    file_name = "num_publications.tex"
+  "ln1p_num_pdb_submissions" = list(
+    file_name = "ln1p_num_pdb_submissions.tex"
   ),
-  "num_publications_pdb" = list(
-    file_name = "num_publications_pdb.tex"
+  "ln1p_num_publications" = list(
+    file_name = "ln1p_num_publications.tex"
   )
 )
 
@@ -71,7 +71,10 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
     "field_Medicine"
   )
   field_labels <- gsub("field_", "", fields)
-  subgroups <- c("subgroup_All PDB", "subgroup_High PDB", "subgroup_CEM")
+  subgroups <- c(
+    "subgroup_All PDB", "subgroup_High PDB",
+    "subgroup_All PDB - CEM", "subgroup_High PDB - CEM"
+  )
 
   for (dep_var in dep_vars) {
     file_name <- table_info[[dep_var]]$file_name
@@ -120,7 +123,10 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
         # Generate the etable output
         etable_output <- fixest::etable(
           results[result_names],
-          drop = c("num_publications", "Constant"),
+          drop = c(
+            "num_publications", "Constant",
+            "^covid_", "^field_", "^mesh_", "^institution_"
+          ),
           tex = TRUE,
           dict = dict_vars,
           digits = 3,
@@ -140,7 +146,7 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
 
         # Add tech_group headers and \cmidrule after row 5
         field_headers <- paste0(
-          "\\multicolumn{6}{c}{", field_labels, "}"
+          "\\multicolumn{4}{c}{", field_labels, "}"
         )
         field_headers <- paste0(
           " & ", paste(field_headers, collapse = " & "), " \\\\"
@@ -148,18 +154,40 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
 
         field_cmidrules <- paste0(
           "\\cmidrule(lr){",
-          seq(2, length(field_labels) * 6 + 1, by = 6), "-",
-          seq(7, length(field_labels) * 6 + 1, by = 6), "}"
+          seq(2, length(field_labels) * 4 + 1, by = 3), "-",
+          seq(4, length(field_labels) * 4 + 1, by = 3), "}"
         )
         field_cmidrules <- paste0(
           paste(field_cmidrules, collapse = " ")
         )
 
+        # matching headers
+        matching_headers <- paste0(
+          rep(
+            "\\multicolumn{2}{c}{All Authors} & \\multicolumn{2}{c}{CEM Authors}", # nolint
+            length(field_labels)
+          )
+        )
+
+        matching_headers <- paste0(
+          " & ", paste(matching_headers, collapse = " & "), " \\\\"
+        )
+
+        matching_cmidrules <- paste0(
+          "\\cmidrule(lr){",
+          seq(2, length(field_labels) * 4 + 1, by = 1), "-",
+          seq(3, length(field_labels) * 4 + 1, by = 1), "}"
+        )
+
+        matching_cmidrules <- paste0(
+          paste(matching_cmidrules, collapse = " ")
+        )
+
         # subgroup headers
         subgroup_headers <- paste0(
           rep(
-            "\\multicolumn{2}{c}{All PDB} & \\multicolumn{2}{c}{High PDB} & \\multicolumn{2}{c}{CEM}", # nolint
-            length(field_labels)
+            "\\multicolumn{1}{c}{All PDB} & \\multicolumn{1}{c}{High PDB}", # nolint
+            length(field_labels) * 2
           )
         )
 
@@ -169,34 +197,12 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
 
         subgroup_cmidrules <- paste0(
           "\\cmidrule(lr){",
-          seq(2, length(field_labels) * 6 + 1, by = 2), "-",
-          seq(3, length(field_labels) * 6 + 1, by = 2), "}"
+          seq(2, length(field_labels) * 4 + 1, by = 1), "-",
+          seq(2, length(field_labels) * 4 + 1, by = 1), "}"
         )
 
         subgroup_cmidrules <- paste0(
           paste(subgroup_cmidrules, collapse = " ")
-        )
-
-        # "Extensive", "Intensive", repeated as many times as field_labels
-        coefficient_headers <- paste0(
-          rep(
-            "\\multicolumn{1}{c}{Extensive} & \\multicolumn{1}{c}{Intensive}",
-            length(field_labels) * 3
-          )
-        )
-        coefficient_headers <- paste0(
-          "Variables & ", paste(coefficient_headers, collapse = " & "), " \\\\" # nolint
-        )
-
-        coefficient_cmidrules <- paste0(
-          "\\cmidrule(lr){", seq(2, length(field_labels) * 6 + 1, by = 2), "-", # nolint
-          seq(2, length(field_labels) * 6 + 1, by = 2), "} \\cmidrule(lr){",
-          seq(3, length(field_labels) * 6 + 1, by = 2), "-",
-          seq(3, length(field_labels) * 6 + 1, by = 2), "}"
-        )
-        coefficient_cmidrules <- paste0(
-          "\\cmidrule(lr){1-1}",
-          paste(coefficient_cmidrules, collapse = " ")
         )
 
         etable_lines <- unlist(strsplit(etable_output, "\n"))
@@ -205,13 +211,13 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
         etable_lines <- append(etable_lines, field_headers, after = 5)
         etable_lines <- append(etable_lines, field_cmidrules, after = 6)
 
-        # Insert subgroup headers after row 6
-        etable_lines <- append(etable_lines, subgroup_headers, after = 7)
-        etable_lines <- append(etable_lines, subgroup_cmidrules, after = 8)
+        # Insert matching headers after row 6
+        etable_lines <- append(etable_lines, matching_headers, after = 7)
+        etable_lines <- append(etable_lines, matching_cmidrules, after = 8)
 
-        # Insert coefficient headers after row 8
-        etable_lines <- append(etable_lines, coefficient_headers, after = 9)
-        etable_lines <- append(etable_lines, coefficient_cmidrules, after = 10) # nolint
+        # Insert subgroup headers after row 6
+        etable_lines <- append(etable_lines, subgroup_headers, after = 9)
+        etable_lines <- append(etable_lines, subgroup_cmidrules, after = 10)
 
         # drop lines 10-11
         etable_lines <- etable_lines[-c(12, 13, 14)]
