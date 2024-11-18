@@ -424,6 +424,9 @@ def merge_author_data(
     institutions = _institution_preprocessing(institutions)
     candidate_authors = _candidates_preprocessing(candidate_authors)
 
+    mesh_terms["term_group"] = mesh_terms["tree_number"].apply(
+        lambda x: str(x)[:1] if x is not None else None
+    )
     mesh_terms_dict = mesh_terms.set_index("DUI")["term_group"].to_dict()
 
     output_data = pd.DataFrame()
@@ -465,16 +468,14 @@ def merge_author_data(
         logger.info("Collecting COVID references")
         data = collect_covid_references(data)
 
-        data.drop(
-            columns=[
-                "concepts",
-                "mesh_terms",
-                "grants",
-                "topics",
-                "ids",
-            ],
-            inplace=True,
-        )
+        for col in ["concepts", "mesh_terms", "grants", "topics", "ids"]:
+            try:
+                data.drop(
+                    columns=[col],
+                    inplace=True,
+                )
+            except KeyError:
+                pass
 
         if ecr:
             # identify any authors that have snuck in from before 2020
@@ -737,7 +738,7 @@ def calculate_mesh_balance(
 
     # transform mesh_terms by mapping to term_group
     df["mesh_terms"] = df["mesh_terms"].apply(
-        lambda x: [y[0] for y in x] if x is not None else []
+        lambda x: [y.get("descriptor_ui") for y in x] if x is not None else []
     )
     df["mesh_terms"] = df["mesh_terms"].apply(
         lambda x: [mesh_terms.get(y, "") for y in x] if x is not None else []
@@ -866,8 +867,12 @@ def aggregate_to_quarterly(data: pd.DataFrame) -> pd.DataFrame:
         "num_publications_pdb": ("pdb_submission", "sum"),
         "institution": ("institution", "first"),
         "institution_cited_by_count": ("institution_cited_by_count", "first"),
-        "country_code": ("country_code", "first"),
-        "type": ("type", "first"),
+        "institution_country_code": ("country_code", "first"),
+        "institution_type": ("type", "first"),
+        "institution_2yr_mean_citedness": ("2yr_mean_citedness", "first"),
+        "institution_h_index": ("h_index", "first"),
+        "institution_i10_index": ("i10_index", "first"),
+        "institution_works_count": ("works_count", "first"),
         "depth": ("depth", "first"),
         "af": ("af", "first"),
         "ct_ai": ("ct_ai", "first"),
