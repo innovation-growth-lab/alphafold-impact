@@ -1,6 +1,52 @@
 """
-This is a boilerplate pipeline 'data_collection_ecr'
-generated using Kedro 0.19.1
+This module contains functions for data collection and processing of author information
+from various sources. The functions include extracting unique authors, fetching candidate
+ECR status, fetching author outputs, merging author data, and various helper functions
+for data transformations and calculations.
+
+Functions:
+    _get_candidate_authors(data: pd.DataFrame) -> pd.DataFrame:
+
+    get_unique_authors(publications_data: pd.DataFrame) -> pd.DataFrame:
+
+    fetch_candidate_ecr_status(authors: pd.DataFrame, from_publication_date: str,
+        to_publication_date: str, api_config: Dict[str, str]) -> pd.DataFrame:
+        publication records.
+
+    fetch_author_outputs(authors: pd.DataFrame, ecr: bool, from_publication_date: str,
+        api_config: Dict[str, str]) -> Generator[Dict[str, pd.DataFrame], None, None]:
+
+    merge_author_data(data_loaders: Dict[str, AbstractDataset], candidate_authors: pd.DataFrame,
+        authors: pd.DataFrame, ecr: bool, institutions: pd.DataFrame,
+        patents_data: pd.DataFrame, pdb_submissions: pd.DataFrame,
+        icite_data: pd.DataFrame, mesh_terms: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+
+    _institution_preprocessing(institutions: pd.DataFrame) -> pd.DataFrame:
+        Preprocesses the institution data.
+
+    _candidates_preprocessing(candidate_authors: pd.DataFrame) -> pd.DataFrame:
+        Preprocesses the candidate authors data.
+
+    _define_high_pdb_authors(data: pd.DataFrame, pdb_submissions: pd.DataFrame) -> pd.DataFrame:
+        Define high PDB authors based on the publication counts in the fourth quantile.
+
+    calculate_field_share(data: pd.DataFrame) -> pd.DataFrame:
+
+    calculate_mesh_balance(data: pd.DataFrame, mesh_terms: pd.DataFrame) -> pd.DataFrame:
+
+    collect_covid_references(data: pd.DataFrame) -> pd.DataFrame:
+
+    aggregate_to_quarterly(data: pd.DataFrame) -> pd.DataFrame:
+
+    _create_cc_counts(data: pd.DataFrame, icite_data: pd.DataFrame) -> pd.DataFrame:
+
+    _result_transformations(data: pd.DataFrame) -> pd.DataFrame:
+
+    _normalise_citation_counts(data: pd.DataFrame) -> pd.DataFrame:
+
+    _pivot_labels(data: pd.DataFrame) -> pd.DataFrame:
+        Pivots the strength labels to a wide format and performs cumulative sum and forward fill.
+
 """
 
 import logging
@@ -304,7 +350,7 @@ def fetch_author_outputs(
     filter_batches = [[from_publication_date, batch] for batch in author_batches]
 
     # slice to create parallel jobs that produce slices
-    slices = [filter_batches[i : i + 100] for i in range(0, len(filter_batches), 100)]
+    slices = [filter_batches[i : i + 50] for i in range(0, len(filter_batches), 50)]
 
     logger.info("Fetching papers for %d author batches", len(slices))
     for i, slice_ in enumerate(slices):

@@ -4,6 +4,7 @@ Utility functions for data processing in the foundational labs pipeline.
 
 import logging
 import pandas as pd
+import numpy as np
 from Bio import Entrez
 
 Entrez.email = "david.ampudia@nesta.org.uk"
@@ -204,7 +205,7 @@ def get_cum_sums(pi_data, publication_data):
 
     # ffill the four columns
     pi_data[["cum_af", "cum_ct_ai", "cum_ct_noai", "cum_other"]] = (
-        pi_data[["cum_af", "cum_ct_ai", "cum_ct_noai", "cum_other"]]
+        pi_data.groupby("pi_id")[["cum_af", "cum_ct_ai", "cum_ct_noai", "cum_other"]]
         .ffill()
         .fillna(0)
         .astype(int)
@@ -213,7 +214,9 @@ def get_cum_sums(pi_data, publication_data):
     return pi_data
 
 
-def get_strong_cum_sums(pi_data: pd.DataFrame, publication_data: pd.DataFrame) -> pd.DataFrame:
+def get_strong_cum_sums(
+    pi_data: pd.DataFrame, publication_data: pd.DataFrame
+) -> pd.DataFrame:
     """
     Calculate the cumulative sums of strong counts for each PI in the given data.
 
@@ -251,7 +254,7 @@ def get_strong_cum_sums(pi_data: pd.DataFrame, publication_data: pd.DataFrame) -
         fill_value=0,
     ).reset_index()
 
-    for col in ["af", "ct_ai", "ct_noai", "other"]:
+    for col in ["af", "ct_ai", "ct_noai"]:
         pi_relevant_pubs.rename(columns={col: "strong_cumul_" + col}, inplace=True)
         pi_relevant_pubs["strong_cumul_" + col] = pi_relevant_pubs[
             "strong_cumul_" + col
@@ -268,15 +271,13 @@ def get_strong_cum_sums(pi_data: pd.DataFrame, publication_data: pd.DataFrame) -
             "strong_cumul_af",
             "strong_cumul_ct_ai",
             "strong_cumul_ct_noai",
-            "strong_cumul_other",
         ]
     ] = (
-        pi_data[
+        pi_data.groupby("pi_id")[
             [
                 "strong_cumul_af",
                 "strong_cumul_ct_ai",
                 "strong_cumul_ct_noai",
-                "strong_cumul_other",
             ]
         ]
         .ffill()
@@ -769,6 +770,10 @@ def get_quarterly_aggregate_outputs(data):
 
     """
 
+    def safe_mode(series):
+        mode = series.mode()
+        return mode.iloc[0] if not mode.empty else np.nan
+
     # Define aggregation functions for each column
     agg_funcs = {
         "cited_by_count": "sum",
@@ -795,10 +800,14 @@ def get_quarterly_aggregate_outputs(data):
         "citation_normalized_percentile_value": "mean",
         "citation_normalized_percentile_is_in_top_1_percent": lambda x: int(x.sum()),
         "citation_normalized_percentile_is_in_top_10_percent": lambda x: int(x.sum()),
-        "cum_af": "first",
-        "cum_ct_ai": "first",
-        "cum_ct_noai": "first",
-        "cum_other": "first",
+        "cum_af": safe_mode,
+        "cum_ct_ai": safe_mode,
+        "cum_ct_noai": safe_mode,
+        "cum_other": safe_mode,
+        "strong_cumul_af": safe_mode,
+        "strong_cumul_ct_ai": safe_mode,
+        "strong_cumul_ct_noai": safe_mode,
+        "primary_field": safe_mode,
     }
 
     # Assume `data` is your original data
