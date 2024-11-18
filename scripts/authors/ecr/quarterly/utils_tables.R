@@ -154,8 +154,8 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
 
         field_cmidrules <- paste0(
           "\\cmidrule(lr){",
-          seq(2, length(field_labels) * 4 + 1, by = 3), "-",
-          seq(4, length(field_labels) * 4 + 1, by = 3), "}"
+          seq(2, length(field_labels) * 4 + 1, by = 4), "-",
+          seq(5, length(field_labels) * 4 + 1, by = 4), "}"
         )
         field_cmidrules <- paste0(
           paste(field_cmidrules, collapse = " ")
@@ -175,8 +175,8 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
 
         matching_cmidrules <- paste0(
           "\\cmidrule(lr){",
-          seq(2, length(field_labels) * 4 + 1, by = 1), "-",
-          seq(3, length(field_labels) * 4 + 1, by = 1), "}"
+          seq(2, length(field_labels) * 4 + 1, by = 2), "-",
+          seq(3, length(field_labels) * 4 + 1, by = 2), "}"
         )
 
         matching_cmidrules <- paste0(
