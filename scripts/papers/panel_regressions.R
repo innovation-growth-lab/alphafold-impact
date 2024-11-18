@@ -51,8 +51,7 @@ covs[["base0"]] <- c(field_cols, mesh_cols, "num_publications")
 fes <- list()
 fes[["fe0"]] <- c("quarter_year")
 fes[["fe1"]] <- c(
-  "quarter_year",
-  "institution", "institution_type", "institution_country_code"
+  "quarter_year", "institution", "institution_type", "institution_country_code"
 )
 
 
@@ -68,7 +67,7 @@ dep_vars <- c(
 )
 treat_vars <- paste(
   c(
-    "af", "ct_ai", "ct_noai", "af:strong", "ct_ai:strong", 
+    "af", "ct_ai", "ct_noai", "af:strong", "ct_ai:strong",
     "ct_noai:strong", "af:ct_ai", "af:ct_noai"
   ),
   collapse = " + "
@@ -134,7 +133,6 @@ for (dep_var_out in dep_vars) { # nolint
       non_na_data <- local_data[!is.na(local_data[[dep_var]]), ]
 
       # compute the unique number of quarter_year
-      n_authors <- length(unique(non_na_data$author))
       n_quarters <- length(unique(non_na_data$quarter_year))
       n_institutions <- length(unique(non_na_data$institution))
       n_institution_types <- length(unique(non_na_data$institution_type))
@@ -143,7 +141,7 @@ for (dep_var_out in dep_vars) { # nolint
       )
 
       if (
-        n_authors + n_quarters + n_institutions +
+        n_quarters + n_institutions +
           n_institution_types + n_institution_countries
         > nrow(non_na_data)
       ) {
@@ -243,7 +241,7 @@ for (dep_var_out in dep_vars) { # nolint
         fe_list = fe_list,
         treat_vars = treat_vars,
         treat_var_interest = c(
-          "af", "ct_ai", "ct_noai", "af:strong1", 
+          "af", "ct_ai", "ct_noai", "af:strong1",
           "ct_ai:strong1", "ct_noai:strong1"
         )
       )

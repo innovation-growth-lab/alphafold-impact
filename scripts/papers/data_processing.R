@@ -142,7 +142,8 @@ papers <- papers %>%
 
 # Define the columns to be used for matching
 cols <- c(
-  "cited_by_count", "fwci", "citation_normalized_percentile_value", "patent_count"
+  "cited_by_count", "fwci",
+  "citation_normalized_percentile_value", "patent_count"
 )
 
 # Filter and prepare data for collapsing
@@ -197,8 +198,8 @@ papers <- papers %>%
     "depth",
     "primary_field",
     "high_pdb",
-    grep("^field_", names(sub_samples$all_lvl0), value = TRUE),
-    grep("^mesh_", names(sub_samples$all_lvl0), value = TRUE)
+    grep("^field_", names(papers), value = TRUE),
+    grep("^mesh_", names(papers), value = TRUE)
   ))
 
 # Create subsets for all combinations of depth, field, and sub_group
@@ -242,9 +243,7 @@ for (depth_lvl in unique_depths) { # nolint
         cem_data <- match.data(match_out_af)
 
         # Sample based on the matched group
-        qtly_cem <- papers %>% semi_join(cem_data, by = "author")
-        sub_sample <- qtly_cem
-
+        sub_sample <- sub_sample %>% semi_join(cem_data, by = "author")
       }
 
       # Store the subset

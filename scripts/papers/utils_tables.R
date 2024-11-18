@@ -47,7 +47,8 @@ table_info <- list(
 dict_vars <- c(
   "af" = "AlphaFold",
   "ct_ai" = "Counterfactual AI",
-  "ct_noai" = "Counterfactual No AI"
+  "ct_noai" = "Counterfactual No AI",
+  "strong1" = "Method"
 )
 
 # Function to generate tables
@@ -131,7 +132,7 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
 
         # Add tech_group headers and \cmidrule after row 5
         field_headers <- paste0(
-          "\\multicolumn{6}{c}{", field_labels, "}"
+          "\\multicolumn{3}{c}{", field_labels, "}"
         )
         field_headers <- paste0(
           " & ", paste(field_headers, collapse = " & "), " \\\\"
@@ -139,8 +140,8 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
 
         field_cmidrules <- paste0(
           "\\cmidrule(lr){",
-          seq(2, length(field_labels) * 6 + 1, by = 6), "-",
-          seq(7, length(field_labels) * 6 + 1, by = 6), "}"
+          seq(2, length(field_labels) * 3 + 1, by = 3), "-",
+          seq(4, length(field_labels) * 3 + 1, by = 3), "}"
         )
         field_cmidrules <- paste0(
           paste(field_cmidrules, collapse = " ")
@@ -149,7 +150,7 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
         # subgroup headers
         subgroup_headers <- paste0(
           rep(
-            "\\multicolumn{2}{c}{All PDB} & \\multicolumn{2}{c}{High PDB} & \\multicolumn{2}{c}{CEM}", # nolint
+            "\\multicolumn{1}{c}{All PDB} & \\multicolumn{1}{c}{High PDB} & \\multicolumn{1}{c}{CEM}", # nolint
             length(field_labels)
           )
         )
@@ -159,35 +160,14 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
         )
 
         subgroup_cmidrules <- paste0(
-          "\\cmidrule(lr){",
-          seq(2, length(field_labels) * 6 + 1, by = 2), "-",
-          seq(3, length(field_labels) * 6 + 1, by = 2), "}"
+          "\\cmidrule(lr){", seq(2, length(field_labels) * 3 + 1, by = 2), "-", # nolint
+          seq(2, length(field_labels) * 3 + 1, by = 2), "} \\cmidrule(lr){",
+          seq(3, length(field_labels) * 3 + 1, by = 2), "-",
+          seq(3, length(field_labels) * 3 + 1, by = 2), "}"
         )
-
         subgroup_cmidrules <- paste0(
-          paste(subgroup_cmidrules, collapse = " ")
-        )
-
-        # "Extensive", "Intensive", repeated as many times as field_labels
-        coefficient_headers <- paste0(
-          rep(
-            "\\multicolumn{1}{c}{Extensive} & \\multicolumn{1}{c}{Intensive}",
-            length(field_labels) * 3
-          )
-        )
-        coefficient_headers <- paste0(
-          "Variables & ", paste(coefficient_headers, collapse = " & "), " \\\\" # nolint
-        )
-
-        coefficient_cmidrules <- paste0(
-          "\\cmidrule(lr){", seq(2, length(field_labels) * 6 + 1, by = 2), "-", # nolint
-          seq(2, length(field_labels) * 6 + 1, by = 2), "} \\cmidrule(lr){",
-          seq(3, length(field_labels) * 6 + 1, by = 2), "-",
-          seq(3, length(field_labels) * 6 + 1, by = 2), "}"
-        )
-        coefficient_cmidrules <- paste0(
           "\\cmidrule(lr){1-1}",
-          paste(coefficient_cmidrules, collapse = " ")
+          paste(subgroup_cmidrules, collapse = " ")
         )
 
         etable_lines <- unlist(strsplit(etable_output, "\n"))
@@ -200,12 +180,8 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
         etable_lines <- append(etable_lines, subgroup_headers, after = 7)
         etable_lines <- append(etable_lines, subgroup_cmidrules, after = 8)
 
-        # Insert coefficient headers after row 8
-        etable_lines <- append(etable_lines, coefficient_headers, after = 9)
-        etable_lines <- append(etable_lines, coefficient_cmidrules, after = 10) # nolint
-
         # drop lines 10-11
-        etable_lines <- etable_lines[-c(12, 13, 14)]
+        etable_lines <- etable_lines[-c(10, 11, 12)]
 
         # add mean y row in 6th last row
         etable_lines <- append(
