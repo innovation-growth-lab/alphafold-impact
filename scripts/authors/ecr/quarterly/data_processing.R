@@ -142,8 +142,7 @@ ecr_data <- ecr_data %>%
       percentile_value /
         (1 - percentile_value)
     ),
-    ln1p_num_publications = log1p(num_publications),
-    ln1p_num_pdb_submissions = log1p(num_publications_pdb),
+    num_pdb_submissions = num_publications_pdb,
     ln1p_ca_count = log1p(ca_count),
     ln1p_patent_count = log1p(patent_count),
     ln1p_patent_citation = log1p(patent_citation),
@@ -206,7 +205,7 @@ ecr_data <- ecr_data %>%
     "institution_2yr_mean_citedness",
     "institution_h_index",
     "institution_i10_index",
-    "ln1p_num_publications",
+    "num_publications",
     "ln1p_cited_by_count",
     "ln1p_cit_0",
     "ln1p_cit_1",
@@ -217,7 +216,7 @@ ecr_data <- ecr_data %>%
     "ln1p_ca_count",
     "resolution",
     "R_free",
-    "ln1p_num_pdb_submissions",
+    "num_pdb_submissions",
     "af_ind",
     "ct_ai_ind",
     "ct_noai_ind",

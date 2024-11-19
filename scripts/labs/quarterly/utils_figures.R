@@ -105,8 +105,8 @@ dep_var_labels <- c(
   "ln1p_ca_count" = "ln (1 + CA count)",
   "resolution" = "Resolution",
   "R_free" = "R free",
-  "ln1p_num_pdb_submissions" = "ln (1 + PDB submission)",
-  "ln1p_num_publications" = "ln (1 + Publications)"
+  "num_pdb_submissions" = "PDB submissions",
+  "num_publications" = "Publications"
 )
 
 coef_labels <- c(

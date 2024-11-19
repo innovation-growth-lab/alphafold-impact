@@ -54,7 +54,7 @@ covs[["base0"]] <- c(
   "institution_i10_index",
   "institution_country_code",
   "covid_share_2020",
-  "ln1p_num_publications"
+  "num_publications"
 )
 
 fes <- list()
@@ -64,17 +64,17 @@ fes[["fe1"]] <- c("author", "quarter")
 cov_sets <- c("base0")
 fe_list <- c("fe1")
 dep_vars <- c(
-  "ln1p_num_publications",
+  "num_publications",
   "ln1p_cited_by_count", "ln1p_cit_0", "ln1p_cit_1",
   "ln1p_fwci", "logit_cit_norm_perc",
   "ln1p_patent_count", "ln1p_patent_citation",
-  "ln1p_ca_count", "resolution", "R_free", "ln1p_num_pdb_submissions"
+  "ln1p_ca_count", "resolution", "R_free", "num_pdb_submissions"
 )
 
 
 for (dep_var_out in dep_vars) { # nolint
   treat_vars <- c(
-    "af_ind + ct_ai_ind + ct_noai_ind + strong_af_ind + strong_ct_ai_ind + strong_ct_noai_ind" # nolint  )
+    "af_ind + ct_ai_ind + ct_noai_ind + af:ct_ai_ind + af:ct_noai_ind + strong_af_ind + strong_ct_ai_ind + strong_ct_noai_ind + strong_af:strong_ct_ai_ind + strong_af:strong_ct_noai_ind" # nolint
   )
 
   form_list <- list()
@@ -84,8 +84,8 @@ for (dep_var_out in dep_vars) { # nolint
     for (cov_set in cov_sets) {
       local_covs <- covs[[cov_set]]
       # if dep_var is num_publications, remove it from covs
-      if (dep_var == "ln1p_num_publications") {
-        local_covs <- covs[[cov_set]][-which(covs[[cov_set]] == "ln1p_num_publications")] # nolint
+      if (dep_var == "num_publications") {
+        local_covs <- covs[[cov_set]][-which(covs[[cov_set]] == "num_publications")] # nolint
       } else {
         local_covs <- covs[[cov_set]]
       }
@@ -93,9 +93,9 @@ for (dep_var_out in dep_vars) { # nolint
       for (fe in fe_list) {
         # Iterate over treatment variables
         for (treat_var in treat_vars) {
-          if (treat_var == "af_ind + ct_ai_ind + ct_noai_ind + strong_af_ind + strong_ct_ai_ind + strong_ct_noai_ind") { # nolint
-            treat_var <- paste0("af + ct_ai + ct_noai + strong_af + strong_ct_ai + strong_ct_noai") # nolint
-            label_var <- "af_ind + ct_ai_ind + ct_noai_ind + strong_af_ind + strong_ct_ai_ind + strong_ct_noai_ind" # nolint
+          if (treat_var == "af_ind + ct_ai_ind + ct_noai_ind + af:ct_ai_ind + af:ct_noai_ind + strong_af_ind + strong_ct_ai_ind + strong_ct_noai_ind + strong_af:strong_ct_ai_ind + strong_af:strong_ct_noai_ind") { # nolint
+            treat_var <- paste0("af + ct_ai + ct_noai + af:ct_ai + af:ct_noai + strong_af + strong_ct_ai + strong_ct_noai + strong_af:strong_ct_ai + strong_af:strong_ct_noai") # nolint
+            label_var <- "af_ind + ct_ai_ind + ct_noai_ind + af:ct_ai_ind + af:ct_noai_ind + strong_af_ind + strong_ct_ai_ind + strong_ct_noai_ind + strong_af:strong_ct_ai_ind + strong_af:strong_ct_noai_ind" # nolint
           } else {
             label_var <- treat_var
           }
@@ -177,14 +177,13 @@ for (dep_var_out in dep_vars) { # nolint
       }
 
       # run the regression as linear, but make an exception for pdb_submission
-      if (dep_var == "ln1p_num_pdb_submissions") {
+      if (dep_var %in% c("num_publications", "num_pdb_submissions")) {
         results[[regression_label]] <- tryCatch(
           {
-            feols(
+            fepois(
               form_list[[form]],
               data = local_data,
-              cluster = c("author", "quarter"),
-              family = binomial(link = "logit")
+              cluster = c("author", "quarter")
             )
           },
           error = function(e) {

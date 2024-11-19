@@ -181,8 +181,7 @@ foundational_labs_data <- foundational_labs_data %>%
       citation_normalized_percentile_value /
         (1 - citation_normalized_percentile_value)
     ),
-    ln1p_num_publications = log1p(num_publications),
-    ln1p_num_pdb_submissions = log1p(pdb_submission),
+    num_pdb_submissions = pdb_submission,
     ln1p_ca_count = log1p(ca_count),
     ln1p_patent_count = log1p(patent_count),
     ln1p_patent_citation = log1p(patent_citation),
@@ -395,7 +394,7 @@ quarterly_lab_data <- quarterly_lab_data %>%
     "institution_2yr_mean_citedness",
     "institution_h_index",
     "institution_i10_index",
-    "ln1p_num_publications",
+    "num_publications",
     "ln1p_cited_by_count",
     "ln1p_cit_0",
     "ln1p_cit_1",
@@ -406,7 +405,7 @@ quarterly_lab_data <- quarterly_lab_data %>%
     "ln1p_ca_count",
     "resolution",
     "R_free",
-    "ln1p_num_pdb_submissions",
+    "num_pdb_submissions",
     "af_ind",
     "ct_ai_ind",
     "ct_noai_ind",

@@ -77,7 +77,7 @@ extract_coefficients <- function(results, dep_vars, subsets, cov_sets, fe_list, 
 
 # --- Variable definitions ---
 # Set desired orders for variables and names
-subgroup_order <- c("All PDB", "High PDB", "CEM")
+subgroup_order <- c("All PDB", "High PDB", "All PDB - CEM", "High PDB - CEM")
 depth_order <- c("All Groups", "Foundational", "Applied")
 field_order <- c(
   "field_All Fields",
@@ -87,8 +87,6 @@ field_order <- c(
 
 
 coef_order <- c(
-  "strong_af:strong_ct_noai", "strong_af:strong_ct_ai", "strong_ct_noai", "strong_ct_ai", "strong_af", # nolint
-  "af:ct_noai", "af:ct_ai", "ct_noai", "ct_ai", "af",
   "strong_af:strong_ct_noai_ind", "strong_af:strong_ct_ai_ind", "strong_ct_noai_ind", "strong_ct_ai_ind", "strong_af_ind", # nolint
   "af:ct_noai_ind", "af:ct_ai_ind", "ct_noai_ind", "ct_ai_ind", "af_ind"
 )
@@ -104,8 +102,8 @@ dep_var_labels <- c(
   "ln1p_ca_count" = "ln (1 + CA count)",
   "resolution" = "Resolution",
   "R_free" = "R free",
-  "pdb_submission" = "PDB submission",
-  "num_publications_pdb" = "Number of PDB submissions"
+  "num_pdb_submissions" = "PDB submissions",
+  "num_publications" = "Publications"
 )
 
 coef_labels <- c(
@@ -126,13 +124,16 @@ coef_labels <- c(
 strip_colors <- c(
   "All Groups - All PDB" = "lightyellow",
   "All Groups - High PDB" = "lightyellow",
-  "All Groups - CEM" = "lightyellow",
+  "All Groups - All PDB - CEM" = "lightyellow",
+  "All Groups - High PDB - CEM" = "lightyellow",
   "Foundational - All PDB" = "lightcoral",
   "Foundational - High PDB" = "lightcoral",
-  "Foundational - CEM" = "lightcoral",
+  "Foundational - All PDB - CEM" = "lightcoral",
+  "Foundational - High PDB - CEM" = "lightcoral",
   "Applied - All PDB" = "lightblue",
   "Applied - High PDB" = "lightblue",
-  "Applied - CEM" = "lightblue"
+  "Applied - All PDB - CEM" = "lightblue",
+  "Applied - High PDB - CEM" = "lightblue"
 )
 
 # --- Function to generate coefficient plots ---

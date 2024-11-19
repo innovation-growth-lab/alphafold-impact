@@ -39,11 +39,11 @@ table_info <- list(
   "R_free" = list(
     file_name = "R_free.tex"
   ),
-  "ln1p_num_pdb_submissions" = list(
-    file_name = "ln1p_num_pdb_submissions.tex"
+  "num_pdb_submissions" = list(
+    file_name = "num_pdb_submissions.tex"
   ),
-  "ln1p_num_publications" = list(
-    file_name = "ln1p_num_publications.tex"
+  "num_publications" = list(
+    file_name = "num_publications.tex"
   )
 )
 

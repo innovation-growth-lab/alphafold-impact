@@ -142,8 +142,7 @@ nonecr_data <- nonecr_data %>%
       percentile_value /
         (1 - percentile_value)
     ),
-    ln1p_num_publications = log1p(num_publications),
-    ln1p_num_pdb_submissions = log1p(num_publications_pdb),
+    num_pdb_submissions = num_publications_pdb,
     ln1p_ca_count = log1p(ca_count),
     ln1p_patent_count = log1p(patent_count),
     ln1p_patent_citation = log1p(patent_citation),
@@ -159,13 +158,17 @@ field_mapping <- c(
 # Apply the mapping to the primary_field column
 nonecr_data$primary_field <- recode(nonecr_data$primary_field, !!!field_mapping)
 
+# filter out non complete cases of columns starting with institution_
+nonecr_data <- nonecr_data %>%
+  filter(complete.cases(across(starts_with("institution_"))))
+
 # ------------------------------------------------------------------------------
 # CEM (Coarsened Exact Matching)
 # ------------------------------------------------------------------------------
 
 # Define the columns to be used for matching
 coarse_cols <- c(
-  "ln1p_cited_by_count", "ln1p_num_publications", "covid_share_2020"
+  "ln1p_cited_by_count", "num_publications", "covid_share_2020"
 )
 
 exact_cols <- c("institution_type", "institution_country_code", "high_pdb")
@@ -206,7 +209,7 @@ nonecr_data <- nonecr_data %>%
     "institution_2yr_mean_citedness",
     "institution_h_index",
     "institution_i10_index",
-    "ln1p_num_publications",
+    "num_publications",
     "ln1p_cited_by_count",
     "ln1p_cit_0",
     "ln1p_cit_1",
@@ -217,7 +220,7 @@ nonecr_data <- nonecr_data %>%
     "ln1p_ca_count",
     "resolution",
     "R_free",
-    "ln1p_num_pdb_submissions",
+    "num_pdb_submissions",
     "af_ind",
     "ct_ai_ind",
     "ct_noai_ind",
@@ -240,9 +243,15 @@ nonecr_data <- nonecr_data %>%
 
 colnames(nonecr_data) <- gsub(",", "", colnames(nonecr_data))
 
+
 # Define sub_samples as a list of samples
 sub_samples <- list()
-sub_groups <- c("All PDB", "All PDB - CEM", "High PDB", "High PDB - CEM")
+sub_groups <- c(
+  # "All PDB",
+  "All PDB - CEM",
+  # "High PDB"
+  "High PDB - CEM"
+)
 unique_depths <- c("All Groups", "Foundational", "Applied")
 unique_fields <- c(
   "All Fields",
@@ -285,7 +294,7 @@ for (depth_lvl in unique_depths) { # nolint
         match_out_af_coarse <- matchit(
           as.formula(paste0(
             "af_ind ~ ",
-            paste0(coarse_cols, collapse = " + ")
+            paste(coarse_cols, collapse = " + ")
           )),
           data = quarterly_cem, method = "cem", k2k = FALSE
         )
