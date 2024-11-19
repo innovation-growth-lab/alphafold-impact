@@ -295,8 +295,8 @@ applied_labs_data <- applied_labs_data %>%
     ln1p_ca_count = log1p(ca_count),
     ln1p_patent_count = log1p(patent_count),
     ln1p_patent_citation = log1p(patent_citation),
-    ln1p_num_publications = log1p(num_publications),
-    ln1p_num_pdb_submissions = log1p(pdb_submission),
+    num_publications = num_publications,
+    num_pdb_submissions = pdb_submission,
     primary_field = as.factor(primary_field),
     resolution = as.numeric(resolution),
     R_free = as.numeric(R_free),
@@ -354,7 +354,7 @@ quarterly_lab_data <- quarterly_lab_data %>%
 
 # Define the columns to be used for matching
 coarse_cols <- c(
-  "ln1p_cited_by_count", "ln1p_num_publications", "covid_share_2020"
+  "ln1p_cited_by_count", "num_publications", "covid_share_2020"
 )
 
 exact_cols <- c("institution_type", "institution_country_code", "high_pdb")

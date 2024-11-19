@@ -164,7 +164,7 @@ ecr_data$primary_field <- recode(ecr_data$primary_field, !!!field_mapping)
 
 # Define the columns to be used for matching
 coarse_cols <- c(
-  "ln1p_cited_by_count", "ln1p_num_publications", "covid_share_2020"
+  "ln1p_cited_by_count", "num_publications", "covid_share_2020"
 )
 
 exact_cols <- c("institution_type", "institution_country_code", "high_pdb")
