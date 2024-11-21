@@ -42,12 +42,12 @@ sub_samples <- readRDS(paste0(pathdir, "data/sub_samples.rds"))
 # DATA PREPARATION
 # ------------------------------------------------------------------------------
 
-mesh_cols <- grep("^mesh_", names(sub_samples[[1]]), value = TRUE)
 field_cols <- grep("^field_", names(sub_samples[[1]]), value = TRUE)
 
 covs <- list()
 covs[["base0"]] <- c(
-  field_cols, mesh_cols, "institution_type",
+  field_cols,
+  "institution_type",
   "institution_cited_by_count",
   "institution_2yr_mean_citedness",
   "institution_h_index",
@@ -64,11 +64,17 @@ fes[["fe1"]] <- c("pi_id", "quarter_year")
 cov_sets <- c("base0")
 fe_list <- c("fe1")
 dep_vars <- c(
+  "ln1p_cited_by_count",
+  "ln1p_cit_0",
+  "ln1p_cit_1",
+  "ln1p_fwci",
+  "ln1p_resolution",
+  "ln1p_R_free",
   "num_publications",
-  "ln1p_cited_by_count", "ln1p_cit_0", "ln1p_cit_1",
-  "ln1p_fwci", "logit_cit_norm_perc",
-  "ln1p_patent_count", "ln1p_patent_citation",
-  "ln1p_ca_count", "resolution", "R_free", "num_pdb_submissions"
+  "patent_count",
+  "patent_citation",
+  "num_pdb_submissions",
+  "ca_count"
 )
 
 for (dep_var_out in dep_vars) { # nolint
@@ -174,14 +180,17 @@ for (dep_var_out in dep_vars) { # nolint
       }
 
       # run the regression as linear, but make an exception for pdb_submission
-      if (dep_var %in% c("num_publications", "num_pdb_submissions")) {
+      if (dep_var %in% c(
+        "num_publications", "num_pdb_submissions",
+        "ca_count", "patent_count", "patent_citation"
+      )) {
         message("Running Poisson regression")
         results[[regression_label]] <- tryCatch(
           {
             fepois(
               form_list[[form]],
               data = local_data,
-              cluster = c("pi_id", "quarter")
+              cluster = c("pi_id", "quarter_year")
             )
           },
           error = function(e) {

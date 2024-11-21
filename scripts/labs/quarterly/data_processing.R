@@ -186,8 +186,8 @@ foundational_labs_data <- foundational_labs_data %>%
     ln1p_patent_count = log1p(patent_count),
     ln1p_patent_citation = log1p(patent_citation),
     primary_field = as.factor(primary_field),
-    resolution = as.numeric(resolution),
-    R_free = as.numeric(R_free),
+    ln1p_resolution = log1p(as.numeric(resolution)),
+    ln1p_R_free = log1p(as.numeric(R_free)),
     quarter_year = as.factor(time)
   )
 
@@ -298,8 +298,8 @@ applied_labs_data <- applied_labs_data %>%
     num_publications = num_publications,
     num_pdb_submissions = pdb_submission,
     primary_field = as.factor(primary_field),
-    resolution = as.numeric(resolution),
-    R_free = as.numeric(R_free),
+    ln1p_resolution = log1p(as.numeric(resolution)),
+    ln1p_R_free = log1p(as.numeric(R_free)),
     quarter_year = as.factor(time)
   )
 
@@ -357,7 +357,7 @@ coarse_cols <- c(
   "ln1p_cited_by_count", "num_publications", "covid_share_2020"
 )
 
-exact_cols <- c("institution_type", "institution_country_code", "high_pdb")
+exact_cols <- c("institution_country_code")
 
 mode_function <- function(x) {
   ux <- unique(x)
@@ -400,11 +400,11 @@ quarterly_lab_data <- quarterly_lab_data %>%
     "ln1p_cit_1",
     "ln1p_fwci",
     "logit_cit_norm_perc",
-    "ln1p_patent_count",
-    "ln1p_patent_citation",
-    "ln1p_ca_count",
-    "resolution",
-    "R_free",
+    "patent_count",
+    "patent_citation",
+    "ca_count",
+    "ln1p_resolution",
+    "ln1p_R_free",
     "num_pdb_submissions",
     "af_ind",
     "ct_ai_ind",
@@ -422,8 +422,7 @@ quarterly_lab_data <- quarterly_lab_data %>%
     "primary_field",
     "high_pdb",
     "covid_share_2020",
-    grep("^field_", names(quarterly_lab_data), value = TRUE),
-    grep("^mesh_", names(quarterly_lab_data), value = TRUE)
+    grep("^field_", names(quarterly_lab_data), value = TRUE)
   )
 
 colnames(quarterly_lab_data) <- gsub(",", "", colnames(quarterly_lab_data))
@@ -437,7 +436,7 @@ gc()
 
 # Define sub_samples as a list of samples
 sub_samples <- list()
-sub_groups <- c("All PDB", "All PDB - CEM", "High PDB", "High PDB - CEM")
+sub_groups <- c("All PDB - CEM", "High PDB - CEM")
 unique_depths <- c("All Groups", "Foundational", "Applied")
 unique_fields <- c(
   "All Fields",

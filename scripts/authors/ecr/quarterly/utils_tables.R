@@ -24,23 +24,20 @@ table_info <- list(
   "logit_cit_norm_perc" = list(
     file_name = "logit_cit_norm_perc.tex"
   ),
-  "ln1p_patent_count" = list(
-    file_name = "ln1p_patent_count.tex"
+  "patent_count" = list(
+    file_name = "patent_count.tex"
   ),
-  "ln1p_patent_citation" = list(
-    file_name = "ln1p_patent_citation.tex"
+  "patent_citation" = list(
+    file_name = "patent_citation.tex"
   ),
-  "ln1p_ca_count" = list(
-    file_name = "ln1p_ca_count.tex"
+  "ca_count" = list(
+    file_name = "ca_count.tex"
   ),
-  "resolution" = list(
-    file_name = "resolution.tex"
+  "ln1p_resolution" = list(
+    file_name = "ln1p_resolution.tex"
   ),
-  "R_free" = list(
-    file_name = "R_free.tex"
-  ),
-  "pdb_submission" = list(
-    file_name = "pdb_submission.tex"
+  "ln1p_R_free" = list(
+    file_name = "ln1p_R_free.tex"
   ),
   "num_pdb_submissions" = list(
     file_name = "num_pdb_submissions.tex"
@@ -132,7 +129,7 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
           digits = 3,
           digits.stats = 2,
           powerBelow = -20,
-          fitstat = c("n", "r2")
+          fitstat = c("n", "r2", "ar2", "pr2", "sq.cor")
         )
 
         # force mean y to appear
@@ -146,7 +143,7 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
 
         # Add tech_group headers and \cmidrule after row 5
         field_headers <- paste0(
-          "\\multicolumn{4}{c}{", field_labels, "}"
+          "\\multicolumn{2}{c}{", field_labels, "}"
         )
         field_headers <- paste0(
           " & ", paste(field_headers, collapse = " & "), " \\\\"
@@ -154,8 +151,8 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
 
         field_cmidrules <- paste0(
           "\\cmidrule(lr){",
-          seq(2, length(field_labels) * 4 + 1, by = 4), "-",
-          seq(5, length(field_labels) * 4 + 1, by = 4), "}"
+          seq(2, length(field_labels) * 2 + 1, by = 2), "-",
+          seq(3, length(field_labels) * 2 + 1, by = 2), "}"
         )
         field_cmidrules <- paste0(
           paste(field_cmidrules, collapse = " ")
@@ -164,7 +161,7 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
         # matching headers
         matching_headers <- paste0(
           rep(
-            "\\multicolumn{2}{c}{All Authors} & \\multicolumn{2}{c}{CEM Authors}", # nolint
+            "\\multicolumn{2}{c}{CEM Authors}", # nolint
             length(field_labels)
           )
         )
@@ -175,8 +172,8 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
 
         matching_cmidrules <- paste0(
           "\\cmidrule(lr){",
-          seq(2, length(field_labels) * 4 + 1, by = 2), "-",
-          seq(3, length(field_labels) * 4 + 1, by = 2), "}"
+          seq(2, length(field_labels) * 2 + 1, by = 2), "-",
+          seq(3, length(field_labels) * 2 + 1, by = 2), "}"
         )
 
         matching_cmidrules <- paste0(
@@ -187,7 +184,7 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
         subgroup_headers <- paste0(
           rep(
             "\\multicolumn{1}{c}{All PDB} & \\multicolumn{1}{c}{High PDB}", # nolint
-            length(field_labels) * 2
+            length(field_labels)
           )
         )
 
@@ -197,8 +194,8 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
 
         subgroup_cmidrules <- paste0(
           "\\cmidrule(lr){",
-          seq(2, length(field_labels) * 4 + 1, by = 1), "-",
-          seq(2, length(field_labels) * 4 + 1, by = 1), "}"
+          seq(2, length(field_labels) * 2 + 1, by = 1), "-",
+          seq(2, length(field_labels) * 2 + 1, by = 1), "}"
         )
 
         subgroup_cmidrules <- paste0(
@@ -220,7 +217,7 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
         etable_lines <- append(etable_lines, subgroup_cmidrules, after = 10)
 
         # drop lines 10-11
-        etable_lines <- etable_lines[-c(12, 13, 14)]
+        # etable_lines <- etable_lines[-c(12, 13, 14)]
 
         # add mean y row in 6th last row
         etable_lines <- append(

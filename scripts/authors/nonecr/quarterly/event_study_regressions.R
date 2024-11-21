@@ -45,7 +45,7 @@ sub_samples <- readRDS(
 # DATA PREPARATION
 # ------------------------------------------------------------------------------
 
-lagsleads <- c(-9:-3, -1:9)
+lagsleads <- c(-6:-3, -1:6)
 
 covs <- list()
 covs[["base0"]] <- c("num_publications")
@@ -69,7 +69,8 @@ dep_vars <- c(
 
 treat_vars <- list()
 for (group in c(
-  "rel_treat_af"
+  # "rel_treat_af", 
+  "rel_treat_strong_af"
   # "rel_treat_strong_af", "rel_treat_ct_ai", "rel_treat_ct_noai",
   # "rel_treat_strong_ct_ai", "rel_treat_strong_ct_noai"
 )) {
@@ -77,9 +78,9 @@ for (group in c(
 }
 
 
-results <- list()
+outter_results <- list()
 for (dep_var_out in dep_vars) { # nolint
-
+  results <- list()
   form_list <- list()
   # Iterate over dependent variables
   for (dep_var in dep_var_out) { # nolint
@@ -203,88 +204,92 @@ for (dep_var_out in dep_vars) { # nolint
   # ----------------------------------------------------------------------------
   # GENERATE TABLES
   # ----------------------------------------------------------------------------
+
+
+
+  plot_es <- function(model, yvar) {
+    # Tidy the model and filter the terms
+    tidy_model <- tidy(model, conf.int = TRUE) %>% # nolint
+      filter(grepl("rel_treat", term)) %>% # nolint
+      filter(!(grepl("rel_treat_9|`rel_treat_-9`", term))) %>%
+      dplyr::mutate(t = c(-6:-3, -1:6)) %>% # nolint
+      bind_rows(tibble(t = -2, estimate = 0, conf.low = 0, conf.high = 0)) %>% # nolint
+      mutate(group = as.factor(case_when( # nolint
+        t < 0 ~ 1,
+        t >= 0 ~ 2
+      )))
+
+    # Calculate dynamic ylims based on confidence intervals
+    ylims <- range(c(tidy_model$conf.low, tidy_model$conf.high), na.rm = TRUE)
+
+    # Create the plot
+    return(tidy_model %>% # nolint
+      ggplot(aes(x = t, y = estimate)) + # nolint
+      geom_hline(yintercept = 0, linetype = "longdash", color = "gray") + # nolint
+      geom_vline(xintercept = 0, linetype = "longdash", color = "gray") + # nolint
+      geom_rect( # nolint
+        aes(
+          xmin = -1.8, xmax = -1.2, ymin = -Inf, ymax = Inf
+        ),
+        fill = "gray", alpha = .1
+      ) +
+      geom_errorbar(aes(ymin = conf.low, ymax = conf.high), # nolint
+        linetype = "solid", show.legend = FALSE,
+        color = "darkgray", width = .1, linewidth = 1
+      ) +
+      geom_point(fill = "black", shape = 21, size = 2) + # nolint
+      geom_line(linewidth = 1) + # nolint
+      ggtitle("") + # nolint
+      ylim(ylims) + # nolint
+      labs(y = yvar, x = "Quarters Relative to First AF Citation") + # nolint
+      scale_x_continuous(breaks = seq(-8, 8, by = 2)) + # nolint
+      theme_classic() + # nolint
+      theme( # nolint
+        plot.title = element_text(hjust = 0.5), # nolint
+        axis.title = element_text(size = 8)
+      ))
+  }
+
+  figures <- "data/05_model_output/authors/nonecr/quarterly/figures/es/"
+
+  if (!dir.exists(figures)) {
+    dir.create(figures, recursive = TRUE)
+  }
+
+  # # Iterate over all es_results and save a figure for each
+  for (result in names(results)) {
+    tryCatch(
+      {
+        # split string into "__" separated parts
+        parts <- strsplit(result, "__")[[1]]
+
+        # dependent variable is fourth last
+        dep_var <- parts[length(parts) - 3]
+
+        model <- results[[result]]
+
+        # Create the plot
+        plot <- plot_es(model, dep_var)
+
+        # Save the plot with a unique filename
+        message(paste("Saving figure for", result))
+        ggsave(
+          paste0(figures, result, ".png"),
+          plot,
+          width = 12, height = 6
+        )
+      },
+      error = function(e) {
+        message(paste("Error in processing", result, ":", e$message))
+      }
+    )
+  }
+
+  # add results to outter results 
+  outter_results[[dep_var_out]] <- results
 }
-
-
-plot_es <- function(model, yvar) {
-  # Tidy the model and filter the terms
-  tidy_model <- tidy(model, conf.int = TRUE) %>% # nolint
-    filter(grepl("rel_treat", term)) %>% # nolint
-    filter(!(grepl("rel_treat_9|`rel_treat_-9`", term))) %>%
-    dplyr::mutate(t = c(-6:-3, -1:8)) %>% # nolint
-    bind_rows(tibble(t = -2, estimate = 0, conf.low = 0, conf.high = 0)) %>% # nolint
-    mutate(group = as.factor(case_when( # nolint
-      t < 0 ~ 1,
-      t >= 0 ~ 2
-    )))
-
-  # Calculate dynamic ylims based on confidence intervals
-  ylims <- range(c(tidy_model$conf.low, tidy_model$conf.high), na.rm = TRUE)
-
-  # Create the plot
-  return(tidy_model %>% # nolint
-    ggplot(aes(x = t, y = estimate)) + # nolint
-    geom_hline(yintercept = 0, linetype = "longdash", color = "gray") + # nolint
-    geom_vline(xintercept = 0, linetype = "longdash", color = "gray") + # nolint
-    geom_rect( # nolint
-      aes(
-        xmin = -1.8, xmax = -1.2, ymin = -Inf, ymax = Inf
-      ),
-      fill = "gray", alpha = .1
-    ) +
-    geom_errorbar(aes(ymin = conf.low, ymax = conf.high), # nolint
-      linetype = "solid", show.legend = FALSE,
-      color = "darkgray", width = .1, linewidth = 1
-    ) +
-    geom_point(fill = "black", shape = 21, size = 2) + # nolint
-    geom_line(linewidth = 1) + # nolint
-    ggtitle("") + # nolint
-    ylim(ylims) + # nolint
-    labs(y = yvar, x = "Quarters Relative to First AF Citation") + # nolint
-    scale_x_continuous(breaks = seq(-8, 8, by = 2)) + # nolint
-    theme_classic() + # nolint
-    theme( # nolint
-      plot.title = element_text(hjust = 0.5), # nolint
-      axis.title = element_text(size = 8)
-    ))
-}
-
-figures <- "data/05_model_output/authors/nonecr/quarterly/figures/es/"
-
-if (!dir.exists(figures)) {
-  dir.create(figures, recursive = TRUE)
-}
-
-# # Iterate over all es_results and save a figure for each
-for (result in names(results)) {
-  tryCatch(
-    {
-      # split string into "__" separated parts
-      parts <- strsplit(result, "__")[[1]]
-
-      # dependent variable is fourth last
-      dep_var <- parts[length(parts) - 3]
-
-      model <- results[[result]]
-
-      # Create the plot
-      plot <- plot_es(model, dep_var)
-
-      # Save the plot with a unique filename
-      ggsave(
-        paste0(figures, result, ".png"),
-        plot,
-        width = 12, height = 6
-      )
-    },
-    error = function(e) {
-      message(paste("Error in processing", result, ":", e$message))
-    }
-  )
-}
-
 # save the "results" object
 saveRDS(
-  results,
+  outter_results,
   "data/05_model_output/authors/nonecr/quarterly/data/es_results.rds"
 )

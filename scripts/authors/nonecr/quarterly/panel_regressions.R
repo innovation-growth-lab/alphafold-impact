@@ -42,37 +42,38 @@ sub_samples <- readRDS(paste0(pathdir, "data/sub_samples.rds"))
 # DATA PREPARATION
 # ------------------------------------------------------------------------------
 
-mesh_cols <- grep("^mesh_", names(sub_samples[[1]]), value = TRUE)
 field_cols <- grep("^field_", names(sub_samples[[1]]), value = TRUE)
 
 covs <- list()
 covs[["base0"]] <- c(
-  field_cols, "institution_type", mesh_cols,
+  field_cols,
+  "institution_type",
   "institution_cited_by_count",
   "institution_2yr_mean_citedness",
   "institution_h_index",
   "institution_i10_index",
   "institution_country_code",
-  "covid_share_2020",
-  "num_publications"
+  "covid_share_2020"#,
+  # "num_publications"
 )
 
 fes <- list()
-fes[["fe0"]] <- c("quarter")
 fes[["fe1"]] <- c("author", "quarter")
 
 cov_sets <- c("base0")
 fe_list <- c("fe1")
 dep_vars <- c(
-  "num_publications",
-  "ln1p_cited_by_count", "ln1p_cit_0", "ln1p_cit_1",
-  "ln1p_fwci", # "logit_cit_norm_perc",
-  "ln1p_patent_count",
-  "ln1p_patent_citation",
-  "ln1p_ca_count",
-  "resolution",
-  "R_free",
-  "num_pdb_submissions"
+  # "ln1p_cited_by_count",
+  # "ln1p_cit_0",
+  # "ln1p_cit_1",
+  # "ln1p_fwci",
+  # "ln1p_resolution",
+  # "ln1p_R_free",
+  "num_publications"
+  # "patent_count",
+  # "patent_citation",
+  # "num_pdb_submissions",
+  # "ca_count"
 )
 
 for (dep_var_out in dep_vars) { # nolint
@@ -179,7 +180,11 @@ for (dep_var_out in dep_vars) { # nolint
 
       # run the regression as linear, but make an exception for pdb_submission
       # so actually once you drop enough, you can get a rough 25% increase, similar to the linear reg. #nolint
-      if (dep_var %in% c("num_publications", "num_pdb_submissions")) {
+      # the main thing is, using ln is odd because it assumes continuous variables and far from zero values
+      if (dep_var %in% c(
+        "num_publications", "num_pdb_submissions",
+        "ca_count", "patent_count", "patent_citation"
+      )) {
         message("Running Poisson regression")
         results[[regression_label]] <- tryCatch(
           {

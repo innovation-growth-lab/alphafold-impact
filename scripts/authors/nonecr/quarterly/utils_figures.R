@@ -97,11 +97,11 @@ dep_var_labels <- c(
   "ln1p_cit_1" = "ln (1 + Citations at month < 24)",
   "ln1p_fwci" = "ln (1 + Field-Weighted Citation Impact)",
   "logit_cit_norm_perc" = "logit (Citation percentile)",
-  "ln1p_patent_count" = "ln (1 + Patent count)",
-  "ln1p_patent_citation" = "ln (1 + Patent citation count)",
-  "ln1p_ca_count" = "ln (1 + CA count)",
-  "resolution" = "Resolution",
-  "R_free" = "R free",
+  "patent_count" = "Patent citation count",
+  "patent_citation" = "Patent-to-patent citation count",
+  "ca_count" = "Clinical article citation count",
+  "ln1p_resolution" = "ln (1 + Resolution)",
+  "ln1p_R_free" = "ln (1 + R-free)",
   "num_pdb_submissions" = "PDB submissions",
   "num_publications" = "Publications"
 )

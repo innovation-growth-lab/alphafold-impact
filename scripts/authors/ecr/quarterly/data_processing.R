@@ -37,7 +37,7 @@ bind_rows <- dplyr::bind_rows
 # DATA PREPARATION
 # ------------------------------------------------------------------------------
 
-credentials <- yaml.load_file("conf/base/credentials.yml")
+credentials <- suppressWarnings(yaml.load_file("conf/base/credentials.yml"))
 
 Sys.setenv(
   "AWS_ACCESS_KEY_ID" = credentials$s3_credentials$key, # nolint
@@ -139,7 +139,7 @@ ecr_data <- ecr_data %>%
     ln1p_cit_1 = log1p(cit_1),
     ln1p_cit_norm_perc = log1p(percentile_value),
     logit_cit_norm_perc = log(
-      percentile_value /
+        percentile_value /
         (1 - percentile_value)
     ),
     num_pdb_submissions = num_publications_pdb,
@@ -147,8 +147,8 @@ ecr_data <- ecr_data %>%
     ln1p_patent_count = log1p(patent_count),
     ln1p_patent_citation = log1p(patent_citation),
     primary_field = as.factor(primary_field),
-    resolution = as.numeric(resolution),
-    R_free = as.numeric(R_free)
+    ln1p_resolution = log1p(as.numeric(resolution)),
+    ln1p_R_free = log1p(as.numeric(R_free)),
   )
 # Define the mapping of old values to new values
 field_mapping <- c(
@@ -167,7 +167,7 @@ coarse_cols <- c(
   "ln1p_cited_by_count", "num_publications", "covid_share_2020"
 )
 
-exact_cols <- c("institution_type", "institution_country_code", "high_pdb")
+exact_cols <- c("institution_country_code")
 
 mode_function <- function(x) {
   ux <- unique(x)
@@ -211,11 +211,11 @@ ecr_data <- ecr_data %>%
     "ln1p_cit_1",
     "ln1p_fwci",
     "logit_cit_norm_perc",
-    "ln1p_patent_count",
-    "ln1p_patent_citation",
-    "ln1p_ca_count",
-    "resolution",
-    "R_free",
+    "patent_count",
+    "patent_citation",
+    "ca_count",
+    "ln1p_resolution",
+    "ln1p_R_free",
     "num_pdb_submissions",
     "af_ind",
     "ct_ai_ind",
@@ -233,21 +233,16 @@ ecr_data <- ecr_data %>%
     "primary_field",
     "high_pdb",
     "covid_share_2020",
-    grep("^field_", names(ecr_data), value = TRUE),
-    grep("^mesh_", names(ecr_data), value = TRUE)
+    grep("^field_", names(ecr_data), value = TRUE)
   )
 
 colnames(ecr_data) <- gsub(",", "", colnames(ecr_data))
 
 # Define sub_samples as a list of samples
 sub_samples <- list()
-sub_groups <- c("All PDB", "All PDB - CEM", "High PDB", "High PDB - CEM")
+sub_groups <- c("All PDB - CEM", "High PDB - CEM")
 unique_depths <- c("All Groups", "Foundational", "Applied")
-unique_fields <- c(
-  "All Fields",
-  "Molecular Biology",
-  "Medicine"
-)
+unique_fields <- c("All Fields", "Molecular Biology", "Medicine")
 
 # Create subsets for all combinations of depth, field, and sub_group
 for (depth_lvl in unique_depths) { # nolint

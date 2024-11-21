@@ -37,7 +37,7 @@ bind_rows <- dplyr::bind_rows
 # DATA PREPARATION
 # ------------------------------------------------------------------------------
 
-credentials <- yaml.load_file("conf/base/credentials.yml")
+credentials <- suppressWarnings(yaml.load_file("conf/base/credentials.yml"))
 
 Sys.setenv(
   "AWS_ACCESS_KEY_ID" = credentials$s3_credentials$key, # nolint
@@ -147,8 +147,8 @@ nonecr_data <- nonecr_data %>%
     ln1p_patent_count = log1p(patent_count),
     ln1p_patent_citation = log1p(patent_citation),
     primary_field = as.factor(primary_field),
-    resolution = as.numeric(resolution),
-    R_free = as.numeric(R_free)
+    ln1p_resolution = log1p(as.numeric(resolution)),
+    ln1p_R_free = log1p(as.numeric(R_free))
   )
 # Define the mapping of old values to new values
 field_mapping <- c(
@@ -157,10 +157,6 @@ field_mapping <- c(
 
 # Apply the mapping to the primary_field column
 nonecr_data$primary_field <- recode(nonecr_data$primary_field, !!!field_mapping)
-
-# filter out non complete cases of columns starting with institution_
-nonecr_data <- nonecr_data %>%
-  filter(complete.cases(across(starts_with("institution_"))))
 
 # ------------------------------------------------------------------------------
 # CEM (Coarsened Exact Matching)
@@ -171,7 +167,7 @@ coarse_cols <- c(
   "ln1p_cited_by_count", "num_publications", "covid_share_2020"
 )
 
-exact_cols <- c("institution_type", "institution_country_code", "high_pdb")
+exact_cols <- c("institution_country_code")
 
 mode_function <- function(x) {
   ux <- unique(x)
@@ -215,11 +211,11 @@ nonecr_data <- nonecr_data %>%
     "ln1p_cit_1",
     "ln1p_fwci",
     "logit_cit_norm_perc",
-    "ln1p_patent_count",
-    "ln1p_patent_citation",
-    "ln1p_ca_count",
-    "resolution",
-    "R_free",
+    "patent_count",
+    "patent_citation",
+    "ca_count",
+    "ln1p_resolution",
+    "ln1p_R_free",
     "num_pdb_submissions",
     "af_ind",
     "ct_ai_ind",
@@ -237,27 +233,16 @@ nonecr_data <- nonecr_data %>%
     "primary_field",
     "high_pdb",
     "covid_share_2020",
-    grep("^field_", names(nonecr_data), value = TRUE),
-    grep("^mesh_", names(nonecr_data), value = TRUE)
+    grep("^field_", names(nonecr_data), value = TRUE)
   )
 
 colnames(nonecr_data) <- gsub(",", "", colnames(nonecr_data))
 
-
 # Define sub_samples as a list of samples
 sub_samples <- list()
-sub_groups <- c(
-  # "All PDB",
-  "All PDB - CEM",
-  # "High PDB"
-  "High PDB - CEM"
-)
+sub_groups <- c("All PDB - CEM", "High PDB - CEM")
 unique_depths <- c("All Groups", "Foundational", "Applied")
-unique_fields <- c(
-  "All Fields",
-  "Molecular Biology",
-  "Medicine"
-)
+unique_fields <- c("All Fields", "Molecular Biology", "Medicine")
 
 # Create subsets for all combinations of depth, field, and sub_group
 for (depth_lvl in unique_depths) { # nolint
