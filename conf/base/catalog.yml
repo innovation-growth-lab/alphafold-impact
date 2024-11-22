@@ -357,6 +357,12 @@ nonecr.publications.quarterly:
 
 # -------------------------------------------------------------
 
+uniprot.entries.raw:
+  <<: *_pq
+  filepath: s3://igl-alphafold/oct/01_raw/uniprot/entries.parquet
+
+# -------------------------------------------------------------
+
 # Analysis
 
 # -------------------------------------------------------------

@@ -38,6 +38,12 @@ def collect_pdb_details(pdb_df: pd.DataFrame, api_config: dict) -> pd.DataFrame:
 
     processed_papers_with_pmids = _get_papers(pmids, api_config, label="ids.pmid")
 
+    logger.info(
+        "Processed %d/%d papers with pmids from openalex",
+        len(processed_papers_with_pmids),
+        len(pmids),
+    )
+
     # filter out from pdb_df the rows with pmid in processed_papers_with_pmids
     spdb_df = pdb_df[
         ~pdb_df["pmid"].isin(
@@ -45,12 +51,32 @@ def collect_pdb_details(pdb_df: pd.DataFrame, api_config: dict) -> pd.DataFrame:
         )
     ]
 
-    # extract the list of doi from spdb_df
-    dois = (
-        spdb_df["doi"].replace(["", "None", "nan"], np.nan).dropna().unique().tolist()
+    # turns out, missing dois still have a pdb entry doi, 
+    # not included in the API response!
+    spdb_df["doi"] = spdb_df.apply(
+        lambda row: (
+            f"10.2210/pdb{row['rcsb_id'].lower()}/pdb"
+            if row["doi"] in ["", "None", "nan"]
+            else row["doi"]
+        ),
+        axis=1,
     )
 
+    logger.info(
+        "Attempting to process %d papers with dois from openalex",
+        len(spdb_df),
+    )
+
+    # extract the list of doi from spdb_df
+    dois = spdb_df["doi"].unique().tolist()
+
     processed_papers_with_dois = _get_papers(dois, api_config, label="doi")
+
+    logger.info(
+        "Processed %d/%d papers with dois from openalex",
+        len(processed_papers_with_dois),
+        len(dois),
+    )
 
     # concatenate the two frames, drop duplicate ids
     oa_pdb_df = pd.concat(
@@ -60,20 +86,22 @@ def collect_pdb_details(pdb_df: pd.DataFrame, api_config: dict) -> pd.DataFrame:
     pdb_with_pmid = pdb_df[~pdb_df["pmid"].isin(["", "None", "nan"])]
     pdb_with_pmid["pmid"] = pdb_with_pmid["pmid"].astype(float).astype(int).astype(str)
 
-    # merge to oa_pdb_df the dataframe pdb_df, first try on pmid, then on doi
+    logger.info("Merging openalex data with pdb data")
     oa_pdb_df_pmid = oa_pdb_df.merge(
         pdb_with_pmid[["rcsb_id", "pmid", "resolution", "R_free"]],
         how="left",
         on="pmid",
     )
 
+    logger.info("Merging openalex data with pdb data")
     oa_pdb_df_doi = oa_pdb_df.merge(
         pdb_df[["rcsb_id", "doi", "resolution", "R_free"]], how="left", on="doi"
     )
 
-    # Combine the results
+    logger.info("Concatenating openalex data with pdb data")
     combined_df = pd.concat([oa_pdb_df_pmid, oa_pdb_df_doi]).drop_duplicates("id")
 
+    logger.info("Finished processing %d papers", len(combined_df))
     # replace openalex.org in id
     combined_df["id"] = combined_df["id"].str.replace("https://openalex.org/", "")
 
@@ -104,8 +132,6 @@ def _process_responses(responses):
                     "topics",
                     "concepts",
                     "fwci",
-                    "citation_normalized_percentile",
-                    "cited_by_percentile_year",
                 ]
             }
             for item in children_list
@@ -196,31 +222,6 @@ def _process_responses(responses):
                 if x
                 else None
             )
-        )
-
-        # Extract the content of citation_normalized_percentile
-        df[
-            [
-                "citation_normalized_percentile_value",
-                "citation_normalized_percentile_is_in_top_1_percent",
-                "citation_normalized_percentile_is_in_top_10_percent",
-            ]
-        ] = df.apply(
-            lambda x: (pd.Series(x["citation_normalized_percentile"])),
-            axis=1,
-            result_type="expand",
-        )
-
-        # Extract the content of cited_by_percentile_year
-        df[
-            [
-                "cited_by_percentile_year_min",
-                "cited_by_percentile_year_max",
-            ]
-        ] = df.apply(
-            lambda x: pd.Series(x["cited_by_percentile_year"]),
-            axis=1,
-            result_type="expand",
         )
 
         # append to output
