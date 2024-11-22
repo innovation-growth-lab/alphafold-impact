@@ -27,7 +27,7 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                     "pdb_df": "pdb.entries.intermediate",
                     "uniprot_df": "uniprot.entries.raw",
                 },
-                outputs="pdb.entries.processed",
+                outputs="pdb.entries.primary",
                 name="merge_uniprot_data",
             ),
         ],

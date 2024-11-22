@@ -215,6 +215,10 @@ pdb.entries.raw:
 pdb.entries.intermediate:
   <<: *_pq
   filepath: s3://igl-alphafold/oct/02_intermediate/pdb/entries.parquet
+
+pdb.entries.primary:
+  <<: *_pq
+  filepath: s3://igl-alphafold/oct/03_primary/pdb/entries.parquet
   
 publications.data.af:
   <<: *_pq
