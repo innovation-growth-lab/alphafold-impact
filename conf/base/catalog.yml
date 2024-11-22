@@ -357,6 +357,10 @@ nonecr.publications.quarterly:
 
 # -------------------------------------------------------------
 
+uniprot.pdb.map:
+  <<: *_pq
+  filepath: s3://igl-alphafold/oct/02_intermediate/uniprot/pdb_map.parquet
+
 uniprot.entries.raw:
   <<: *_pq
   filepath: s3://igl-alphafold/oct/01_raw/uniprot/entries.parquet

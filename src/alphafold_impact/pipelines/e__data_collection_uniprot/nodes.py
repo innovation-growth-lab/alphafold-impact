@@ -18,9 +18,7 @@ def _fetch_pbd_uniprot_id(pdb_id) -> List[str]:
     """Fetch the list of PDB ids to be used for data collection"""
     # Fetch the list of PDB ids
     session = requests.Session()
-    retries = Retry(
-        total=5, backoff_factor=0.1
-    )
+    retries = Retry(total=5, backoff_factor=0.1)
     session.mount("https://", HTTPAdapter(max_retries=retries))
     response = session.get(
         f"https://www.ebi.ac.uk/pdbe/api/mappings/uniprot/{pdb_id}", timeout=10
@@ -121,6 +119,32 @@ def compute_complexity(data: Dict) -> float:
     return composite_complexity
 
 
+def _extract_data(input_data):
+    function_string = []
+    triples_list = []
+
+    for item in input_data:
+        # collect all "FUNCTION" comment values
+        if item.get("commentType") == "FUNCTION" and "texts" in item:
+            for text_item in item["texts"]:
+                if "value" in text_item:
+                    function_string.append(text_item["value"])
+
+        # extract triples (id, acronym, MIM ID) for "DISEASE" type comments
+        if item.get("commentType") == "DISEASE" and "disease" in item:
+            disease = item["disease"]
+            disease_id = disease.get("diseaseId")
+            acronym = disease.get("acronym")
+            mim_id = disease.get("diseaseCrossReference", {}).get("id")
+            if disease_id and acronym and mim_id:
+                triples_list.append((disease_id, acronym, mim_id))
+
+    # join the collected FUNCTION values into a single string
+    joined_function_string = " ".join(function_string)
+
+    return joined_function_string, triples_list
+
+
 def safe_get(d, keys, default=np.nan):
     """
     Safely retrieves a nested key from a dictionary, returning a
@@ -153,15 +177,15 @@ def get_uniprot_details(uniprot_id: str) -> Dict:
         Dict: Dictionary containing the details of the uniprot id
     """
     session = requests.Session()
-    retries = Retry(
-        total=5, backoff_factor=0.1
-    )
+    retries = Retry(total=5, backoff_factor=0.1)
     session.mount("https://", HTTPAdapter(max_retries=retries))
     response = session.get(
         f"https://rest.uniprot.org/uniprotkb/search?query=accession_id:{uniprot_id}",
         timeout=10,
     )
     response = response.json()["results"][0]
+
+    function_string, disease_triples = _extract_data(response.get("comments", []))
 
     obj_ret = {
         "uniprot_id": uniprot_id,
@@ -175,22 +199,46 @@ def get_uniprot_details(uniprot_id: str) -> Dict:
             .get("value", np.nan)
         ),
         "complexity": compute_complexity(response),
+        "function_string": function_string,
+        "disease_triples": disease_triples,
     }
 
     return obj_ret
 
 
-def fetch_uniprot_details(pdb_data: pd.DataFrame) -> pd.DataFrame:
-    """Fetch the details of a PDB id"""
+def fetch_pdb_uniprot_map(pdb_data: pd.DataFrame) -> pd.DataFrame:
+    """
+    This function fetches the mapping between PDB and UniProt IDs.
 
-    # parallelise fetching uniprot ids
+    Args:
+        pdb_data (pd.DataFrame): The DataFrame containing PDB details.
+
+    Returns:
+        pd.DataFrame: The DataFrame containing the mapping between PDB
+          and UniProt IDs.
+    """
     uniprot_ids = Parallel(n_jobs=6, verbose=10)(
         delayed(_fetch_pbd_uniprot_id)(pdb_id) for pdb_id in pdb_data["rcsb_id"]
     )
     uniprot_ids = pd.concat(uniprot_ids)
 
+    return uniprot_ids
+
+
+def fetch_uniprot_data(uniprot_ids: pd.DataFrame) -> pd.DataFrame:
+    """
+    Fetch the details of the uniprot ids from the uniprot API.
+
+    Args:
+        uniprot_ids (pd.DataFrame): The DataFrame containing the uniprot ids.
+
+    Returns:
+        pd.DataFrame: The DataFrame containing the details of the uniprot ids.
+    """
     # get the unique ids to iterate requests for
     unique_uniprot_ids = uniprot_ids["uniprot_id"].unique()
+
+    logger.info("Fetching details for %s uniprot ids", len(unique_uniprot_ids))
 
     # paralleling fetching uniprot details
     uniprot_details = Parallel(n_jobs=6, verbose=10)(
