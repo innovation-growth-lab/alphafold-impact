@@ -356,21 +356,14 @@ def get_pdb_activity(data, pdb_submissions):
         data (pandas.DataFrame): The input data containing information about PIs,
           time, and publications count.
         pdb_submissions (pandas.DataFrame): The PDB submissions data containing
-          information about PDB IDs, resolution, and R_free.
+          information about PDB
 
     Returns:
         pandas.DataFrame: The updated data with additional PDB activity metrics.
     """
     # Convert resolution and R_free columns to numeric, coercing errors
-    pdb_submissions["resolution"] = pd.to_numeric(
-        pdb_submissions["resolution"], errors="coerce"
-    )
-    pdb_submissions["R_free"] = pd.to_numeric(
-        pdb_submissions["R_free"], errors="coerce"
-    )
-
     # Merge pdb_submissions with data on 'id'
-    submissions = pdb_submissions[["id", "resolution", "R_free"]].merge(
+    submissions = pdb_submissions.merge(
         data, on="id", how="inner"
     )
 
@@ -378,36 +371,27 @@ def get_pdb_activity(data, pdb_submissions):
     submissions_grouped = (
         submissions.groupby(["pi_id", "time"])
         .agg(
-            pdb_count=pd.NamedAgg(column="id", aggfunc="count"),
-            resolution=pd.NamedAgg(column="resolution", aggfunc="mean"),
-            R_free=pd.NamedAgg(column="R_free", aggfunc="mean"),
+            num_uniprot_structures=pd.NamedAgg(column="num_uniprot_structures", aggfunc="sum"),
+            num_pdb_ids=pd.NamedAgg(column="num_pdb_ids", aggfunc="sum"),
+            num_primary_submissions=pd.NamedAgg(column="num_primary_submissions", aggfunc="sum"),
+            score_mean=pd.NamedAgg(column="score_mean", aggfunc="mean"),
+            complexity_sum=pd.NamedAgg(column="complexity_sum", aggfunc="sum"),
+            complexity_mean=pd.NamedAgg(column="complexity_mean", aggfunc="mean"),
+            organism_rarity_mean=pd.NamedAgg(column="organism_rarity_mean", aggfunc="mean"),
+            organism_rarity_max=pd.NamedAgg(column="organism_rarity_max", aggfunc="max"),
+            num_diseases=pd.NamedAgg(column="num_diseases", aggfunc="sum"),
+            resolution_mean=pd.NamedAgg(column="resolution_mean", aggfunc="mean"),
+            R_free_mean=pd.NamedAgg(column="R_free_mean", aggfunc="mean"),
+            mean_tmscore=pd.NamedAgg(column="mean_tmscore", aggfunc="mean"),
+            max_tmscore=pd.NamedAgg(column="max_tmscore", aggfunc="max"),
+            normalised_mean_tmscore=pd.NamedAgg(column="normalised_mean_tmscore", aggfunc="mean"),
+            normalised_max_tmscore=pd.NamedAgg(column="normalised_max_tmscore", aggfunc="max"),
         )
         .reset_index()
     )
 
-    # compute publications_count
-    publications_count = (
-        data.groupby(["pi_id", "time"]).size().reset_index(name="publications_count")
-    )
-
-    # create publications_count column in submissions_grouped
-    submissions_grouped = submissions_grouped.merge(
-        publications_count, on=["pi_id", "time"], how="left"
-    )
-
     # Merge the grouped submissions back with the original data to include publication counts
     data_merged = data.merge(submissions_grouped, on=["pi_id", "time"], how="left")
-
-    # Calculate pdb_share as the share of pdb submissions over the share of publications
-    data_merged["pdb_share"] = (
-        data_merged["pdb_count"] / data_merged["publications_count"]
-    )
-
-    # fillna pdb_share nan with 0
-    data_merged["pdb_share"] = data_merged["pdb_share"].fillna(0)
-
-    # Drop the intermediate 'pdb_count' column if no longer needed
-    data_merged.drop(columns=["pdb_count"], inplace=True)
 
     # get individual pdb_submission for each id
     data_merged = data_merged.merge(
@@ -781,10 +765,22 @@ def get_quarterly_aggregate_outputs(data):
         "cit_0": "sum",
         "cit_1": "sum",
         "parent_time": "first",
-        "pdb_share": "first",
+        "num_uniprot_structures": safe_mode,
+        "num_pdb_ids": safe_mode,
+        "num_primary_submissions": safe_mode,
+        "score_mean": safe_mode,
+        "complexity_sum": safe_mode,
+        "complexity_mean": safe_mode,
+        "organism_rarity_mean": safe_mode,
+        "organism_rarity_max": safe_mode,
+        "num_diseases": safe_mode,
+        "resolution_mean": safe_mode,
+        "R_free_mean": safe_mode,
+        "mean_tmscore": safe_mode,
+        "max_tmscore": safe_mode,
+        "normalised_mean_tmscore": safe_mode,
+        "normalised_max_tmscore": safe_mode,
         "pdb_submission": "sum",
-        "resolution": "mean",
-        "R_free": "mean",
         "intent": "first",
         "ai_concept": lambda x: x.sum(),
         "protein_concept": lambda x: x.sum(),

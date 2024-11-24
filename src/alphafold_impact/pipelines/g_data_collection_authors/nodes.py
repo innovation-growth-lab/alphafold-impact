@@ -569,7 +569,7 @@ def merge_author_data(
 
         # get pdb activity metrics
         data = data.merge(
-            pdb_submissions[["id", "resolution", "R_free"]], on="id", how="left"
+            pdb_submissions, on="id", how="left"
         )
 
         # get icite_counts
@@ -887,8 +887,6 @@ def aggregate_to_quarterly(data: pd.DataFrame) -> pd.DataFrame:
         pd.DataFrame: The aggregated DataFrame with the data aggregated
             to the quarterly level.
     """
-    for col in ["R_free", "resolution"]:
-        data[col] = data[col].replace({"": np.nan}).astype("float")
 
     def safe_mode(series):
         mode = series.mode()
@@ -908,9 +906,22 @@ def aggregate_to_quarterly(data: pd.DataFrame) -> pd.DataFrame:
         "patent_count": ("patent_count", "sum"),
         "patent_citation": ("patent_citation", "sum"),
         "ca_count": ("ca_count", "sum"),
-        "resolution": ("resolution", "mean"),
-        "R_free": ("R_free", "mean"),
-        "num_publications_pdb": ("pdb_submission", "sum"),
+        "num_uniprot_structures": ("num_uniprot_structures", "sum"),
+        "num_pdb_ids": ("num_pdb_ids", "sum"),
+        "num_primary_submissions": ("num_primary_submissions", "sum"),
+        "score_mean": ("score_mean", "mean"),
+        "complexity_sum": ("complexity_sum", "sum"),
+        "complexity_mean": ("complexity_mean", "mean"),
+        "organism_rarity_mean": ("organism_rarity_mean", "mean"),
+        "organism_rarity_max": ("organism_rarity_max", "mean"),
+        "num_diseases": ("num_diseases", "sum"),
+        "resolution_mean": ("resolution_mean", "mean"),
+        "R_free_mean": ("R_free_mean", "mean"),
+        "pdb_submission": ("pdb_submission", "sum"),
+        "mean_tmscore": ("mean_tmscore", "mean"),
+        "max_tmscore": ("max_tmscore", "max"),
+        "normalised_mean_tmscore": ("normalised_mean_tmscore", "mean"),
+        "normalised_max_tmscore": ("normalised_max_tmscore", "max"),
         "institution": ("institution", "first"),
         "institution_cited_by_count": ("institution_cited_by_count", "first"),
         "institution_country_code": ("country_code", "first"),

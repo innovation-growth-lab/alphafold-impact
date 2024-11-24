@@ -200,7 +200,7 @@ summary_pivoted <- summary_pivoted %>%
       variable == "num_publications" ~ "Number of Publications",
       variable == "ln1p_cited_by_count" ~ "Log Citations",
       variable == "ln1p_fwci" ~ "Log Field-Weighted Citation Index",
-      variable == "ca_count" ~ "Number of Collaborative Articles",
+      variable == "ca_count" ~ "Number of Clinical Citations",
       variable == "patent_count" ~ "Number of Patents",
       variable == "num_pdb_submissions" ~ "Number of PDB Submissions",
       variable == "institution_h_index" ~ "Institution h-index",

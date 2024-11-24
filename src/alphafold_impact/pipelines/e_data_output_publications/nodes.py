@@ -424,7 +424,6 @@ def _get_pdb_activity(
     pdb_submissions_e = pdb_submissions.explode("authors")
     pdb_submissions_e.drop_duplicates(subset=["id", "authors"], inplace=True)
 
-
     # compute count, average resolution, and R_free per authors
     pdb_submissions_grouped_count = (
         pdb_submissions_e.groupby(["authors"])
@@ -484,7 +483,29 @@ def _get_pdb_activity(
     ]
 
     data = data.merge(
-        pdb_submissions[["id", "resolution", "R_free"]], on="id", how="left", indicator=True
+        pdb_submissions[
+            [
+                "id",
+                "num_uniprot_structures",
+                "num_pdb_ids",
+                "num_primary_submissions",
+                "score_mean",
+                "complexity_sum",
+                "complexity_mean",
+                "organism_rarity_mean",
+                "organism_rarity_max",
+                "num_diseases",
+                "resolution_mean",
+                "R_free_mean",
+                "mean_tmscore",
+                "max_tmscore",
+                "normalised_mean_tmscore",
+                "normalised_max_tmscore",
+            ]
+        ],
+        on="id",
+        how="left",
+        indicator=True,
     )
     data["pdb_submission"] = data["_merge"] == "both"
     data = data.merge(data_e_grouped, on="id", how="left")
@@ -619,6 +640,7 @@ def _normalise_citation_counts(data: pd.DataFrame) -> pd.DataFrame:
     data = data.merge(t_columns, left_on="id", right_index=True, how="left")
 
     return data
+
 
 def get_institution_info(
     publications: pd.DataFrame,

@@ -17,7 +17,7 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                     "data_loaders": "applied_lab.data_collection.publications.raw",
                     "mapping_df": "applied_lab.data_collection.candidates.map",
                     "publications_data": "publications.data.outputs",
-                    "pdb_submissions": "pdb.entries.intermediate",
+                    "pdb_submissions": "pdb.entries.primary",
                     "patents_data": "lens.data_processing.primary",
                     "mesh_terms": "nih.data_collection.mesh_terms",
                     "institutional_data": "applied_lab.data_collection.institution_info.primary",
