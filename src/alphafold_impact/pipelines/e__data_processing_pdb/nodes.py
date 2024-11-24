@@ -1,13 +1,22 @@
 """
-This is a boilerplate pipeline 'data_analysis_chains'
-generated using Kedro 0.19.1
+This module contains the functions to process PDB data.
+
+The main functions in this module are:
+
+* collect_pdb_details - Collects PDB details from a DataFrame and API configuration.
+* merge_uniprot_data - Merges Uniprot data with PDB data.
+* process_similarity_data - Process the entire similarity data file in chunks and 
+    compute novelty metrics.
 """
 
 import logging
 import pandas as pd
 import numpy as np
-from joblib import Parallel, delayed
-from ..a_data_collection_oa.nodes import collect_papers  # pylint: disable=E0402
+from .utils import (
+    get_papers,
+    preprocess_pdb_dates,
+    filter_and_compute_metrics,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +45,7 @@ def collect_pdb_details(pdb_df: pd.DataFrame, api_config: dict) -> pd.DataFrame:
         .tolist()
     )
 
-    processed_papers_with_pmids = _get_papers(pmids, api_config, label="ids.pmid")
+    processed_papers_with_pmids = get_papers(pmids, api_config, label="ids.pmid")
 
     logger.info(
         "Processed %d/%d papers with pmids from openalex",
@@ -70,7 +79,7 @@ def collect_pdb_details(pdb_df: pd.DataFrame, api_config: dict) -> pd.DataFrame:
     # extract the list of doi from spdb_df
     dois = spdb_df["doi"].unique().tolist()
 
-    processed_papers_with_dois = _get_papers(dois, api_config, label="doi")
+    processed_papers_with_dois = get_papers(dois, api_config, label="doi")
 
     logger.info(
         "Processed %d/%d papers with dois from openalex",
@@ -134,6 +143,77 @@ def collect_pdb_details(pdb_df: pd.DataFrame, api_config: dict) -> pd.DataFrame:
     return combined_df
 
 
+
+def aggregate_to_pdb_level(similarity_chunks: pd.DataFrame) -> pd.DataFrame:
+    """
+    Distill similarity data to PDB-to-PDB level by extracting PDB IDs from
+        query and target.
+
+    Args:
+        similarity_df (pd.DataFrame): The DataFrame containing similarity data.
+
+    Returns:
+        pd.DataFrame: The DataFrame containing computed metrics.
+    """
+    results = []
+    for i, chunk in enumerate(similarity_chunks):
+        logger.info("Processing chunk %d", i + 1)
+        chunk["query"] = chunk["query"].str[:4]
+        chunk["target"] = chunk["target"].str[:4]
+
+        # Group by PDB-to-PDB comparisons and compute metrics
+        pdb_level_chunk = chunk.groupby(["query", "target"], as_index=False).agg(
+            {"alntmscore": "mean"}
+        )
+
+        results.append(pdb_level_chunk)
+
+    # Concatenate all individual results
+    pdb_level_df = pd.concat(results, ignore_index=True)
+
+    # [HACK] Group again in case chunks split a query in 2+
+    pdb_level_df = pdb_level_df.groupby(
+        ["query", "target"], as_index=False
+    ).agg(
+        {
+            "alntmscore": "mean"
+        }
+    )
+
+
+    return pdb_level_df
+
+
+def process_similarity_data(
+    similarity_df: pd.DataFrame,
+    pdb_df: pd.DataFrame,
+) -> pd.DataFrame:
+    """
+    Process the entire similarity data file in chunks and compute novelty metrics.
+
+    Args:
+        similarity_file_path (str): The path to the similarity data file.
+        pdb_df (pd.DataFrame): The DataFrame containing PDB details.
+        chunksize (int): The size of each chunk to load.
+
+    Returns:
+        pd.DataFrame: The DataFrame containing computed metrics.
+    """
+    pdb_df = pdb_df[["id", "rcsb_id", "publication_date", "doi", "R_free", "resolution"]]
+
+    logger.info("Preprocessing PDB dates")
+    pdb_dates = preprocess_pdb_dates(pdb_df)
+
+    logger.info("Filtering and computing metrics")
+    results = filter_and_compute_metrics(similarity_df, pdb_dates)
+
+    logger.info("Merging results with PDB data")
+    pdb_df["rcsb_id"] = pdb_df["rcsb_id"].str.upper()
+    pdb_df = pdb_df.merge(results, how="left", left_on="rcsb_id", right_on="query")
+
+    return pdb_df
+
+
 def merge_uniprot_data(pdb_df: pd.DataFrame, uniprot_df: pd.DataFrame) -> pd.DataFrame:
     """
     Merges Uniprot data with PDB data.
@@ -158,6 +238,10 @@ def merge_uniprot_data(pdb_df: pd.DataFrame, uniprot_df: pd.DataFrame) -> pd.Dat
     pdb_oa_means = pdb_df.groupby("id").agg(
         resolution_mean=("resolution", "mean"),
         R_free_mean=("R_free", "mean"),
+        mean_tmscore=("mean_tmscore", "mean"),
+        max_tmscore=("max_tmscore", "mean"),
+        normalised_mean_tmscore=("normalised_mean_tmscore", "mean"),
+        normalised_max_tmscore=("normalised_max_tmscore", "mean"),
     )
 
     logger.info("merging to uniprot to get per-PDB primary status")
@@ -216,7 +300,7 @@ def merge_uniprot_data(pdb_df: pd.DataFrame, uniprot_df: pd.DataFrame) -> pd.Dat
         on=["organism_id", "quarter"],
     )
 
-    logger.info("Creating publication-level features")
+    logger.info("Creating publication-level UniProt features")
     oa_structural_df = (
         intermediate_df.groupby("id")
         .agg(
@@ -239,160 +323,3 @@ def merge_uniprot_data(pdb_df: pd.DataFrame, uniprot_df: pd.DataFrame) -> pd.Dat
     )
 
     return oa_structural_df
-
-
-def _process_responses(responses):
-    output = []
-
-    for children_list in responses:
-
-        json_data = [
-            {
-                k: v
-                for k, v in item.items()
-                if k
-                in [
-                    "id",
-                    "ids",
-                    "doi",
-                    "publication_date",
-                    "mesh_terms",
-                    "cited_by_count",
-                    "authorships",
-                    "topics",
-                    "concepts",
-                    "fwci",
-                ]
-            }
-            for item in children_list
-        ]
-
-        # transform to datafram
-        df = pd.DataFrame(json_data)
-
-        # if dataframe is empty, continue
-        if df.empty:
-            continue
-
-        # extract pmid from ids
-        df["pmid"] = df["ids"].apply(
-            lambda x: (
-                x.get("pmid").replace("https://pubmed.ncbi.nlm.nih.gov/", "")
-                if x and x.get("pmid")
-                else None
-            )
-        )
-
-        # keep only a list of tuples with "descriptor_ui" and "descriptor_name" for each
-        df["mesh_terms"] = df["mesh_terms"].apply(
-            lambda x: (
-                [(c["descriptor_ui"], c["descriptor_name"]) for c in x] if x else None
-            )
-        )
-
-        # create boolean variable for neglected_disease if mesh_terms contains D058069
-        df["neglected_disease"] = df["mesh_terms"].apply(
-            lambda x: any([term[0] == "D058069" for term in x]) if x else False
-        )
-
-        # create a boolean variable for rare disease if mesh_terms contains D035583
-        df["rare_disease"] = df["mesh_terms"].apply(
-            lambda x: any([term[0] == "D035583" for term in x]) if x else False
-        )
-
-        # break atuhorship nested dictionary jsons, create triplets of authorship
-        df["authorships"] = df["authorships"].apply(
-            lambda x: (
-                [
-                    (
-                        (
-                            author["author"]["id"].replace("https://openalex.org/", ""),
-                            inst["id"].replace("https://openalex.org/", ""),
-                            author["author_position"],
-                        )
-                        if author["institutions"]
-                        else [
-                            author["author"]["id"].replace("https://openalex.org/", ""),
-                            "",
-                            author["author_position"],
-                        ]
-                    )
-                    for author in x
-                    for inst in author["institutions"] or [{}]
-                ]
-                if x
-                else None
-            )
-        )
-
-        # change doi to remove the url
-        df["doi"] = df["doi"].str.replace("https://doi.org/", "")
-
-        # create a list of topics, with id (replacing openalex.org),
-        df["topics"] = df["topics"].apply(
-            lambda x: (
-                [
-                    (
-                        topic["id"].replace("https://openalex.org/", ""),
-                        topic["display_name"],
-                        topic["subfield"]["id"].replace("https://openalex.org/", ""),
-                        topic["subfield"]["display_name"],
-                        topic["field"]["id"].replace("https://openalex.org/", ""),
-                        topic["field"]["display_name"],
-                        topic["domain"]["id"].replace("https://openalex.org/", ""),
-                        topic["domain"]["display_name"],
-                    )
-                    for topic in x
-                ]
-                if x
-                else None
-            )
-        )
-
-        # extract concepts, ie. for each element in the list of jsons
-        df["concepts"] = df["concepts"].apply(
-            lambda x: (
-                [
-                    (
-                        concept["id"].replace("https://openalex.org/", ""),
-                        concept["display_name"],
-                    )
-                    for concept in x
-                ]
-                if x
-                else None
-            )
-        )
-
-        # append to output
-        output.append(df)
-
-    df = pd.concat(output)
-
-    return df
-
-
-def _get_papers(ids: list, api_config: dict, label: str = "doi"):
-    # slice of dois
-    slice_keys = ["|".join(ids[i : i + 50]) for i in range(0, len(ids), 50)]
-
-    # create parallel batches from slices
-    batch_keys = [slice_keys[i : i + 100] for i in range(0, len(slice_keys), 100)]
-
-    papers_with_ids = Parallel(n_jobs=8, backend="loky", verbose=10)(
-        delayed(collect_papers)(
-            oa_ids=batch_key,
-            perpage=api_config["perpage"],
-            filter_criteria=label,
-            eager_loading=True,
-            skip_preprocess=True,
-        )
-        for batch_key in batch_keys
-    )
-
-    # flatten the list of dicts into a single dict
-    papers_with_ids_list = [v for d in papers_with_ids for _, v in d.items()]
-
-    processed_papers_with_ids = _process_responses(papers_with_ids_list)
-
-    return processed_papers_with_ids

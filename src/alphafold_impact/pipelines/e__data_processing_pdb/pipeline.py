@@ -4,7 +4,12 @@ generated using Kedro 0.19.1
 """
 
 from kedro.pipeline import Pipeline, pipeline, node
-from .nodes import collect_pdb_details, merge_uniprot_data
+from .nodes import (
+    collect_pdb_details,
+    merge_uniprot_data,
+    process_similarity_data,
+    aggregate_to_pdb_level,
+)
 
 
 def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstring
@@ -22,9 +27,24 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                 name="fetch_oa_details_from_pdb_pubs",
             ),
             node(
-                merge_uniprot_data,
+                aggregate_to_pdb_level,
+                inputs={"similarity_chunks": "foldseek.pdb_similarities.raw"},
+                outputs="foldseek.pdb_similarities.intermediate",
+                name="aggregate_foldseek_to_pdb_level",
+            ),
+            node(
+                process_similarity_data,
                 inputs={
                     "pdb_df": "pdb.entries.intermediate",
+                    "similarity_df": "foldseek.pdb_similarities.intermediate",
+                },
+                outputs="pdb.enhanced_entries.intermediate",
+                name="process_pdb_similarity_data",
+            ),
+            node(
+                merge_uniprot_data,
+                inputs={
+                    "pdb_df": "pdb.enhanced_entries.intermediate",
                     "uniprot_df": "uniprot.entries.raw",
                 },
                 outputs="pdb.entries.primary",

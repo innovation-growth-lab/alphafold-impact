@@ -216,6 +216,10 @@ pdb.entries.intermediate:
   <<: *_pq
   filepath: s3://igl-alphafold/oct/02_intermediate/pdb/entries.parquet
 
+pdb.enhanced_entries.intermediate:
+  <<: *_pq
+  filepath: s3://igl-alphafold/oct/02_intermediate/pdb/enhanced_entries.parquet
+
 pdb.entries.primary:
   <<: *_pq
   filepath: s3://igl-alphafold/oct/03_primary/pdb/entries.parquet
@@ -369,6 +373,31 @@ uniprot.entries.raw:
   <<: *_pq
   filepath: s3://igl-alphafold/oct/01_raw/uniprot/entries.parquet
 
+# -------------------------------------------------------------
+
+foldseek.pdb_similarities.raw:
+  filepath: data/01_raw/pairwise_similarities.tsv
+  type: pandas.CSVDataset
+  load_args:
+    chunksize: 1000000
+
+
+foldseek.pdb_similarities.intermediate:
+  <<: *_pq
+  filepath: s3://igl-alphafold/oct/02_intermediate/foldseek/pdb_similarities.parquet
+# install foldseek, download their pdb database and run the following command
+# foldseek easy-search pdb pdb pairwise_similarities.tsv tmp/ --format-output "query,target,alntmscore"
+
+# load_args:
+#   names:
+#     - query
+#     - target
+#     - alntmscore
+  # sep: '\t'
+  # usecols:
+  #   - 0
+  #   - 1
+  #   - 2
 # -------------------------------------------------------------
 
 # Analysis
