@@ -568,9 +568,7 @@ def merge_author_data(
         data = get_patent_citations(data, patents_data)
 
         # get pdb activity metrics
-        data = data.merge(
-            pdb_submissions, on="id", how="left"
-        )
+        data = data.merge(pdb_submissions, on="id", how="left")
 
         # get icite_counts
         icite_outputs = _create_cc_counts(data[["id", "doi"]], icite_data)
@@ -675,7 +673,9 @@ def _define_high_pdb_authors(
         pd.DataFrame: The updated DataFrame with the 'high_pdb' column.
     """
 
-    data_db = data[["id", "author"]].merge(pdb_submissions, on="id", how="inner")
+    data_db = data[["id", "author", "publication_date"]].merge(
+        pdb_submissions, on="id", how="inner"
+    )
 
     data_db["pdb_submission"] = True
 
