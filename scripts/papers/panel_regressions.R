@@ -46,13 +46,20 @@ field_cols <- grep("^field_", names(sub_samples$all_lvl0), value = TRUE)
 mesh_cols <- grep("^mesh_", names(sub_samples$all_lvl0), value = TRUE)
 
 covs <- list()
-covs[["base0"]] <- c(field_cols, mesh_cols, "num_publications")
+covs[["base0"]] <- c(
+  field_cols,
+  "institution_type",
+  "institution_cited_by_count",
+  "institution_2yr_mean_citedness",
+  "institution_h_index",
+  "institution_i10_index",
+  "institution_country_code"
+)
 
 fes <- list()
 fes[["fe0"]] <- c("quarter_year")
-fes[["fe1"]] <- c(
-  "quarter_year", "institution", "institution_type", "institution_country_code"
-)
+fes[["fe1"]] <- c("author", "quarter_year")
+
 
 
 ### Extensive ###
@@ -61,9 +68,25 @@ cov_sets <- c("base0")
 fe_list <- c("fe1")
 dep_vars <- c(
   "ln1p_cited_by_count",
-  "ln1p_fwci", "logit_cit_norm_perc",
-  "ln1p_patent_count", "ln1p_patent_citation", "ln1p_ca_count",
-  "resolution", "R_free", "pdb_submission"
+  "ln1p_fwci",
+  "ln1p_resolution",
+  "ln1p_R_free",
+  "patent_count",
+  "patent_citation",
+  "num_pdb_ids",
+  "ca_count",
+  "num_uniprot_structures",
+  "num_primary_submissions",
+  "num_diseases",
+  "organism_rarity_mean",
+  "mean_tmscore",
+  "num_uniprot_structures_w_disease",
+  "num_primary_submissions_w_disease",
+  "num_uniprot_structures_w_rare_organisms",
+  "num_primary_submissions_w_rare_organisms",
+  "num_uniprot_structures_w_low_similarity",
+  "num_primary_submissions_w_low_similarity"
+
 )
 treat_vars <- paste(
   c(
@@ -133,47 +156,47 @@ for (dep_var_out in dep_vars) { # nolint
       non_na_data <- local_data[!is.na(local_data[[dep_var]]), ]
 
       # compute the unique number of quarter_year
+      n_authors <- length(unique(non_na_data$author))
       n_quarters <- length(unique(non_na_data$quarter_year))
-      n_institutions <- length(unique(non_na_data$institution))
-      n_institution_types <- length(unique(non_na_data$institution_type))
-      n_institution_countries <- length(
-        unique(non_na_data$institution_country_code)
-      )
 
       if (
-        n_quarters + n_institutions +
-          n_institution_types + n_institution_countries
+        n_authors + n_quarters
         > nrow(non_na_data)
       ) {
         message("Skipping regression: ", regression_label)
-        placeholder_data <- data.frame(dep_var = c(0, 1))
-        colnames(placeholder_data) <- dep_var
         results[[regression_label]] <- feols(
           as.formula(paste(dep_var, "~ 1")),
-          data = placeholder_data
+          data = local_data
         )
         next
       }
-
       # run the regression as linear, but make an exception for pdb_submission
-      if (dep_var == "pdb_submission") {
+      if (dep_var %in% c(
+        "num_publications", "num_pdb_submissions",
+        "ca_count", "patent_count", "patent_citation",
+        "num_uniprot_structures",
+        "num_primary_submissions",
+        "num_diseases",
+        "num_uniprot_structures_w_disease",
+        "num_primary_submissions_w_disease",
+        "num_uniprot_structures_w_rare_organisms",
+        "num_primary_submissions_w_rare_organisms",
+        "num_uniprot_structures_w_low_similarity",
+        "num_primary_submissions_w_low_similarity"
+      )) {
+        message("Running Poisson regression")
         results[[regression_label]] <- tryCatch(
           {
-            feols(
+            fepois(
               form_list[[form]],
               data = local_data,
               cluster = c("author", "quarter_year"),
-              family = binomial(link = "logit")
+              control = list(maxit = 500)
             )
           },
           error = function(e) {
             message("Error in regression: ", regression_label, " - ", e$message)
-            placeholder_data <- data.frame(dep_var = c(0, 1))
-            colnames(placeholder_data) <- dep_var
-            return(feols(
-              as.formula(paste(dep_var, "~ 1")),
-              data = placeholder_data
-            ))
+            return(feols(as.formula(paste(dep_var, "~ 1")), data = local_data))
           }
         )
       } else {

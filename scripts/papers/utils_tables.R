@@ -24,23 +24,59 @@ table_info <- list(
   "logit_cit_norm_perc" = list(
     file_name = "logit_cit_norm_perc.tex"
   ),
-  "ln1p_patent_count" = list(
-    file_name = "ln1p_patent_count.tex"
+  "patent_count" = list(
+    file_name = "patent_count.tex"
   ),
-  "ln1p_patent_citation" = list(
-    file_name = "ln1p_patent_citation.tex"
+  "patent_citation" = list(
+    file_name = "patent_citation.tex"
   ),
-  "ln1p_ca_count" = list(
-    file_name = "ln1p_ca_count.tex"
+  "ca_count" = list(
+    file_name = "ca_count.tex"
   ),
-  "resolution" = list(
-    file_name = "resolution.tex"
+  "ln1p_resolution" = list(
+    file_name = "ln1p_resolution.tex"
   ),
-  "R_free" = list(
-    file_name = "R_free.tex"
+  "ln1p_R_free" = list(
+    file_name = "ln1p_R_free.tex"
   ),
-  "pdb_submission" = list(
-    file_name = "pdb_submission.tex"
+  "num_pdb_submissions" = list(
+    file_name = "num_pdb_submissions.tex"
+  ),
+  "num_publications" = list(
+    file_name = "num_publications.tex"
+  ),
+  "num_uniprot_structures" = list(
+    file_name = "num_uniprot_structures.tex"
+  ),
+  "num_primary_submissions" = list(
+    file_name = "num_primary_submissions.tex"
+  ),
+  "organism_rarity_mean" = list(
+    file_name = "organism_rarity_mean.tex"
+  ),
+  "mean_tmscore" = list(
+    file_name = "mean_tmscore.tex"
+  ),
+  "num_uniprot_structures_w_disease" = list(
+    file_name = "num_uniprot_structures_w_disease.tex"
+  ),
+  "num_primary_submissions_w_disease" = list(
+    file_name = "num_primary_submissions_w_disease.tex"
+  ),
+  "num_uniprot_structures_w_rare_organisms" = list(
+    file_name = "num_uniprot_structures_w_rare_organisms.tex"
+  ),
+  "num_primary_submissions_w_rare_organisms" = list(
+    file_name = "num_primary_submissions_w_rare_organisms.tex"
+  ),
+  "num_uniprot_structures_w_low_similarity" = list(
+    file_name = "num_uniprot_structures_w_low_similarity.tex"
+  ),
+  "num_primary_submissions_w_low_similarity" = list(
+    file_name = "num_primary_submissions_w_low_similarity.tex"
+  ),
+  "num_diseases" = list(
+    file_name = "num_diseases.tex"
   )
 )
 
@@ -191,7 +227,7 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
 
         # Combine the lines back into a single string
         etable_output <- paste(etable_lines, collapse = "\n")
-        
+
         # Write the table to a file
         writeLines(
           etable_output,

@@ -59,14 +59,77 @@ papers <- s3read_using(
 # Replace commas in column names
 colnames(papers) <- gsub(",", "", colnames(papers))
 
+# creating quantiles for institution controls and translational
+papers <- papers %>%
+  mutate(
+    institution_2yr_mean_citedness = factor(
+      ntile("2yr_mean_citedness", 4)
+    ),
+    institution_h_index = factor(ntile(h_index, 4)),
+    institution_i10_index = factor(ntile(i10_index, 4)),
+    institution_cited_by_count = factor(
+      ntile(cited_by_count_institution, 4)
+    ),
+    organism_rarity_mean_quantile = factor(ntile(organism_rarity_mean, 4)),
+    organism_rarity_max_quantile = factor(ntile(organism_rarity_max, 4)),
+    mean_tmscore_quantile = factor(ntile(mean_tmscore, 4)),
+    max_tmscore_quantile = factor(ntile(max_tmscore, 4))
+  )
+
 # for duplicate ids, keep first. fill few nas
 papers <- papers %>%
   distinct(id, .keep_all = TRUE) %>%
   mutate(
-    type = ifelse(is.na(type), "unknown", type),
-    country_code = ifelse(is.na(country_code), "unknown", country_code),
-    institution = ifelse(is.na(institution), "unknown", institution),
-    pdb_submission = ifelse(pdb_submission > 0, 1, 0)
+    institution_type = ifelse(
+      is.na(type), "unknown", type
+    ),
+    institution_country_code = ifelse(
+      is.na(country_code), "unknown", country_code
+    ),
+    institution_2yr_mean_citedness = ifelse(
+      is.na(institution_2yr_mean_citedness), "unknown",
+      institution_2yr_mean_citedness
+    ),
+    institution_h_index = ifelse(
+      is.na(institution_h_index), "unknown", institution_h_index
+    ),
+    institution_i10_index = ifelse(
+      is.na(institution_i10_index), "unknown", institution_i10_index
+    ),
+    institution_cited_by_count = ifelse(
+      is.na(institution_cited_by_count), "unknown",
+      institution_cited_by_count
+    ),
+    pdb_submission = ifelse(pdb_submission > 0, 1, 0),
+    ca_count = ifelse(is.na(ca_count), 0, ca_count),
+    num_uniprot_structures = ifelse(
+      is.na(num_uniprot_structures), 0, num_uniprot_structures
+    ),
+    num_pdb_ids = ifelse(is.na(num_pdb_ids), 0, num_pdb_ids),
+    num_primary_submissions = ifelse(is.na(num_primary_submissions), 0, num_primary_submissions), # nolint
+  )
+
+# adding translational variables
+papers <- papers %>%
+  mutate(
+    num_uniprot_structures_w_disease = ifelse(
+      num_uniprot_structures > 0 & num_diseases > 0, num_uniprot_structures, 0 # nolint
+    ),
+    num_primary_submissions_w_disease = ifelse(
+      num_primary_submissions > 0 & num_diseases > 0, num_primary_submissions, 0 # nolint
+    ),
+    num_uniprot_structures_w_rare_organisms = ifelse(
+      num_uniprot_structures > 0 & organism_rarity_mean_quantile == 4, num_uniprot_structures, 0 # nolint
+    ),
+    num_primary_submissions_w_rare_organisms = ifelse(
+      num_primary_submissions > 0 & organism_rarity_mean_quantile == 4, num_primary_submissions, 0 # nolint
+    ),
+    num_uniprot_structures_w_low_similarity = ifelse(
+      num_uniprot_structures > 0 & mean_tmscore_quantile == 1, num_uniprot_structures, 0 # nolint
+    ),
+    num_primary_submissions_w_low_similarity = ifelse(
+      num_primary_submissions > 0 & mean_tmscore_quantile == 1, num_primary_submissions, 0 # nolint
+    )
   )
 
 # Create 'strong' variable
@@ -78,9 +141,8 @@ papers <- papers %>%
     ct = if_else(source %in% c("ct_ai", "ct_noai"), 1, 0),
     ct_ai = if_else(source == "ct_ai", 1, 0),
     ct_noai = if_else(source == "ct_noai", 1, 0),
-    institution = as.factor(last_author_institution),
-    institution_type = as.factor(type),
-    institution_country_code = as.factor(country_code),
+    institution_type = as.factor(institution_type),
+    institution_country_code = as.factor(institution_country_code),
     ln1p_cited_by_count = log1p(cited_by_count),
     ln1p_fwci = log1p(fwci), # nolint
     ln1p_cit_norm_perc = log1p(citation_normalized_percentile_value),
@@ -93,8 +155,9 @@ papers <- papers %>%
     ln1p_patent_citation = log1p(patent_citation),
     primary_field = as.factor(primary_field), # nolint
     publication_date = as.Date(publication_date),
-    resolution = as.numeric(resolution),
-    R_free = as.numeric(R_free),
+    ln1p_resolution = log1p(as.numeric(resolution_mean)),
+    ln1p_R_free = log1p(as.numeric(R_free_mean)),
+    ln1p_score = log1p(as.numeric(score_mean)),
     year = as.integer(str_sub(publication_date, 1, 4)),
     quarter_year = paste0(
       year(publication_date), " Q", quarter(publication_date)
@@ -137,36 +200,12 @@ papers <- papers %>%
   )) # nolint
 
 # ------------------------------------------------------------------------------
-# CEM (Coarsened Exact Matching)
-# ------------------------------------------------------------------------------
-
-# Define the columns to be used for matching
-cols <- c(
-  "cited_by_count", "fwci",
-  "citation_normalized_percentile_value", "patent_count"
-)
-
-# Filter and prepare data for collapsing
-papers_cem <- papers %>%
-  group_by(author) %>%
-  mutate(af = max(af)) %>%
-  ungroup() %>%
-  filter(complete.cases(fwci, citation_normalized_percentile_value)) %>%
-  filter(quarter_year %in% c("2021 Q2", "2021 Q3", "2021 Q4", "2022 Q1")) %>%
-  select(af, author, cols) %>%
-  group_by(author) %>%
-  summarise(
-    af = max(af),
-    across(cols, \(x) mean(x, na.rm = TRUE))
-  )
-
-# ------------------------------------------------------------------------------
 # SUBSET
 # ------------------------------------------------------------------------------
 
 # Define sub_samples as a list of samples
 sub_samples <- list()
-sub_groups <- c("All PDB", "High PDB", "CEM")
+sub_groups <- c("All PDB", "High PDB")
 unique_depths <- c("All Groups", "Foundational", "Applied")
 unique_fields <- c(
   "All Fields",
@@ -176,20 +215,23 @@ unique_fields <- c(
 
 papers <- papers %>%
   select(c(
-    "num_publications",
     "quarter_year",
     "author",
-    "institution",
     "institution_type",
     "institution_country_code",
+    "institution_cited_by_count",
+    "institution_2yr_mean_citedness",
+    "institution_h_index",
+    "institution_i10_index",
+    "num_publications",
     "ln1p_cited_by_count",
     "ln1p_fwci",
     "logit_cit_norm_perc",
-    "ln1p_patent_count",
-    "ln1p_patent_citation",
-    "ln1p_ca_count",
-    "resolution",
-    "R_free",
+    "patent_count",
+    "patent_citation",
+    "ca_count",
+    "ln1p_resolution",
+    "ln1p_R_free",
     "pdb_submission",
     "af",
     "ct_ai",
@@ -199,7 +241,19 @@ papers <- papers %>%
     "primary_field",
     "high_pdb",
     grep("^field_", names(papers), value = TRUE),
-    grep("^mesh_", names(papers), value = TRUE)
+    "num_uniprot_structures",
+    "num_pdb_ids",
+    "num_primary_submissions",
+    "num_diseases",
+    "organism_rarity_mean",
+    "mean_tmscore",
+    "ln1p_score",
+    "num_uniprot_structures_w_disease",
+    "num_primary_submissions_w_disease",
+    "num_uniprot_structures_w_rare_organisms",
+    "num_primary_submissions_w_rare_organisms",
+    "num_uniprot_structures_w_low_similarity",
+    "num_primary_submissions_w_low_similarity"
   ))
 
 # Create subsets for all combinations of depth, field, and sub_group
@@ -228,22 +282,8 @@ for (depth_lvl in unique_depths) { # nolint
       }
 
       # Apply sub_group filter
-      if (sub_group == "High PDB") {
+      if (grepl("High PDB", sub_group)) {
         sub_sample <- subset(sub_sample, high_pdb == 1)
-      }
-
-      if (sub_group == "CEM") {
-        # CEM matching on the collapsed data
-        match_out_af <- matchit(
-          as.formula(paste0("af ~ ", paste0(cols, collapse = " + "))),
-          data = papers_cem, method = "cem", k2k = TRUE
-        )
-
-        # Store matched data
-        cem_data <- match.data(match_out_af)
-
-        # Sample based on the matched group
-        sub_sample <- sub_sample %>% semi_join(cem_data, by = "author")
       }
 
       # Store the subset
@@ -251,7 +291,6 @@ for (depth_lvl in unique_depths) { # nolint
     }
   }
 }
-
 # ------------------------------------------------------------------------------
 # Save data
 # ------------------------------------------------------------------------------

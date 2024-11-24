@@ -53,7 +53,7 @@ covs[["base0"]] <- c(
   "institution_h_index",
   "institution_i10_index",
   "institution_country_code",
-  "covid_share_2020"#,
+  "covid_share_2020" # ,
   # "num_publications"
 )
 
@@ -63,17 +63,28 @@ fes[["fe1"]] <- c("author", "quarter")
 cov_sets <- c("base0")
 fe_list <- c("fe1")
 dep_vars <- c(
-  # "ln1p_cited_by_count",
-  # "ln1p_cit_0",
-  # "ln1p_cit_1",
-  # "ln1p_fwci",
-  # "ln1p_resolution",
-  # "ln1p_R_free",
-  "num_publications"
-  # "patent_count",
-  # "patent_citation",
-  # "num_pdb_submissions",
-  # "ca_count"
+  "num_publications",
+  "ln1p_cited_by_count",
+  "ln1p_cit_0",
+  "ln1p_cit_1",
+  "ln1p_fwci",
+  "ln1p_resolution",
+  "ln1p_R_free",
+  "patent_count",
+  "patent_citation",
+  "num_pdb_submissions",
+  "ca_count",
+  "num_uniprot_structures",
+  "num_primary_submissions",
+  "num_diseases",
+  "organism_rarity_mean",
+  "mean_tmscore",
+  "num_uniprot_structures_w_disease",
+  "num_primary_submissions_w_disease",
+  "num_uniprot_structures_w_rare_organisms",
+  "num_primary_submissions_w_rare_organisms",
+  "num_uniprot_structures_w_low_similarity",
+  "num_primary_submissions_w_low_similarity"
 )
 
 for (dep_var_out in dep_vars) { # nolint
@@ -183,7 +194,16 @@ for (dep_var_out in dep_vars) { # nolint
       # the main thing is, using ln is odd because it assumes continuous variables and far from zero values
       if (dep_var %in% c(
         "num_publications", "num_pdb_submissions",
-        "ca_count", "patent_count", "patent_citation"
+        "ca_count", "patent_count", "patent_citation",
+        "num_uniprot_structures",
+        "num_primary_submissions",
+        "num_diseases",
+        "num_uniprot_structures_w_disease",
+        "num_primary_submissions_w_disease",
+        "num_uniprot_structures_w_rare_organisms",
+        "num_primary_submissions_w_rare_organisms",
+        "num_uniprot_structures_w_low_similarity",
+        "num_primary_submissions_w_low_similarity"
       )) {
         message("Running Poisson regression")
         results[[regression_label]] <- tryCatch(
@@ -191,7 +211,8 @@ for (dep_var_out in dep_vars) { # nolint
             fepois(
               form_list[[form]],
               data = local_data,
-              cluster = c("author", "quarter")
+              cluster = c("author", "quarter"),
+              control = list(maxit = 500)
             )
           },
           error = function(e) {

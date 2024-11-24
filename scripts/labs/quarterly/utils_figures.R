@@ -106,7 +106,18 @@ dep_var_labels <- c(
   "ln1p_resolution" = "ln (1 + Resolution)",
   "ln1p_R_free" = "ln (1 + R-free)",
   "num_pdb_submissions" = "PDB submissions",
-  "num_publications" = "Publications"
+  "num_publications" = "Publications",
+  "num_uniprot_structures" = "Uniprot structures",
+  "num_primary_submissions" = "Primary submissions",
+  "num_diseases" = "Number of Diseases",
+  "organism_rarity_mean" = "Organism rarity mean",
+  "mean_tmscore" = "Mean TM-score",
+  "num_uniprot_structures_w_disease" = "Uniprot structures with disease relevance", # nolint
+  "num_primary_submissions_w_disease" = "Primary submissions with disease relevance", # nolint
+  "num_uniprot_structures_w_rare_organisms" = "Uniprot structures with rare organisms", # nolint
+  "num_primary_submissions_w_rare_organisms" = "Primary submissions with rare organisms", # nolint
+  "num_uniprot_structures_w_low_similarity" = "Uniprot structures with low similarity", # nolint
+  "num_primary_submissions_w_low_similarity" = "Primary submissions with low similarity" # nolint
 )
 
 coef_labels <- c(

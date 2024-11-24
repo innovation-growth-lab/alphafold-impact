@@ -90,7 +90,11 @@ nonecr_data <- nonecr_data %>%
     institution_i10_index = factor(ntile(institution_i10_index, 4)),
     institution_cited_by_count = factor(
       ntile(institution_cited_by_count, 4)
-    )
+    ),
+    organism_rarity_mean_quantile = factor(ntile(organism_rarity_mean, 4)),
+    organism_rarity_max_quantile = factor(ntile(organism_rarity_max, 4)),
+    mean_tmscore_quantile = factor(ntile(mean_tmscore, 4)),
+    max_tmscore_quantile = factor(ntile(max_tmscore, 4))
   )
 
 # fill with nan
@@ -120,10 +124,37 @@ nonecr_data <- nonecr_data %>%
     ca_count = ifelse(is.na(ca_count), 0, ca_count),
     high_pdb = as.factor(ifelse(is.na(high_pdb), 0, high_pdb)),
     covid_share_2020 = ifelse(is.na(covid_share_2020), 0, covid_share_2020),
+    num_uniprot_structures = ifelse(
+      is.na(num_uniprot_structures), 0, num_uniprot_structures
+    ),
+    num_pdb_ids = ifelse(is.na(num_pdb_ids), 0, num_pdb_ids),
+    num_primary_submissions = ifelse(is.na(num_primary_submissions), 0, num_primary_submissions), # nolint
     across(starts_with("field_"), ~ ifelse(is.na(.), 0, .)),
     across(starts_with("mesh_"), ~ ifelse(is.na(.), 0, .))
   )
 
+# create translational variables
+nonecr_data <- nonecr_data %>%
+  mutate(
+    num_uniprot_structures_w_disease = ifelse(
+      num_uniprot_structures > 0 & num_diseases > 0, num_uniprot_structures, 0 # nolint
+    ),
+    num_primary_submissions_w_disease = ifelse(
+      num_primary_submissions > 0 & num_diseases > 0, num_primary_submissions, 0 # nolint
+    ),
+    num_uniprot_structures_w_rare_organisms = ifelse(
+      num_uniprot_structures > 0 & organism_rarity_mean_quantile == 4, num_uniprot_structures, 0 # nolint
+    ),
+    num_primary_submissions_w_rare_organisms = ifelse(
+      num_primary_submissions > 0 & organism_rarity_mean_quantile == 4, num_primary_submissions, 0 # nolint
+    ),
+    num_uniprot_structures_w_low_similarity = ifelse(
+      num_uniprot_structures > 0 & mean_tmscore_quantile == 1, num_uniprot_structures, 0 # nolint
+    ),
+    num_primary_submissions_w_low_similarity = ifelse(
+      num_primary_submissions > 0 & mean_tmscore_quantile == 1, num_primary_submissions, 0 # nolint
+    )
+  )
 # create factors, log transforms
 nonecr_data <- nonecr_data %>%
   mutate(
@@ -147,8 +178,9 @@ nonecr_data <- nonecr_data %>%
     ln1p_patent_count = log1p(patent_count),
     ln1p_patent_citation = log1p(patent_citation),
     primary_field = as.factor(primary_field),
-    ln1p_resolution = log1p(as.numeric(resolution)),
-    ln1p_R_free = log1p(as.numeric(R_free))
+    ln1p_resolution = log1p(as.numeric(resolution_mean)),
+    ln1p_R_free = log1p(as.numeric(R_free_mean)),
+    ln1p_score = log1p(as.numeric(score_mean))
   )
 # Define the mapping of old values to new values
 field_mapping <- c(
@@ -233,7 +265,20 @@ nonecr_data <- nonecr_data %>%
     "primary_field",
     "high_pdb",
     "covid_share_2020",
-    grep("^field_", names(nonecr_data), value = TRUE)
+    grep("^field_", names(quarterly_lab_data), value = TRUE),
+    "num_uniprot_structures",
+    "num_pdb_ids",
+    "num_primary_submissions",
+    "num_diseases",
+    "organism_rarity_mean",
+    "mean_tmscore",
+    "ln1p_score",
+    "num_uniprot_structures_w_disease",
+    "num_primary_submissions_w_disease",
+    "num_uniprot_structures_w_rare_organisms",
+    "num_primary_submissions_w_rare_organisms",
+    "num_uniprot_structures_w_low_similarity",
+    "num_primary_submissions_w_low_similarity"
   )
 
 colnames(nonecr_data) <- gsub(",", "", colnames(nonecr_data))

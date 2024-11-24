@@ -74,12 +74,23 @@ dep_vars <- c(
   "patent_count",
   "patent_citation",
   "num_pdb_submissions",
-  "ca_count"
+  "ca_count",
+  "num_uniprot_structures",
+  "num_primary_submissions",
+  "num_diseases",
+  "organism_rarity_mean",
+  "mean_tmscore",
+  "num_uniprot_structures_w_disease",
+  "num_primary_submissions_w_disease",
+  "num_uniprot_structures_w_rare_organisms",
+  "num_primary_submissions_w_rare_organisms",
+  "num_uniprot_structures_w_low_similarity",
+  "num_primary_submissions_w_low_similarity"
 )
 
 for (dep_var_out in dep_vars) { # nolint
   treat_vars <- c(
-    "af_ind + ct_ai_ind + ct_noai_ind + af:ct_ai_ind + af:ct_noai_ind + strong_af_ind + strong_ct_ai_ind + strong_ct_noai_ind + strong_af:strong_ct_ai_ind + strong_af:strong_ct_noai_ind" # nolint 
+    "af_ind + ct_ai_ind + ct_noai_ind + af:ct_ai_ind + af:ct_noai_ind + strong_af_ind + strong_ct_ai_ind + strong_ct_noai_ind + strong_af:strong_ct_ai_ind + strong_af:strong_ct_noai_ind" # nolint
   )
   form_list <- list()
   # Iterate over dependent variables
@@ -182,7 +193,16 @@ for (dep_var_out in dep_vars) { # nolint
       # run the regression as linear, but make an exception for pdb_submission
       if (dep_var %in% c(
         "num_publications", "num_pdb_submissions",
-        "ca_count", "patent_count", "patent_citation"
+        "ca_count", "patent_count", "patent_citation",
+        "num_uniprot_structures",
+        "num_primary_submissions",
+        "num_diseases",
+        "num_uniprot_structures_w_disease",
+        "num_primary_submissions_w_disease",
+        "num_uniprot_structures_w_rare_organisms",
+        "num_primary_submissions_w_rare_organisms",
+        "num_uniprot_structures_w_low_similarity",
+        "num_primary_submissions_w_low_similarity"
       )) {
         message("Running Poisson regression")
         results[[regression_label]] <- tryCatch(
@@ -190,7 +210,8 @@ for (dep_var_out in dep_vars) { # nolint
             fepois(
               form_list[[form]],
               data = local_data,
-              cluster = c("pi_id", "quarter_year")
+              cluster = c("pi_id", "quarter_year"),
+              control = list(maxit = 500)
             )
           },
           error = function(e) {

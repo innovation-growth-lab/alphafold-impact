@@ -408,44 +408,27 @@ def _get_pdb_activity(
         pandas.DataFrame: The updated data with additional PDB activity metrics.
 
     """
-    pdb_submissions["resolution"] = pd.to_numeric(
-        pdb_submissions["resolution"], errors="coerce"
-    )
-    pdb_submissions["R_free"] = pd.to_numeric(
-        pdb_submissions["R_free"], errors="coerce"
-    )
 
-    # extract from authorships every first item in the sublists
-    pdb_submissions["authors"] = pdb_submissions["authorships"].apply(
+    author_pdb_submissions = pdb_submissions.merge(
+        data[["id", "authorships"]], on="id", how="left"
+    )
+    author_pdb_submissions.dropna(subset=["authorships"], inplace=True)
+
+    author_pdb_submissions["authors"] = author_pdb_submissions["authorships"].apply(
         lambda x: [y[0] for y in x] if x is not None else []
     )
 
     # explode and drop id authors duplicates
-    pdb_submissions_e = pdb_submissions.explode("authors")
-    pdb_submissions_e.drop_duplicates(subset=["id", "authors"], inplace=True)
+    author_pdb_submissions = author_pdb_submissions.explode("authors")
+    author_pdb_submissions.drop_duplicates(subset=["id", "authors"], inplace=True)
 
-    # compute count, average resolution, and R_free per authors
+    # compute count per author
     pdb_submissions_grouped_count = (
-        pdb_submissions_e.groupby(["authors"])
+        author_pdb_submissions.groupby(["authors"])
         .agg(
             pdb_count=pd.NamedAgg(column="id", aggfunc="count"),
         )
         .reset_index()
-    )
-
-    # compute average resolution and R_free per authors
-    pdb_submissions_grouped_chars = (
-        pdb_submissions_e.groupby(["authors"])
-        .agg(
-            resolution=pd.NamedAgg(column="resolution", aggfunc="mean"),
-            R_free=pd.NamedAgg(column="R_free", aggfunc="mean"),
-        )
-        .reset_index()
-    )
-
-    # merge the two groupeds
-    pdb_submissions_grouped = pdb_submissions_grouped_count.merge(
-        pdb_submissions_grouped_chars, on="authors", how="left"
     )
 
     # keep last author from data authorships
@@ -463,21 +446,19 @@ def _get_pdb_activity(
 
     # merge with pdb_submissions_grouped
     data_e = data_e.merge(
-        pdb_submissions_grouped, left_on="authors", right_on="authors", how="left"
+        pdb_submissions_grouped_count, left_on="authors", right_on="authors", how="left"
     )
 
-    # group by "id", sum counts, average R_free and resolution
+    # group by "id", sum counts
     data_e_grouped = (
         data_e.groupby(["id"])
         .agg(
             pdb_count=pd.NamedAgg(column="pdb_count", aggfunc="sum"),
-            resolution=pd.NamedAgg(column="resolution", aggfunc="mean"),
-            R_free=pd.NamedAgg(column="R_free", aggfunc="mean"),
         )
         .reset_index()
     )
 
-    # relabel to add "group_" to pdb_count, resolution, and R_free
+    # relabel to add "group_" to pdb_count
     data_e_grouped.columns = [
         "group_" + col if col != "id" else col for col in data_e_grouped.columns
     ]
@@ -509,6 +490,8 @@ def _get_pdb_activity(
     )
     data["pdb_submission"] = data["_merge"] == "both"
     data = data.merge(data_e_grouped, on="id", how="left")
+
+    data.drop(columns=["_merge"], inplace=True)
 
     return data
 

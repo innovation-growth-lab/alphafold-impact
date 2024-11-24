@@ -44,6 +44,39 @@ table_info <- list(
   ),
   "num_publications" = list(
     file_name = "num_publications.tex"
+  ),
+  "num_uniprot_structures" = list(
+    file_name = "num_uniprot_structures.tex"
+  ),
+  "num_primary_submissions" = list(
+    file_name = "num_primary_submissions.tex"
+  ),
+  "organism_rarity_mean" = list(
+    file_name = "organism_rarity_mean.tex"
+  ),
+  "mean_tmscore" = list(
+    file_name = "mean_tmscore.tex"
+  ),
+  "num_uniprot_structures_w_disease" = list(
+    file_name = "num_uniprot_structures_w_disease.tex"
+  ),
+  "num_primary_submissions_w_disease" = list(
+    file_name = "num_primary_submissions_w_disease.tex"
+  ),
+  "num_uniprot_structures_w_rare_organisms" = list(
+    file_name = "num_uniprot_structures_w_rare_organisms.tex"
+  ),
+  "num_primary_submissions_w_rare_organisms" = list(
+    file_name = "num_primary_submissions_w_rare_organisms.tex"
+  ),
+  "num_uniprot_structures_w_low_similarity" = list(
+    file_name = "num_uniprot_structures_w_low_similarity.tex"
+  ),
+  "num_primary_submissions_w_low_similarity" = list(
+    file_name = "num_primary_submissions_w_low_similarity.tex"
+  ),
+  "num_diseases" = list(
+    file_name = "num_diseases.tex"
   )
 )
 
@@ -215,9 +248,6 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
         # Insert subgroup headers after row 6
         etable_lines <- append(etable_lines, subgroup_headers, after = 9)
         etable_lines <- append(etable_lines, subgroup_cmidrules, after = 10)
-
-        # drop lines 10-11
-        # etable_lines <- etable_lines[-c(12, 13, 14)]
 
         # add mean y row in 6th last row
         etable_lines <- append(

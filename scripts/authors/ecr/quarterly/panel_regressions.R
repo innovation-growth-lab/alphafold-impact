@@ -73,7 +73,18 @@ dep_vars <- c(
   "patent_count",
   "patent_citation",
   "num_pdb_submissions",
-  "ca_count"
+  "ca_count",
+  "num_uniprot_structures",
+  "num_primary_submissions",
+  "num_diseases",
+  "organism_rarity_mean",
+  "mean_tmscore",
+  "num_uniprot_structures_w_disease",
+  "num_primary_submissions_w_disease",
+  "num_uniprot_structures_w_rare_organisms",
+  "num_primary_submissions_w_rare_organisms",
+  "num_uniprot_structures_w_low_similarity",
+  "num_primary_submissions_w_low_similarity"
 )
 
 
@@ -184,14 +195,24 @@ for (dep_var_out in dep_vars) { # nolint
       # run the regression as linear, but make an exception for pdb_submission
       if (dep_var %in% c(
         "num_publications", "num_pdb_submissions",
-        "ca_count", "patent_count", "patent_citation"
+        "ca_count", "patent_count", "patent_citation",
+        "num_uniprot_structures",
+        "num_primary_submissions",
+        "num_diseases",
+        "num_uniprot_structures_w_disease",
+        "num_primary_submissions_w_disease",
+        "num_uniprot_structures_w_rare_organisms",
+        "num_primary_submissions_w_rare_organisms",
+        "num_uniprot_structures_w_low_similarity",
+        "num_primary_submissions_w_low_similarity"
       )) {
         results[[regression_label]] <- tryCatch(
           {
             fepois(
               form_list[[form]],
               data = local_data,
-              cluster = c("author", "quarter")
+              cluster = c("author", "quarter"),
+              control = list(maxit = 500)
             )
           },
           error = function(e) {
