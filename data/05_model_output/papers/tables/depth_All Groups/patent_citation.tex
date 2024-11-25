@@ -1,0 +1,87 @@
+\begingroup
+\centering
+\begin{tabular}{lcccccc}
+   \tabularnewline \midrule \midrule
+   Dependent Variable: & \multicolumn{6}{c}{patent\_citation}\\
+ & \multicolumn{3}{c}{All Fields} & \multicolumn{3}{c}{Molecular Biology} & \multicolumn{3}{c}{Medicine} \\
+\cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10}
+ & \multicolumn{1}{c}{All PDB} & \multicolumn{1}{c}{High PDB} & \multicolumn{1}{c}{CEM} & \multicolumn{1}{c}{All PDB} & \multicolumn{1}{c}{High PDB} & \multicolumn{1}{c}{CEM} & \multicolumn{1}{c}{All PDB} & \multicolumn{1}{c}{High PDB} & \multicolumn{1}{c}{CEM} \\
+\cmidrule(lr){1-1}\cmidrule(lr){2-2} \cmidrule(lr){3-3} \cmidrule(lr){4-4} \cmidrule(lr){5-5} \cmidrule(lr){6-6} \cmidrule(lr){7-7} \cmidrule(lr){8-8} \cmidrule(lr){9-9} \cmidrule(lr){10-10} \cmidrule(lr){3-3}
+   AlphaFold                             & 1.20$^{*}$    & 1.20$^{*}$    & 0.285         & 0.285         & 0.143         & 0.143\\   
+                                         & (0.695)       & (0.695)       & (1.87)        & (1.87)        & (1.01)        & (1.01)\\   
+   Counterfactual AI                     & -0.465        & -0.465        & -14.1         & -14.1         & -2.16$^{***}$ & -2.16$^{***}$\\   
+                                         & (0.644)       & (0.644)       & (162.8)       & (162.8)       & (0.836)       & (0.836)\\   
+   Counterfactual No AI                  & -0.265        & -0.265        & -66.2         & -66.2         & -0.167        & -0.167\\   
+                                         & (0.441)       & (0.441)       & (22,461.9)    & (22,461.9)    & (0.458)       & (0.458)\\   
+   institution\_typecompany              & 88.2          & 88.2          & 53.4          & 53.4          & -80.0         & -80.0\\   
+                                         & (21,560.4)    & (21,560.4)    & (23,716.8)    & (23,716.8)    & (101,728.7)   & (101,728.7)\\   
+   institution\_typeeducation            & 88.4          & 88.4          & 88.7          & 88.7          & -80.2         & -80.2\\   
+                                         & (21,560.4)    & (21,560.4)    & (25,853.6)    & (25,853.6)    & (101,728.8)   & (101,728.8)\\   
+   institution\_typefacility             & 89.2          & 89.2          & 33.2          & 33.2          & -79.9         & -79.9\\   
+                                         & (21,560.5)    & (21,560.5)    & (25,715.0)    & (25,715.0)    & (101,728.7)   & (101,728.7)\\   
+   institution\_typehealthcare           & 88.3          & 88.3          &               &               & -79.3         & -79.3\\   
+                                         & (21,560.4)    & (21,560.4)    &               &               & (101,728.7)   & (101,728.7)\\   
+   institution\_typenonprofit            & 88.4          & 88.4          & 69.9          & 69.9          & -80.5         & -80.5\\   
+                                         & (21,560.4)    & (21,560.4)    & (26,774.6)    & (26,774.6)    & (101,728.8)   & (101,728.8)\\   
+   institution\_typeother                & 87.5          & 87.5          &               &               & -80.3         & -80.3\\   
+                                         & (21,560.2)    & (21,560.2)    &               &               & (101,728.7)   & (101,728.7)\\   
+   institution\_typeunknown              & -40.6         & -40.6         & 36.3          & 36.3          & 368.5         & 368.5\\   
+                                         & (66,829.6)    & (66,829.6)    & (25,673.3)    & (25,673.3)    & (197,350.3)   & (197,350.3)\\   
+   institution\_cited\_by\_count2        & 2.56$^{***}$  & 2.56$^{***}$  & -76.7         & -76.7         & 1.83          & 1.83\\   
+                                         & (0.580)       & (0.580)       & (21,140.0)    & (21,140.0)    & (1.19)        & (1.19)\\   
+   institution\_cited\_by\_count3        & -11.2         & -11.2         &               &               & -233.1        & -233.1\\   
+                                         & (32.3)        & (32.3)        &               &               & (28,631.7)    & (28,631.7)\\   
+   institution\_cited\_by\_count4        & -9.91         & -9.91         & -55.3         & -55.3         & -245.6        & -245.6\\   
+                                         & (32.5)        & (32.5)        & (199.2)       & (199.2)       & (28,635.4)    & (28,635.4)\\   
+   institution\_h\_index2                & -3.58$^{***}$ & -3.58$^{***}$ & 37.6          & 37.6          & -2.17         & -2.17\\   
+                                         & (0.875)       & (0.875)       & (21,162.9)    & (21,162.9)    & (2.30)        & (2.30)\\   
+   institution\_h\_index3                & 23.8          & 23.8          & 29.6          & 29.6          & 246.0         & 246.0\\   
+                                         & (51.9)        & (51.9)        & (21,699.6)    & (21,699.6)    & (28,667.6)    & (28,667.6)\\   
+   institution\_h\_index4                & 22.6          & 22.6          &               &               & 259.0         & 259.0\\   
+                                         & (51.7)        & (51.7)        &               &               & (28,670.6)    & (28,670.6)\\   
+   institution\_i10\_index2              & -12.4         & -12.4         &               &               & -12.2         & -12.2\\   
+                                         & (23.2)        & (23.2)        &               &               & (20.2)        & (20.2)\\   
+   institution\_i10\_index3              & -13.2         & -13.2         &               &               & -13.9         & -13.9\\   
+                                         & (23.6)        & (23.6)        &               &               & (19.2)        & (19.2)\\   
+   institution\_i10\_index4              & -13.0         & -13.0         &               &               & -12.9         & -12.9\\   
+                                         & (23.4)        & (23.4)        &               &               & (19.4)        & (19.4)\\   
+   institution\_country\_codeAT          & -134.3        & -134.3        &               &               &               &   \\   
+                                         & (52,997.9)    & (52,997.9)    &               &               &               &   \\   
+   institution\_country\_codeCN          & -130.1        & -130.1        &               &               & 446.9         & 446.9\\   
+                                         & (53,023.4)    & (53,023.4)    &               &               & (96,107.6)    & (96,107.6)\\   
+   institution\_country\_codeDE          & -111.0        & -111.0        &               &               & 465.2         & 465.2\\   
+                                         & (52,997.5)    & (52,997.5)    &               &               & (96,089.1)    & (96,089.1)\\   
+   institution\_country\_codeFR          & -95.2         & -95.2         &               &               & 479.7         & 479.7\\   
+                                         & (53,034.7)    & (53,034.7)    &               &               & (96,107.4)    & (96,107.4)\\   
+   institution\_country\_codeGB          & -129.5        & -129.5        &               &               & 447.4         & 447.4\\   
+                                         & (53,023.0)    & (53,023.0)    &               &               & (96,107.4)    & (96,107.4)\\   
+   institution\_country\_codeIL          & -130.2        & -130.2        &               &               &               &   \\   
+                                         & (53,022.7)    & (53,022.7)    &               &               &               &   \\   
+   institution\_country\_codeIT          & -130.8        & -130.8        &               &               & 447.1         & 447.1\\   
+                                         & (53,023.3)    & (53,023.3)    &               &               & (96,107.4)    & (96,107.4)\\   
+   institution\_country\_codeSI          & -126.8        & -126.8        &               &               &               &   \\   
+                                         & (53,007.6)    & (53,007.6)    &               &               &               &   \\   
+   institution\_country\_codeUS          & -128.9        & -128.9        &               &               & 448.3         & 448.3\\   
+                                         & (53,022.9)    & (53,022.9)    &               &               & (96,107.4)    & (96,107.4)\\   
+   institution\_country\_codeZA          & -130.4        & -130.4        &               &               & 448.0         & 448.0\\   
+                                         & (53,023.1)    & (53,023.1)    &               &               & (96,107.5)    & (96,107.5)\\   
+   AlphaFold $\times$ Method             & -3.19$^{***}$ & -3.19$^{***}$ & 0.321         & 0.321         & -2.24$^{*}$   & -2.24$^{*}$\\   
+                                         & (1.03)        & (1.03)        & (1,962.7)     & (1,962.7)     & (1.22)        & (1.22)\\   
+   Counterfactual No AI $\times$ Method  & 0.300$^{*}$   & 0.300$^{*}$   & -2.12$^{***}$ & -2.12$^{***}$ & 0.322$^{*}$   & 0.322$^{*}$\\   
+                                         & (0.162)       & (0.162)       & (0.510)       & (0.510)       & (0.174)       & (0.174)\\   
+   institution\_typegovernment           &               &               & 22.3          & 22.3          &               &   \\   
+                                         &               &               & (22,696.9)    & (22,696.9)    &               &   \\   
+   \midrule
+   \emph{Fixed-effects}\\
+   author                                & Yes           & Yes           & Yes           & Yes           & Yes           & Yes\\  
+   quarter\_year                         & Yes           & Yes           & Yes           & Yes           & Yes           & Yes\\  
+   \midrule
+   \emph{Fit statistics}\\
+   Convergence                           &TRUE           & TRUE          & FALSE         & FALSE         & TRUE          & TRUE\\  
+   Observations                          & 1,198         & 1,198         & 292           & 292           & 676           & 676\\  
+Mean(Dep. Var.) & 5.050 & 5.050 & 3.301 & 3.301 & 6.806 & 6.806 \\
+   \midrule \midrule
+   \multicolumn{7}{l}{\emph{Clustered (author \& quarter\_year) standard-errors in parentheses}}\\
+   \multicolumn{7}{l}{\emph{Signif. Codes: ***: 0.01, **: 0.05, *: 0.1}}\\
+\end{tabular}
+\par\endgroup

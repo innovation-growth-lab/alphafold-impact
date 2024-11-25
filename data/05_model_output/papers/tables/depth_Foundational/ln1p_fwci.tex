@@ -1,38 +1,171 @@
 \begingroup
 \centering
-\begin{tabular}{lccccccccc}
+\begin{tabular}{lcccccc}
    \tabularnewline \midrule \midrule
-   Dependent Variable: & \multicolumn{9}{c}{ln1p\_fwci}\\
- & \multicolumn{6}{c}{All Fields} & \multicolumn{6}{c}{Molecular Biology} & \multicolumn{6}{c}{Medicine} \\
-\cmidrule(lr){2-7} \cmidrule(lr){8-13} \cmidrule(lr){14-19}
- & \multicolumn{2}{c}{All PDB} & \multicolumn{2}{c}{High PDB} & \multicolumn{2}{c}{CEM} & \multicolumn{2}{c}{All PDB} & \multicolumn{2}{c}{High PDB} & \multicolumn{2}{c}{CEM} & \multicolumn{2}{c}{All PDB} & \multicolumn{2}{c}{High PDB} & \multicolumn{2}{c}{CEM} \\
-\cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7} \cmidrule(lr){8-9} \cmidrule(lr){10-11} \cmidrule(lr){12-13} \cmidrule(lr){14-15} \cmidrule(lr){16-17} \cmidrule(lr){18-19}
-Variables & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} & \multicolumn{1}{c}{Extensive} & \multicolumn{1}{c}{Intensive} \\
-\cmidrule(lr){1-1}\cmidrule(lr){2-2} \cmidrule(lr){3-3} \cmidrule(lr){4-4} \cmidrule(lr){5-5} \cmidrule(lr){6-6} \cmidrule(lr){7-7} \cmidrule(lr){8-8} \cmidrule(lr){9-9} \cmidrule(lr){10-10} \cmidrule(lr){11-11} \cmidrule(lr){12-12} \cmidrule(lr){13-13} \cmidrule(lr){14-14} \cmidrule(lr){15-15} \cmidrule(lr){16-16} \cmidrule(lr){17-17} \cmidrule(lr){18-18} \cmidrule(lr){19-19}
-   AlphaFold                              &     &     & 0.015         &     &     & 0.015         &     &     & 0.015\\   
-                                          &     &     & (0.019)       &     &     & (0.019)       &     &     & (0.019)\\   
-   Counterfactual AI                      &     &     & 0.058$^{***}$ &     &     & 0.058$^{***}$ &     &     & 0.058$^{***}$\\   
-                                          &     &     & (0.013)       &     &     & (0.013)       &     &     & (0.013)\\   
-   Counterfactual No AI                   &     &     & 0.108$^{***}$ &     &     & 0.108$^{***}$ &     &     & 0.108$^{***}$\\   
-                                          &     &     & (0.022)       &     &     & (0.022)       &     &     & (0.022)\\   
-   AlphaFold $\times$ strong1             &     &     & 0.118$^{***}$ &     &     & 0.118$^{***}$ &     &     & 0.118$^{***}$\\   
-                                          &     &     & (0.018)       &     &     & (0.018)       &     &     & (0.018)\\   
-   Counterfactual AI $\times$ strong1     &     &     & 0.021         &     &     & 0.021         &     &     & 0.021\\   
-                                          &     &     & (0.031)       &     &     & (0.031)       &     &     & (0.031)\\   
-   Counterfactual No AI $\times$ strong1  &     &     & 0.070$^{***}$ &     &     & 0.070$^{***}$ &     &     & 0.070$^{***}$\\   
-                                          &     &     & (0.024)       &     &     & (0.024)       &     &     & (0.024)\\   
+   Dependent Variable: & \multicolumn{6}{c}{ln1p\_fwci}\\
+ & \multicolumn{3}{c}{All Fields} & \multicolumn{3}{c}{Molecular Biology} & \multicolumn{3}{c}{Medicine} \\
+\cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10}
+ & \multicolumn{1}{c}{All PDB} & \multicolumn{1}{c}{High PDB} & \multicolumn{1}{c}{CEM} & \multicolumn{1}{c}{All PDB} & \multicolumn{1}{c}{High PDB} & \multicolumn{1}{c}{CEM} & \multicolumn{1}{c}{All PDB} & \multicolumn{1}{c}{High PDB} & \multicolumn{1}{c}{CEM} \\
+\cmidrule(lr){1-1}\cmidrule(lr){2-2} \cmidrule(lr){3-3} \cmidrule(lr){4-4} \cmidrule(lr){5-5} \cmidrule(lr){6-6} \cmidrule(lr){7-7} \cmidrule(lr){8-8} \cmidrule(lr){9-9} \cmidrule(lr){10-10} \cmidrule(lr){3-3}
+   AlphaFold                             & 0.340$^{***}$ & 0.340$^{***}$ & 0.349$^{**}$  & 0.349$^{**}$  & 0.815$^{***}$ & 0.815$^{***}$\\   
+                                         & (0.095)       & (0.095)       & (0.147)       & (0.147)       & (0.210)       & (0.210)\\   
+   Counterfactual AI                     & 0.283$^{***}$ & 0.283$^{***}$ & 0.295$^{**}$  & 0.295$^{**}$  & 0.713$^{**}$  & 0.713$^{**}$\\   
+                                         & (0.091)       & (0.091)       & (0.138)       & (0.138)       & (0.308)       & (0.308)\\   
+   Counterfactual No AI                  & 0.315$^{***}$ & 0.315$^{***}$ & 0.349$^{**}$  & 0.349$^{**}$  & 0.526$^{***}$ & 0.526$^{***}$\\   
+                                         & (0.094)       & (0.094)       & (0.149)       & (0.149)       & (0.176)       & (0.176)\\   
+   institution\_typecompany              & -0.300        & -0.300        & -0.367        & -0.367        & -1.59         & -1.59\\   
+                                         & (88,985.6)    & (88,985.6)    & (31,228.1)    & (31,228.1)    & (90,399.4)    & (90,399.4)\\   
+   institution\_typeeducation            & 0.163         & 0.163         & 1.03          & 1.03          & -2.50         & -2.50\\   
+                                         & (88,985.6)    & (88,985.6)    & (32,716.3)    & (32,716.3)    & (90,399.4)    & (90,399.4)\\   
+   institution\_typefacility             & 0.032         & 0.032         & 0.832         & 0.832         & -2.53         & -2.53\\   
+                                         & (88,985.6)    & (88,985.6)    & (32,716.3)    & (32,716.3)    & (90,399.5)    & (90,399.5)\\   
+   institution\_typegovernment           & 0.159         & 0.159         & 0.990         & 0.990         & -3.21         & -3.21\\   
+                                         & (88,985.6)    & (88,985.6)    & (32,716.3)    & (32,716.3)    & (90,399.6)    & (90,399.6)\\   
+   institution\_typehealthcare           & 0.284         & 0.284         & 1.12          & 1.12          & -1.92         & -1.92\\   
+                                         & (88,985.6)    & (88,985.6)    & (32,716.3)    & (32,716.3)    & (90,399.3)    & (90,399.3)\\   
+   institution\_typenonprofit            & 0.063         & 0.063         & 0.917         & 0.917         & -2.37         & -2.37\\   
+                                         & (88,985.6)    & (88,985.6)    & (32,716.3)    & (32,716.3)    & (90,399.4)    & (90,399.4)\\   
+   institution\_typeother                & -0.521        & -0.521        & 0.844         & 0.844         & 4.08          & 4.08\\   
+                                         & (88,985.6)    & (88,985.6)    & (32,716.2)    & (32,716.2)    & (105,957.1)   & (105,957.1)\\   
+   institution\_typeunknown              & -0.246        & -0.246        & 0.876         & 0.876         & -3.70         & -3.70\\   
+                                         & (90,128.2)    & (90,128.2)    & (32,716.2)    & (32,716.2)    & (90,399.3)    & (90,399.3)\\   
+   institution\_cited\_by\_count2        & -0.477$^{*}$  & -0.477$^{*}$  & -0.244        & -0.244        & 2.30$^{***}$  & 2.30$^{***}$\\   
+                                         & (0.237)       & (0.237)       & (0.468)       & (0.468)       & (0.823)       & (0.823)\\   
+   institution\_cited\_by\_count3        & -0.353        & -0.353        & 0.054         & 0.054         & 6.46$^{***}$  & 6.46$^{***}$\\   
+                                         & (0.294)       & (0.294)       & (0.508)       & (0.508)       & (0.922)       & (0.922)\\   
+   institution\_cited\_by\_count4        & 0.004         & 0.004         & 0.625         & 0.625         & 6.89$^{***}$  & 6.89$^{***}$\\   
+                                         & (0.349)       & (0.349)       & (0.675)       & (0.675)       & (0.850)       & (0.850)\\   
+   institution\_h\_index2                & 0.151         & 0.151         & 0.115         & 0.115         & -2.08$^{**}$  & -2.08$^{**}$\\   
+                                         & (0.183)       & (0.183)       & (0.304)       & (0.304)       & (0.911)       & (0.911)\\   
+   institution\_h\_index3                & 0.103         & 0.103         & -0.422        & -0.422        & -3.76$^{***}$ & -3.76$^{***}$\\   
+                                         & (0.311)       & (0.311)       & (0.407)       & (0.407)       & (0.586)       & (0.586)\\   
+   institution\_h\_index4                & 0.060         & 0.060         & -0.802$^{*}$  & -0.802$^{*}$  & -3.19$^{***}$ & -3.19$^{***}$\\   
+                                         & (0.354)       & (0.354)       & (0.450)       & (0.450)       & (0.847)       & (0.847)\\   
+   institution\_i10\_index2              & 0.066         & 0.066         & 0.144         & 0.144         & 0.253         & 0.253\\   
+                                         & (0.163)       & (0.163)       & (0.454)       & (0.454)       & (0.472)       & (0.472)\\   
+   institution\_i10\_index3              & -0.110        & -0.110        & 0.024         & 0.024         & -4.03$^{***}$ & -4.03$^{***}$\\   
+                                         & (0.188)       & (0.188)       & (0.496)       & (0.496)       & (0.794)       & (0.794)\\   
+   institution\_i10\_index4              & -0.188        & -0.188        & 0.081         & 0.081         & -2.60$^{**}$  & -2.60$^{**}$\\   
+                                         & (0.302)       & (0.302)       & (0.613)       & (0.613)       & (1.06)        & (1.06)\\   
+   institution\_country\_codeAR          & -0.601        & -0.601        & -0.154        & -0.154        & 0.486         & 0.486\\   
+                                         & (10,627.9)    & (10,627.9)    & (147,398.0)   & (147,398.0)   & (29,241.8)    & (29,241.8)\\   
+   institution\_country\_codeAT          & -1.57         & -1.57         &               &               &               &   \\   
+                                         & (10,627.9)    & (10,627.9)    &               &               &               &   \\   
+   institution\_country\_codeAU          & -0.360        & -0.360        & -0.212        & -0.212        &               &   \\   
+                                         & (10,627.9)    & (10,627.9)    & (0.266)       & (0.266)       &               &   \\   
+   institution\_country\_codeBE          & -0.018        & -0.018        & 0.452         & 0.452         &               &   \\   
+                                         & (10,627.9)    & (10,627.9)    & (0.319)       & (0.319)       &               &   \\   
+   institution\_country\_codeBG          & -0.457        & -0.457        & 0.263         & 0.263         &               &   \\   
+                                         & (10,627.9)    & (10,627.9)    & (0.284)       & (0.284)       &               &   \\   
+   institution\_country\_codeBH          & -0.165        & -0.165        &               &               &               &   \\   
+                                         & (81,620.0)    & (81,620.0)    &               &               &               &   \\   
+   institution\_country\_codeBR          & -0.723        & -0.723        & -0.579$^{**}$ & -0.579$^{**}$ &               &   \\   
+                                         & (10,627.9)    & (10,627.9)    & (0.271)       & (0.271)       &               &   \\   
+   institution\_country\_codeCA          & -0.366        & -0.366        & 0.255         & 0.255         &               &   \\   
+                                         & (10,627.9)    & (10,627.9)    & (0.258)       & (0.258)       &               &   \\   
+   institution\_country\_codeCH          & 0.958         & 0.958         & 0.630$^{*}$   & 0.630$^{*}$   &               &   \\   
+                                         & (10,627.9)    & (10,627.9)    & (0.331)       & (0.331)       &               &   \\   
+   institution\_country\_codeCL          & -1.44         & -1.44         &               &               &               &   \\   
+                                         & (81,085.1)    & (81,085.1)    &               &               &               &   \\   
+   institution\_country\_codeCM          & -0.334        & -0.334        &               &               &               &   \\   
+                                         & (91,812.2)    & (91,812.2)    &               &               &               &   \\   
+   institution\_country\_codeCN          & -0.306        & -0.306        & -0.167        & -0.167        & -2.16$^{**}$  & -2.16$^{**}$\\   
+                                         & (10,627.9)    & (10,627.9)    & (0.243)       & (0.243)       & (0.815)       & (0.815)\\   
+   institution\_country\_codeCZ          & -0.563        & -0.563        & -0.220        & -0.220        & 0.171         & 0.171\\   
+                                         & (10,627.9)    & (10,627.9)    & (0.287)       & (0.287)       & (25,584.9)    & (25,584.9)\\   
+   institution\_country\_codeDE          & 0.201         & 0.201         & 0.220         & 0.220         &               &   \\   
+                                         & (10,627.9)    & (10,627.9)    & (0.263)       & (0.263)       &               &   \\   
+   institution\_country\_codeDK          & -0.129        & -0.129        & 0.237         & 0.237         &               &   \\   
+                                         & (10,627.8)    & (10,627.8)    & (0.369)       & (0.369)       &               &   \\   
+   institution\_country\_codeDZ          & 0.967         & 0.967         &               &               &               &   \\   
+                                         & (137,362.7)   & (137,362.7)   &               &               &               &   \\   
+   institution\_country\_codeEG          & 0.095         & 0.095         & 0.051         & 0.051         &               &   \\   
+                                         & (62,245.1)    & (62,245.1)    & (35,983.4)    & (35,983.4)    &               &   \\   
+   institution\_country\_codeES          & -0.220        & -0.220        & -0.276        & -0.276        &               &   \\   
+                                         & (10,627.9)    & (10,627.9)    & (0.326)       & (0.326)       &               &   \\   
+   institution\_country\_codeET          & 0.799         & 0.799         &               &               &               &   \\   
+                                         & (59,905.0)    & (59,905.0)    &               &               &               &   \\   
+   institution\_country\_codeFI          & -0.333        & -0.333        & 0.081         & 0.081         &               &   \\   
+                                         & (10,627.8)    & (10,627.8)    & (94,236.4)    & (94,236.4)    &               &   \\   
+   institution\_country\_codeFR          & -0.399        & -0.399        & -0.412$^{*}$  & -0.412$^{*}$  & -0.933        & -0.933\\   
+                                         & (10,627.9)    & (10,627.9)    & (0.230)       & (0.230)       & (0.892)       & (0.892)\\   
+   institution\_country\_codeGB          & -0.088        & -0.088        & 0.165         & 0.165         & -2.42$^{***}$ & -2.42$^{***}$\\   
+                                         & (10,627.8)    & (10,627.8)    & (0.290)       & (0.290)       & (0.579)       & (0.579)\\   
+   institution\_country\_codeGR          & -0.085        & -0.085        & 0.336         & 0.336         &               &   \\   
+                                         & (10,627.9)    & (10,627.9)    & (0.281)       & (0.281)       &               &   \\   
+   institution\_country\_codeHU          & 0.604         & 0.604         & 0.483$^{***}$ & 0.483$^{***}$ &               &   \\   
+                                         & (10,627.9)    & (10,627.9)    & (0.153)       & (0.153)       &               &   \\   
+   institution\_country\_codeIL          & 0.488         & 0.488         & -1.42         & -1.42         &               &   \\   
+                                         & (10,627.9)    & (10,627.9)    & (75,194.4)    & (75,194.4)    &               &   \\   
+   institution\_country\_codeIN          & -0.427        & -0.427        & -0.761        & -0.761        & -1.65$^{**}$  & -1.65$^{**}$\\   
+                                         & (10,627.9)    & (10,627.9)    & (0.462)       & (0.462)       & (0.716)       & (0.716)\\   
+   institution\_country\_codeIR          & 0.193         & 0.193         & -0.087        & -0.087        &               &   \\   
+                                         & (10,627.9)    & (10,627.9)    & (0.221)       & (0.221)       &               &   \\   
+   institution\_country\_codeIS          & 0.077         & 0.077         &               &               &               &   \\   
+                                         & (14,148.1)    & (14,148.1)    &               &               &               &   \\   
+   institution\_country\_codeIT          & -0.212        & -0.212        & 0.018         & 0.018         &               &   \\   
+                                         & (10,627.9)    & (10,627.9)    & (0.290)       & (0.290)       &               &   \\   
+   institution\_country\_codeJP          & 0.144         & 0.144         & 0.545$^{**}$  & 0.545$^{**}$  &               &   \\   
+                                         & (10,627.9)    & (10,627.9)    & (0.260)       & (0.260)       &               &   \\   
+   institution\_country\_codeKE          & 0.140         & 0.140         &               &               &               &   \\   
+                                         & (62,552.2)    & (62,552.2)    &               &               &               &   \\   
+   institution\_country\_codeKR          & 0.312         & 0.312         &               &               &               &   \\   
+                                         & (10,627.9)    & (10,627.9)    &               &               &               &   \\   
+   institution\_country\_codeLV          & -0.021        & -0.021        &               &               &               &   \\   
+                                         & (10,628.0)    & (10,628.0)    &               &               &               &   \\   
+   institution\_country\_codeMX          & -0.337        & -0.337        &               &               &               &   \\   
+                                         & (10,627.9)    & (10,627.9)    &               &               &               &   \\   
+   institution\_country\_codeNL          & -0.392        & -0.392        & -0.091        & -0.091        &               &   \\   
+                                         & (10,627.9)    & (10,627.9)    & (0.336)       & (0.336)       &               &   \\   
+   institution\_country\_codeNO          & -0.315        & -0.315        & 0.160         & 0.160         & -3.12$^{***}$ & -3.12$^{***}$\\   
+                                         & (10,627.8)    & (10,627.8)    & (0.214)       & (0.214)       & (0.556)       & (0.556)\\   
+   institution\_country\_codeNP          & 0.385         & 0.385         &               &               &               &   \\   
+                                         & (36,872.2)    & (36,872.2)    &               &               &               &   \\   
+   institution\_country\_codeNZ          & -0.408        & -0.408        & -0.293        & -0.293        &               &   \\   
+                                         & (10,627.8)    & (10,627.8)    & (0.428)       & (0.428)       &               &   \\   
+   institution\_country\_codePK          & -0.568        & -0.568        & -0.424        & -0.424        &               &   \\   
+                                         & (10,627.9)    & (10,627.9)    & (0.361)       & (0.361)       &               &   \\   
+   institution\_country\_codePT          & 0.713         & 0.713         &               &               &               &   \\   
+                                         & (10,627.9)    & (10,627.9)    &               &               &               &   \\   
+   institution\_country\_codeRU          & -0.432        & -0.432        & -0.467        & -0.467        &               &   \\   
+                                         & (10,627.9)    & (10,627.9)    & (0.302)       & (0.302)       &               &   \\   
+   institution\_country\_codeSA          & 0.106         & 0.106         & 0.376         & 0.376         &               &   \\   
+                                         & (10,627.9)    & (10,627.9)    & (0.250)       & (0.250)       &               &   \\   
+   institution\_country\_codeSE          & -0.681        & -0.681        &               &               &               &   \\   
+                                         & (10,627.9)    & (10,627.9)    &               &               &               &   \\   
+   institution\_country\_codeSG          & 0.235         & 0.235         & 0.557         & 0.557         &               &   \\   
+                                         & (10,627.8)    & (10,627.8)    & (0.338)       & (0.338)       &               &   \\   
+   institution\_country\_codeSI          & 0.057         & 0.057         &               &               &               &   \\   
+                                         & (10,627.9)    & (10,627.9)    &               &               &               &   \\   
+   institution\_country\_codeTW          & -0.323        & -0.323        &               &               & -1.08         & -1.08\\   
+                                         & (10,628.1)    & (10,628.1)    &               &               & (0.911)       & (0.911)\\   
+   institution\_country\_codeUA          & 0.800         & 0.800         & 0.261         & 0.261         &               &   \\   
+                                         & (10,627.8)    & (10,627.8)    & (39,343.3)    & (39,343.3)    &               &   \\   
+   institution\_country\_codeUS          & -0.274        & -0.274        &               &               & -2.51$^{***}$ & -2.51$^{***}$\\   
+                                         & (10,627.9)    & (10,627.9)    &               &               & (0.543)       & (0.543)\\   
+   institution\_country\_codeVN          & 1.85          & 1.85          &               &               &               &   \\   
+                                         & (10,627.9)    & (10,627.9)    &               &               &               &   \\   
+   AlphaFold $\times$ Method             & 0.043         & 0.043         & 0.083         & 0.083         & 0.017         & 0.017\\   
+                                         & (0.041)       & (0.041)       & (0.053)       & (0.053)       & (0.116)       & (0.116)\\   
+   Counterfactual AI $\times$ Method     & 0.078         & 0.078         & -0.008        & -0.008        & -0.330        & -0.330\\   
+                                         & (0.072)       & (0.072)       & (0.150)       & (0.150)       & (0.349)       & (0.349)\\   
+   Counterfactual No AI $\times$ Method  & 0.038         & 0.038         & 0.187$^{*}$   & 0.187$^{*}$   & -0.203        & -0.203\\   
+                                         & (0.073)       & (0.073)       & (0.106)       & (0.106)       & (0.171)       & (0.171)\\   
+   institution\_country\_codeLK          &               &               & -0.363        & -0.363        &               &   \\   
+                                         &               &               & (47,376.3)    & (47,376.3)    &               &   \\   
+   institution\_country\_codeMA          &               &               &               &               & 1.20          & 1.20\\   
+                                         &               &               &               &               & (34,963.1)    & (34,963.1)\\   
    \midrule
    \emph{Fixed-effects}\\
-   quarter\_year                          &     &     & Yes           &     &     & Yes           &     &     & Yes\\  
-   institution                            &     &     & Yes           &     &     & Yes           &     &     & Yes\\  
-   institution\_type                      &     &     & Yes           &     &     & Yes           &     &     & Yes\\  
-   institution\_country\_code             &     &     & Yes           &     &     & Yes           &     &     & Yes\\  
+   author                                & Yes           & Yes           & Yes           & Yes           & Yes           & Yes\\  
+   quarter\_year                         & Yes           & Yes           & Yes           & Yes           & Yes           & Yes\\  
    \midrule
    \emph{Fit statistics}\\
-   Observations                           & 2   & 2   & 70,606        & 2   & 2   & 70,606        & 2   & 2   & 70,606\\  
-Mean(Dep. Var.) & 0.500 & 0.500 & 0.891 & 0.500 & 0.500 & 0.891 & 0.500 & 0.500 & 0.891 \\
-   R$^2$                                  &     &     & 0.18          &     &     & 0.18          &     &     & 0.18\\  
+   Observations                          & 16,422        & 16,422        & 8,206         & 8,206         & 2,921         & 2,921\\  
+   R$^2$                                 & 0.87          & 0.87          & 0.88          & 0.88          & 0.96          & 0.96\\  
+Mean(Dep. Var.) & 0.806 & 0.806 & 0.742 & 0.742 & 0.913 & 0.913 \\
    \midrule \midrule
-   \multicolumn{10}{l}{\emph{Signif. Codes: ***: 0.01, **: 0.05, *: 0.1}}\\
+   \multicolumn{7}{l}{\emph{Clustered (author \& quarter\_year) standard-errors in parentheses}}\\
+   \multicolumn{7}{l}{\emph{Signif. Codes: ***: 0.01, **: 0.05, *: 0.1}}\\
 \end{tabular}
 \par\endgroup
