@@ -173,7 +173,6 @@ nonecr_data <- nonecr_data %>%
       percentile_value /
         (1 - percentile_value)
     ),
-    num_pdb_submissions = num_publications_pdb,
     ln1p_ca_count = log1p(ca_count),
     ln1p_patent_count = log1p(patent_count),
     ln1p_patent_citation = log1p(patent_citation),
@@ -248,7 +247,7 @@ nonecr_data <- nonecr_data %>%
     "ca_count",
     "ln1p_resolution",
     "ln1p_R_free",
-    "num_pdb_submissions",
+    "num_pdb_ids",
     "af_ind",
     "ct_ai_ind",
     "ct_noai_ind",
@@ -265,7 +264,7 @@ nonecr_data <- nonecr_data %>%
     "primary_field",
     "high_pdb",
     "covid_share_2020",
-    grep("^field_", names(quarterly_lab_data), value = TRUE),
+    grep("^field_", names(nonecr_data), value = TRUE),
     "num_uniprot_structures",
     "num_pdb_ids",
     "num_primary_submissions",

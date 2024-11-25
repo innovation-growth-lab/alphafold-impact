@@ -1,7 +1,7 @@
 # Clean out the workspace
 rm(list = ls())
 options(max.print = 1000)
-options(width = 1000)
+options(width = 300)
 
 # Check installation & load required packages
 list_of_packages <- c(
@@ -156,32 +156,32 @@ ecr_data <- ecr_data %>%
     )
   )
 
-# create factors, log transforms, other variablesecr_data <- ecr_data %>%
-mutate(
-  author = as.factor(author),
-  author_position = as.factor(author_position),
-  depth = as.factor(depth),
-  institution = as.factor(institution),
-  institution_type = as.factor(institution_type),
-  institution_country_code = as.factor(institution_country_code),
-  ln1p_cited_by_count = log1p(cited_by_count),
-  ln1p_fwci = log1p(fwci),
-  ln1p_cit_0 = log1p(cit_0),
-  ln1p_cit_1 = log1p(cit_1),
-  ln1p_cit_norm_perc = log1p(percentile_value),
-  logit_cit_norm_perc = log(
-    percentile_value /
-      (1 - percentile_value)
-  ),
-  num_pdb_submissions = num_publications_pdb,
-  ln1p_ca_count = log1p(ca_count),
-  ln1p_patent_count = log1p(patent_count),
-  ln1p_patent_citation = log1p(patent_citation),
-  primary_field = as.factor(primary_field),
-  ln1p_resolution = log1p(as.numeric(resolution_mean)),
-  ln1p_R_free = log1p(as.numeric(R_free_mean)),
-  ln1p_score = log1p(as.numeric(score_mean))
-)
+# create factors, log transforms, other variables
+ecr_data <- ecr_data %>%
+  mutate(
+    author = as.factor(author),
+    author_position = as.factor(author_position),
+    depth = as.factor(depth),
+    institution = as.factor(institution),
+    institution_type = as.factor(institution_type),
+    institution_country_code = as.factor(institution_country_code),
+    ln1p_cited_by_count = log1p(cited_by_count),
+    ln1p_fwci = log1p(fwci),
+    ln1p_cit_0 = log1p(cit_0),
+    ln1p_cit_1 = log1p(cit_1),
+    ln1p_cit_norm_perc = log1p(percentile_value),
+    logit_cit_norm_perc = log(
+      percentile_value /
+        (1 - percentile_value)
+    ),
+    ln1p_ca_count = log1p(ca_count),
+    ln1p_patent_count = log1p(patent_count),
+    ln1p_patent_citation = log1p(patent_citation),
+    primary_field = as.factor(primary_field),
+    ln1p_resolution = log1p(as.numeric(resolution_mean)),
+    ln1p_R_free = log1p(as.numeric(R_free_mean)),
+    ln1p_score = log1p(as.numeric(score_mean))
+  )
 # Define the mapping of old values to new values
 field_mapping <- c(
   "Biochemistry, Genetics and Molecular Biology" = "Molecular Biology"
@@ -248,7 +248,7 @@ ecr_data <- ecr_data %>%
     "ca_count",
     "ln1p_resolution",
     "ln1p_R_free",
-    "num_pdb_submissions",
+    "num_pdb_ids",
     "af_ind",
     "ct_ai_ind",
     "ct_noai_ind",

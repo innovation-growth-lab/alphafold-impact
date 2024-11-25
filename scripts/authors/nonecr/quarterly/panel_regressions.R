@@ -63,16 +63,16 @@ fes[["fe1"]] <- c("author", "quarter")
 cov_sets <- c("base0")
 fe_list <- c("fe1")
 dep_vars <- c(
-  "num_publications",
-  "ln1p_cited_by_count",
-  "ln1p_cit_0",
-  "ln1p_cit_1",
-  "ln1p_fwci",
+  # "num_publications",
+  # "ln1p_cited_by_count",
+  # "ln1p_cit_0",
+  # "ln1p_cit_1",
+  # "ln1p_fwci",
   "ln1p_resolution",
   "ln1p_R_free",
-  "patent_count",
-  "patent_citation",
-  "num_pdb_submissions",
+  # "patent_count",
+  # "patent_citation",
+  "num_pdb_ids",
   "ca_count",
   "num_uniprot_structures",
   "num_primary_submissions",
@@ -193,7 +193,7 @@ for (dep_var_out in dep_vars) { # nolint
       # so actually once you drop enough, you can get a rough 25% increase, similar to the linear reg. #nolint
       # the main thing is, using ln is odd because it assumes continuous variables and far from zero values
       if (dep_var %in% c(
-        "num_publications", "num_pdb_submissions",
+        "num_publications", "num_pdb_ids",
         "ca_count", "patent_count", "patent_citation",
         "num_uniprot_structures",
         "num_primary_submissions",

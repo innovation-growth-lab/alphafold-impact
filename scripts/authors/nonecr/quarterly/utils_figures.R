@@ -102,7 +102,7 @@ dep_var_labels <- c(
   "ca_count" = "Clinical article citation count",
   "ln1p_resolution" = "ln (1 + Resolution)",
   "ln1p_R_free" = "ln (1 + R-free)",
-  "num_pdb_submissions" = "PDB submissions",
+  "num_pdb_ids" = "PDB submissions",
   "num_publications" = "Publications",
   "num_uniprot_structures" = "Uniprot structures",
   "num_primary_submissions" = "Primary submissions",

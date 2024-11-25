@@ -72,7 +72,7 @@ dep_vars <- c(
   "num_publications",
   "patent_count",
   "patent_citation",
-  "num_pdb_submissions",
+  "num_pdb_ids",
   "ca_count",
   "num_uniprot_structures",
   "num_primary_submissions",
@@ -194,7 +194,7 @@ for (dep_var_out in dep_vars) { # nolint
 
       # run the regression as linear, but make an exception for pdb_submission
       if (dep_var %in% c(
-        "num_publications", "num_pdb_submissions",
+        "num_publications", "num_pdb_ids",
         "ca_count", "patent_count", "patent_citation",
         "num_uniprot_structures",
         "num_primary_submissions",
