@@ -1,0 +1,42 @@
+\begingroup
+\centering
+\begin{tabular}{lcccccc}
+   \tabularnewline \midrule \midrule
+   Dependent Variable: & \multicolumn{6}{c}{num\_primary\_submissions\_w\_disease}\\
+ & \multicolumn{2}{c}{All Fields} & \multicolumn{2}{c}{Molecular Biology} & \multicolumn{2}{c}{Medicine} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7}
+ & \multicolumn{2}{c}{CEM Authors} & \multicolumn{2}{c}{CEM Authors} & \multicolumn{2}{c}{CEM Authors} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7}
+ & \multicolumn{1}{c}{All PDB} & \multicolumn{1}{c}{High PDB} & \multicolumn{1}{c}{All PDB} & \multicolumn{1}{c}{High PDB} & \multicolumn{1}{c}{All PDB} & \multicolumn{1}{c}{High PDB} \\
+\cmidrule(lr){2-2} \cmidrule(lr){3-3} \cmidrule(lr){4-4} \cmidrule(lr){5-5} \cmidrule(lr){6-6} \cmidrule(lr){7-7}
+   Model:                        & (1)           & (2)  & (3)          & (4)  & (5)  & (6)\\  
+                                 &  Poisson      & OLS  & Poisson      & OLS  & OLS  & OLS\\  
+   \midrule
+   \emph{Variables}\\
+   AlphaFold                     & -57.1$^{*}$   &      &              &      &      &   \\   
+                                 & (32.3)        &      &              &      &      &   \\   
+   Counterfactual AI             & 27.9          &      &              &      &      &   \\   
+                                 & (17.3)        &      &              &      &      &   \\   
+   Counterfactual No AI          & -95.0$^{***}$ &      &              &      &      &   \\   
+                                 & (25.9)        &      &              &      &      &   \\   
+   AlphaFold - Method            & 6.47          &      & 21.6$^{***}$ &      &      &   \\   
+                                 & (8.90)        &      & (1.50)       &      &      &   \\   
+   Counterfactual AI - Method    & 69.4$^{***}$  &      &              &      &      &   \\   
+                                 & (18.6)        &      &              &      &      &   \\   
+   Counterfactual No AI - Method & 64.1$^{***}$  &      &              &      &      &   \\   
+                                 & (24.5)        &      &              &      &      &   \\   
+   \midrule
+   \emph{Fixed-effects}\\
+   author                        & Yes           &      & Yes          &      &      & \\  
+   quarter                       & Yes           &      & Yes          &      &      & \\  
+   \midrule
+   \emph{Fit statistics}\\
+   Convergence                   &FALSE          & TRUE & FALSE        & TRUE & TRUE & TRUE\\  
+   Observations                  & 36            & 2    & 15           & 2    & 2    & 2\\  
+   Pseudo R$^2$                  & 0.77          &      & 0.68         &      &      & \\  
+Mean(Dep. Var.) & 2.056 & 0.500 & 2.400 & 0.500 & 0.500 & 0.500 \\
+   Squared Correlation           & 1.0           &      & 1            &      &      & \\  
+   \midrule \midrule
+   \multicolumn{7}{l}{\emph{Signif. Codes: ***: 0.01, **: 0.05, *: 0.1}}\\
+\end{tabular}
+\par\endgroup

@@ -1,0 +1,48 @@
+\begingroup
+\centering
+\begin{tabular}{lcccccc}
+   \tabularnewline \midrule \midrule
+   Dependent Variable: & \multicolumn{6}{c}{num\_uniprot\_structures\_w\_rare\_organisms}\\
+ & \multicolumn{2}{c}{All Fields} & \multicolumn{2}{c}{Molecular Biology} & \multicolumn{2}{c}{Medicine} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7}
+ & \multicolumn{2}{c}{CEM Authors} & \multicolumn{2}{c}{CEM Authors} & \multicolumn{2}{c}{CEM Authors} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7}
+ & \multicolumn{1}{c}{All PDB} & \multicolumn{1}{c}{High PDB} & \multicolumn{1}{c}{All PDB} & \multicolumn{1}{c}{High PDB} & \multicolumn{1}{c}{All PDB} & \multicolumn{1}{c}{High PDB} \\
+\cmidrule(lr){2-2} \cmidrule(lr){3-3} \cmidrule(lr){4-4} \cmidrule(lr){5-5} \cmidrule(lr){6-6} \cmidrule(lr){7-7}
+   Model:                                                     & (1)         & (2)           & (3)     & (4)  & (5)           & (6)\\  
+                                                              &  Poisson    & Poisson       & Poisson & OLS  & Poisson       & Poisson\\  
+   \midrule
+   \emph{Variables}\\
+   AlphaFold                                                  & 0.556       & -13.9$^{***}$ & -34.7   &      & -74.1$^{***}$ &   \\   
+                                                              & (5.36)      & (3.56)        & (47.5)  &      & (1.16)        &   \\   
+   Counterfactual AI                                          & 3.81        & 43.9$^{***}$  & 17.6    &      & -67.3$^{***}$ &   \\   
+                                                              & (3.98)      & (15.2)        & (36.7)  &      & (4.58)        &   \\   
+   Counterfactual No AI                                       & 2.56        & -4.44$^{*}$   & -11.0   &      & -19.9$^{***}$ & -20.5$^{***}$\\   
+                                                              & (2.94)      & (2.38)        & (50.4)  &      & (0.908)       & (0.00001)\\   
+   AlphaFold - Method                                         & -5.53       & 43.1$^{***}$  & 8.34    &      & 8.84$^{***}$  &   \\   
+                                                              & (5.59)      & (7.50)        & (17.5)  &      & (2.35)        &   \\   
+   Counterfactual AI - Method                                 & -4.57       &               & -30.3   &      &               &   \\   
+                                                              & (7.36)      &               & (20.1)  &      &               &   \\   
+   Counterfactual No AI - Method                              & -5.26$^{*}$ &               & 12.6    &      & -11.0$^{**}$  &   \\   
+                                                              & (3.01)      &               & (13.2)  &      & (4.65)        &   \\   
+   AlphaFold $\times$ Counterfactual No AI                    & 20.9        &               & 41.0    &      &               &   \\   
+                                                              & (24.4)      &               & (59.2)  &      &               &   \\   
+   AlphaFold - Method $\times$ Counterfactual AI - Method     & -12.9       &               &         &      &               &   \\   
+                                                              & (28.1)      &               &         &      &               &   \\   
+   AlphaFold - Method $\times$ Counterfactual No AI - Method  & 3.76$^{*}$  &               &         &      &               &   \\   
+                                                              & (2.15)      &               &         &      &               &   \\   
+   \midrule
+   \emph{Fixed-effects}\\
+   author                                                     & Yes         & Yes           & Yes     &      & Yes           & Yes\\  
+   quarter                                                    & Yes         & Yes           & Yes     &      & Yes           & Yes\\  
+   \midrule
+   \emph{Fit statistics}\\
+   Convergence                                                &FALSE        & FALSE         & FALSE   & TRUE & FALSE         & TRUE\\  
+   Observations                                               & 260         & 42            & 78      & 2    & 27            & 11\\  
+   Pseudo R$^2$                                               & 0.79        & 0.53          & 0.83    &      & 0.55          & 0.42\\  
+Mean(Dep. Var.) & 0.746 & 0.524 & 1.321 & 0.500 & 0.630 & 0.636 \\
+   Squared Correlation                                        & 0.99        & 1.0           & 1.0     &      & 1             & 1.0\\  
+   \midrule \midrule
+   \multicolumn{7}{l}{\emph{Signif. Codes: ***: 0.01, **: 0.05, *: 0.1}}\\
+\end{tabular}
+\par\endgroup

@@ -1,0 +1,51 @@
+\begingroup
+\centering
+\begin{tabular}{lcccccc}
+   \tabularnewline \midrule \midrule
+   Dependent Variable: & \multicolumn{6}{c}{organism\_rarity\_mean}\\
+ & \multicolumn{2}{c}{All Fields} & \multicolumn{2}{c}{Molecular Biology} & \multicolumn{2}{c}{Medicine} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7}
+ & \multicolumn{2}{c}{CEM Authors} & \multicolumn{2}{c}{CEM Authors} & \multicolumn{2}{c}{CEM Authors} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7}
+ & \multicolumn{1}{c}{All PDB} & \multicolumn{1}{c}{High PDB} & \multicolumn{1}{c}{All PDB} & \multicolumn{1}{c}{High PDB} & \multicolumn{1}{c}{All PDB} & \multicolumn{1}{c}{High PDB} \\
+\cmidrule(lr){2-2} \cmidrule(lr){3-3} \cmidrule(lr){4-4} \cmidrule(lr){5-5} \cmidrule(lr){6-6} \cmidrule(lr){7-7}
+   Model:                                                     & (1)     & (2)     & (3)     & (4)          & (5)          & (6)\\  
+   \midrule
+   \emph{Variables}\\
+   AlphaFold                                                  & 0.021   & 0.004   & 0.031   & -0.027       & 0.162$^{*}$  & 0.411$^{***}$\\   
+                                                              & (0.019) & (0.024) & (0.032) & (0.026)      & (0.082)      & (0.145)\\   
+   Counterfactual AI                                          & -0.008  & -0.028  & 0.103   & 0.112        & -0.155       & 0.037\\   
+                                                              & (0.051) & (0.066) & (0.078) & (0.095)      & (0.191)      & (0.239)\\   
+   Counterfactual No AI                                       & 0.004   & -0.018  & 0.075   & 0.059        & -0.093       & -0.044\\   
+                                                              & (0.029) & (0.041) & (0.061) & (0.078)      & (0.085)      & (0.100)\\   
+   AlphaFold - Method                                         & -0.023  & -0.043  & -0.073  & -0.061       & -0.041       & -0.130\\   
+                                                              & (0.025) & (0.028) & (0.046) & (0.052)      & (0.052)      & (0.078)\\   
+   Counterfactual AI - Method                                 & -0.007  & 0.020   & -0.008  & -0.064$^{*}$ & -0.150$^{*}$ &   \\   
+                                                              & (0.025) & (0.044) & (0.043) & (0.033)      & (0.077)      &   \\   
+   Counterfactual No AI - Method                              & -0.033  & -0.008  & 0.061   & -0.034       & -0.005       & 0.079\\   
+                                                              & (0.032) & (0.032) & (0.082) & (0.097)      & (0.071)      & (0.062)\\   
+   AlphaFold $\times$ Counterfactual AI                       & 0.111   & 0.284   & 0.153   & 0.187        & 0.409$^{**}$ &   \\   
+                                                              & (0.104) & (0.173) & (0.145) & (0.147)      & (0.196)      &   \\   
+   AlphaFold $\times$ Counterfactual No AI                    & 0.013   & 0.044   &         &              & 0.012        & -0.281\\   
+                                                              & (0.042) & (0.061) &         &              & (0.117)      & (0.260)\\   
+   AlphaFold - Method $\times$ Counterfactual AI - Method     & 0.036   &         &         &              &              &   \\   
+                                                              & (0.037) &         &         &              &              &   \\   
+   AlphaFold - Method $\times$ Counterfactual No AI - Method  & 0.003   & 0.005   & 0.010   & 0.013        & -0.011       & -0.036\\   
+                                                              & (0.006) & (0.007) & (0.016) & (0.018)      & (0.037)      & (0.052)\\   
+   \midrule
+   \emph{Fixed-effects}\\
+   author                                                     & Yes     & Yes     & Yes     & Yes          & Yes          & Yes\\  
+   quarter                                                    & Yes     & Yes     & Yes     & Yes          & Yes          & Yes\\  
+   \midrule
+   \emph{Fit statistics}\\
+   Observations                                               & 2,913   & 1,392   & 1,444   & 684          & 689          & 330\\  
+   R$^2$                                                      & 0.83    & 0.73    & 0.89    & 0.87         & 0.90         & 0.88\\  
+   Adjusted R$^2$                                             & 0.43    & 0.40    & 0.42    & 0.50         & 0.06         & 0.11\\  
+   Pseudo R$^2$                                               & 53.7    & 28.5    & -17.8   & -22.0        & -16.7        & -26.7\\  
+   Squared Correlation                                        & 0.83    & 0.73    & 0.89    & 0.87         & 0.90         & 0.88\\  
+Mean(Dep. Var.) & 0.122 & 0.126 & 0.098 & 0.104 & 0.128 & 0.134 \\
+   \midrule \midrule
+   \multicolumn{7}{l}{\emph{Clustered (author \& quarter) standard-errors in parentheses}}\\
+   \multicolumn{7}{l}{\emph{Signif. Codes: ***: 0.01, **: 0.05, *: 0.1}}\\
+\end{tabular}
+\par\endgroup
