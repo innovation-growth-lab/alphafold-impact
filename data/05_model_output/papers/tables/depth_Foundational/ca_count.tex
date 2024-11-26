@@ -7,41 +7,41 @@
 \cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10}
  & \multicolumn{1}{c}{All PDB} & \multicolumn{1}{c}{High PDB} & \multicolumn{1}{c}{CEM} & \multicolumn{1}{c}{All PDB} & \multicolumn{1}{c}{High PDB} & \multicolumn{1}{c}{CEM} & \multicolumn{1}{c}{All PDB} & \multicolumn{1}{c}{High PDB} & \multicolumn{1}{c}{CEM} \\
 \cmidrule(lr){1-1}\cmidrule(lr){2-2} \cmidrule(lr){3-3} \cmidrule(lr){4-4} \cmidrule(lr){5-5} \cmidrule(lr){6-6} \cmidrule(lr){7-7} \cmidrule(lr){8-8} \cmidrule(lr){9-9} \cmidrule(lr){10-10} \cmidrule(lr){3-3}
-   AlphaFold                             & -0.731     & -0.731     &               &               & 2.92          & 2.92\\   
-                                         & (2.03)     & (2.03)     &               &               & (7.36)        & (7.36)\\   
-   Counterfactual AI                     & -203.4     & -203.4     &               &               & 12.3$^{***}$  & 12.3$^{***}$\\   
-                                         & (2,837.0)  & (2,837.0)  &               &               & (3.20)        & (3.20)\\   
-   Counterfactual No AI                  & 35.2       & 35.2       &               &               &               &   \\   
-                                         & (106.4)    & (106.4)    &               &               &               &   \\   
-   institution\_typeeducation            & 282.7      & 282.7      &               &               & 27.7$^{***}$  & 27.7$^{***}$\\   
-                                         & (26,382.2) & (26,382.2) &               &               & (8.20)        & (8.20)\\   
-   institution\_typefacility             & 245.0      & 245.0      &               &               & -25.1$^{***}$ & -25.1$^{***}$\\   
-                                         & (26,408.4) & (26,408.4) &               &               & (9.10)        & (9.10)\\   
-   institution\_typeunknown              & 281.9      & 281.9      &               &               &               &   \\   
-                                         & (26,382.0) & (26,382.0) &               &               &               &   \\   
-   institution\_cited\_by\_count2        & 223.8      & 223.8      &               &               &               &   \\   
-                                         & (2,967.6)  & (2,967.6)  &               &               &               &   \\   
-   institution\_cited\_by\_count3        & -11.2      & -11.2      &               &               &               &   \\   
-                                         & (201.7)    & (201.7)    &               &               &               &   \\   
-   institution\_h\_index2                & -5.32      & -5.32      &               &               &               &   \\   
-                                         & (137.9)    & (137.9)    &               &               &               &   \\   
-   AlphaFold $\times$ Method             & 0.166      & 0.166      & -21.4$^{***}$ & -21.4$^{***}$ &               &   \\   
-                                         & (1.25)     & (1.25)     & (0.0004)      & (0.0004)      &               &   \\   
-   Counterfactual AI $\times$ Method     & 188.9      & 188.9      &               &               &               &   \\   
-                                         & (2,842.7)  & (2,842.7)  &               &               &               &   \\   
-   Counterfactual No AI $\times$ Method  & -25.8      & -25.8      &               &               & -20.7$^{***}$ & -20.7$^{***}$\\   
-                                         & (160.2)    & (160.2)    &               &               & (3.44)        & (3.44)\\   
+   \emph{Variables}\\
+   AlphaFold                             & -0.731      & 26.1          &               &       & 2.93          & 9.03\\   
+                                         & (2.04)      & (55.9)        &               &       & (7.37)        & (5.55)\\   
+   Counterfactual AI                     & -17.1       & -9.15         &               &       & 12.3$^{***}$  &   \\   
+                                         & (110.1)     & (56.4)        &               &       & (3.19)        &   \\   
+   Counterfactual No AI                  & 48.8        & 49.2          &               &       &               &   \\   
+                                         & (283.1)     & (56.9)        &               &       &               &   \\   
+   institution\_typeeducation            & 1,389.2     &               &               &       & 27.7$^{***}$  &   \\   
+                                         & (64,604.9)  &               &               &       & (8.24)        &   \\   
+   institution\_typefacility             & 115.0       &               &               &       & -25.1$^{***}$ &   \\   
+                                         & (30,261.0)  &               &               &       & (9.13)        &   \\   
+   institution\_typeunknown              & 1,388.3     &               &               &       &               &   \\   
+                                         & (64,601.8)  &               &               &       &               &   \\   
+   institution\_cited\_by\_count2        & 31.9        &               &               &       &               &   \\   
+                                         & (226.2)     &               &               &       &               &   \\   
+   institution\_cited\_by\_count3        & -2,487.7    &               &               &       &               &   \\   
+                                         & (102,778.4) &               &               &       &               &   \\   
+   institution\_h\_index3                & 1,237.6     &               &               &       &               &   \\   
+                                         & (51,480.5)  &               &               &       &               &   \\   
+   AlphaFold $\times$ Method             & 0.166       & -17.7$^{*}$   & -21.5$^{***}$ &       &               &   \\   
+                                         & (1.25)      & (9.23)        & (0.0004)      &       &               &   \\   
+   Counterfactual AI $\times$ Method     & 2.49        &               &               &       &               &   \\   
+                                         & (25.8)      &               &               &       &               &   \\   
+   Counterfactual No AI $\times$ Method  & -23.4       & -11.2$^{***}$ &               &       & -20.7$^{***}$ & -14.6$^{***}$\\   
+                                         & (180.1)     & (2.50)        &               &       & (3.41)        & (0.021)\\   
    \midrule
    \emph{Fixed-effects}\\
-   author                                & Yes        & Yes        & Yes           & Yes           & Yes           & Yes\\  
-   quarter\_year                         & Yes        & Yes        & Yes           & Yes           & Yes           & Yes\\  
+   author                                & Yes         & Yes           & Yes           &       & Yes           & Yes\\  
+   quarter\_year                         & Yes         & Yes           & Yes           &       & Yes           & Yes\\  
    \midrule
    \emph{Fit statistics}\\
-   Convergence                           &FALSE       & FALSE      & FALSE         & FALSE         & FALSE         & FALSE\\  
-   Observations                          & 175        & 175        & 37            & 37            & 84            & 84\\  
-Mean(Dep. Var.) & 1.194 & 1.194 & 1.000 & 1.000 & 1.667 & 1.667 \\
+   Convergence                           &FALSE        & FALSE         & FALSE         & TRUE  & FALSE         & FALSE\\  
+Mean(Dep. Var.) & 1.194 & 1.660 & 1.000 & 0.003 & 1.667 & 2.167 \\
+   Observations                          & 175         & 47            & 37            & 3,312 & 84            & 30\\  
    \midrule \midrule
-   \multicolumn{7}{l}{\emph{Clustered (author \& quarter\_year) standard-errors in parentheses}}\\
    \multicolumn{7}{l}{\emph{Signif. Codes: ***: 0.01, **: 0.05, *: 0.1}}\\
 \end{tabular}
 \par\endgroup

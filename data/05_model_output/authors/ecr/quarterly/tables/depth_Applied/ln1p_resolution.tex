@@ -9,35 +9,35 @@
 \cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7}
  & \multicolumn{1}{c}{All PDB} & \multicolumn{1}{c}{High PDB} & \multicolumn{1}{c}{All PDB} & \multicolumn{1}{c}{High PDB} & \multicolumn{1}{c}{All PDB} & \multicolumn{1}{c}{High PDB} \\
 \cmidrule(lr){2-2} \cmidrule(lr){3-3} \cmidrule(lr){4-4} \cmidrule(lr){5-5} \cmidrule(lr){6-6} \cmidrule(lr){7-7}
-   Model:                                & (1)            & (2)            & (3)           & (4) & (5) & (6)\\  
+   Model:                                                     & (1)            & (2)          & (3)            & (4) & (5) & (6)\\  
    \midrule
    \emph{Variables}\\
-   AlphaFold                             & -0.024         & -0.541$^{***}$ & -2.37$^{***}$ &     &     &   \\   
-                                         & (0.068)        & (0.071)        & (0.251)       &     &     &   \\   
-   Counterfactual AI                     & -0.014         & -0.056         & 10.3$^{***}$  &     &     &   \\   
-                                         & (0.087)        & (0.064)        & (0.854)       &     &     &   \\   
-   Counterfactual No AI                  & -0.242         & 0.202$^{**}$   & 0.256$^{***}$ &     &     &   \\   
-                                         & (0.177)        & (0.092)        & (0.000007)    &     &     &   \\   
-   AlphaFold - Method                    & 0.121$^{**}$   & 0.243$^{*}$    & 1.02$^{***}$  &     &     &   \\   
-                                         & (0.051)        & (0.124)        & (0.123)       &     &     &   \\   
-   Counterfactual AI - Method            & -0.335$^{***}$ &                & 0.406$^{***}$ &     &     &   \\   
-                                         & (0.112)        &                & (0.010)       &     &     &   \\   
-   Counterfactual No AI - Method         & -1.47          & 1.14           & 136.0$^{***}$ &     &     &   \\   
-                                         & (11,437.4)     & (0.691)        & (0.902)       &     &     &   \\   
-   AlphaFold $\times$ Counterfactual AI  & 0.008          &                &               &     &     &   \\   
-                                         & (0.215)        &                &               &     &     &   \\   
+   AlphaFold                                                  & -0.020         & -0.087       & 0.0001         &     &     &   \\   
+                                                              & (0.055)        & (0.074)      & (0.072)        &     &     &   \\   
+   Counterfactual AI                                          & 0.019          & 0.173        & 0.668$^{***}$  &     &     &   \\   
+                                                              & (0.051)        & (0.163)      & (0.072)        &     &     &   \\   
+   Counterfactual No AI                                       & -0.252$^{**}$  & -0.198$^{*}$ & 0.240$^{***}$  &     &     &   \\   
+                                                              & (0.120)        & (0.114)      & (0.045)        &     &     &   \\   
+   AlphaFold - Method                                         & 0.064$^{**}$   & 0.092$^{**}$ & -0.256$^{***}$ &     &     &   \\   
+                                                              & (0.029)        & (0.040)      & (0.041)        &     &     &   \\   
+   Counterfactual AI - Method                                 & -0.356$^{***}$ &              & 0.351$^{***}$  &     &     &   \\   
+                                                              & (0.093)        &              & (0.101)        &     &     &   \\   
+   Counterfactual No AI - Method                              & -0.366$^{*}$   & -12.1        &                &     &     &   \\   
+                                                              & (0.195)        & (9,968.3)    &                &     &     &   \\   
+   AlphaFold - Method $\times$ Counterfactual No AI - Method  &                & 0.990        &                &     &     &   \\   
+                                                              &                & (830.7)      &                &     &     &   \\   
    \midrule
    \emph{Fixed-effects}\\
-   author                                & Yes            & Yes            & Yes           &     &     & \\  
-   quarter                               & Yes            & Yes            & Yes           &     &     & \\  
+   author                                                     & Yes            & Yes          & Yes            &     &     & \\  
+   quarter                                                    & Yes            & Yes          & Yes            &     &     & \\  
    \midrule
    \emph{Fit statistics}\\
-   Observations                          & 322            & 89             & 173           & 2   & 2   & 2\\  
-   R$^2$                                 & 0.95           & 1.0            & 1.0           &     &     & \\  
-   Adjusted R$^2$                        & 0.42           & 1.0            & 1.0           &     &     & \\  
-   Pseudo R$^2$                          & -33.4          & 240.3          & -172.3        &     &     & \\  
-Mean(Dep. Var.) & 1.233 & 1.243 & 1.248 & 0.500 & 0.500 & 0.500 \\
-   Squared Correlation                   & 0.95           & 1.0            & 1.0           &     &     & \\  
+   Observations                                               & 363            & 145          & 197            & 2   & 2   & 2\\  
+   R$^2$                                                      & 0.96           & 0.99         & 1.0            &     &     & \\  
+   Adjusted R$^2$                                             & 0.58           & 0.66         & 1.0            &     &     & \\  
+   Pseudo R$^2$                                               & -26.0          & -132.1       & -35.0          &     &     & \\  
+Mean(Dep. Var.) & 1.236 & 1.245 & 1.253 & 0.500 & 0.500 & 0.500 \\
+   Squared Correlation                                        & 0.96           & 0.99         & 1.0            &     &     & \\  
    \midrule \midrule
    \multicolumn{7}{l}{\emph{Signif. Codes: ***: 0.01, **: 0.05, *: 0.1}}\\
 \end{tabular}

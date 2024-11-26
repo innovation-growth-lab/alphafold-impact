@@ -8,31 +8,29 @@
  & \multicolumn{1}{c}{All PDB} & \multicolumn{1}{c}{High PDB} & \multicolumn{1}{c}{CEM} & \multicolumn{1}{c}{All PDB} & \multicolumn{1}{c}{High PDB} & \multicolumn{1}{c}{CEM} & \multicolumn{1}{c}{All PDB} & \multicolumn{1}{c}{High PDB} & \multicolumn{1}{c}{CEM} \\
 \cmidrule(lr){1-1}\cmidrule(lr){2-2} \cmidrule(lr){3-3} \cmidrule(lr){4-4} \cmidrule(lr){5-5} \cmidrule(lr){6-6} \cmidrule(lr){7-7} \cmidrule(lr){8-8} \cmidrule(lr){9-9} \cmidrule(lr){10-10} \cmidrule(lr){3-3}
    \emph{Variables}\\
-   AlphaFold                         & 24.4           & 24.4           &      &      &      &   \\   
-                                     & (132.5)        & (132.5)        &      &      &      &   \\   
-   Counterfactual AI                 & 50.9           & 50.9           &      &      &      &   \\   
-                                     & (132.5)        & (132.5)        &      &      &      &   \\   
-   Counterfactual No AI              & 39.4           & 39.4           &      &      &      &   \\   
-                                     & (132.3)        & (132.3)        &      &      &      &   \\   
-   institution\_typecompany          & 684.6          & 684.6          &      &      &      &   \\   
-                                     & (424.2)        & (424.2)        &      &      &      &   \\   
-   institution\_typeeducation        & 500.0$^{*}$    & 500.0$^{*}$    &      &      &      &   \\   
-                                     & (290.3)        & (290.3)        &      &      &      &   \\   
-   institution\_typenonprofit        & 1,209.9$^{**}$ & 1,209.9$^{**}$ &      &      &      &   \\   
-                                     & (497.3)        & (497.3)        &      &      &      &   \\   
-   institution\_cited\_by\_count2    & -947.8$^{***}$ & -947.8$^{***}$ &      &      &      &   \\   
-                                     & (349.3)        & (349.3)        &      &      &      &   \\   
-   institution\_country\_codeCO      & -747.6$^{***}$ & -747.6$^{***}$ &      &      &      &   \\   
-                                     & (219.0)        & (219.0)        &      &      &      &   \\   
+   AlphaFold                         & -189.7$^{*}$ &      &      &      &      &   \\   
+                                     & (98.7)       &      &      &      &      &   \\   
+   Counterfactual AI                 & -162.8$^{*}$ &      &      &      &      &   \\   
+                                     & (99.0)       &      &      &      &      &   \\   
+   Counterfactual No AI              & -174.7$^{*}$ &      &      &      &      &   \\   
+                                     & (98.8)       &      &      &      &      &   \\   
+   institution\_typecompany          & 435.5$^{*}$  &      &      &      &      &   \\   
+                                     & (249.9)      &      &      &      &      &   \\   
+   institution\_typeeducation        & -461.7$^{*}$ &      &      &      &      &   \\   
+                                     & (251.0)      &      &      &      &      &   \\   
+   institution\_typefacility         & -547.4       &      &      &      &      &   \\   
+                                     & (708.7)      &      &      &      &      &   \\   
+   institution\_cited\_by\_count3    & -267.9       &      &      &      &      &   \\   
+                                     & (272.9)      &      &      &      &      &   \\   
    \midrule
    \emph{Fixed-effects}\\
-   author                            & Yes            & Yes            &      &      &      & \\  
-   quarter\_year                     & Yes            & Yes            &      &      &      & \\  
+   author                            & Yes          &      &      &      &      & \\  
+   quarter\_year                     & Yes          &      &      &      &      & \\  
    \midrule
    \emph{Fit statistics}\\
-   Convergence                       &FALSE           & FALSE          & TRUE & TRUE & TRUE & TRUE\\  
-Mean(Dep. Var.) & 7.023 & 7.023 & 1.000 & 1.000 & 5.918 & 5.918 \\
-   Observations                      & 171            & 171            & 224  & 224  & 158  & 158\\  
+   Convergence                       &FALSE         & TRUE & TRUE & TRUE & TRUE & TRUE\\  
+Mean(Dep. Var.) & 7.023 & 4.722 & 1.000 & 1.286 & 5.918 & 9.676 \\
+   Observations                      & 171          & 162  & 224  & 70   & 158  & 68\\  
    \midrule \midrule
    \multicolumn{7}{l}{\emph{Signif. Codes: ***: 0.01, **: 0.05, *: 0.1}}\\
 \end{tabular}
