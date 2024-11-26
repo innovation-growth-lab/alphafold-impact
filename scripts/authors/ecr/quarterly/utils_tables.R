@@ -77,6 +77,9 @@ table_info <- list(
   ),
   "num_diseases" = list(
     file_name = "num_diseases.tex"
+  ),
+  "mesh_C" = list(
+    file_name = "mesh_C.tex"
   )
 
 )

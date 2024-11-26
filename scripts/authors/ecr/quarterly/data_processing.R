@@ -267,6 +267,7 @@ ecr_data <- ecr_data %>%
     "primary_field",
     "high_pdb",
     "covid_share_2020",
+    "mesh_C",
     grep("^field_", names(ecr_data), value = TRUE),
     "num_uniprot_structures",
     "num_pdb_ids",

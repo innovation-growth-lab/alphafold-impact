@@ -240,6 +240,7 @@ papers <- papers %>%
     "depth",
     "primary_field",
     "high_pdb",
+    "mesh_C",
     grep("^field_", names(papers), value = TRUE),
     "num_uniprot_structures",
     "num_pdb_ids",
