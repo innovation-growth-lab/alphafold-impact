@@ -211,7 +211,11 @@ for (dep_var_out in dep_vars) { # nolint
               form_list[[form]],
               data = local_data,
               cluster = c("pi_id", "quarter_year"),
-              control = list(maxit = 500)
+              fixef.iter = 100000,
+              glm.iter = 100,
+              nthreads = 1,
+              lean = TRUE,
+              mem.clean = TRUE
             )
           },
           error = function(e) {
@@ -226,7 +230,9 @@ for (dep_var_out in dep_vars) { # nolint
             feols(
               form_list[[form]],
               data = local_data,
-              cluster = c("pi_id", "quarter_year")
+              cluster = c("pi_id", "quarter_year"),
+              lean = TRUE,
+              mem.clean = TRUE
             )
           },
           error = function(e) {

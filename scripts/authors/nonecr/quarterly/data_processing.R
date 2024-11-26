@@ -91,6 +91,9 @@ nonecr_data <- nonecr_data %>%
     institution_cited_by_count = factor(
       ntile(institution_cited_by_count, 4)
     ),
+    institution_cited_by_count_num = as.numeric(institution_cited_by_count),
+    institution_h_index_num = as.numeric(institution_h_index),
+    institution_i10_index_num = as.numeric(institution_i10_index),
     organism_rarity_mean_quantile = factor(ntile(organism_rarity_mean, 4)),
     organism_rarity_max_quantile = factor(ntile(organism_rarity_max, 4)),
     mean_tmscore_quantile = factor(ntile(mean_tmscore, 4)),
@@ -241,7 +244,6 @@ nonecr_data <- nonecr_data %>%
     "ln1p_cit_0",
     "ln1p_cit_1",
     "ln1p_fwci",
-    "logit_cit_norm_perc",
     "patent_count",
     "patent_citation",
     "ca_count",
@@ -347,7 +349,8 @@ for (depth_lvl in unique_depths) { # nolint
         )
 
         # Sample based on the combined matched group
-        sub_sample <- sub_sample %>% filter(author %in% combined_cem_data)
+        sub_sample <- sub_sample %>%
+          filter(author %in% combined_cem_data | high_pdb == 1)
       }
 
 

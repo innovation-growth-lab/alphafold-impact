@@ -1,7 +1,7 @@
 # Clean out the workspace
 rm(list = ls())
 options(max.print = 1000)
-options(width = 300)
+options(width = 200)
 
 # Check installation & load required packages
 list_of_packages <- c(
@@ -127,6 +127,9 @@ ecr_data <- ecr_data %>%
     num_uniprot_structures = ifelse(
       is.na(num_uniprot_structures), 0, num_uniprot_structures
     ),
+    institution_cited_by_count_num = as.numeric(institution_cited_by_count),
+    institution_h_index_num = as.numeric(institution_h_index),
+    institution_i10_index_num = as.numeric(institution_i10_index),
     num_pdb_ids = ifelse(is.na(num_pdb_ids), 0, num_pdb_ids),
     num_primary_submissions = ifelse(is.na(num_primary_submissions), 0, num_primary_submissions), # nolint
     across(starts_with("field_"), ~ ifelse(is.na(.), 0, .)),
@@ -242,7 +245,6 @@ ecr_data <- ecr_data %>%
     "ln1p_cit_0",
     "ln1p_cit_1",
     "ln1p_fwci",
-    "logit_cit_norm_perc",
     "patent_count",
     "patent_citation",
     "ca_count",
@@ -348,7 +350,8 @@ for (depth_lvl in unique_depths) { # nolint
         )
 
         # Sample based on the combined matched group
-        sub_sample <- sub_sample %>% filter(author %in% combined_cem_data)
+        sub_sample <- sub_sample %>%
+          filter(author %in% combined_cem_data | high_pdb == 1)
       }
 
 

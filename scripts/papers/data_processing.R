@@ -192,7 +192,7 @@ papers$primary_field <- recode(papers$primary_field, !!!field_mapping)
 papers <- papers %>%
   mutate(high_pdb = if_else(
     group_pdb_count >= quantile(
-      group_pdb_count, 0.75,
+      group_pdb_count, 0.9,
       na.rm = TRUE
     ),
     1,
@@ -248,6 +248,7 @@ papers <- papers %>%
     "organism_rarity_mean",
     "mean_tmscore",
     "ln1p_score",
+    "num_pdb_ids",
     "num_uniprot_structures_w_disease",
     "num_primary_submissions_w_disease",
     "num_uniprot_structures_w_rare_organisms",

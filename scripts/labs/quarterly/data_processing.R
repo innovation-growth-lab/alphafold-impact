@@ -164,6 +164,9 @@ foundational_labs_data <- foundational_labs_data %>%
       institution_cited_by_count
     ),
     institution = ifelse(is.na(institution_works_count), 0, institution_works_count), # nolint
+    institution_cited_by_count_num = as.numeric(institution_cited_by_count),
+    institution_h_index_num = as.numeric(institution_h_index),
+    institution_i10_index_num = as.numeric(institution_i10_index),
     ca_count = ifelse(is.na(ca_count), 0, ca_count),
     high_pdb = as.factor(ifelse(is.na(high_pdb), 0, high_pdb)),
     covid_share_2020 = ifelse(is.na(covid_share_2020), 0, covid_share_2020),
@@ -307,6 +310,9 @@ applied_labs_data <- applied_labs_data %>%
       is.na(institution_cited_by_count), "unknown",
       institution_cited_by_count
     ),
+    institution_cited_by_count_num = as.numeric(institution_cited_by_count),
+    institution_h_index_num = as.numeric(institution_h_index),
+    institution_i10_index_num = as.numeric(institution_i10_index),
     institution = ifelse(is.na(institution_works_count), 0, institution_works_count), # nolint
     ca_count = ifelse(is.na(ca_count), 0, ca_count),
     high_pdb = as.factor(ifelse(is.na(high_pdb), 0, high_pdb)),
@@ -465,7 +471,6 @@ quarterly_lab_data <- quarterly_lab_data %>%
     "ln1p_cit_0",
     "ln1p_cit_1",
     "ln1p_fwci",
-    "logit_cit_norm_perc",
     "patent_count",
     "patent_citation",
     "ca_count",
