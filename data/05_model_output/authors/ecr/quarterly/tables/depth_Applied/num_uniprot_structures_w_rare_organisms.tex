@@ -9,37 +9,37 @@
 \cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7}
  & \multicolumn{1}{c}{All PDB} & \multicolumn{1}{c}{High PDB} & \multicolumn{1}{c}{All PDB} & \multicolumn{1}{c}{High PDB} & \multicolumn{1}{c}{All PDB} & \multicolumn{1}{c}{High PDB} \\
 \cmidrule(lr){2-2} \cmidrule(lr){3-3} \cmidrule(lr){4-4} \cmidrule(lr){5-5} \cmidrule(lr){6-6} \cmidrule(lr){7-7}
-   Model:                                                     & (1)         & (2)           & (3)     & (4)                         & (5)           & (6)\\  
+   Model:                                                     & (1)         & (2)          & (3)           & (4)     & (5)          & (6)\\  
    \midrule
    \emph{Variables}\\
-   AlphaFold                                                  & 0.763       & 8.76          & 2.07    & $-1.16\times 10^{20}$       & 108.9         & -11.9$^{***}$\\   
-                                                              & (1.83)      & (25.0)        & (50.9)  & ($8.21\times 10^{19}$)      & (92.6)        & (3.05)\\   
-   Counterfactual AI                                          & 4.38$^{**}$ & 13.0          & 23.5    &                             & 36.7          &   \\   
-                                                              & (1.80)      & (12.8)        & (49.3)  &                             & (53.8)        &   \\   
-   Counterfactual No AI                                       & 0.580       & -2.44         & -29.9   &                             & 106.8         & -15.7$^{***}$\\   
-                                                              & (1.20)      & (2.75)        & (75.6)  &                             & (87.1)        & (1.39)\\   
-   AlphaFold - Method                                         & -2.09       & -7.21$^{***}$ & 3.31    & $1.55\times 10^{20}$$^{*}$  & 0.502         &   \\   
-                                                              & (1.84)      & (1.33)        & (24.7)  & ($8.86\times 10^{19}$)      & (9.99)        &   \\   
-   Counterfactual AI - Method                                 & -4.31       &               & 126.4   &                             &               &   \\   
-                                                              & (2.68)      &               & (206.6) &                             &               &   \\   
-   Counterfactual No AI - Method                              & -2.83       & -13.2         & 17.6    &                             & 59.2$^{***}$  &   \\   
-                                                              & (1.77)      & (31.8)        & (59.5)  &                             & (21.8)        &   \\   
-   AlphaFold $\times$ Counterfactual No AI                    & 19.3        & 72.6$^{**}$   & -10.9   &                             &               &   \\   
-                                                              & (102.5)     & (30.5)        & (33.7)  &                             &               &   \\   
-   AlphaFold - Method $\times$ Counterfactual AI - Method     & -14.1       &               &         &                             &               &   \\   
-                                                              & (803.7)     &               &         &                             &               &   \\   
-   AlphaFold - Method $\times$ Counterfactual No AI - Method  & 1.03        & 5.53          &         &                             & -4.87$^{***}$ &   \\   
-                                                              & (0.920)     & (3.67)        &         &                             & (0.926)       &   \\   
+   AlphaFold                                                  & 0.763       & 13.5$^{**}$  & -96.9$^{***}$ & 225.7   & 57.9$^{***}$ & 27.6$^{***}$\\   
+                                                              & (1.83)      & (6.48)       & (29.3)        & (139.0) & (17.3)       & (1.96)\\   
+   Counterfactual AI                                          & 4.38$^{**}$ & 49.6$^{***}$ & 61.6$^{**}$   &         & 39.0$^{***}$ &   \\   
+                                                              & (1.80)      & (16.5)       & (27.2)        &         & (11.8)       &   \\   
+   Counterfactual No AI                                       & 0.580       & -15.0        & -29.3         &         & -2.92        & -18.7$^{***}$\\   
+                                                              & (1.20)      & (15.1)       & (20.6)        &         & (17.4)       & (3.26)\\   
+   AlphaFold - Method                                         & -2.09       & -6.99        & 8.29          & -278.1  & -1.94        &   \\   
+                                                              & (1.84)      & (9.17)       & (7.15)        & (182.3) & (4.48)       &   \\   
+   Counterfactual AI - Method                                 & -4.31       &              & -307.7$^{*}$  &         &              &   \\   
+                                                              & (2.68)      &              & (176.9)       &         &              &   \\   
+   Counterfactual No AI - Method                              & -2.83       & -22.2        & 29.0          &         &              &   \\   
+                                                              & (1.77)      & (25.9)       & (18.7)        &         &              &   \\   
+   AlphaFold $\times$ Counterfactual No AI                    & 19.3        &              & 106.6$^{***}$ &         &              &   \\   
+                                                              & (102.5)     &              & (40.1)        &         &              &   \\   
+   AlphaFold - Method $\times$ Counterfactual AI - Method     & -14.1       &              &               &         &              &   \\   
+                                                              & (803.7)     &              &               &         &              &   \\   
+   AlphaFold - Method $\times$ Counterfactual No AI - Method  & 1.03        & 5.37         &               &         & 2.68         &   \\   
+                                                              & (0.920)     & (5.56)       &               &         & (3.60)       &   \\   
    \midrule
    \emph{Fixed-effects}\\
-   author                                                     & Yes         & Yes           & Yes     & Yes                         & Yes           & Yes\\  
-   quarter                                                    & Yes         & Yes           & Yes     & Yes                         & Yes           & Yes\\  
+   author                                                     & Yes         & Yes          & Yes           & Yes     & Yes          & Yes\\  
+   quarter                                                    & Yes         & Yes          & Yes           & Yes     & Yes          & Yes\\  
    \midrule
    \emph{Fit statistics}\\
-   Convergence                                                &TRUE         & FALSE         & FALSE   & FALSE                       & FALSE         & FALSE\\  
-   Observations                                               & 296         & 98            & 90      & 25                          & 35            & 18\\  
-   Pseudo R$^2$                                               & 0.74        & 0.64          & 0.81    & 0.54                        & 0.57          & 0.50\\  
-   Squared Correlation                                        & 0.99        & 1.0           & 1.0     & 1.0                         & 1.0           & 1.0\\  
+   Convergence                                                &TRUE         & FALSE        & FALSE         & FALSE   & FALSE        & TRUE\\  
+   Observations                                               & 296         & 98           & 90            & 25      & 35           & 18\\  
+   Pseudo R$^2$                                               & 0.74        & 0.64         & 0.81          & 0.54    & 0.57         & 0.50\\  
+   Squared Correlation                                        & 0.99        & 1.0          & 1.0           & 1.0     & 1            & 1.0\\  
 Mean(Dep. Var.) & 0.828 & 0.786 & 1.389 & 1.400 & 0.714 & 0.833 \\
    \midrule \midrule
    \multicolumn{7}{l}{\emph{Clustered (author \& quarter) standard-errors in parentheses}}\\
