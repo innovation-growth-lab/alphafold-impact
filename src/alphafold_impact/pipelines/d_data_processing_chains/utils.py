@@ -29,7 +29,7 @@ def sort_and_drop(
     """
     # define & implement the custom sorting order
     # sort_order = {"methodology": 0, "result": 1, "background": 2, "": 3, None: 4}
-    sort_order = {"strong": 0, "weak": 1, "unknown": 2, "N/A": 3}
+    sort_order = {"strong": 0, "weak": 1, "unknown": 2, "no_data": 3}
     data["sort_order"] = data["intent"].map(sort_order)
 
     data = (
@@ -55,7 +55,7 @@ def sort_and_drop(
 
     if unique:
         logger.info("Dropping duplicate citation links")
-        data.sort_values("sort_order").drop_duplicates(subset="id", inplace=True)
+        data.sort_values("sort_order").drop_duplicates(subset=["parent_id", "id"], inplace=True)
 
     # drop the sort_order column, reindex
     data.drop(columns="sort_order", inplace=True)

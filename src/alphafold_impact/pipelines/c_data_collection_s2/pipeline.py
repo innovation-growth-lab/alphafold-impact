@@ -30,7 +30,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                     "api_key": "params:s2.data_collection.strength.api.key",
                     "perpage": "params:s2.data_collection.strength.api.perpage",
                 },
-                outputs="oa.data_processing.depth.all.primary",
+                outputs="oa.data_processing.depth.af.primary",
                 name="fetch_s2_citation_intent_af"
             ),
         ],

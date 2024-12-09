@@ -19,7 +19,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
             node(
                 filter_relevant_citation_links,
                 inputs={
-                    "depth_data": "oa.data_processing.depth.all.primary",
+                    "depth_data": "oa.data_processing.depth.af.primary",
                     "identifier": "params:chains.identifier.id",
                     "num_levels": "params:chains.num_levels.af",
                 },
@@ -30,7 +30,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 get_papers_with_strong_chain,
                 inputs={
                     "chains": "chains.complete_links.id.primary",
-                    "depth_data": "oa.data_processing.depth.all.primary",
+                    "depth_data": "oa.data_processing.depth.af.primary",
                     "identifier": "params:chains.identifier.id",
                     "num_levels": "params:chains.num_levels.af",
                 },
@@ -41,7 +41,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 get_chain_label_papers,
                 inputs={
                     "chains": "chains.complete_links.id.primary",
-                    "depth_data": "oa.data_processing.depth.all.primary",
+                    "depth_data": "oa.data_processing.depth.af.primary",
                     "identifier": "params:chains.identifier.id",
                     "num_levels": "params:chains.num_levels.af",
                 },
