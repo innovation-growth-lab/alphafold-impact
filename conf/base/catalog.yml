@@ -1,7 +1,3 @@
-_js: &_js
-  type: ${_json.type}
-  credentials: s3_credentials
-
 _pq: &_pq
   type: pandas.ParquetDataset
   credentials: s3_credentials
@@ -420,3 +416,15 @@ reach.new_data.publications:
       - 'citation_normalized_percentile_is_in_top_10_percent'
       - 'cited_by_percentile_year_min'
       - 'cited_by_percentile_year_max'
+
+# -------------------------------------------------------------
+
+# Plots
+
+fig.1:
+  <<: *_image
+  filepath: s3://igl-alphafold/oct/04_output/figures/fig1.png
+
+fig.2:
+  <<: *_image
+  filepath: s3://igl-alphafold/oct/04_output/figures/fig2.png
