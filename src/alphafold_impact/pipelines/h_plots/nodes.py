@@ -1,4 +1,5 @@
 import logging
+from typing import List, Optional
 import pandas as pd
 import numpy as np
 import altair as alt
@@ -26,8 +27,8 @@ def igl_style() -> alt.theme.ThemeConfig:
                 "domainWidth": 1,
                 "grid": False,
                 "labelColor": "#092640",  # Dark blue
-                "titleFontSize": sizes[2],
-                "labelFontSize": sizes[1],
+                "titleFontSize": sizes[4],
+                "labelFontSize": sizes[3],
                 "titleFontWeight": "normal",
             },
             "header": {
@@ -48,7 +49,7 @@ def igl_style() -> alt.theme.ThemeConfig:
                 "anchor": "start",
                 "color": "#092640",  # Dark blue
             },
-            "background": "#EBEBEB",  # Grey
+            "background": "#FFFFFF",  # Grey
             "view": {
                 "stroke": "#092640",  # Dark blue
             },
@@ -482,3 +483,228 @@ def generate_fig3(
     image = save_chart_as_image(chart)
 
     return image
+
+
+def generate_summary_tables_latex(
+    publications: pd.DataFrame,
+    early_career_researchers: pd.DataFrame,
+    established_researchers: pd.DataFrame,
+    foundational_labs: pd.DataFrame,
+    applied_labs: pd.DataFrame,
+) -> dict:
+    """Generate summary tables for four datasets and return them in LaTeX format."""
+
+    def _process_dataset(data: pd.DataFrame, dataset_name: str) -> str:
+        """Process a single dataset and return its LaTeX representation."""
+        logger.info("Processing dataset: %s...", dataset_name)
+        data["location"] = np.select(
+            [data["level"].eq("0"), data["level"].ne("0")],
+            ["Adjacent", "Downstream"],
+            default="unknown",
+        )
+
+        variables = {
+            "Number of Publications": data.groupby(["source", "location"])[
+                "num_publications"
+            ].sum(),
+            "Number of PDB Submissions": data.groupby(["source", "location"])[
+                "pdb_submission"
+            ].sum(),
+            "Number of Patents": data.groupby(["source", "location"])[
+                "patent_count"
+            ].sum(),
+            "Number of Clinical Trials": data.groupby(["source", "location"])[
+                "ca_count"
+            ].sum(),
+        }
+
+        summary_table = pd.DataFrame(variables).T  # Transpose so rows are variables
+
+        summary_table.index.name = "Variable"
+        summary_table.columns.names = ["Source", "Location"]
+
+        latex_table = summary_table.to_latex(
+            multicolumn=True,
+            multicolumn_format="c",
+            escape=False,
+            caption=f"Summary Table of Key Variables for {dataset_name.capitalize()}",
+            label=f"tab:{dataset_name.lower()}_summary_table",
+        )
+
+        return latex_table
+
+    def _assign_source(data: pd.DataFrame, identifier, prefix) -> pd.DataFrame:
+        """Assign the source variable based on non-zero values of 'af', 'ct_ai', and 'ct_noai'."""
+        grouped = data.groupby(identifier)[
+            [f"{prefix}af", f"{prefix}ct_ai", f"{prefix}ct_noai"]
+        ].sum()
+        grouped["source"] = np.select(
+            [
+                grouped[f"{prefix}af"] > 0,
+                (grouped[f"{prefix}af"] == 0) & (grouped[f"{prefix}ct_ai"] > 0),
+                (grouped[f"{prefix}af"] == 0)
+                & (grouped[f"{prefix}ct_ai"] == 0)
+                & (grouped[f"{prefix}ct_noai"] > 0),
+            ],
+            ["af", "ct_ai", "ct_noai"],
+            default="other",
+        )
+
+        # assign the source to the original data
+        dict_source = grouped["source"].to_dict()
+        data["source"] = data[identifier].map(dict_source)
+        return data
+
+    publications["num_publications"] = 1
+
+    # join foundational labs, create the level column as foundational = 0, applied != 0
+    foundational_labs["level"] = "0"
+    applied_labs["level"] = "1"
+    labs = pd.concat([foundational_labs, applied_labs], ignore_index=True)
+
+    # create variable for ecrs and established researchers using "depth", mapping applied to "1" and foundational to "0". Label it "level"
+    early_career_researchers["level"] = early_career_researchers["depth"].map(
+        {"foundational": "0", "applied": "1"}
+    )
+    established_researchers["level"] = established_researchers["depth"].map(
+        {"foundational": "0", "applied": "1"}
+    )
+
+    # Assign "source" variable to labs and researchers
+    labs = _assign_source(labs, "pi_id", "cum_")
+    early_career_researchers = _assign_source(early_career_researchers, "author", "")
+    established_researchers = _assign_source(established_researchers, "author", "")
+
+    datasets = {
+        "Publications": publications,
+        "Early Career Researchers": early_career_researchers,
+        "Established Researchers": established_researchers,
+        "Foundational": labs,
+    }
+
+    latex_results = {
+        dataset_name: _process_dataset(data, dataset_name)
+        for dataset_name, data in datasets.items()
+    }
+
+    # concatenate the latex tables
+    table = "\n\n".join(latex_results.values())
+
+    return table
+
+
+def plot_regression_results(
+    reg: pd.DataFrame,
+    depth: List[str],
+    field: List[str],
+    subgroup: List[str],
+    treat_vars: Optional[List[str]] = None,
+    highlight_significant: bool = True,
+    significance_level: float = 0.05,
+) -> alt.Chart:
+    """Create an interactive Altair chart for regression coefficient plots."""
+
+    # Define coefficient labels
+    coef_labels = {
+        "af": "AlphaFold",
+        "ct_ai": "AI Frontier",
+        "ct_noai": "Non-AI Frontier",
+        "strong_af": "AlphaFold - Method",
+        "strong_ct_ai": "AI Frontier - Method",
+        "strong_ct_noai": "Non-AI Frontier - Method",
+    }
+    coef_order = list(coef_labels.keys())
+
+    # Filter the data based on user inputs
+    source = (
+        reg.query("depth in @depth")
+        .query("field in @field")
+        .query("subgroup in @subgroup")
+    )
+
+    # Further filter based on treat_vars if provided
+    if treat_vars:
+        source = source.query("treat_var in @treat_vars")
+
+    # Add a significance column if highlighting significant coefficients
+    if highlight_significant and "p_value" in source.columns:
+        source["significant"] = source["p_value"] < significance_level
+    else:
+        source["significant"] = False
+
+    # Map treatment variable labels and enforce order
+    source["treat_var_label"] = (
+        source["treat_var"].map(coef_labels).fillna(source["treat_var"])
+    )
+    source["treat_var"] = pd.Categorical(
+        source["treat_var"], categories=coef_order, ordered=True
+    )
+
+    # Drop duplicates (treat_var_label and estimate)
+    source = source.drop_duplicates(subset=["treat_var_label", "estimate"])
+
+    # steps
+    x_min = min(source["conf_low"].min(), 0)
+    x_max = max(source["conf_high"].max(), 0)
+    tick_interval = 0.05
+
+    # Base chart: Points
+    points = (
+        alt.Chart(source)
+        .mark_circle(size=90, opacity=1)  # Ensure full opacity
+        .encode(
+            x=alt.X(
+                "estimate:Q",
+                title="Estimate (with 95% CI)",
+                axis=alt.Axis(
+                    tickCount=int((x_max - x_min) / tick_interval), format=".2f"
+                ),
+            ),
+            y=alt.Y(
+                "treat_var_label:N",  # Use mapped labels for Y-axis
+                title="Coefficient Variable",
+                sort=[
+                    coef_labels[key] for key in coef_order
+                ],  # Explicitly sort by the provided order
+            ),
+            color=alt.condition(
+                alt.datum.significant,
+                alt.value("red"),
+                alt.value("black"),
+            ),
+        )
+    )
+
+    # Error bars
+    error_bars = (
+        alt.Chart(source)
+        .mark_errorbar(thickness=2, ticks=True, color="black")
+        .encode(
+            x=alt.X("conf_low:Q", title=None),
+            x2=alt.X2("conf_high:Q"),
+            y=alt.Y(
+                "treat_var_label:N",
+                sort=[coef_labels[key] for key in coef_order],  # Reapply sorting
+                title=None,
+            ),
+        )
+    )
+
+    # Vertical line at x=0
+    vertical_line = (
+        alt.Chart(pd.DataFrame({"x": [0]}))
+        .mark_rule(color="gray", strokeDash=[5, 5])
+        .encode(x="x:Q")
+    )
+    # Combine charts
+    chart = (vertical_line + error_bars + points).properties(width=250, height=250)
+
+    # import vl_convert as vlc
+
+    # png_bytes = vlc.vegalite_to_png(  # pylint: disable=no-member
+    #     chart.to_json(), scale=3
+    # )
+    # with open("test.png", "wb") as f:
+    #     f.write(png_bytes)
+
+    return chart

@@ -4,7 +4,13 @@ generated using Kedro 0.19.1
 """
 
 from kedro.pipeline import Pipeline, pipeline, node
-from .nodes import generate_fig1, generate_fig2, generate_fig3
+from .nodes import (
+    generate_fig1,
+    generate_fig2,
+    generate_fig3,
+    generate_summary_tables_latex,
+    plot_regression_results,
+)
 
 
 def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
@@ -30,6 +36,29 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                 },
                 outputs="fig.3",
                 name="generate_fig3",
+            ),
+            node(
+                func=generate_summary_tables_latex,
+                inputs={
+                    "publications": "publications.data.outputs",
+                    "early_career_researchers": "ecr.publications.quarterly",
+                    "established_researchers": "nonecr.publications.quarterly",
+                    "foundational_labs": "foundational_lab.data_analysis.staggered.outputs.quarterly.primary",
+                    "applied_labs": "applied_lab.data_analysis.staggered.outputs.quarterly.primary",
+                },
+                outputs="summary_table",
+                name="generate_summary_table",
+            ),
+            node(
+                func=plot_regression_results,
+                inputs={
+                    "reg": "organism_rarity_mean_coef_table.rds",
+                    "depth": "params:depth_allgroups",
+                    "field": "params:field_all",
+                    "subgroup": "params:cem",
+                },
+                outputs="regression_results",
+                name="plot_regression_results",
             ),
         ]
     )

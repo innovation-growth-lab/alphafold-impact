@@ -504,3 +504,8 @@ publications:
     - parent_id
     - parent_pmid
     - parent_doi
+
+
+depth_allgroups: "depth_All Groups"
+field_all: "field_All Fields"
+cem: "subgroup_All PDB - CEM"

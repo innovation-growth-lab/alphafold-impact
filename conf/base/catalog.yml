@@ -432,3 +432,13 @@ fig.2:
 fig.3:
   <<: *_image
   filepath: s3://igl-alphafold/oct/04_output/figures/fig3.png
+
+
+
+# -------------------------------------------------------------
+
+# RDS
+
+organism_rarity_mean_coef_table.rds:
+  type: src.alphafold_impact.datasets.rds_dataset.RdsDataset
+  filepath: data/05_model_output/authors/nonecr/quarterly/coef_tables/organism_rarity_mean_coef_table.rds
