@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import altair as alt
 from PIL import Image
-from .utils import normalise_january_counts, save_chart_as_image
+from .utils import normalise_january_counts, save_chart_as_image, COUNTRY_CLASSIFICATION
 
 
 MAIN_TOPICS = [
@@ -26,8 +26,8 @@ def igl_style() -> alt.theme.ThemeConfig:
                 "domainWidth": 1,
                 "grid": False,
                 "labelColor": "#092640",  # Dark blue
-                "titleFontSize": sizes[4],
-                "labelFontSize": sizes[3],
+                "titleFontSize": sizes[2],
+                "labelFontSize": sizes[1],
                 "titleFontWeight": "normal",
             },
             "header": {
@@ -120,16 +120,18 @@ def _preprocess_data_fig1(publications: pd.DataFrame, source: str) -> pd.DataFra
 
 def _create_chart_fig1(data: pd.DataFrame, title: str) -> alt.Chart:
     """Create the Altair chart for Figure 1."""
+
+    # any data count below 0, set it to 0
+    data["count"] = data["count"].clip(lower=0)
+
     return (
         alt.Chart(data)
-        .mark_bar()
+        .mark_bar(width=7)
         .encode(
             x=alt.X(
                 "publication_date:T",
-                title="Time (Year-Month)",
-                axis=alt.Axis(
-                    format="%b `%y",
-                ),
+                title="Publication Date (month)",
+                axis=alt.Axis(tickCount="year"),
             ),
             y=alt.Y(
                 "count:Q",
@@ -148,6 +150,8 @@ def _create_chart_fig1(data: pd.DataFrame, title: str) -> alt.Chart:
             title={
                 "text": [title],
             },
+            width=275,
+            height=200,
         )
     )
 
@@ -333,5 +337,148 @@ def generate_fig2(publications: pd.DataFrame) -> Image.Image:
     hconcat = alt.vconcat(chart_a, chart_b).resolve_scale(color="independent")
 
     image = save_chart_as_image(hconcat)
+
+    return image
+
+
+def _preprocess_representation_data(data: pd.DataFrame) -> pd.DataFrame:
+    """Preprocess data for representation ratio plots."""
+
+    source_labels = {
+        "af": "AlphaFold",
+        "ct_ai": "AI-intensive Frontier",
+        "ct_noai": "Non-AI Frontier",
+        "other": "Other Struct. Biol.",
+    }
+
+    data = data.sort_values(by=["author", "quarter"])
+
+    # determine the source classification for the last observation of each author
+    last_observation = data.groupby("author").last().reset_index()
+
+    # create the conditions and choices for the source classification
+    conditions = [
+        last_observation["af"] > 0,
+        last_observation["ct_ai"] > 0,
+        last_observation["ct_noai"] > 0,
+    ]
+    choices = ["af", "ct_ai", "ct_noai"]
+
+    # use np.select to create the source column for the last observation
+    last_observation["source"] = np.select(conditions, choices, default="other")
+
+    # merge the source classification back into the original DataFrame
+    data = data.merge(last_observation[["author", "source"]], on="author", how="left")
+
+    unique_researchers = data.sort_values(by=["quarter"]).drop_duplicates(
+        subset=["author"], keep="last"
+    )
+    unique_researchers["country_label"] = unique_researchers[
+        "institution_country_code"
+    ].map(COUNTRY_CLASSIFICATION)
+    unique_researchers["source"] = unique_researchers["source"].map(source_labels)
+
+    total_authors = (
+        unique_researchers.groupby(["source", "country_label"])["author"]
+        .count()
+        .reset_index()
+        .rename(columns={"author": "total_authors"})
+    )
+
+    combined_total_authors = (
+        unique_researchers.dropna(subset=["country_label"])
+        .groupby("source")["author"]
+        .count()
+        .reset_index()
+        .rename(columns={"author": "total_authors"})
+    )
+
+    combined_total_authors["share_source_authors"] = (
+        combined_total_authors["total_authors"]
+        / combined_total_authors["total_authors"].sum()
+    )
+    total_authors["share_authors"] = total_authors.groupby("country_label")[
+        "total_authors"
+    ].transform(lambda x: x / x.sum())
+
+    # merge with overall source counts
+    merged_data = pd.merge(
+        total_authors,
+        combined_total_authors[["source", "share_source_authors"]],
+        on="source",
+        how="left",
+    )
+
+    # compute the LMIC representation ratio
+    merged_data["representation_ratio"] = (
+        merged_data["share_authors"] / merged_data["share_source_authors"]
+    )
+
+    return merged_data
+
+
+def _create_representation_chart(
+    data: pd.DataFrame, title: str, y_title: str, y_label: bool
+) -> alt.Chart:
+    """Create the Altair chart for representation ratio."""
+    source_order = [
+        "AlphaFold",
+        "AI-intensive Frontier",
+        "Non-AI Frontier",
+        "Other Struct. Biol.",
+    ]
+    scatter = (
+        alt.Chart(data)
+        .mark_circle(size=100)
+        .encode(
+            x=alt.X(
+                "representation_ratio:Q",
+                title="Representation Ratio",
+                scale=alt.Scale(domain=[0.8, 1.2]),
+            ),
+            y=alt.Y(
+                "source:N",
+                title=y_title,
+                axis=alt.Axis(labels=y_label),
+                sort=source_order,
+            ),
+            color=alt.Color("country_label:N", title="Country"),
+        )
+        .properties(title=title, width=200, height=150)
+    )
+
+    # reference line at 1.0
+    line = alt.Chart(pd.DataFrame({"x": [1]})).mark_rule(color="gray").encode(x="x:Q")
+
+    return alt.layer(scatter, line).resolve_scale(x="shared")
+
+
+def generate_fig3(
+    ecrs: pd.DataFrame,
+    nonecrs: pd.DataFrame,
+) -> Image.Image:
+    """Generate representation ratio plots for ECRs, and Non-ECRs."""
+    ecr_data = _preprocess_representation_data(ecrs)
+    nonecr_data = _preprocess_representation_data(nonecrs)
+
+    ecr_chart = _create_representation_chart(
+        ecr_data, title="Representation Ratio - ECRs", y_title=None, y_label=True
+    )
+    nonecr_chart = _create_representation_chart(
+        nonecr_data,
+        title="Representation Ratio - Non-ECRs",
+        y_title=None,
+        y_label=False,
+    )
+
+    chart = (
+        alt.hconcat(ecr_chart, nonecr_chart)
+        .resolve_axis(y="shared")
+        .resolve_scale(x="shared", y="shared")
+        .properties(spacing=50)
+        .configure_legend(offset=-10)
+    )
+
+    image = save_chart_as_image(chart)
 
     return image

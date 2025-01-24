@@ -428,3 +428,7 @@ fig.1:
 fig.2:
   <<: *_image
   filepath: s3://igl-alphafold/oct/04_output/figures/fig2.png
+
+fig.3:
+  <<: *_image
+  filepath: s3://igl-alphafold/oct/04_output/figures/fig3.png
