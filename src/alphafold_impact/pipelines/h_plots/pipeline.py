@@ -10,6 +10,9 @@ from .nodes import (
     generate_fig3,
     generate_summary_tables_latex,
     plot_regression_results,
+    generate_researcher_charts,
+    generate_publication_charts,
+    combined_publications_researchers_charts
 )
 
 
@@ -60,6 +63,36 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                 outputs="regression_results",
                 name="plot_regression_results",
             ),
+            node(
+                func=generate_researcher_charts,
+                inputs={
+                    "ecrs": "ecr.publications.quarterly",
+                    "researchers": "nonecr.publications.quarterly"
+                },
+                outputs="fig.4",
+                name="generate_researcher_charts",
+            ),
+            node(
+                func=generate_publication_charts,
+                inputs={
+                    "publications": "publications.data.outputs",
+                },
+                outputs="fig.5",
+                name="generate_publication_charts",
+            ),
+            node(
+                func=combined_publications_researchers_charts,
+                inputs={
+                    "publications": "publications.data.outputs",
+                    "ecrs": "ecr.publications.quarterly",
+                    "researchers": "nonecr.publications.quarterly",
+                    "columns": "params:columns.fig_4",
+                    "labels": "params:labels.fig_4",
+                    "chart_titles": "params:chart_titles.fig_4",
+                },
+                outputs="fig.4combined",
+                name="combined_publications_researchers_charts",
+            )
         ]
     )
 

@@ -143,7 +143,6 @@ def collect_pdb_details(pdb_df: pd.DataFrame, api_config: dict) -> pd.DataFrame:
     return combined_df
 
 
-
 def aggregate_to_pdb_level(similarity_chunks: pd.DataFrame) -> pd.DataFrame:
     """
     Distill similarity data to PDB-to-PDB level by extracting PDB IDs from
@@ -172,14 +171,9 @@ def aggregate_to_pdb_level(similarity_chunks: pd.DataFrame) -> pd.DataFrame:
     pdb_level_df = pd.concat(results, ignore_index=True)
 
     # [HACK] Group again in case chunks split a query in 2+
-    pdb_level_df = pdb_level_df.groupby(
-        ["query", "target"], as_index=False
-    ).agg(
-        {
-            "alntmscore": "mean"
-        }
+    pdb_level_df = pdb_level_df.groupby(["query", "target"], as_index=False).agg(
+        {"alntmscore": "mean"}
     )
-
 
     return pdb_level_df
 
@@ -199,7 +193,9 @@ def process_similarity_data(
     Returns:
         pd.DataFrame: The DataFrame containing computed metrics.
     """
-    pdb_df = pdb_df[["id", "rcsb_id", "publication_date", "doi", "R_free", "resolution"]]
+    pdb_df = pdb_df[
+        ["id", "rcsb_id", "publication_date", "doi", "R_free", "resolution"]
+    ]
 
     logger.info("Preprocessing PDB dates")
     pdb_dates = preprocess_pdb_dates(pdb_df)
@@ -249,31 +245,53 @@ def merge_uniprot_data(pdb_df: pd.DataFrame, uniprot_df: pd.DataFrame) -> pd.Dat
         pdb_df, how="left", left_on="pdb_id", right_on="rcsb_id"
     )
 
-    # create column primary_submission for a given uniprot_id
-    merged_uniprot_df["primary_submission"] = (
-        merged_uniprot_df.groupby("uniprot_id")["publication_date"]
-        .transform("min")
-        .eq(merged_uniprot_df["publication_date"])
+    def _assign_primary_submission(group):
+        min_date = group["publication_date"].min()
+        min_date_entries = group[group["publication_date"] == min_date]
+        group["primary_submission"] = False
+        if len(min_date_entries) == 1:
+            # if there is only one entry, it is the primary submission
+            group.loc[min_date_entries.index, "primary_submission"] = True
+            return group
+        elif len(min_date_entries) == 0:
+            # if there are no entries, return the group as is
+            return group
+        chosen_index = np.random.choice(min_date_entries.index)
+        group.loc[chosen_index, "primary_submission"] = True
+        return group
+
+    merged_uniprot_df = merged_uniprot_df.groupby("uniprot_id").apply(
+        _assign_primary_submission
     )
 
-    # create unique assignment
-    primary_pdbs = (
-        merged_uniprot_df[["rcsb_id", "primary_submission"]]
-        .sort_values("primary_submission")
-        .drop_duplicates(subset=["rcsb_id"], keep="last")
-    )
+    # Reset index if needed
+    merged_uniprot_df.reset_index(drop=True, inplace=True)
 
-    # transform boolean to int
-    primary_pdbs["primary_submission"] = primary_pdbs["primary_submission"].astype(
-        "Int64"
-    )
+    # # create unique assignment
+    # primary_pdbs = (
+    #     merged_uniprot_df[["rcsb_id", "primary_submission"]]
+    #     .sort_values("primary_submission")
+    #     .drop_duplicates(subset=["rcsb_id"], keep="last")
+    # )
+
+    # # transform boolean to int
+    # primary_pdbs["primary_submission"] = primary_pdbs["primary_submission"].astype(
+    #     "Int64"
+    # )
 
     # merge back
-    pdb_df = pdb_df.merge(primary_pdbs, how="left")
+    # pdb_df = pdb_df.merge(primary_pdbs, how="left", on="rcsb_id")
 
     # merge uniprot data with pdb data
     intermediate_df = uniprot_df.merge(
-        pdb_df, how="left", left_on="pdb_id", right_on="rcsb_id"
+        merged_uniprot_df[["uniprot_id", "pdb_id", "primary_submission"]],
+        how="left",
+        on=["uniprot_id", "pdb_id"],
+    )
+
+    # add quarter
+    intermediate_df = intermediate_df.merge(
+        pdb_df[["rcsb_id", "id", "quarter"]], how="left", left_on="pdb_id", right_on="rcsb_id"
     )
 
     logger.info("Creating disease counts in intermediate_df")

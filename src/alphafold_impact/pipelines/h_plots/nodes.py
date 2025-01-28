@@ -4,7 +4,14 @@ import pandas as pd
 import numpy as np
 import altair as alt
 from PIL import Image
-from .utils import normalise_january_counts, save_chart_as_image, COUNTRY_CLASSIFICATION
+from .utils import (
+    normalise_january_counts,
+    save_chart_as_image,
+    COUNTRY_CLASSIFICATION,
+    add_researcher_label,
+    create_quarterly_vals,
+    create_quarterly_charts,
+)
 
 
 MAIN_TOPICS = [
@@ -44,7 +51,7 @@ def igl_style() -> alt.theme.ThemeConfig:
                 "titleColor": "#092640",  # Dark blue
             },
             "title": {
-                "fontSize": sizes[4],
+                "fontSize": sizes[5],
                 "fontWeight": "bold",
                 "anchor": "start",
                 "color": "#092640",  # Dark blue
@@ -595,9 +602,9 @@ def generate_summary_tables_latex(
 
 def plot_regression_results(
     reg: pd.DataFrame,
-    depth: List[str],
-    field: List[str],
-    subgroup: List[str],
+    depth: List[str],  # pylint: disable=unused-argument
+    field: List[str],  # pylint: disable=unused-argument
+    subgroup: List[str],  # pylint: disable=unused-argument
     treat_vars: Optional[List[str]] = None,
     highlight_significant: bool = True,
     significance_level: float = 0.05,
@@ -708,3 +715,124 @@ def plot_regression_results(
     #     f.write(png_bytes)
 
     return chart
+
+
+def process_and_create_charts(
+    structures: pd.DataFrame,
+    columns: list,
+    source_labels: dict,
+    chart_titles: list,
+    concat_title: str,
+) -> alt.Chart:
+    """Process data and create charts"""
+    # create per-publication values
+    for var in columns:
+        structures[f"{var}_pp"] = structures[var] / structures["num_publications"]
+        structures[f"{var}_rolling"] = structures.groupby("source")[
+            f"{var}_pp"
+        ].transform(lambda x: x.rolling(4, min_periods=1).mean())
+
+    charts = create_quarterly_charts(
+        structures,
+        [f"{var}_rolling" for var in columns if var != "num_publications"],
+        [source_labels[var] for var in columns if var != "num_publications"],
+        chart_titles,
+    )
+
+    hconcat = alt.hconcat(*charts).properties(title=alt.TitleParams(concat_title, fontSize=20))
+    return hconcat
+
+
+def generate_researcher_charts(
+    ecrs: pd.DataFrame, researchers: pd.DataFrame
+) -> alt.Chart:
+    """Generate submission charts"""
+
+    # # concatenate the datasets
+    # researchers = pd.concat([ecrs, researchers], ignore_index=True)
+
+    # researchers = add_researcher_label(researchers)
+
+    # structures = create_quarterly_vals(researchers, COLUMNS, "sum")
+
+    # chart = process_and_create_charts(
+    #     structures, COLUMNS, source_labels, chart_titles, "Researchers"
+    # )
+
+    # image = save_chart_as_image(chart)
+
+    # return image
+
+
+def generate_publication_charts(publications: pd.DataFrame) -> alt.Chart:
+    """Generate publication charts"""
+    publications["quarter"] = pd.to_datetime(
+        publications["publication_date"]
+    ).dt.to_period("Q")
+    publications["num_publications"] = 1
+
+    COLUMNS = [
+        "num_publications",
+        "num_uniprot_structures",
+        "num_pdb_ids",
+        "num_primary_submissions",
+    ]
+
+    structures = create_quarterly_vals(publications, COLUMNS, "sum")
+
+    source_labels = {
+        "num_uniprot_structures": "Uniprot Structures",
+        "num_pdb_ids": "PDB Submissions",
+        "num_primary_submissions": "Primary Submissions",
+    }
+
+    chart_titles = [
+        "(d) Uniprot Structures per Publication (4Q RA)",
+        "(e) PDB IDs per Publication (4Q RA)",
+        "(f) Primary Submissions per Publication (4Q RA)",
+    ]
+
+    chart = process_and_create_charts(
+        structures, COLUMNS, source_labels, chart_titles, "Publications"
+    )
+
+    image = save_chart_as_image(chart)
+
+    return image
+
+
+def combined_publications_researchers_charts(
+    publications: pd.DataFrame,
+    researchers: pd.DataFrame,
+    ecrs: pd.DataFrame,
+    columns,
+    labels,
+    chart_titles,
+) -> alt.Chart:
+    """Generate combined publication and researcher charts"""
+
+    researchers = pd.concat([ecrs, researchers], ignore_index=True)
+    researchers = add_researcher_label(researchers)
+
+    publications["quarter"] = pd.to_datetime(
+        publications["publication_date"]
+    ).dt.to_period("Q")
+    publications["num_publications"] = 1
+
+    publication_structures = create_quarterly_vals(publications, columns, "sum")
+    researcher_structures = create_quarterly_vals(researchers, columns, "sum")
+
+    publication_chart = process_and_create_charts(
+        publication_structures, columns, labels, chart_titles, "Publications"
+    )
+    researcher_chart = process_and_create_charts(
+        researcher_structures, columns, labels, chart_titles, "Researchers"
+    )
+
+    combined_chart = (publication_chart & researcher_chart).configure_title(
+        offset=15, orient="top", anchor="middle"
+    )
+
+    image = save_chart_as_image(combined_chart)
+
+    return image

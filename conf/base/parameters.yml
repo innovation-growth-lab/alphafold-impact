@@ -509,3 +509,22 @@ publications:
 depth_allgroups: "depth_All Groups"
 field_all: "field_All Fields"
 cem: "subgroup_All PDB - CEM"
+
+columns:
+  fig_4:
+    - "num_publications"
+    - "num_uniprot_structures"
+    - "num_pdb_ids"
+    - "num_primary_submissions"
+
+labels:
+  fig_4:
+    num_uniprot_structures: "UniProt Structures"
+    num_pdb_ids: "PDB Submissions"
+    num_primary_submissions: "Primary UP Submissions"
+
+chart_titles:
+  fig_4:
+      - Uniprot Structures per Publication (4Q RA)
+      - PDB Submissions per Publication (4Q RA)
+      - Primary Submissions per Publication (4Q RA)

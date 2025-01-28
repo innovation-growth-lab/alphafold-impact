@@ -638,6 +638,11 @@ def get_institution_info(
         pd.DataFrame: DataFrame containing institution data.
 
     """
+    # keep last author from data authorships
+    publications["last_author_institution"] = publications["authorships"].apply(
+        lambda x: x[-1][1] if x is not None and len(x) > 0 else None
+    )
+
     institutions = publications["last_author_institution"].unique().tolist()
 
     logger.info("Fetching publications for %d authors", len(institutions))
