@@ -15,7 +15,7 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
             node(
                 process_baseline_data,
                 inputs={
-                    "alphafold_data": "oa.data_processing.depth.all.primary",
+                    "alphafold_data": "oa.data_processing.depth.af.primary",
                     "intent_data": "oa.data_processing.depth.level.0.baseline.primary",
                     "baseline_data": "oa.data_collection.subfield.structural_biology.depth.0.intermediate",
                     "seed_baseline_data": "oa.data_processing.subfield.structural_biology.primary",
@@ -25,7 +25,7 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
             ),
             node(
                 process_af_data,
-                inputs={"alphafold_data": "oa.data_processing.depth.all.primary"},
+                inputs={"alphafold_data": "oa.data_processing.depth.af.primary"},
                 outputs="alphafold_target",
                 name="process_af_for_chain_assignment",
             ),

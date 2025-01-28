@@ -121,17 +121,17 @@ dep_var_labels <- c(
 
 coef_labels <- c(
   "af_ind" = "AlphaFold",
-  "ct_ai_ind" = "Counterfactual AI",
-  "ct_noai_ind" = "Counterfactual no AI",
+  "ct_ai_ind" = "AI Frontier",
+  "ct_noai_ind" = "No AI Frontier",
   "strong_af_ind" = "AlphaFold - Method",
-  "strong_ct_ai_ind" = "Counterfactual AI - Method",
-  "strong_ct_noai_ind" = "Counterfactual no AI - Method",
+  "strong_ct_ai_ind" = "AI Frontier - Method",
+  "strong_ct_noai_ind" = "No AI Frontier - Method",
   "af" = "AlphaFold",
-  "ct_ai" = "Counterfactual AI",
-  "ct_noai" = "Counterfactual no AI",
+  "ct_ai" = "AI Frontier",
+  "ct_noai" = "No AI Frontier",
   "strong_af" = "AlphaFold - Method",
-  "strong_ct_ai" = "Counterfactual AI - Method",
-  "strong_ct_noai" = "Counterfactual no AI - Method"
+  "strong_ct_ai" = "AI Frontier - Method",
+  "strong_ct_noai" = "No AI Frontier - Method"
 )
 
 strip_colors <- c(

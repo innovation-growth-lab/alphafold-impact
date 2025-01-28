@@ -64,7 +64,7 @@ fes[["fe1"]] <- c("pi_id", "quarter_year")
 cov_sets <- c("base0")
 fe_list <- c("fe1")
 dep_vars <- c(
-  "mesh_C"
+  # 
   # "ln1p_cited_by_count",
   # "ln1p_cit_0",
   # "ln1p_cit_1",
@@ -74,7 +74,7 @@ dep_vars <- c(
   # "num_publications",
   # "patent_count",
   # "patent_citation",
-  # "num_pdb_submissions",
+  "num_pdb_ids"
   # "ca_count",
   # "num_uniprot_structures",
   # "num_primary_submissions",
@@ -86,7 +86,8 @@ dep_vars <- c(
   # "num_uniprot_structures_w_rare_organisms",
   # "num_primary_submissions_w_rare_organisms",
   # "num_uniprot_structures_w_low_similarity",
-  # "num_primary_submissions_w_low_similarity"
+  # "num_primary_submissions_w_low_similarity",
+  # "mesh_C"
 )
 
 for (dep_var_out in dep_vars) { # nolint
@@ -215,7 +216,7 @@ for (dep_var_out in dep_vars) { # nolint
               fixef.iter = 100000,
               glm.iter = 100,
               nthreads = 1,
-              lean = TRUE,
+              lean = FALSE,
               mem.clean = TRUE
             )
           },
@@ -232,7 +233,7 @@ for (dep_var_out in dep_vars) { # nolint
               form_list[[form]],
               data = local_data,
               cluster = c("pi_id", "quarter_year"),
-              lean = TRUE,
+              lean = FALSE,
               mem.clean = TRUE
             )
           },
@@ -292,6 +293,18 @@ for (dep_var_out in dep_vars) { # nolint
         )
       )
 
+      # save coef_table
+      coefplot_dir <- paste0(pathdir, "coef_tables/")
+
+      if (!dir.exists(coefplot_dir)) {
+        dir.create(coefplot_dir, recursive = TRUE)
+      }
+
+      saveRDS(
+        coef_table,
+        paste0(coefplot_dir, dep_var_out, "_coef_table.rds")
+      )
+      
       generate_coef_plots(
         coef_table
       )

@@ -449,6 +449,6 @@ fig.4combined:
 
 # RDS
 
-# organism_rarity_mean_coef_table.rds:
-#   type: src.alphafold_impact.datasets.rds_dataset.RdsDataset
-#   filepath: data/05_model_output/authors/nonecr/quarterly/coef_tables/organism_rarity_mean_coef_table.rds
+organism_rarity_mean_coef_table.rds:
+  type: alphafold_impact.datasets.rds_dataset.RdsDataset
+  filepath: data/05_model_output/authors/nonecr/quarterly/coef_tables/organism_rarity_mean_coef_table.rds

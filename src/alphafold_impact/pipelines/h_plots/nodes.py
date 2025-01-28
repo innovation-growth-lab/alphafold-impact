@@ -739,7 +739,9 @@ def process_and_create_charts(
         chart_titles,
     )
 
-    hconcat = alt.hconcat(*charts).properties(title=alt.TitleParams(concat_title, fontSize=20))
+    hconcat = alt.hconcat(*charts).properties(
+        title=alt.TitleParams(concat_title, fontSize=20)
+    )
     return hconcat
 
 
@@ -823,10 +825,14 @@ def combined_publications_researchers_charts(
     researcher_structures = create_quarterly_vals(researchers, columns, "sum")
 
     publication_chart = process_and_create_charts(
-        publication_structures, columns, labels, chart_titles, "Publications"
+        publication_structures, columns, labels, chart_titles, "Citation Chains"
     )
     researcher_chart = process_and_create_charts(
-        researcher_structures, columns, labels, chart_titles, "Researchers"
+        researcher_structures,
+        columns,
+        labels,
+        chart_titles,
+        "Early Career and Established Researchers",
     )
 
     combined_chart = (publication_chart & researcher_chart).configure_title(
