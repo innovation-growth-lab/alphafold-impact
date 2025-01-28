@@ -12,6 +12,6 @@ ruff~=0.0.290
 scikit-learn~=1.0
 seaborn~=0.12.1
 pytest==7.4.4
-altair==5.2.0
+altair
 requests-html~=0.10.0
 biopython==1.83

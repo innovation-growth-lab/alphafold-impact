@@ -368,6 +368,7 @@ applied_labs_data <- applied_labs_data %>%
     ln1p_patent_citation = log1p(patent_citation),
     num_publications = num_publications,
     num_pdb_submissions = pdb_submission,
+    num_pdb_ids = num_pdb_ids,
     primary_field = as.factor(primary_field),
     ln1p_resolution = log1p(as.numeric(resolution_mean)),
     ln1p_R_free = log1p(as.numeric(R_free_mean)),

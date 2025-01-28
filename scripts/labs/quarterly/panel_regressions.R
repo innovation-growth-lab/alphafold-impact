@@ -64,7 +64,7 @@ fes[["fe1"]] <- c("pi_id", "quarter_year")
 cov_sets <- c("base0")
 fe_list <- c("fe1")
 dep_vars <- c(
-  # 
+  # "mesh_C"
   # "ln1p_cited_by_count",
   # "ln1p_cit_0",
   # "ln1p_cit_1",
@@ -194,7 +194,7 @@ for (dep_var_out in dep_vars) { # nolint
 
       # run the regression as linear, but make an exception for pdb_submission
       if (dep_var %in% c(
-        "num_publications", "num_pdb_submissions",
+        "num_publications", "num_pdb_ids", "num_pdb_submissions",
         "ca_count", "patent_count", "patent_citation",
         "num_uniprot_structures",
         "num_primary_submissions",

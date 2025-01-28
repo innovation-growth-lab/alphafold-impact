@@ -269,7 +269,6 @@ nonecr_data <- nonecr_data %>%
     "mesh_C",
     grep("^field_", names(nonecr_data), value = TRUE),
     "num_uniprot_structures",
-    "num_pdb_ids",
     "num_primary_submissions",
     "num_diseases",
     "organism_rarity_mean",
