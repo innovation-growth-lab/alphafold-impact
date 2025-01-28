@@ -2,7 +2,7 @@
 library(dplyr)
 library(ggplot2)
 library(showtext)
-
+library(scales)
 font_add_google("Mulish", "muli")
 showtext_auto()
 
@@ -141,9 +141,9 @@ strip_colors <- c(
   "Foundational - High PDB - CEM" = "lightcoral",
   "Applied - All PDB - CEM" = "#092640",
   "Applied - High PDB - CEM" = "lightcoral",
-  "Laboratories" = "#00B2A2",
-  "Established Researchers" = "#FF5836",
-  "Early Career Researchers" = "#FAB61B",
+  "Principal" = "#00B2A2",
+  "Established" = "#FF5836",
+  "Early Career" = "#FAB61B",
   "Citation Chains" = "#1F5DAD"
 )
 
@@ -157,20 +157,20 @@ depth_colors <- c(
 # --- Variable definitions ---
 # Set desired orders for variables and names
 subgroup_order <- c("All PDB - CEM", "High PDB - CEM")
-depth_order <- c("All Groups")#, "Foundational", "Applied")
+depth_order <- c("All Groups") # , "Foundational", "Applied")
 field_order <- c(
   "field_All Fields",
   "field_Molecular Biology",
   "field_Medicine"
 )
 
-observation_order <- c("papers", "nonecr", "ecr", "labs")
+observation_order <- c("papers", "ecr", "nonecr", "labs")
 
 observation_labels <- c(
   "papers" = "Citation Chains",
-  "labs" = "Laboratories",
-  "nonecr" = "Established Researchers",
-  "ecr" = "Early Career Researchers"
+  "ecr" = "Early Career",
+  "nonecr" = "Established",
+  "labs" = "Principal"
 )
 
 
@@ -197,6 +197,10 @@ generate_coef_plots <- function(coef_table) { # nolint
 
   unique_dep_vars <- unique(coef_table$dep_var)
 
+  # keep only depth_All Groups and field_All Fields
+  coef_table <- coef_table %>% # nolint
+    filter(depth == "depth_All Groups", field == "field_All Fields")
+
   for (single_dep_var in unique_dep_vars) {
     coef_plot_data <- coef_table %>% # nolint
       filter(treat_var %in% names(coef_labels), dep_var == single_dep_var) %>% # nolint
@@ -214,8 +218,8 @@ generate_coef_plots <- function(coef_table) { # nolint
         treat_var = recode(treat_var, !!!coef_labels) # nolint
       )
 
-      coef_plot_data <- coef_plot_data %>% # nolint
-        filter(!is.na(field) & !is.na(depth) & !is.na(subgroup)) # nolint
+    coef_plot_data <- coef_plot_data %>% # nolint
+      filter(!is.na(field) & !is.na(depth) & !is.na(subgroup)) # nolint
 
     for (depthsubgroup in unique(coef_plot_data$depth_subgroup)) {
       subgroup_coef_plot_data <- coef_plot_data %>% # nolint
@@ -270,6 +274,7 @@ generate_coef_plots <- function(coef_table) { # nolint
           scales = "free",
           independent = "x",
           space = "fixed",
+          labeller = label_wrap_gen(20),
           strip = ggh4x::strip_themed(
             background_y = ggh4x::elem_list_rect(
               fill = vertical_strip_colors
@@ -280,22 +285,22 @@ generate_coef_plots <- function(coef_table) { # nolint
           )
         ) + # nolint
         labs( # nolint
-          title = paste("Dependent Variable:", single_dep_var, " | ", depthsubgroup), # nolint
+          title = paste("Dependent Variable:", single_dep_var), # nolint
           # subtitle = paste("Field:", field_label), # nolint
           x = "Estimate (with 95% CI)",
           y = "Coefficient Variable"
         ) +
         theme_classic() + # nolint
         theme( # nolint
-          axis.text.y = element_text(size = 40), # nolint
-          axis.title.x = element_text(size = 36), # nolint
-          axis.title.y = element_text(size = 36), # nolint
-          strip.text = element_text(size = 30), # nolint
+          axis.text.y = element_text(size = 56), # nolint
+          axis.title.x = element_text(size = 56), # nolint
+          axis.title.y = element_text(size = 56), # nolint
+          strip.text = element_text(size = 45), # nolint
           panel.grid.major.x = element_line(linewidth = 0.2, color = "grey"), # nolint
           panel.border = element_rect(color = "black", fill = NA, linewidth = 0.8), # nolint
-          panel.spacing = unit(2, "lines"), # nolint
+          panel.spacing = unit(1.5, "lines"), # nolint
           legend.position = "none",
-          plot.margin = margin(1, 1, 1, 1, "cm") # nolint
+          plot.margin = margin(0.1, 0.1, 0.1, 0.1, "cm") # nolint
         )
 
       # add counts of obs (subgroup all and ext.)
@@ -303,14 +308,14 @@ generate_coef_plots <- function(coef_table) { # nolint
         data = subgroup_coef_plot_data, # nolint
         aes(label = paste0("n = ", n_obs)), # nolint
         x = Inf, y = Inf,
-        hjust = 1.1, vjust = 25.5,
-        size = 12, color = "black"
+        hjust = 1.1, vjust = 21.75,
+        size = 16, color = "black"
       ) + theme(
-        text = element_text(family = "muli", size = 40), # Base font size
-        axis.text = element_text(size = 36), # Axis tick labels
-        axis.title = element_text(size = 40), # Axis titles
-        strip.text = element_text(size = 40, face = "bold", colour = "white"), # Facet strip text
-        plot.title = element_text(size = 48, face = "bold"), # Title
+        text = element_text(family = "muli", size = 56), # Base font size
+        axis.text = element_text(size = 56), # Axis tick labels
+        axis.title = element_text(size = 60), # Axis titles
+        strip.text = element_text(size = 60, face = "bold", colour = "white"), # Facet strip text
+        plot.title = element_text(size = 66, face = "bold"), # Title
         plot.subtitle = element_text(size = 44)
       )
 
@@ -329,7 +334,7 @@ generate_coef_plots <- function(coef_table) { # nolint
       ggsave( # nolint
         outfile, # nolint
         coeffplot,
-        width = 15,
+        width = 14,
         height = plot_height,
         dpi = 300
       )
