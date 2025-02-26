@@ -169,7 +169,7 @@ def fetch_citation_to_specific_depth(
         start_level,
     )
 
-    while level < max_depth:
+    while level <= max_depth:
         next_level_papers = set()
         batch_num = 0
 

@@ -15,3 +15,6 @@ pytest==7.4.4
 altair
 requests-html~=0.10.0
 biopython==1.83
+s3fs
+pyreadr
+vl-convert-python

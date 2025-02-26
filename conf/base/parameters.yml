@@ -37,12 +37,11 @@ oa:
       api: *api
       get: *get
       filter: cites
-      max_depth: 3
+      max_depth: 2
       levels:
         0: 0
         1: 1
         2: 2
-        3: 3
 
     
     # Works for concepts
@@ -50,9 +49,6 @@ oa:
       test_concept_ids:
         - "c10010492" # Protein sequencing
         - "c204328495" # Protein folding
-      test_publication_years:
-        - 2022
-        - 2023
 
     subfield:
       structural_biology:
@@ -349,7 +345,8 @@ s2:
       af_paper: W3177828909
       af_doi: 10.1038/s41586-021-03819-2
       api:
-        key: 0lnUkuBhBJ8NUT2RxpK9j82yWGfUL2I81UmlwN6b
+        key: 4xdrZY4Ukp2YvjViW2jiT1wIjKCme2AXvQGWQJJi # bse
+        # key: 0lnUkuBhBJ8NUT2RxpK9j82yWGfUL2I81UmlwN6b # nesta
         base_url: https://api.semanticscholar.org/graph/v1/paper
         cites: citations
         cited_by: references

@@ -109,7 +109,8 @@ dep_var_labels <- c(
   "num_uniprot_structures" = "Uniprot structures",
   "num_primary_submissions" = "Primary submissions",
   "num_diseases" = "Number of Diseases",
-  "organism_rarity_mean" = "Organism rarity mean",
+  "organism_rarity_mean" = "Organism Rarity mean",
+  "organism_rarity_max" = "Organism Rarity (Max)",
   "mean_tmscore" = "Mean TM-score",
   "num_uniprot_structures_w_disease" = "Uniprot structures with disease relevance", # nolint
   "num_primary_submissions_w_disease" = "Primary submissions with disease relevance", # nolint
@@ -160,7 +161,7 @@ subgroup_order <- c("All PDB - CEM", "High PDB - CEM")
 depth_order <- c("All Groups") # , "Foundational", "Applied")
 field_order <- c(
   "field_All Fields",
-  "field_Molecular Biology",
+  "field_Biochemistry",
   "field_Medicine"
 )
 
@@ -197,9 +198,11 @@ generate_coef_plots <- function(coef_table) { # nolint
 
   unique_dep_vars <- unique(coef_table$dep_var)
 
-  # keep only depth_All Groups and field_All Fields
+  # rename "Molecular Biology" to "Biochemistry"
   coef_table <- coef_table %>% # nolint
-    filter(depth == "depth_All Groups", field == "field_All Fields")
+    mutate( # nolint
+      field = recode(field, "field_Molecular Biology" = "field_Biochemistry")
+    )
 
   for (single_dep_var in unique_dep_vars) {
     coef_plot_data <- coef_table %>% # nolint
@@ -222,6 +225,7 @@ generate_coef_plots <- function(coef_table) { # nolint
       filter(!is.na(field) & !is.na(depth) & !is.na(subgroup)) # nolint
 
     for (depthsubgroup in unique(coef_plot_data$depth_subgroup)) {
+      field <- sub(" - .*", "", depthsubgroup)
       subgroup_coef_plot_data <- coef_plot_data %>% # nolint
         filter(depth_subgroup == depthsubgroup)
 
@@ -234,7 +238,7 @@ generate_coef_plots <- function(coef_table) { # nolint
 
 
       subgroup_coef_plot_data <- subgroup_coef_plot_data %>% # nolint
-        filter(n_obs >= 650, estimate >= -10, estimate <= 10)
+        filter(n_obs >= 950, estimate >= -10, estimate <= 10)
 
 
       horizontal_levels <- levels(
@@ -284,8 +288,9 @@ generate_coef_plots <- function(coef_table) { # nolint
             )
           )
         ) + # nolint
+        scale_x_continuous(breaks = scales::pretty_breaks(n = 3)) + # Limit the number of x-axis tick marks
         labs( # nolint
-          title = paste("Dependent Variable:", single_dep_var), # nolint
+          title = paste("Dependent Variable:", single_dep_var, " | ", field), # nolint
           # subtitle = paste("Field:", field_label), # nolint
           x = "Estimate (with 95% CI)",
           y = "Coefficient Variable"

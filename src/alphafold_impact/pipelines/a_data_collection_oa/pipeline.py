@@ -84,7 +84,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                     "seed_paper": "oa.structural_biology.seed_papers",
                     "api_config": "params:oa.data_collection.depth.api",
                     "filter_config": "params:oa.data_collection.depth.filter",
-                    "max_depth": "params:sb_labs.data_collection.depth.max_depth",
+                    "max_depth": "params:oa.data_collection.depth.max_depth",
                 },
                 outputs="oa.data_collection.subfield.structural_biology.depth.raw",
                 name="fetch_sb_citation_to_specific_depth",
