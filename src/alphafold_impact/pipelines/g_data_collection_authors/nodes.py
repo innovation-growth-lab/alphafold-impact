@@ -57,9 +57,6 @@ from kedro.io import AbstractDataset
 import pandas as pd
 import numpy as np
 from ..a_data_collection_oa.nodes import collect_papers  # pylint: disable=E0402
-from ..e_data_output_publications.nodes import (  # pylint: disable=E0402
-    get_patent_citations,
-)
 
 pd.set_option("future.no_silent_downcasting", True)
 logger = logging.getLogger(__name__)
@@ -101,17 +98,12 @@ def _get_candidate_authors(data: pd.DataFrame) -> pd.DataFrame:
     author_data = author_data[~(author_data["author"] == "A9999999999")]
     author_data["level"] = author_data["level"].astype(int)
 
-    # create "foundational" or "applied" column
-    author_data["depth"] = author_data["level"].apply(
-        lambda x: "foundational" if x == 0 else "applied"
-    )
-
     # create quarter column
     author_data["publication_date"] = pd.to_datetime(author_data["publication_date"])
     author_data["quarter"] = author_data["publication_date"].dt.to_period("Q")
 
     author_data_out = (
-        author_data.groupby(["author", "institution", "depth", "source", "quarter"])
+        author_data.groupby(["author", "institution", "source", "quarter"])
         .size()
         .reset_index(name="counts")
     )
@@ -216,26 +208,24 @@ def get_unique_authors(
 
     logger.info("Getting unique institutions")
     top_institutions = authors.loc[
-        authors.groupby(["author", "depth", "source"])["counts"].idxmax()
-    ][["author", "depth", "source", "institution"]]
+        authors.groupby(["author", "source"])["counts"].idxmax()
+    ][["author", "source", "institution"]]
     authors = authors.drop("institution", axis=1).merge(
-        top_institutions, on=["author", "depth", "source"]
+        top_institutions, on=["author", "source"]
     )
 
     logger.info("Cumulative sum of counts")
     authors = (
-        authors.groupby(["author", "depth", "source", "quarter"])["counts"]
-        .sum()
-        .reset_index()
+        authors.groupby(["author", "source", "quarter"])["counts"].sum().reset_index()
     )
-    authors = authors.sort_values(by=["author", "depth", "source", "quarter"])
-    authors["cumulative_counts"] = authors.groupby(["author", "depth", "source"])[
+    authors = authors.sort_values(by=["author", "source", "quarter"])
+    authors["cumulative_counts"] = authors.groupby(["author", "source"])[
         "counts"
     ].cumsum()
 
     logger.info("Pivoting table")
     authors = authors.pivot_table(
-        index=["author", "depth", "quarter"],
+        index=["author", "quarter"],
         columns="source",
         values="cumulative_counts",
         fill_value=0,
@@ -485,28 +475,11 @@ def merge_author_data(
             - The second DataFrame contains the reduced ECR data for regression analysis.
     """
     logger.info("Preparing labels for end-of-loop merge")
-    label_cols = [col for col in candidate_authors.columns if col.startswith("strong")]
-    author_labels = candidate_authors[
-        ["author", "quarter"] + label_cols
-    ].drop_duplicates(subset=["author", "quarter"])
-
-    # sort by author and quarter
-    author_labels = author_labels.sort_values(by=["author", "quarter"])
-
-    # ffill strong labels
-    author_labels[
-        [col for col in author_labels.columns if col.startswith("strong")]
-    ] = (author_labels[["author"] + label_cols].groupby("author").ffill().fillna(0))
-
-    for col in label_cols:
-        author_labels[col] = author_labels[col].astype(int)
-
-    candidate_authors = candidate_authors.drop(
-        columns=[col for col in candidate_authors.columns if col.startswith("strong")]
-    )
 
     institutions = _institution_preprocessing(institutions)
-    candidate_authors = _candidates_preprocessing(candidate_authors)
+
+    # process pdb data
+    author_submissions = _process_pdb_data(pdb_submissions)
 
     mesh_terms["term_group"] = mesh_terms["tree_number"].apply(
         lambda x: str(x)[:1] if x is not None else None
@@ -523,7 +496,7 @@ def merge_author_data(
         data = loader()
 
         logger.info("Getting high PDB authors")
-        data = _define_high_pdb_authors(data, pdb_submissions)
+        data = _define_high_pdb_authors(data, author_submissions)
 
         # get first author data
         data = data[data["author_position"] == "first"]
@@ -584,28 +557,13 @@ def merge_author_data(
 
         # sort by quarter, bfill and ffill for missing af. ct_ai, ct_noai, other
         data = data.sort_values(by=["author", "quarter"])
-        data[["af", "ct_ai", "ct_noai", "other"]] = (
-            data.groupby("author")[["af", "ct_ai", "ct_noai", "other"]]
-            .ffill()
-            .fillna(0)
-            .astype(int)
-        )
-
-        # fill depth with whatever value groupby author is not NAN
-        data["depth"] = data.groupby("author")["depth"].transform(
-            lambda x: x.ffill().bfill()
-        )
-
-        # drop if depth still nan
-        data = data.dropna(subset=["depth"])
+        cols_to_fill = [
+            col for col in candidate_authors.columns if col not in ["author", "quarter"]
+        ]
+        for col in cols_to_fill:
+            data[col] = data.groupby("author")[col].ffill().fillna(0).astype(int)
 
         # get patent citations
-        data["doi"] = data["doi"].apply(
-            lambda x: x.replace("https://doi.org/", "") if x is not None else None
-        )
-        data = get_patent_citations(data, patents_data)
-
-        # get pdb activity metrics
         data = data.merge(pdb_submissions, on="id", how="left")
 
         # get icite_counts
@@ -615,8 +573,10 @@ def merge_author_data(
         # concatenate the data
         output_data = pd.concat([output_data, data], ignore_index=True)
 
-    # merge the unique authors with the output data
-    output_data = output_data.merge(author_labels, on=["author", "quarter"], how="left")
+    # create top quantile pre2021 pdb activity
+    output_data["high_pdb_pre2021"] = output_data[
+        "num_pdb_submissions_pre2021"
+    ] >= output_data["num_pdb_submissions_pre2021"].quantile(0.75)
 
     return output_data
 
@@ -697,7 +657,7 @@ def _candidates_preprocessing(candidate_authors: pd.DataFrame) -> pd.DataFrame:
 
 
 def _define_high_pdb_authors(
-    data: pd.DataFrame, pdb_submissions: pd.DataFrame
+    data: pd.DataFrame, author_submissions: pd.DataFrame
 ) -> pd.DataFrame:
     """
     Define high PDB authors based on the publication counts in the
@@ -711,33 +671,30 @@ def _define_high_pdb_authors(
         pd.DataFrame: The updated DataFrame with the 'high_pdb' column.
     """
 
-    data_db = data[["id", "author", "publication_date"]].merge(
-        pdb_submissions, on="id", how="inner"
+    author_submissions_pre2021 = author_submissions[
+        author_submissions["publication_date"] < "2021-01-01"
+    ]
+    data_db = (
+        data[["author"]]
+        .drop_duplicates(subset=["author"])
+        .merge(author_submissions_pre2021[["author", "id"]], on="author", how="left")
+        .drop_duplicates(subset=["author", "id"])
     )
 
-    data_db["pdb_submission"] = True
+    # create a column that is 1 if notna else 0
+    data_db["num_pdb_submissions_pre2021"] = data_db["id"].notna().astype(int)
 
-    # Filter data_db to include only publications before 2021
-    data_db_pre_2021 = data_db[data_db["publication_date"] < "2021-01-01"]
-
-    # Group by author and count the number of publications for each author
-    author_pub_counts = data_db_pre_2021.groupby("author")["id"].count().reset_index()
-    author_pub_counts = author_pub_counts.rename(columns={"id": "pub_count"})
-
-    # Calculate the 75th percentile (fourth quantile) of the publication counts
-    quantile_75 = author_pub_counts["pub_count"].quantile(0.75)
-
-    # Create a high_pdb variable for authors with publication counts in the fourth quantile
-    author_pub_counts["high_pdb"] = author_pub_counts["pub_count"] >= quantile_75
-
-    # Merge this information back into the data DataFrame
-    data = data.merge(
-        author_pub_counts[["author", "high_pdb"]], on="author", how="left"
+    # group by author and sum pdb_submission
+    data_db = (
+        data_db.groupby("author")["num_pdb_submissions_pre2021"].sum().reset_index()
     )
 
     # Merge data_db to include pdb_submission column
-    data = data.merge(data_db[["id", "pdb_submission"]], on="id", how="left")
-    data.fillna({"pdb_submission": False}, inplace=True)
+    data = data.merge(
+        data_db[["author", "num_pdb_submissions_pre2021"]],
+        on="author",
+        how="left",
+    )
 
     return data
 
@@ -868,6 +825,10 @@ def calculate_mesh_balance(
 
     data.drop(columns=["mesh_terms"], inplace=True)
 
+    # fill NaN for columns that are mesh_
+    mesh_cols = [col for col in data.columns if col.startswith("mesh_")]
+    data[mesh_cols] = data[mesh_cols].fillna(0)
+
     return data
 
 
@@ -883,11 +844,20 @@ def collect_covid_references(data: pd.DataFrame) -> pd.DataFrame:
       pd.DataFrame: The original DataFrame with an additional column "covid_share_2020"
     """
 
-    data_2020 = data[data["quarter"].isin(["2020Q1", "2020Q2", "2020Q3", "2020Q4"])]
+    data_2020 = data[
+        (data["publication_date"] >= "2020-01-01")
+        & (data["publication_date"] <= "2020-12-31")
+    ]
 
-    data_2020["covid_2020"] = data_2020["concepts"].apply(
-        lambda x: (any(element == "C524204448" for element in x))
+    # explode concepts
+    data_2020 = data_2020.explode("concepts")
+
+    # get the first element of each list
+    data_2020["concepts"] = data_2020["concepts"].apply(
+        lambda x: x[0] if isinstance(x, np.ndarray) and len(x) > 0 else None
     )
+
+    data_2020["covid_2020"] = data_2020["concepts"].apply(lambda x: (x == "C524204448"))
 
     # Group the filtered dataframe by author and calculate the share of COVID concepts
     covid_share_2020 = (
@@ -907,6 +877,9 @@ def collect_covid_references(data: pd.DataFrame) -> pd.DataFrame:
     )
 
     data["covid_share_2020"] = data["author"].map(covid_share_dict)
+
+    # fill NaN with 0
+    data["covid_share_2020"] = data["covid_share_2020"].fillna(0)
 
     data.drop(columns=["concepts"], inplace=True)
 
@@ -1050,6 +1023,22 @@ def _result_transformations(data: pd.DataFrame) -> pd.DataFrame:
     Returns:
         pd.DataFrame: The transformed DataFrame with the extracted and restructured fields.
     """
+    data["pmid"] = data["ids"].apply(
+        lambda x: (
+            x.get("pmid", None).replace("https://pubmed.ncbi.nlm.nih.gov/", "")
+            if x.get("pmid")
+            else None
+        )
+    )
+    data["pmcid"] = data["ids"].apply(
+        lambda x: (
+            x.get("pmcid", None).replace(
+                "https://www.ncbi.nlm.nih.gov/pmc/articles/", ""
+            )
+            if x.get("pmcid")
+            else None
+        )
+    )
     # extract the content of authorships
     data["authorships"] = data["authorships"].apply(
         lambda x: (
@@ -1211,5 +1200,86 @@ def _normalise_citation_counts(data: pd.DataFrame) -> pd.DataFrame:
 
     # merge the 't' DataFrame back to the original DataFrame
     data = data.merge(t_columns, left_on="id", right_index=True, how="left")
+
+    return data
+
+
+def _process_pdb_data(pdb_submissions: pd.DataFrame) -> pd.DataFrame:
+    return (
+        pdb_submissions.explode("authorships")
+        .assign(
+            authorships=lambda x: x["authorships"].apply(
+                lambda y: y[0] if isinstance(y, np.ndarray) and len(y) > 0 else None
+            )
+        )
+        .rename(columns={"authorships": "author"})
+    )
+
+
+def get_patent_citations(
+    data: pd.DataFrame, patents_data: pd.DataFrame
+) -> pd.DataFrame:
+    """
+    Get patent citations for the given data using multiple identifier types (DOI, PMID, PMCID).
+
+    Args:
+        data (pandas.DataFrame): The input data containing paper identifiers.
+        patents_data (pandas.DataFrame): The patent data with NPL citations.
+
+    Returns:
+        pandas.DataFrame: The data with patent citations merged and aggregated.
+    """
+
+    # Create separate matches for each ID type
+    matches = []
+    
+    # Match DOIs
+    doi_matches = data.merge(
+        patents_data,
+        left_on='doi',
+        right_on='NPL Resolved External ID(s)',
+        how='inner'
+    )
+    matches.append(doi_matches)
+
+    # Match PMIDs
+    pmid_matches = data.merge(
+        patents_data,
+        left_on='pmid',
+        right_on='NPL Resolved External ID(s)',
+        how='inner'
+    )
+    matches.append(pmid_matches)
+
+    # Match PMCIDs
+    pmcid_matches = data.merge(
+        patents_data,
+        left_on='pmcid',
+        right_on='NPL Resolved External ID(s)',
+        how='inner'
+    )
+    matches.append(pmcid_matches)
+
+    # Combine all matches and remove duplicates
+    patent_matches = pd.concat(matches, ignore_index=True)
+    patent_matches = patent_matches.drop_duplicates(subset=['id', 'Title'])
+
+    # Group by paper ID and aggregate patent information
+    patent_matches_grouped = (
+        patent_matches.groupby(['id'])
+        .agg(
+            patent_count=pd.NamedAgg(column='Title', aggfunc='count'),
+            CPCs=pd.NamedAgg(
+                column='CPC Classifications',
+                aggfunc=lambda x: ";;".join(map(str, x)),
+            ),
+            patent_citation=pd.NamedAgg(column='Cited by Patent Count', aggfunc='sum'),
+        )
+        .reset_index()
+    )
+
+    # Merge with original data and fill missing values
+    data = data.merge(patent_matches_grouped, on='id', how='left')
+    data['patent_count'] = data['patent_count'].fillna(0)
 
     return data

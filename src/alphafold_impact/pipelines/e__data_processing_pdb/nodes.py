@@ -194,7 +194,15 @@ def process_similarity_data(
         pd.DataFrame: The DataFrame containing computed metrics.
     """
     pdb_df = pdb_df[
-        ["id", "rcsb_id", "publication_date", "doi", "R_free", "resolution"]
+        [
+            "id",
+            "rcsb_id",
+            "authorships",
+            "publication_date",
+            "doi",
+            "R_free",
+            "resolution",
+        ]
     ]
 
     logger.info("Preprocessing PDB dates")
@@ -291,7 +299,10 @@ def merge_uniprot_data(pdb_df: pd.DataFrame, uniprot_df: pd.DataFrame) -> pd.Dat
 
     # add quarter
     intermediate_df = intermediate_df.merge(
-        pdb_df[["rcsb_id", "id", "quarter"]], how="left", left_on="pdb_id", right_on="rcsb_id"
+        pdb_df[["rcsb_id", "id", "quarter", "publication_date", "authorships"]],
+        how="left",
+        left_on="pdb_id",
+        right_on="rcsb_id",
     )
 
     logger.info("Creating disease counts in intermediate_df")
@@ -322,6 +333,7 @@ def merge_uniprot_data(pdb_df: pd.DataFrame, uniprot_df: pd.DataFrame) -> pd.Dat
     oa_structural_df = (
         intermediate_df.groupby("id")
         .agg(
+            publication_date=("publication_date", "first"),
             num_uniprot_structures=("uniprot_id", "nunique"),
             num_pdb_ids=("rcsb_id", "nunique"),
             num_primary_submissions=("primary_submission", "sum"),
@@ -331,6 +343,7 @@ def merge_uniprot_data(pdb_df: pd.DataFrame, uniprot_df: pd.DataFrame) -> pd.Dat
             organism_rarity_mean=("organism_rarity", "mean"),
             organism_rarity_max=("organism_rarity", "max"),
             num_diseases=("num_diseases", "sum"),
+            authorships=("authorships", "first"),
         )
         .reset_index()
     )
