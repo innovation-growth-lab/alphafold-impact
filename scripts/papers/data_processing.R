@@ -135,7 +135,11 @@ papers <- papers %>%
 # Create 'strong' variable
 papers <- papers %>%
   mutate(
-    strong = as.factor(if_else(chain_label %in% c("strong", "partial_strong"), 1, 0)), # nolint
+    strong = as.factor(case_when(
+      chain_label %in% c("strong", "partial_strong") ~ 1,
+      chain_label %in% c("weak", "partial_weak") ~ 0,
+      TRUE ~ NA_real_
+    )),
     depth = as.factor(if_else(level == 0, "foundational", "applied")),
     af = if_else(source == "af", 1, 0),
     ct = if_else(source %in% c("ct_ai", "ct_noai"), 1, 0),
@@ -206,7 +210,7 @@ papers <- papers %>%
 # Define sub_samples as a list of samples
 sub_samples <- list()
 sub_groups <- c("All PDB", "High PDB")
-unique_depths <- c("All Groups", "Foundational", "Applied")
+unique_scopes <- c("All", "Intent") # Changed to All/Intent distinction
 unique_fields <- c(
   "All Fields",
   "Molecular Biology",
@@ -259,11 +263,11 @@ papers <- papers %>%
   ))
 
 # Create subsets for all combinations of depth, field, and sub_group
-for (depth_lvl in unique_depths) { # nolint
+for (scope_lvl in unique_scopes) {
   for (field in unique_fields) {
     for (sub_group in sub_groups) {
       sample_name <- paste0(
-        "depth_", depth_lvl, "__field_",
+        "scope_", scope_lvl, "__field_",
         field, "__subgroup_", sub_group
       )
       message("Creating sample: ", sample_name)
@@ -271,11 +275,12 @@ for (depth_lvl in unique_depths) { # nolint
       # Start with the full dataset
       sub_sample <- papers
 
-      # Apply depth filter
-      if (depth_lvl == "Foundational") {
-        sub_sample <- subset(sub_sample, depth == "foundational")
-      } else if (depth_lvl == "Applied") {
-        sub_sample <- subset(sub_sample, depth == "applied")
+      # # Apply depth filter
+      if (scope_lvl == "Intent") {
+        sub_sample <- subset(sub_sample, !is.na(strong))
+      } else {
+        # drop strong
+        sub_sample <- subset(sub_sample, select = -strong)
       }
 
       # Apply field filter

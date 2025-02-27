@@ -85,40 +85,49 @@ table_info <- list(
 
 dict_vars <- c(
   "af" = "AlphaFold",
-  "ct_ai" = "Counterfactual AI",
-  "ct_noai" = "Counterfactual No AI",
-  "strong1" = "Method"
+  "ct_ai" = "AI Frontiers",
+  "ct_noai" = "No AI Frontiers",
+  "af:strong0" = "AlphaFold - Background",
+  "af:strong1" = "AlphaFold - Method",
+  "ct_ai:strong0" = "AI Frontiers - Background",
+  "ct_ai:strong1" = "AI Frontiers - Method",
+  "strong0:ct_ai" = "AI Frontiers - Background",
+  "strong1:ct_ai" = "AI Frontiers - Method",
+  "ct_noai:strong0" = "No AI Frontiers - Background",
+  "ct_noai:strong1" = "No AI Frontiers - Method",
+  "strong0:ct_noai" = "No AI Frontiers - Background",
+  "strong1:ct_noai" = "No AI Frontiers - Method",
+  "strong1" = "Method",
+  "strong0" = "Background"
 )
-
-# Function to generate tables
 
 # Function to generate tables
 generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe_list, treat_vars) { # nolint
 
-  depths <- c("depth_All Groups", "depth_Foundational", "depth_Applied")
+  scopes <- c("scope_All", "scope_Intent")
   fields <- c(
     "field_All Fields",
     "field_Molecular Biology",
     "field_Medicine"
   )
   field_labels <- gsub("field_", "", fields)
-  subgroups <- c("subgroup_All PDB", "subgroup_High PDB", "subgroup_CEM")
+  subgroups <- c("subgroup_All PDB", "subgroup_High PDB")
 
   for (dep_var in dep_vars) {
     file_name <- table_info[[dep_var]]$file_name
 
     # Iterate over subsets
-    for (depth in depths) {
+    for (field in fields) {
       result_names <- c()
-      for (field in fields) {
-        for (subgroup in subgroups) {
+      for (subgroup in subgroups) {
+        for (scope in scopes) {
           # Iterate over covariate sets, fixed effects, and treatment variables # nolint
           for (cov_set in cov_sets) {
             for (fe in fe_list) {
               for (treat_var in treat_vars) {
                 # Build the result name
                 result_name <- paste0(
-                  depth, "__", field, "__", subgroup, "__", # nolint
+                  scope, "__", field, "__", subgroup, "__", # nolint
                   dep_var, "__", cov_set, "__", fe, "__", gsub(" ", "_", treat_var) # nolint
                 )
                 # Check if result exists
@@ -131,18 +140,17 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
         }
       }
 
-      # Use etable to output the table for each depth-field combination
+
+      # Use etable to output the table for each scope-field combination
       if (length(result_names) > 0) {
         message(
           paste0(
-            "Generating table for depth: ", depth,
-            ", pdb group: ", subgroup,
-            " and ", dep_var
+            "Generating table for dep_var: ", dep_var
           )
         )
         pathdir <- paste0(
           tables,
-          depth, "/"
+          "/", field, "/"
         )
         if (!dir.exists(pathdir)) {
           dir.create(pathdir, recursive = TRUE)
@@ -151,7 +159,10 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
         # Generate the etable output
         etable_output <- fixest::etable(
           results[result_names],
-          drop = c("num_publications", "Constant"),
+          drop = c(
+            "num_publications", "Constant",
+            "^covid_", "^field_", "^mesh_", "^institution_"
+          ),
           tex = TRUE,
           dict = dict_vars,
           digits = 3,
@@ -169,57 +180,40 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
           "Mean(Dep. Var.) & ", paste(sprintf("%.3f", mean_y_values), collapse = " & "), " \\\\" # nolint
         )
 
-        # Add tech_group headers and \cmidrule after row 5
-        field_headers <- paste0(
-          "\\multicolumn{3}{c}{", field_labels, "}"
+        # Add headers and cmidrules
+        # First level: PDB Experience headers
+        pdb_headers <- c(
+          "\\multicolumn{3}{c}{All Authors} & \\multicolumn{3}{c}{Experienced Authors}"
         )
-        field_headers <- paste0(
-          " & ", paste(field_headers, collapse = " & "), " \\\\"
+        pdb_headers <- paste0(
+          " & ", paste(pdb_headers, collapse = " & "), " \\\\"
         )
+        pdb_cmidrules <- "\\cmidrule(lr){2-4} \\cmidrule(lr){5-7}"
 
-        field_cmidrules <- paste0(
-          "\\cmidrule(lr){",
-          seq(2, length(field_labels) * 3 + 1, by = 3), "-",
-          seq(4, length(field_labels) * 3 + 1, by = 3), "}"
-        )
-        field_cmidrules <- paste0(
-          paste(field_cmidrules, collapse = " ")
-        )
-
-        # subgroup headers
-        subgroup_headers <- paste0(
+        # Second level: Intent headers
+        intent_headers <- paste0(
           rep(
-            "\\multicolumn{1}{c}{All PDB} & \\multicolumn{1}{c}{High PDB} & \\multicolumn{1}{c}{CEM}", # nolint
-            length(field_labels)
+            "\\multicolumn{1}{c}{All} & \\multicolumn{2}{c}{With Intent Data}",
+            2
           )
         )
-
-        subgroup_headers <- paste0(
-          " & ", paste(subgroup_headers, collapse = " & "), " \\\\"
+        intent_headers <- paste0(
+          " & ", paste(intent_headers, collapse = " & "), " \\\\"
         )
-
-        subgroup_cmidrules <- paste0(
-          "\\cmidrule(lr){", seq(2, length(field_labels) * 3 + 1, by = 2), "-", # nolint
-          seq(2, length(field_labels) * 3 + 1, by = 2), "} \\cmidrule(lr){",
-          seq(3, length(field_labels) * 3 + 1, by = 2), "-",
-          seq(3, length(field_labels) * 3 + 1, by = 2), "}"
-        )
-        subgroup_cmidrules <- paste0(
-          "\\cmidrule(lr){1-1}",
-          paste(subgroup_cmidrules, collapse = " ")
+        intent_cmidrules <- paste0(
+          "\\cmidrule(lr){2-2} \\cmidrule(lr){3-4}",
+          " \\cmidrule(lr){5-5} \\cmidrule(lr){6-7}"
         )
 
         etable_lines <- unlist(strsplit(etable_output, "\n"))
 
-        # Insert tech_group headers after row 5
-        etable_lines <- append(etable_lines, field_headers, after = 5)
-        etable_lines <- append(etable_lines, field_cmidrules, after = 6)
+        # Insert headers and cmidrules
+        etable_lines <- append(etable_lines, pdb_headers, after = 5)
+        etable_lines <- append(etable_lines, pdb_cmidrules, after = 6)
+        etable_lines <- append(etable_lines, intent_headers, after = 7)
+        etable_lines <- append(etable_lines, intent_cmidrules, after = 8)
 
-        # Insert subgroup headers after row 6
-        etable_lines <- append(etable_lines, subgroup_headers, after = 7)
-        etable_lines <- append(etable_lines, subgroup_cmidrules, after = 8)
-
-        # drop lines 10-11
+        # drop old header lines
         etable_lines <- etable_lines[-c(10, 11, 12)]
 
         # add mean y row in 6th last row
