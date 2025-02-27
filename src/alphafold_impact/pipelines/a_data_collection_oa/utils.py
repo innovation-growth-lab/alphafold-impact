@@ -29,6 +29,12 @@ MAIL_TO_CANDIDATES = [
     "data_analytics@nesta.org.uk",
     "david.ampudia@bse.eu",
     "david.ampudia@upf.edu",
+    "yanyan.leung@nesta.org.uk",
+    "layla.gemmell@nesta.org.uk",
+    "george.richardson@nesta.org.uk",
+    "hugo.cuello@nesta.org.uk",
+    "nyangala.zolho@nesta.org.uk",
+    "edoardo.trimarchi@nesta.org.uk"
 ]
 
 
@@ -101,7 +107,7 @@ def _make_request(session: requests.Session, url: str) -> dict:
     response = session.get(url, timeout=20)
     while response.status_code == 429:
         logger.info("Waiting for 1 hour...")
-        time.sleep(3600)
+        time.sleep(30)  # 1 hour wait
         response = session.get(url, timeout=20)
     return response.json()
 
