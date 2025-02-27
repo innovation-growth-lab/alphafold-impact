@@ -424,10 +424,7 @@ def _get_pdb_activity(
 
     """
 
-    author_pdb_submissions = pdb_submissions.merge(
-        data[["id", "authorships"]], on="id", how="left"
-    )
-    author_pdb_submissions.dropna(subset=["authorships"], inplace=True)
+    author_pdb_submissions = pdb_submissions.dropna(subset=["authorships"])
 
     author_pdb_submissions["authors"] = author_pdb_submissions["authorships"].apply(
         lambda x: [y[0] for y in x] if x is not None else []
