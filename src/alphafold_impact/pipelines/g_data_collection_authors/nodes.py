@@ -116,38 +116,79 @@ def _get_candidate_authors(data: pd.DataFrame) -> pd.DataFrame:
         .reset_index(name="counts")
     )
 
-    logger.info("Getting chain labels")
-    sort_order = {
-        "strong": 0,
-        "partial_strong": 1,
-        "mixed": 2,
-        "weak": 3,
-        "partial_weak": 4,
-        "unknown": 5,
-        "no_data": 6,
+    # create grouped chain_labels
+    labels = {
+        "strong": ["strong", "partial_strong"],
+        "weak": ["weak", "partial_weak"],
+        "mixed": ["mixed"],
+        "unknown": ["unknown", "no_data"],
     }
-    author_data["sort_order"] = author_data.apply(
-        lambda row: -1 if row["level"] == -1 else sort_order.get(row["chain_label"], 7),
-        axis=1,
+
+    # create author labels
+    author_data["grouped_chain_label"] = author_data["chain_label"].apply(
+        lambda x: next((k for k, v in labels.items() if x in v), "unknown")
     )
 
     author_labels = (
-        author_data[
-            ["sort_order", "quarter", "author", "chain_label", "level", "source"]
-        ]
-        .sort_values(["level", "sort_order"])
-        .groupby(["author", "quarter", "source"])
-        .first()
-        .reset_index()
-        .drop(columns=["sort_order", "level"])
+        author_data.groupby(["author", "quarter", "grouped_chain_label", "source"])
+        .size()
+        .reset_index(name="counts")
     )
 
-    # keep rows with strong or partial storng chain labels
-    author_labels = author_labels[
-        author_labels["chain_label"].isin(["strong", "partial_strong"])
+    # pivot the author labels
+    author_labels = author_labels.pivot_table(
+        index=["author", "quarter"],
+        columns=["source", "grouped_chain_label"],
+        values="counts",
+        fill_value=0,
+    ).reset_index()
+
+    # join the two-level columns into one
+    author_labels.columns = [
+        f"{col[0]}_{col[1]}" if isinstance(col, tuple) else col
+        for col in author_labels.columns
     ]
 
-    author_labels["strong"] = author_labels["source"]
+    # rename author_ and quarter_ to author and quarter
+    author_labels.rename(
+        columns={"author_": "author", "quarter_": "quarter"}, inplace=True
+    )
+
+    # make all columns but author_ and quarter_ int
+    author_labels = author_labels.astype(
+        {
+            col: "int"
+            for col in author_labels.columns
+            if col not in ["author", "quarter"]
+        }
+    )
+
+    # create four columns that sum the other counts on row and substract the count of _unknown_
+    author_labels["af_with_intent"] = (
+        author_labels["af_strong"]
+        + author_labels["af_weak"]
+        + author_labels["af_mixed"]
+    )
+    author_labels["ct_ai_with_intent"] = (
+        author_labels["ct_ai_strong"]
+        + author_labels["ct_ai_weak"]
+        + author_labels["ct_ai_mixed"]
+    )
+    author_labels["ct_noai_with_intent"] = (
+        author_labels["ct_noai_strong"]
+        + author_labels["ct_noai_weak"]
+        + author_labels["ct_noai_mixed"]
+    )
+    author_labels["other_with_intent"] = (
+        author_labels["other_strong"]
+        + author_labels["other_weak"]
+        + author_labels["other_mixed"]
+    )
+
+    count_cols = [
+        col for col in author_labels.columns if col not in ["author", "quarter"]
+    ]
+    author_labels[count_cols] = author_labels.groupby("author")[count_cols].cumsum()
 
     return author_data_out, author_labels
 
@@ -204,10 +245,7 @@ def get_unique_authors(
     for col in ["af", "ct_ai", "ct_noai", "other"]:
         authors[col] = authors[col].astype(int)
 
-    logger.info("Pivoting labels")
-    strength_labels_wide = _pivot_labels(strength_labels)
-
-    authors = authors.merge(strength_labels_wide, on=["author", "quarter"], how="left")
+    authors = authors.merge(strength_labels, on=["author", "quarter"], how="left")
 
     return authors
 
@@ -1175,31 +1213,3 @@ def _normalise_citation_counts(data: pd.DataFrame) -> pd.DataFrame:
     data = data.merge(t_columns, left_on="id", right_index=True, how="left")
 
     return data
-
-
-def _pivot_labels(data):
-    strength_labels_wide = data.pivot_table(
-        index=["author", "quarter"], columns="source", values="strong", aggfunc="first"
-    )
-
-    # relabel
-    strength_labels_wide.columns = [
-        f"strong_{col}" for col in strength_labels_wide.columns
-    ]
-    cols = [col for col in strength_labels_wide.columns]
-
-    # sort
-    strength_labels_wide = strength_labels_wide.reset_index().sort_values(
-        by=["author", "quarter"]
-    )
-
-    for col in cols:
-        strength_labels_wide[col] = np.where(strength_labels_wide[col].notnull(), 1, 0)
-
-    # get the cumulative sum of counts
-    strength_labels_wide[cols] = strength_labels_wide.groupby("author")[cols].cumsum()
-
-    # forward fill
-    strength_labels_wide[cols] = strength_labels_wide.groupby("author")[cols].ffill()
-
-    return strength_labels_wide
