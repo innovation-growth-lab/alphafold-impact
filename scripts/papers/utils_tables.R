@@ -110,14 +110,15 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
     "field_Molecular Biology",
     "field_Medicine"
   )
-  field_labels <- gsub("field_", "", fields)
   subgroups <- c("subgroup_All PDB", "subgroup_High PDB")
 
   for (dep_var in dep_vars) {
     file_name <- table_info[[dep_var]]$file_name
 
     # Iterate over subsets
+    latex_output <- list()
     for (field in fields) {
+      field_label <- gsub("field_", "", field)
       result_names <- c()
       for (subgroup in subgroups) {
         for (scope in scopes) {
@@ -140,7 +141,6 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
         }
       }
 
-
       # Use etable to output the table for each scope-field combination
       if (length(result_names) > 0) {
         message(
@@ -148,13 +148,6 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
             "Generating table for dep_var: ", dep_var
           )
         )
-        pathdir <- paste0(
-          tables,
-          "/", field, "/"
-        )
-        if (!dir.exists(pathdir)) {
-          dir.create(pathdir, recursive = TRUE)
-        }
 
         # Generate the etable output
         etable_output <- fixest::etable(
@@ -180,57 +173,143 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
           "Mean(Dep. Var.) & ", paste(sprintf("%.3f", mean_y_values), collapse = " & "), " \\\\" # nolint
         )
 
-        # Add headers and cmidrules
-        # First level: PDB Experience headers
-        pdb_headers <- c(
-          "\\multicolumn{3}{c}{All Authors} & \\multicolumn{3}{c}{Experienced Authors}"
-        )
-        pdb_headers <- paste0(
-          " & ", paste(pdb_headers, collapse = " & "), " \\\\"
-        )
-        pdb_cmidrules <- "\\cmidrule(lr){2-4} \\cmidrule(lr){5-7}"
-
-        # Second level: Intent headers
-        intent_headers <- paste0(
-          rep(
-            "\\multicolumn{1}{c}{All} & \\multicolumn{2}{c}{With Intent Data}",
-            2
-          )
-        )
-        intent_headers <- paste0(
-          " & ", paste(intent_headers, collapse = " & "), " \\\\"
-        )
-        intent_cmidrules <- paste0(
-          "\\cmidrule(lr){2-2} \\cmidrule(lr){3-4}",
-          " \\cmidrule(lr){5-5} \\cmidrule(lr){6-7}"
-        )
-
         etable_lines <- unlist(strsplit(etable_output, "\n"))
 
-        # Insert headers and cmidrules
-        etable_lines <- append(etable_lines, pdb_headers, after = 5)
-        etable_lines <- append(etable_lines, pdb_cmidrules, after = 6)
-        etable_lines <- append(etable_lines, intent_headers, after = 7)
-        etable_lines <- append(etable_lines, intent_cmidrules, after = 8)
+        # Top Field: All Fields
+        if (field_label == "All Fields") {
+          pdb_headers <- c(
+            "\\multicolumn{3}{c}{All Authors} & \\multicolumn{3}{c}{Experienced Authors}"
+          )
+          pdb_headers <- paste0(
+            " & ", paste(pdb_headers, collapse = " & "), " \\\\"
+          )
+          pdb_cmidrules <- "\\cmidrule(lr){2-4} \\cmidrule(lr){5-7}"
 
-        # drop old header lines
-        etable_lines <- etable_lines[-c(10, 11, 12)]
+          # Second level: Intent headers
+          intent_headers <- paste0(
+            rep(
+              "\\multicolumn{1}{c}{All} & \\multicolumn{2}{c}{With Intent Data}",
+              2
+            )
+          )
+          intent_headers <- paste0(
+            " & ", paste(intent_headers, collapse = " & "), " \\\\"
+          )
+          intent_cmidrules <- paste0(
+            "\\cmidrule(lr){2-2} \\cmidrule(lr){3-4}",
+            " \\cmidrule(lr){5-5} \\cmidrule(lr){6-7}"
+          )
 
-        # add mean y row in 6th last row
-        etable_lines <- append(
-          etable_lines, mean_y_row,
-          after = length(etable_lines) - 5
-        )
+          # add field label in italics and with midrules
+          field_label_line <- paste0(
+            "\\multicolumn{6}{c}{\\textit{", field_label, "}} \\\\"
+          )
+          field_label_line <- paste0(
+            " & ", paste(field_label_line, collapse = " & "), " \\\\"
+          )
 
-        # Combine the lines back into a single string
-        etable_output <- paste(etable_lines, collapse = "\n")
+          # Insert headers and cmidrules
+          etable_lines <- append(etable_lines, pdb_headers, after = 5)
+          etable_lines <- append(etable_lines, pdb_cmidrules, after = 6)
+          etable_lines <- append(etable_lines, intent_headers, after = 7)
+          etable_lines <- append(etable_lines, intent_cmidrules, after = 8)
+          etable_lines <- append(etable_lines, field_label_line, after = 9)
+          # drop old header lines
+          etable_lines <- etable_lines[-c(11, 12, 13)]
 
-        # Write the table to a file
-        writeLines(
-          etable_output,
-          con = paste0(pathdir, file_name)
-        )
+
+          # add mean y row in 6th last row
+          etable_lines <- append(
+            etable_lines, mean_y_row,
+            after = length(etable_lines) - 5
+          )
+
+          chunks <- unlist(
+            strsplit(paste(etable_lines, collapse = "\n"), "\\\\midrule")
+          )
+          etable_lines <- unlist(
+            strsplit(paste(chunks[c(1, 2, 3, 5)], collapse = "\\midrule"), "\n")
+          )
+          latex_output <- c(latex_output, etable_lines)
+
+
+          # Second Field: Molecular Biology
+        } else if (field_label == "Molecular Biology") {
+          chunks <- unlist(
+            strsplit(paste(etable_lines, collapse = "\n"), "\\\\midrule")
+          )
+          etable_lines <- unlist(
+            strsplit(paste(chunks[c(4, 6)], collapse = "\\midrule"), "\n")
+          )
+
+          # add field label in italics and with midrules
+          field_label_line <- paste0(
+            "\\multicolumn{6}{c}{\\textit{", field_label, "}} \\\\"
+          )
+          field_label_line <- paste0(
+            " & ", paste(field_label_line, collapse = " & "), " \\\\"
+          )
+          # add as new header the field label
+          etable_lines <- append(etable_lines, field_label_line, after = 1)
+
+          # remove "Variables" row (3)
+          etable_lines <- etable_lines[-c(1, 3)]
+
+          # add mean y row in the last row
+          etable_lines <- append(
+            etable_lines, mean_y_row,
+            after = length(etable_lines)
+          )
+          latex_output <- c(latex_output, etable_lines)
+        } else if (field_label == "Medicine") {
+          chunks <- unlist(
+            strsplit(paste(etable_lines, collapse = "\n"), "\\\\midrule")
+          )
+          etable_lines <- unlist(
+            strsplit(paste(chunks[c(4, 6, 7, 8)], collapse = "\\midrule"), "\n")
+          )
+
+          # add field label in italics and with midrules
+          field_label_line <- paste0(
+            "\\multicolumn{6}{c}{\\textit{", field_label, "}} \\\\"
+          )
+          field_label_line <- paste0(
+            " & ", paste(field_label_line, collapse = " & "), " \\\\"
+          )
+          # add as new header the field label
+          etable_lines <- append(etable_lines, field_label_line, after = 1)
+
+          # remove "Variables" row (3)
+          etable_lines <- etable_lines[-c(1, 3)]
+
+          # add mean y row in the 6th last row
+          etable_lines <- append(
+            etable_lines, mean_y_row,
+            after = length(etable_lines) - 5
+          )
+
+          latex_output <- c(latex_output, etable_lines)
+        } else {
+          # raise error
+          stop(paste0("Field label not found: ", field_label))
+        }
       }
     }
+    # join the latex output into a single file
+    latex_output <- paste(latex_output, collapse = "\n")
+
+    pathdir <- paste0(
+      tables,
+      "/"
+    )
+    if (!dir.exists(pathdir)) {
+      dir.create(pathdir, recursive = TRUE)
+    }
+
+    # Write the table to a file
+    writeLines(
+      latex_output,
+      con = paste0(pathdir, file_name)
+    )
   }
 }
