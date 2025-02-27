@@ -354,26 +354,43 @@ def get_patent_citations(
     data: pd.DataFrame, patents_data: pd.DataFrame
 ) -> pd.DataFrame:
     """
-    Get patent citations for the given data.
+    Get patent citations for the given data using multiple identifier types (DOI, PMID, PMCID).
 
     Args:
-        data (pandas.DataFrame): The input data.
-        patents_data (pandas.DataFrame): The patent data.
+        data (pandas.DataFrame): The input data containing paper identifiers.
+        patents_data (pandas.DataFrame): The patent data with NPL citations.
 
     Returns:
         pandas.DataFrame: The data with patent citations merged and aggregated.
     """
 
-    # merge patent_data on data
-    patent_matches = data.merge(
-        patents_data, how="inner", left_on="doi", right_on="NPL Resolved External ID(s)"
-    )
+    # Create separate matches for each ID type
+    matches = []
 
-    # groupby id, get the count and the joined of CPCs
+    # Match DOIs
+    doi_matches = data.merge(
+        patents_data, left_on="doi", right_on="NPL Resolved External ID(s)", how="inner"
+    )
+    matches.append(doi_matches)
+
+    # Match PMIDs
+    pmid_matches = data.merge(
+        patents_data,
+        left_on="pmid",
+        right_on="NPL Resolved External ID(s)",
+        how="inner",
+    )
+    matches.append(pmid_matches)
+
+    # Combine all matches and remove duplicates
+    patent_matches = pd.concat(matches, ignore_index=True)
+    patent_matches = patent_matches.drop_duplicates(subset=["id", "Title"])
+
+    # Group by paper ID and aggregate patent information
     patent_matches_grouped = (
         patent_matches.groupby(["id"])
         .agg(
-            patent_count=pd.NamedAgg(column="id", aggfunc="count"),
+            patent_count=pd.NamedAgg(column="Title", aggfunc="count"),
             CPCs=pd.NamedAgg(
                 column="CPC Classifications",
                 aggfunc=lambda x: ";;".join(map(str, x)),
@@ -383,10 +400,8 @@ def get_patent_citations(
         .reset_index()
     )
 
-    # merge with data
+    # Merge with original data and fill missing values
     data = data.merge(patent_matches_grouped, on="id", how="left")
-
-    # fill count with 0
     data["patent_count"] = data["patent_count"].fillna(0)
 
     return data

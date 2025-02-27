@@ -564,10 +564,13 @@ def merge_author_data(
             data[col] = data.groupby("author")[col].ffill().fillna(0).astype(int)
 
         # get patent citations
-        data = data.merge(pdb_submissions, on="id", how="left")
+        data = get_patent_citations(data, patents_data)
+        
+        # get pdb metrics
+        data = data.merge(pdb_submissions, on="id", how="left") # TO DOUBLECHECK
 
         # get icite_counts
-        icite_outputs = _create_cc_counts(data[["id", "doi"]], icite_data)
+        icite_outputs = _create_cc_counts(data[["id", "doi", "pmid"]], icite_data)
         data = data.merge(icite_outputs, on="id", how="left")
 
         # concatenate the data
@@ -986,25 +989,40 @@ def _create_cc_counts(data, icite_data):
         pandas.DataFrame: The updated data DataFrame with a new 'count' column.
     """
     # change pmid, doi to str
+    icite_data["pmid"] = icite_data["pmid"].astype(str)
     icite_data["doi"] = icite_data["doi"].astype(str)
+
+    # merge on 'pmid'
+    data_pmid = data.merge(icite_data[["pmid", "cited_by_clin"]], how="left", on="pmid")
+    data_pmid = data_pmid.drop_duplicates(subset=["parent_id", "id", "level", "source"])
 
     # merge on 'doi'
     data_doi = data.merge(icite_data[["doi", "cited_by_clin"]], how="left", on="doi")
-    data_doi = data_doi.drop_duplicates(subset=["id"])
+    data_doi = data_doi.drop_duplicates(subset=["parent_id", "id", "level", "source"])
+
+    combined_data = pd.concat([data_pmid, data_doi]).drop_duplicates(
+        subset=["parent_id", "id", "level", "source"]
+    )
 
     logger.info("Exploding cited_by_clin")
-    data_doi = data_doi[data_doi["cited_by_clin"].astype(str) != "nan"]
-    data_doi = data_doi[data_doi["cited_by_clin"].notnull()]
-    data_doi["cited_by_clin"] = data_doi["cited_by_clin"].apply(lambda x: x.split(" "))
+    combined_data = combined_data[combined_data["cited_by_clin"].astype(str) != "nan"]
+
+    # drop if cited_by_clin is None
+    combined_data = combined_data[combined_data["cited_by_clin"].notnull()]
+
+    combined_data["cited_by_clin"] = combined_data["cited_by_clin"].apply(
+        lambda x: x.split(" ")
+    )
 
     # create count column
-    data_doi["ca_count"] = data_doi["cited_by_clin"].apply(len)
+    combined_data["ca_count"] = combined_data["cited_by_clin"].apply(len)
 
     # merge back with data, fill with 0 for missing count
-    data = data.merge(data_doi[["id", "ca_count"]], on="id", how="left")
+    data = data.merge(combined_data[["id", "ca_count"]], on="id", how="left")
     data["ca_count"] = data["ca_count"].fillna(0)
 
     return data[["id", "ca_count"]]
+
 
 
 def _result_transformations(data: pd.DataFrame) -> pd.DataFrame:
