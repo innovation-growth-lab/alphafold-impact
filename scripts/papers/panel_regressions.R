@@ -74,26 +74,26 @@ fes[["fe1"]] <- c("author", "quarter_year")
 cov_sets <- c("base0")
 fe_list <- c("fe1")
 dep_vars <- c(
-  # "mesh_C",
-  # "ln1p_cited_by_count",
-  # "ln1p_fwci",
-  # "ln1p_resolution",
-  "ln1p_R_free"
-  # "patent_count",
-  # "patent_citation",
-  # "num_pdb_ids",
-  # "ca_count",
-  # "num_uniprot_structures",
-  # "num_primary_submissions",
-  # "num_diseases",
-  # "organism_rarity_mean",
-  # "mean_tmscore",
-  # "num_uniprot_structures_w_disease",
-  # "num_primary_submissions_w_disease",
-  # "num_uniprot_structures_w_rare_organisms",
-  # "num_primary_submissions_w_rare_organisms",
-  # "num_uniprot_structures_w_low_similarity",
-  # "num_primary_submissions_w_low_similarity"
+  "mesh_C",
+  "ln1p_cited_by_count",
+  "ln1p_fwci",
+  "ln1p_resolution",
+  "ln1p_R_free",
+  "patent_count",
+  "patent_citation",
+  "num_pdb_ids",
+  "ca_count",
+  "num_uniprot_structures",
+  "num_primary_submissions",
+  "num_diseases",
+  "organism_rarity_mean",
+  "mean_tmscore",
+  "num_uniprot_structures_w_disease",
+  "num_primary_submissions_w_disease",
+  "num_uniprot_structures_w_rare_organisms",
+  "num_primary_submissions_w_rare_organisms",
+  "num_uniprot_structures_w_low_similarity",
+  "num_primary_submissions_w_low_similarity"
 )
 
 # Define base treatment vars that exist in all samples
@@ -191,56 +191,56 @@ for (dep_var in dep_vars) { # nolint
         next
       }
 
-      # # run the regression as linear, but make an exception for pdb_submission
-      # if (dep_var %in% c(
-      #   "num_publications", "num_pdb_submissions", "num_pdb_ids",
-      #   "ca_count", "patent_count", "patent_citation",
-      #   "num_uniprot_structures",
-      #   "num_primary_submissions",
-      #   "num_diseases",
-      #   "num_uniprot_structures_w_disease",
-      #   "num_primary_submissions_w_disease",
-      #   "num_uniprot_structures_w_rare_organisms",
-      #   "num_primary_submissions_w_rare_organisms",
-      #   "num_uniprot_structures_w_low_similarity",
-      #   "num_primary_submissions_w_low_similarity"
-      # )) {
-      #   message("Running Poisson regression")
-      #   results[[regression_label]] <- tryCatch(
-      #     {
-      #       fepois(
-      #         form_list[[form]],
-      #         data = local_data,
-      #         cluster = c("author", "quarter_year"),
-      #         control = list(maxit = 500)
-      #       )
-      #     },
-      #     error = function(e) {
-      #       message("Error in regression: ", regression_label, " - ", e$message)
-      #       return(feols(as.formula(paste(dep_var, "~ 1")), data = local_data))
-      #     }
-      #   )
-      # } else {
-      # run the regression
-      results[[regression_label]] <- tryCatch(
-        {
-          feols(
-            form_list[[form]],
-            data = local_data,
-            cluster = c("author", "quarter_year")
-          )
-        },
-        error = function(e) {
-          message("Error in regression: ", regression_label, " - ", e$message)
-          placeholder_data <- data.frame(dep_var = c(0, 1))
-          colnames(placeholder_data) <- dep_var
-          return(feols(
-            as.formula(paste(dep_var, "~ 1")),
-            data = placeholder_data
-          ))
-        }
-      )
-      # }
+      # run the regression as linear, but make an exception for pdb_submission
+      if (dep_var %in% c(
+        "num_publications", "num_pdb_submissions", "num_pdb_ids",
+        "ca_count", "patent_count", "patent_citation",
+        "num_uniprot_structures",
+        "num_primary_submissions",
+        "num_diseases",
+        "num_uniprot_structures_w_disease",
+        "num_primary_submissions_w_disease",
+        "num_uniprot_structures_w_rare_organisms",
+        "num_primary_submissions_w_rare_organisms",
+        "num_uniprot_structures_w_low_similarity",
+        "num_primary_submissions_w_low_similarity"
+      )) {
+        message("Running Poisson regression")
+        results[[regression_label]] <- tryCatch(
+          {
+            fepois(
+              form_list[[form]],
+              data = local_data,
+              cluster = c("author", "quarter_year"),
+              control = list(maxit = 500)
+            )
+          },
+          error = function(e) {
+            message("Error in regression: ", regression_label, " - ", e$message)
+            return(feols(as.formula(paste(dep_var, "~ 1")), data = local_data))
+          }
+        )
+      } else {
+        # run the regression
+        results[[regression_label]] <- tryCatch(
+          {
+            feols(
+              form_list[[form]],
+              data = local_data,
+              cluster = c("author", "quarter_year")
+            )
+          },
+          error = function(e) {
+            message("Error in regression: ", regression_label, " - ", e$message)
+            placeholder_data <- data.frame(dep_var = c(0, 1))
+            colnames(placeholder_data) <- dep_var
+            return(feols(
+              as.formula(paste(dep_var, "~ 1")),
+              data = placeholder_data
+            ))
+          }
+        )
+      }
     }
   }
 
@@ -272,30 +272,30 @@ for (dep_var in dep_vars) { # nolint
   # GENERATE PLOTS
   # ----------------------------------------------------------------------------
 
-  # import from utils_figures.R
-  source("scripts/papers/utils_figures.R")
-  message("Generating plots")
-  tryCatch(
-    {
-      coef_table <- extract_coefficients(
-        results = results,
-        dep_vars = dep_var,
-        subsets = names(sub_samples),
-        cov_sets = cov_sets,
-        fe_list = fe_list,
-        treat_vars = c(treat_vars_base, treat_vars_with_strong),
-        treat_var_interest = c(
-          "af", "ct_ai", "ct_noai", "af:strong1",
-          "ct_ai:strong1", "ct_noai:strong1"
-        )
-      )
+#   # import from utils_figures.R
+#   source("scripts/papers/utils_figures.R")
+#   message("Generating plots")
+#   tryCatch(
+#     {
+#       coef_table <- extract_coefficients(
+#         results = results,
+#         dep_vars = dep_var,
+#         subsets = names(sub_samples),
+#         cov_sets = cov_sets,
+#         fe_list = fe_list,
+#         treat_vars = c(treat_vars_base, treat_vars_with_strong),
+#         treat_var_interest = c(
+#           "af", "ct_ai", "ct_noai", "af:strong1",
+#           "ct_ai:strong1", "ct_noai:strong1"
+#         )
+#       )
 
-      generate_coef_plots(
-        coef_table
-      )
-    },
-    error = function(e) {
-      message("Error in generating plots: ", e$message)
-    }
-  )
+#       generate_coef_plots(
+#         coef_table
+#       )
+#     },
+#     error = function(e) {
+#       message("Error in generating plots: ", e$message)
+#     }
+#   )
 }
