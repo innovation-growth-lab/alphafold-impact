@@ -481,6 +481,9 @@ def merge_author_data(
     # process pdb data
     author_submissions = _process_pdb_data(pdb_submissions)
 
+    # drop publication_date from pdb_submissions
+    pdb_submissions = pdb_submissions.drop(columns=["publication_date"])
+
     mesh_terms["term_group"] = mesh_terms["tree_number"].apply(
         lambda x: str(x)[:1] if x is not None else None
     )
@@ -488,6 +491,10 @@ def merge_author_data(
 
     output_data = pd.DataFrame()
     for i, loader in enumerate(data_loaders.values()):
+
+        if i > 10:
+            break
+
         logger.info(
             "Processing data loader %d / %d",
             i + 1,
@@ -565,9 +572,15 @@ def merge_author_data(
 
         # get patent citations
         data = get_patent_citations(data, patents_data)
-        
+
         # get pdb metrics
-        data = data.merge(pdb_submissions, on="id", how="left") # TO DOUBLECHECK
+        data = data.merge(
+            pdb_submissions, on="id", how="left", indicator=True
+        )  # TO DOUBLECHECK
+        data["pdb_submission"] = data["_merge"].apply(
+            lambda x: True if x == "both" else False
+        )
+        data = data.drop(columns=["_merge"])
 
         # get icite_counts
         icite_outputs = _create_cc_counts(data[["id", "doi", "pmid"]], icite_data)
@@ -577,9 +590,16 @@ def merge_author_data(
         output_data = pd.concat([output_data, data], ignore_index=True)
 
     # create top quantile pre2021 pdb activity
-    output_data["high_pdb_pre2021"] = output_data[
-        "num_pdb_submissions_pre2021"
-    ] >= output_data["num_pdb_submissions_pre2021"].quantile(0.75)
+    # get one row per author with their pre2021 pdb submissions
+    author_pdb = output_data[
+        ["author", "num_pdb_submissions_pre2021"]
+    ].drop_duplicates()
+    # calculate threshold based on author-level data
+    pdb_threshold = author_pdb["num_pdb_submissions_pre2021"].quantile(0.75)
+    # merge back to full dataset
+    output_data["high_pdb_pre2021"] = (
+        output_data["num_pdb_submissions_pre2021"] >= pdb_threshold
+    )
 
     return output_data
 
@@ -906,7 +926,7 @@ def aggregate_to_quarterly(data: pd.DataFrame) -> pd.DataFrame:
         mode = series.mode()
         return mode.iloc[0] if not mode.empty else np.nan
 
-    # aggregation dictionaryy
+    # aggregation dictionary
     agg_dict = {
         "num_publications": ("id", "size"),
         "num_cited_by_count": ("cited_by_count", "sum"),
@@ -944,18 +964,33 @@ def aggregate_to_quarterly(data: pd.DataFrame) -> pd.DataFrame:
         "institution_h_index": ("h_index", "first"),
         "institution_i10_index": ("i10_index", "first"),
         "institution_works_count": ("works_count", "first"),
-        "depth": ("depth", "first"),
-        "af": ("af", "first"),
-        "ct_ai": ("ct_ai", "first"),
-        "ct_noai": ("ct_noai", "first"),
-        "other": ("other", "first"),
-        "strong_af": ("strong_af", safe_mode),
-        "strong_ct_ai": ("strong_ct_ai", safe_mode),
-        "strong_ct_noai": ("strong_ct_noai", safe_mode),
-        "strong_other": ("strong_other", safe_mode),
+        "af": ("af", safe_mode),
+        "ct_ai": ("ct_ai", safe_mode),
+        "ct_noai": ("ct_noai", safe_mode),
+        "other": ("other", safe_mode),
+        "af_mixed": ("af_mixed", safe_mode),
+        "af_strong": ("af_strong", safe_mode),
+        "af_unknown": ("af_unknown", safe_mode),
+        "af_weak": ("af_weak", safe_mode),
+        "ct_ai_mixed": ("ct_ai_mixed", safe_mode),
+        "ct_ai_strong": ("ct_ai_strong", safe_mode),
+        "ct_ai_unknown": ("ct_ai_unknown", safe_mode),
+        "ct_ai_weak": ("ct_ai_weak", safe_mode),
+        "ct_noai_mixed": ("ct_noai_mixed", safe_mode),
+        "ct_noai_strong": ("ct_noai_strong", safe_mode),
+        "ct_noai_unknown": ("ct_noai_unknown", safe_mode),
+        "ct_noai_weak": ("ct_noai_weak", safe_mode),
+        "other_mixed": ("other_mixed", safe_mode),
+        "other_strong": ("other_strong", safe_mode),
+        "other_unknown": ("other_unknown", safe_mode),
+        "other_weak": ("other_weak", safe_mode),
+        "af_with_intent": ("af_with_intent", safe_mode),
+        "ct_ai_with_intent": ("ct_ai_with_intent", safe_mode),
+        "ct_noai_with_intent": ("ct_noai_with_intent", safe_mode),
+        "other_with_intent": ("other_with_intent", safe_mode),
         "primary_field": ("primary_field", safe_mode),
         "author_position": ("author_position", safe_mode),
-        "high_pdb": ("high_pdb", "first"),
+        "high_pdb_pre2021": ("high_pdb_pre2021", safe_mode),
     }
 
     # add fields, mesh, covid
@@ -994,15 +1029,13 @@ def _create_cc_counts(data, icite_data):
 
     # merge on 'pmid'
     data_pmid = data.merge(icite_data[["pmid", "cited_by_clin"]], how="left", on="pmid")
-    data_pmid = data_pmid.drop_duplicates(subset=["parent_id", "id", "level", "source"])
+    data_pmid = data_pmid.drop_duplicates(subset=["id"])
 
     # merge on 'doi'
     data_doi = data.merge(icite_data[["doi", "cited_by_clin"]], how="left", on="doi")
-    data_doi = data_doi.drop_duplicates(subset=["parent_id", "id", "level", "source"])
+    data_doi = data_doi.drop_duplicates(subset=["id"])
 
-    combined_data = pd.concat([data_pmid, data_doi]).drop_duplicates(
-        subset=["parent_id", "id", "level", "source"]
-    )
+    combined_data = pd.concat([data_pmid, data_doi]).drop_duplicates(subset=["id"])
 
     logger.info("Exploding cited_by_clin")
     combined_data = combined_data[combined_data["cited_by_clin"].astype(str) != "nan"]
@@ -1019,10 +1052,9 @@ def _create_cc_counts(data, icite_data):
 
     # merge back with data, fill with 0 for missing count
     data = data.merge(combined_data[["id", "ca_count"]], on="id", how="left")
-    data["ca_count"] = data["ca_count"].fillna(0)
+    data["ca_count"] = data["ca_count"].fillna(0).astype(int)
 
     return data[["id", "ca_count"]]
-
 
 
 def _result_transformations(data: pd.DataFrame) -> pd.DataFrame:
@@ -1248,56 +1280,56 @@ def get_patent_citations(
         pandas.DataFrame: The data with patent citations merged and aggregated.
     """
 
+    # remove prefix
+    data["doi"] = data["doi"].replace("https://doi.org/", "", regex=True)
+
     # Create separate matches for each ID type
     matches = []
-    
+
     # Match DOIs
     doi_matches = data.merge(
-        patents_data,
-        left_on='doi',
-        right_on='NPL Resolved External ID(s)',
-        how='inner'
+        patents_data, left_on="doi", right_on="NPL Resolved External ID(s)", how="inner"
     )
     matches.append(doi_matches)
 
     # Match PMIDs
     pmid_matches = data.merge(
         patents_data,
-        left_on='pmid',
-        right_on='NPL Resolved External ID(s)',
-        how='inner'
+        left_on="pmid",
+        right_on="NPL Resolved External ID(s)",
+        how="inner",
     )
     matches.append(pmid_matches)
 
     # Match PMCIDs
     pmcid_matches = data.merge(
         patents_data,
-        left_on='pmcid',
-        right_on='NPL Resolved External ID(s)',
-        how='inner'
+        left_on="pmcid",
+        right_on="NPL Resolved External ID(s)",
+        how="inner",
     )
     matches.append(pmcid_matches)
 
     # Combine all matches and remove duplicates
     patent_matches = pd.concat(matches, ignore_index=True)
-    patent_matches = patent_matches.drop_duplicates(subset=['id', 'Title'])
+    patent_matches = patent_matches.drop_duplicates(subset=["id", "Title"])
 
     # Group by paper ID and aggregate patent information
     patent_matches_grouped = (
-        patent_matches.groupby(['id'])
+        patent_matches.groupby(["id"])
         .agg(
-            patent_count=pd.NamedAgg(column='Title', aggfunc='count'),
+            patent_count=pd.NamedAgg(column="Title", aggfunc="count"),
             CPCs=pd.NamedAgg(
-                column='CPC Classifications',
+                column="CPC Classifications",
                 aggfunc=lambda x: ";;".join(map(str, x)),
             ),
-            patent_citation=pd.NamedAgg(column='Cited by Patent Count', aggfunc='sum'),
+            patent_citation=pd.NamedAgg(column="Cited by Patent Count", aggfunc="sum"),
         )
         .reset_index()
     )
 
     # Merge with original data and fill missing values
-    data = data.merge(patent_matches_grouped, on='id', how='left')
-    data['patent_count'] = data['patent_count'].fillna(0)
+    data = data.merge(patent_matches_grouped, on="id", how="left")
+    data["patent_count"] = data["patent_count"].fillna(0)
 
     return data
