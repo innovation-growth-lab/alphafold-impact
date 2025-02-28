@@ -598,7 +598,7 @@ def merge_author_data(
     pdb_threshold = author_pdb["num_pdb_submissions_pre2021"].quantile(0.75)
     # merge back to full dataset
     output_data["high_pdb_pre2021"] = (
-        output_data["num_pdb_submissions_pre2021"] >= pdb_threshold
+        output_data["num_pdb_submissions_pre2021"] > pdb_threshold
     )
 
     return output_data
