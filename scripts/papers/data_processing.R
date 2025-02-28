@@ -192,17 +192,6 @@ field_mapping <- c(
 
 papers$primary_field <- recode(papers$primary_field, !!!field_mapping)
 
-# Create 'high_pdb' variable
-papers <- papers %>%
-  mutate(high_pdb = if_else(
-    group_pdb_count >= quantile(
-      group_pdb_count, 0.9,
-      na.rm = TRUE
-    ),
-    1,
-    0
-  )) # nolint
-
 # ------------------------------------------------------------------------------
 # SUBSET
 # ------------------------------------------------------------------------------
@@ -243,7 +232,7 @@ papers <- papers %>%
     "strong",
     "depth",
     "primary_field",
-    "high_pdb",
+    "q4_pdb_pre2021_any",
     "mesh_C",
     grep("^field_", names(papers), value = TRUE),
     "num_uniprot_structures",
@@ -290,7 +279,7 @@ for (scope_lvl in unique_scopes) {
 
       # Apply sub_group filter
       if (grepl("High PDB", sub_group)) {
-        sub_sample <- subset(sub_sample, high_pdb == 1)
+        sub_sample <- subset(sub_sample, q4_pdb_pre2021_any == TRUE)
       }
 
       # Store the subset

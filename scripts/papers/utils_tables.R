@@ -39,6 +39,9 @@ table_info <- list(
   "ln1p_R_free" = list(
     file_name = "ln1p_R_free.tex"
   ),
+  "pdb_submission" = list(
+    file_name = "pdb_submission.tex"
+  ),
   "num_pdb_ids" = list(
     file_name = "num_pdb_ids.tex"
   ),

@@ -82,6 +82,7 @@ dep_vars <- c(
   "patent_count",
   "patent_citation",
   "num_pdb_ids",
+  "pdb_submission",
   "ca_count",
   "num_uniprot_structures",
   "num_primary_submissions",
@@ -192,7 +193,23 @@ for (dep_var in dep_vars) { # nolint
       }
 
       # run the regression as linear, but make an exception for pdb_submission
-      if (dep_var %in% c(
+      if (dep_var == "pdb_submission") {
+        message("Running logistic regression")
+        results[[regression_label]] <- tryCatch(
+          {
+            feglm(
+              form_list[[form]],
+              data = local_data,
+              cluster = c("author", "quarter_year"),
+              family = "logit"
+            )
+          },
+          error = function(e) {
+            message("Error in regression: ", regression_label, " - ", e$message)
+            return(feols(as.formula(paste(dep_var, "~ 1")), data = local_data))
+          }
+        )
+      } else if (dep_var %in% c(
         "num_publications", "num_pdb_submissions", "num_pdb_ids",
         "ca_count", "patent_count", "patent_citation",
         "num_uniprot_structures",
@@ -268,34 +285,4 @@ for (dep_var in dep_vars) { # nolint
       message("Error in generating tables: ", e$message)
     }
   )
-  # ----------------------------------------------------------------------------
-  # GENERATE PLOTS
-  # ----------------------------------------------------------------------------
-
-#   # import from utils_figures.R
-#   source("scripts/papers/utils_figures.R")
-#   message("Generating plots")
-#   tryCatch(
-#     {
-#       coef_table <- extract_coefficients(
-#         results = results,
-#         dep_vars = dep_var,
-#         subsets = names(sub_samples),
-#         cov_sets = cov_sets,
-#         fe_list = fe_list,
-#         treat_vars = c(treat_vars_base, treat_vars_with_strong),
-#         treat_var_interest = c(
-#           "af", "ct_ai", "ct_noai", "af:strong1",
-#           "ct_ai:strong1", "ct_noai:strong1"
-#         )
-#       )
-
-#       generate_coef_plots(
-#         coef_table
-#       )
-#     },
-#     error = function(e) {
-#       message("Error in generating plots: ", e$message)
-#     }
-#   )
 }
