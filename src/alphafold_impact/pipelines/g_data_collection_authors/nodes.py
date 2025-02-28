@@ -492,9 +492,6 @@ def merge_author_data(
     output_data = pd.DataFrame()
     for i, loader in enumerate(data_loaders.values()):
 
-        if i > 10:
-            break
-
         logger.info(
             "Processing data loader %d / %d",
             i + 1,
