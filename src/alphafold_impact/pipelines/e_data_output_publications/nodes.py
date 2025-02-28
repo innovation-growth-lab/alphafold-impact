@@ -423,58 +423,6 @@ def _get_pdb_activity(
         pandas.DataFrame: The updated data with additional PDB activity metrics.
 
     """
-
-    author_pdb_submissions = pdb_submissions.dropna(subset=["authorships"])
-
-    author_pdb_submissions["authors"] = author_pdb_submissions["authorships"].apply(
-        lambda x: [y[0] for y in x] if x is not None else []
-    )
-
-    # explode and drop id authors duplicates
-    author_pdb_submissions = author_pdb_submissions.explode("authors")
-    author_pdb_submissions.drop_duplicates(subset=["id", "authors"], inplace=True)
-
-    # compute count per author
-    pdb_submissions_grouped_count = (
-        author_pdb_submissions.groupby(["authors"])
-        .agg(
-            pdb_count=pd.NamedAgg(column="id", aggfunc="count"),
-        )
-        .reset_index()
-    )
-
-    # keep last author from data authorships
-    data["last_author"] = data["authorships"].apply(
-        lambda x: x[-1][0] if x is not None and len(x) > 0 else None
-    )
-
-    # keep a list of authors
-    data_e = data.copy()
-    data_e["authors"] = data_e["authorships"].apply(
-        lambda x: [y[0] for y in x] if x is not None and len(x) > 0 else []
-    )
-
-    data_e = data_e.explode("authors")
-
-    # merge with pdb_submissions_grouped
-    data_e = data_e.merge(
-        pdb_submissions_grouped_count, left_on="authors", right_on="authors", how="left"
-    )
-
-    # group by "id", sum counts
-    data_e_grouped = (
-        data_e.groupby(["id"])
-        .agg(
-            pdb_count=pd.NamedAgg(column="pdb_count", aggfunc="sum"),
-        )
-        .reset_index()
-    )
-
-    # relabel to add "group_" to pdb_count
-    data_e_grouped.columns = [
-        "group_" + col if col != "id" else col for col in data_e_grouped.columns
-    ]
-
     data = data.merge(
         pdb_submissions[
             [
@@ -501,8 +449,6 @@ def _get_pdb_activity(
         indicator=True,
     )
     data["pdb_submission"] = data["_merge"] == "both"
-    data = data.merge(data_e_grouped, on="id", how="left")
-
     data.drop(columns=["_merge"], inplace=True)
 
     return data
@@ -685,3 +631,89 @@ def get_institution_info(
     )
 
     return publications
+
+
+
+def define_high_pdb_authors(
+    data: pd.DataFrame, pdb_submissions: pd.DataFrame
+) -> pd.DataFrame:
+    """
+    Define high PDB authors based on the publication counts in the
+    fourth quantile.
+
+    Args:
+        authors (list): The list of authors.
+        pdb_submissions (pd.DataFrame): The DataFrame containing the PDB submissions.
+
+    Returns:
+        pd.DataFrame: The updated DataFrame with the 'high_pdb' column.
+    """
+    author_pdb_submissions = pdb_submissions.dropna(subset=["authorships"])
+
+    author_pdb_submissions["author"] = author_pdb_submissions["authorships"].apply(
+        lambda x: [y[0] for y in x] if x is not None else []
+    )
+
+    # explode and drop id authors duplicates
+    author_pdb_submissions = author_pdb_submissions.explode("author")
+    author_pdb_submissions.drop_duplicates(subset=["id", "author"], inplace=True)
+
+    # do the same with the publications
+    # keep last author from data authorships
+    data["last_author"] = data["authorships"].apply(
+        lambda x: x[-1][0] if x is not None and len(x) > 0 else None
+    )
+
+    data["author"] = data["authorships"].apply(
+        lambda x: [y[0] for y in x] if x is not None else []
+    )
+    authors = data.explode("author")
+    authors_list = authors["author"].unique()
+
+    submissions = author_pdb_submissions.copy()
+    submissions_pre2021 = submissions[
+        submissions["publication_date"] < "2021-01-01"
+    ]
+    
+    # keep only authors in the data
+    submissions_pre2021 = submissions_pre2021[submissions_pre2021["author"].isin(authors_list)]
+
+    # make sure each author is only counted once per id
+    submissions_pre2021 = submissions_pre2021.drop_duplicates(subset=["id", "author"])
+
+    # group by author and sum pdb_submission
+    submissions_pre2021 = (
+        submissions_pre2021.groupby("author")["num_pdb_ids"].sum().reset_index()
+    )
+
+    # create q4_pdb_pre2021 boolean column
+    submissions_pre2021["q4_pdb_pre2021"] = submissions_pre2021["num_pdb_ids"].apply(
+        lambda x: x >= submissions_pre2021["num_pdb_ids"].quantile(0.75)
+    )
+
+    # map author num_pdb ids
+    authors["num_pdb_ids_pre2021"] = authors["author"].map(
+        submissions_pre2021.set_index("author")["num_pdb_ids"]
+    ).fillna(0).astype(int)
+    authors["q4_pdb_pre2021"] = authors["author"].map(
+        submissions_pre2021.set_index("author")["q4_pdb_pre2021"]
+    ).fillna(False)
+
+    # group by paper
+    authors_grouped_in_paper = authors.groupby("id").agg(
+        num_pdb_ids_pre2021=pd.NamedAgg(column="num_pdb_ids_pre2021", aggfunc="sum"),
+        q4_pdb_pre2021_any=pd.NamedAgg(column="q4_pdb_pre2021", aggfunc="any")
+    ).reset_index()
+
+    # merge back with data
+    data = data.merge(
+        authors_grouped_in_paper[["id", "num_pdb_ids_pre2021", "q4_pdb_pre2021_any"]],
+        on="id",
+        how="left",
+    )
+
+    # fill missing values
+    data["num_pdb_ids_pre2021"] = data["num_pdb_ids_pre2021"].fillna(0).astype(int)
+    data["q4_pdb_pre2021_any"] = data["q4_pdb_pre2021_any"].fillna(False)
+
+    return data

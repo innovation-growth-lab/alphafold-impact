@@ -8,8 +8,9 @@ from .nodes import (
     create_publications_data,
     merge_individual_data,
     update_alphafold_triad,
+    define_high_pdb_authors,
     select_regression_columns,
-    get_institution_info
+    get_institution_info,
 )
 
 
@@ -75,13 +76,21 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                 name="merge_publications_data",
             ),
             node(
-                get_institution_info,
+                define_high_pdb_authors,
                 inputs={
-                    "publications": "publications.data.intermediate"
+                    "data": "publications.data.intermediate",
+                    "pdb_submissions": "pdb.entries.primary",
                 },
+                outputs="publications.data.w_high_pdb_authors",
+                name="define_high_pdb_authors",
+                tags="complete",
+            ),
+            node(
+                get_institution_info,
+                inputs={"publications": "publications.data.w_high_pdb_authors"},
                 outputs="publications.data.outputs",
                 name="get_last_author_institution_info",
-                tags="debug"
+                tags="complete",
             ),
             node(
                 select_regression_columns,
@@ -91,6 +100,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                 },
                 outputs="publications.regression.inputs",
                 name="subset_columns_for_regression",
+                tags="complete",
             ),
         ],
         tags=["data_output_publications"],
