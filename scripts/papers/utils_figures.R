@@ -37,7 +37,7 @@ extract_coefficients <- function(results, dep_vars, subsets, cov_sets, fe_list, 
                 for (treat_var_interest_item in treat_var_interest) {
                   if (treat_var_interest_item %in% rownames(coef_info)) {
                     parts <- strsplit(result_name, "__")[[1]] # nolint
-                    depth_c <- parts[1]
+                    scope_c <- parts[1]
                     field_c <- parts[2]
                     subgroup_c <- parts[3]
                     dep_var_c <- parts[4]
@@ -46,7 +46,7 @@ extract_coefficients <- function(results, dep_vars, subsets, cov_sets, fe_list, 
                     indep_vars_c <- parts[7]
 
                     coef_data[[length(coef_data) + 1]] <- data.frame(
-                      depth = depth_c,
+                      scope = scope_c,
                       field = field_c,
                       subgroup = subgroup_c,
                       treat_var = treat_var_interest_item,
@@ -77,8 +77,8 @@ extract_coefficients <- function(results, dep_vars, subsets, cov_sets, fe_list, 
 
 # --- Variable definitions ---
 # Set desired orders for variables and names
-subgroup_order <- c("All PDB", "High PDB", "CEM")
-depth_order <- c("All Groups", "Foundational", "Applied")
+subgroup_order <- c("All PDB", "High PDB")
+scope_order <- c("All", "Intent")
 field_order <- c(
   "field_All Fields",
   "field_Molecular Biology",
@@ -116,24 +116,20 @@ dep_var_labels <- c(
 )
 
 coef_labels <- c(
-  "af" = "AlphaFold (ext.)",
-  "ct_ai" = "Counterfactual AI (ext.)",
-  "ct_noai" = "Counterfactual no AI (ext.)",
-  "af:strong1" = "AlphaFold - Method (ext.)",
-  "ct_ai:strong1" = "Counterfactual AI - Method (ext.)",
-  "ct_noai:strong1" = "Counterfactual no AI - Method (ext.)"
+  "af" = "AlphaFold",
+  "ct_ai" = "Counterfactual AI",
+  "ct_noai" = "Counterfactual no AI",
+  "af:strong0" = "AlphaFold - Background",
+  "af:strong1" = "AlphaFold - Method",
+  "ct_ai:strong0" = "AI Frontiers - Background",
+  "ct_ai:strong1" = "AI Frontiers - Method",
+  "ct_noai:strong0" = "No AI Frontiers - Background",
+  "ct_noai:strong1" = "No AI Frontiers - Method"
 )
 
 strip_colors <- c(
-  "All Groups - All PDB" = "lightyellow",
-  "All Groups - High PDB" = "lightyellow",
-  "All Groups - CEM" = "lightyellow",
-  "Foundational - All PDB" = "lightcoral",
-  "Foundational - High PDB" = "lightcoral",
-  "Foundational - CEM" = "lightcoral",
-  "Applied - All PDB" = "lightblue",
-  "Applied - High PDB" = "lightblue",
-  "Applied - CEM" = "lightblue"
+  "All PDB" = "lightyellow",
+  "High PDB" = "lightyellow"
 )
 
 # --- Function to generate coefficient plots ---
@@ -157,24 +153,19 @@ generate_coef_plots <- function(coef_table) { # nolint
       tryCatch(
         {
           coef_plot_data <- coef_table %>% # nolint
-            filter(treat_var %in% names(coef_labels), dep_var == single_dep_var, subgroup == paste0("subgroup_", single_subgroup, sep="")) %>% # nolint
+            filter(treat_var %in% names(coef_labels), dep_var == single_dep_var, subgroup == paste0("subgroup_", single_subgroup)) %>% # nolint
             mutate( # nolint
-              depth = factor(gsub("depth_", "", depth), levels = gsub("depth_", "", depth_order)), # nolint
               field = factor(gsub("field_", "", field), levels = gsub("field_", "", field_order)), # nolint
-              subgroup = factor(gsub("subgroup_", "", subgroup), levels = gsub("subgroup_", "", subgroup_order)), # nolint
-              depth_subgroup = factor(paste(depth, subgroup, sep = " - "), levels = unique(paste(depth, subgroup, sep = " - "))), # nolint
-              treat_var = factor(
-                treat_var,
-                levels = coef_order
-              ),
+              subgroup = factor(gsub("subgroup_", "", subgroup), levels = subgroup_order), # nolint
+              treat_var = factor(treat_var, levels = coef_order), # nolint
               treat_var = recode(treat_var, !!!coef_labels) # nolint
             )
 
-          # drop levels in column depth_subgroup if they have zero values
+          # drop levels in column scope_subgroup if they have zero values
           present_levels <- levels(
-            coef_plot_data$depth_subgroup
-          )[levels(coef_plot_data$depth_subgroup) %in%
-            unique(coef_plot_data$depth_subgroup[coef_plot_data$depth_subgroup != ""])] # nolint
+            coef_plot_data$subgroup
+          )[levels(coef_plot_data$subgroup) %in%
+            unique(coef_plot_data$subgroup[coef_plot_data$subgroup != ""])] # nolint
           present_strip_colors <- strip_colors[present_levels]
 
           # Check if coef_plot_data is empty
@@ -201,7 +192,7 @@ generate_coef_plots <- function(coef_table) { # nolint
             ) +
             geom_vline(xintercept = 0, color = "black", linewidth = 1) + # nolint
             ggh4x::facet_grid2(
-              depth_subgroup ~ field,
+              subgroup ~ field,
               scales = "free",
               independent = "x",
               space = "fixed",
@@ -250,7 +241,7 @@ generate_coef_plots <- function(coef_table) { # nolint
             dir.create(pathdir, recursive = TRUE)
           }
 
-          n_y_facet_rows <- length(unique(coef_plot_data$depth_subgroup))
+          n_y_facet_rows <- length(unique(coef_plot_data$subgroup))
           plot_height <- n_y_facet_rows * 3.5 # nolint
 
           ggsave( # nolint

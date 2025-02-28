@@ -285,4 +285,45 @@ for (dep_var in dep_vars) { # nolint
       message("Error in generating tables: ", e$message)
     }
   )
+
+  # ----------------------------------------------------------------------------
+  # GENERATE PLOT COEFFICIENT RDS
+  # ----------------------------------------------------------------------------
+
+  # import from utils_figures.R
+  source("scripts/papers/utils_figures.R")
+  message("Generating plots")
+  tryCatch(
+    {
+      coef_table <- extract_coefficients(
+        results = results,
+        dep_vars = dep_var,
+        subsets = names(sub_samples),
+        cov_sets = cov_sets,
+        fe_list = fe_list,
+        treat_vars = c(treat_vars_base, treat_vars_with_strong),
+        treat_var_interest = c(
+          "af", "ct_ai", "ct_noai",
+          "af:strong0", "af:strong1",
+          "strong0:ct_ai", "strong1:ct_ai",
+          "strong0:ct_noai", "strong1:ct_noai"
+        )
+      )
+
+      # save coef_table
+      coefplot_dir <- paste0(pathdir, "coef_tables/")
+
+      if (!dir.exists(coefplot_dir)) {
+        dir.create(coefplot_dir, recursive = TRUE)
+      }
+
+      saveRDS(
+        coef_table,
+        paste0(coefplot_dir, dep_var, "_coef_table.rds")
+      )
+    },
+    error = function(e) {
+      message("Error in generating tables: ", e$message)
+    }
+  )
 }

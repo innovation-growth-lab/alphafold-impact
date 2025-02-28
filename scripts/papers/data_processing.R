@@ -102,6 +102,7 @@ papers <- papers %>%
     ),
     pdb_submission = ifelse(pdb_submission > 0, 1, 0),
     ca_count = ifelse(is.na(ca_count), 0, ca_count),
+    fwci = ifelse(is.na(fwci), 0, fwci),
     num_uniprot_structures = ifelse(
       is.na(num_uniprot_structures), 0, num_uniprot_structures
     ),
