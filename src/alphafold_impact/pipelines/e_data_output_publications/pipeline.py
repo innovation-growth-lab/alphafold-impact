@@ -76,20 +76,19 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                 name="merge_publications_data",
             ),
             node(
-                define_high_pdb_authors,
-                inputs={
-                    "data": "publications.data.intermediate",
-                    "pdb_submissions": "pdb.entries.primary",
-                },
-                outputs="publications.data.w_high_pdb_authors",
-                name="define_high_pdb_authors",
-                tags="complete",
+                get_institution_info,
+                inputs={"publications": "publications.data.intermediate"},
+                outputs="publications.data.w_institution_info",
+                name="get_last_author_institution_info",
             ),
             node(
-                get_institution_info,
-                inputs={"publications": "publications.data.w_high_pdb_authors"},
+                define_high_pdb_authors,
+                inputs={
+                    "data": "publications.data.w_institution_info",
+                    "pdb_submissions": "pdb.entries.primary",
+                },
                 outputs="publications.data.outputs",
-                name="get_last_author_institution_info",
+                name="define_high_pdb_authors",
                 tags="complete",
             ),
             node(
