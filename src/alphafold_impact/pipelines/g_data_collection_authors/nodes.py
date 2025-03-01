@@ -27,7 +27,7 @@ Functions:
     _candidates_preprocessing(candidate_authors: pd.DataFrame) -> pd.DataFrame:
         Preprocesses the candidate authors data.
 
-    _define_high_pdb_authors(data: pd.DataFrame, pdb_submissions: pd.DataFrame) -> pd.DataFrame:
+    define_high_pdb_authors(data: pd.DataFrame, pdb_submissions: pd.DataFrame) -> pd.DataFrame:
         Define high PDB authors based on the publication counts in the fourth quantile.
 
     calculate_field_share(data: pd.DataFrame) -> pd.DataFrame:
@@ -38,7 +38,7 @@ Functions:
 
     aggregate_to_quarterly(data: pd.DataFrame) -> pd.DataFrame:
 
-    _create_cc_counts(data: pd.DataFrame, icite_data: pd.DataFrame) -> pd.DataFrame:
+    create_cc_counts(data: pd.DataFrame, icite_data: pd.DataFrame) -> pd.DataFrame:
 
     _result_transformations(data: pd.DataFrame) -> pd.DataFrame:
 
@@ -382,6 +382,8 @@ def fetch_author_outputs(
 
     logger.info("Fetching papers for %d author batches", len(slices))
     for i, slice_ in enumerate(slices):
+        if i < 299:
+            continue
         # create a unique list of the authors in the slice
         authors = list(chain.from_iterable([x[1].split("|") for x in slice_]))
 
@@ -500,7 +502,7 @@ def merge_author_data(
         data = loader()
 
         logger.info("Getting high PDB authors")
-        data = _define_high_pdb_authors(data, author_submissions)
+        data = define_high_pdb_authors(data, author_submissions)
 
         # get first author data
         data = data[data["author_position"] == "first"]
@@ -580,7 +582,7 @@ def merge_author_data(
         data = data.drop(columns=["_merge"])
 
         # get icite_counts
-        icite_outputs = _create_cc_counts(data[["id", "doi", "pmid"]], icite_data)
+        icite_outputs = create_cc_counts(data[["id", "doi", "pmid"]], icite_data)
         data = data.merge(icite_outputs, on="id", how="left")
 
         # concatenate the data
@@ -612,71 +614,7 @@ def _institution_preprocessing(institutions: pd.DataFrame) -> pd.DataFrame:
     return institutions
 
 
-def _candidates_preprocessing(candidate_authors: pd.DataFrame) -> pd.DataFrame:
-    """
-    Create a DataFrame with the relative sum for each author in each depth.
-    Assign the depth to the author based on the relative sum where the author
-    is represented most often.
-    """
-    # Calculate the total sum for each depth
-    total_depth_sums = (
-        candidate_authors.groupby("depth")
-        .agg({"af": "sum", "ct_ai": "sum", "ct_noai": "sum", "other": "sum"})
-        .reset_index()
-    )
-
-    total_depth_sums["total"] = (
-        total_depth_sums["af"]
-        + total_depth_sums["ct_ai"]
-        + total_depth_sums["ct_noai"]
-        + total_depth_sums["other"]
-    )
-
-    # Calculate the relative sum for each author in each depth
-    author_depth_sums = (
-        candidate_authors.groupby(["author", "depth"])
-        .agg({"af": "sum", "ct_ai": "sum", "ct_noai": "sum", "other": "sum"})
-        .reset_index()
-    )
-
-    author_depth_sums["total"] = (
-        author_depth_sums["af"]
-        + author_depth_sums["ct_ai"]
-        + author_depth_sums["ct_noai"]
-        + author_depth_sums["other"]
-    )
-
-    # Merge the total depth sums with the author depth sums
-    relative_sums = author_depth_sums.merge(
-        total_depth_sums[["depth", "total"]], on="depth", suffixes=("", "_depth")
-    )
-
-    # Calculate the relative relevance
-    relative_sums["relative_relevance"] = (
-        relative_sums["total"] / relative_sums["total_depth"]
-    )
-
-    # Get the index of the row with the maximum relative relevance for each author
-    idx = relative_sums.groupby("author")["relative_relevance"].idxmax()
-
-    max_relative_data = relative_sums.loc[idx]
-
-    # Group by author and quarter to sum the values
-    summed_data = (
-        candidate_authors.groupby(["author", "quarter"])
-        .agg({"af": "sum", "ct_ai": "sum", "ct_noai": "sum", "other": "sum"})
-        .reset_index()
-    )
-
-    # Merge the summed data with the max relative data
-    max_relative_data = max_relative_data[["author", "depth"]].merge(
-        summed_data, on="author", how="left"
-    )
-
-    return max_relative_data
-
-
-def _define_high_pdb_authors(
+def define_high_pdb_authors(
     data: pd.DataFrame, author_submissions: pd.DataFrame
 ) -> pd.DataFrame:
     """
@@ -1007,7 +945,7 @@ def aggregate_to_quarterly(data: pd.DataFrame) -> pd.DataFrame:
     return output_data
 
 
-def _create_cc_counts(data, icite_data):
+def create_cc_counts(data, icite_data):
     """
     Creates a count column in the given data DataFrame based on the 'cited_by_clin' column
         in the icite_data DataFrame.

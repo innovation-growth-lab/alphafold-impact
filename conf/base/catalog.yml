@@ -319,6 +319,21 @@ applied_lab.data_analysis.staggered.outputs.quarterly.primary:
   <<: *_pq
   filepath: s3://igl-alphafold/oct/04_output/analysis/applied_labs/staggered/outputs_quarterly.parquet
 
+foundational_lab.outputs.primary:
+  <<: *_pq
+  filepath: s3://igl-alphafold/oct/04_output/analysis/foundational_labs/individual/outputs_primary.parquet
+
+foundational_lab.outputs.quarterly:
+  <<: *_pq
+  filepath: s3://igl-alphafold/oct/04_output/analysis/foundational_labs/individual/outputs_quarterly.parquet
+
+applied_lab.outputs.primary:
+  <<: *_pq
+  filepath: s3://igl-alphafold/oct/04_output/analysis/applied_labs/individual/outputs_primary.parquet
+
+applied_lab.outputs.quarterly:
+  <<: *_pq
+  filepath: s3://igl-alphafold/oct/04_output/analysis/applied_labs/individual/outputs_quarterly.parquet
 # -------------------------------------------------------------
 
 ecr.candidate_authors.raw:

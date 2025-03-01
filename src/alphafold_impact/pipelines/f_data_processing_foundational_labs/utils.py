@@ -288,62 +288,180 @@ def get_strong_cum_sums(
     return pi_data
 
 
-def get_intent(publications_data) -> dict:
+def get_usage(data: pd.DataFrame) -> pd.DataFrame:
+    """Get the usage of frontier and AF methods"""
+    # get the authors
+    author_data = (
+        data.drop_duplicates(subset=["id"])
+        .explode("authorships")
+        .assign(
+            author=lambda x: x["authorships"].apply(
+                lambda y: y[0] if y is not None else None
+            ),
+            institution=lambda x: x["authorships"].apply(
+                lambda y: y[1] if y is not None else None
+            ),
+            position=lambda x: x["authorships"].apply(
+                lambda y: y[2] if y is not None else None
+            ),
+        )
+        .dropna(subset=["author"])
+        .drop_duplicates(subset=["id", "author"])
+        .reset_index(drop=True)
+        .drop(columns=["authorships"])
+    )
+
+    # drop A9999999999
+    author_data = author_data[~(author_data["author"] == "A9999999999")]
+    author_data["level"] = author_data["level"].astype(int)
+
+    # create quarter column
+    author_data["publication_date"] = pd.to_datetime(author_data["publication_date"])
+    author_data["quarter"] = author_data["publication_date"].dt.to_period("Q")
+
+    # sort by author, quarter, source
+    author_data = author_data.sort_values(by=["author", "source", "quarter"])
+
+    logger.info("Calculating cumulative counts")
+    author_data = (
+        author_data.groupby(["author", "source", "quarter"])
+        .size()
+        .reset_index(name="counts")
+        .sort_values(by=["author", "source", "quarter"])
+    )
+    
+    author_data["cumulative_counts"] = author_data.groupby(["author", "source"])["counts"].cumsum()
+
+    logger.info("Pivoting table")
+    author_data = author_data.pivot_table(
+        index=["author", "quarter"],
+        columns="source", 
+        values="cumulative_counts",
+        fill_value=0
+    ).reset_index()
+
+    # make source cols int
+    for col in ["af", "ct_ai", "ct_noai", "other"]:
+        author_data[col] = author_data[col].astype(int)
+
+    return author_data
+
+
+
+def get_intent(data: pd.DataFrame) -> pd.DataFrame:
     """
-    Get the intent of the links for each publication in the given data.
+    Get the pi_id intent data from the given DataFrame.
 
     Args:
-        data (pd.DataFrame): The input data containing publication information.
-        publications_data (pd.DataFrame): The publications data containing information
-        about the publications.
+        data (pd.DataFrame): The input DataFrame containing the publications data.
 
     Returns:
-        dict: A dictionary containing the intent of the links for each publication.
+        pd.DataFrame: A DataFrame containing the intent data.
     """
-    # merge publications_data on data
-    publications_data = publications_data[
-        ["authorships", "chain_label", "source", "level"]
-    ].copy()
 
-    # extract author id (first item in each sublist in authorships)
-    publications_data["authorships"] = publications_data["authorships"].apply(
-        lambda x: [y[0] for y in x] if x is not None else []
-    )
-
-    # explode authorships
-    publications_data = publications_data.explode("authorships")
-
-    # create intent_label column
-    publications_data["intent"] = publications_data["chain_label"].apply(
-        lambda x: (
-            "strong"
-            if pd.notna(x) and "strong" in x
-            else "weak" if pd.notna(x) and "weak" in x else None
+    # get the authors
+    author_data = (
+        data.drop_duplicates(subset=["id"])
+        .explode("authorships")
+        .assign(
+            author=lambda x: x["authorships"].apply(
+                lambda y: y[0] if y is not None else None
+            ),
+            institution=lambda x: x["authorships"].apply(
+                lambda y: y[1] if y is not None else None
+            ),
+            position=lambda x: x["authorships"].apply(
+                lambda y: y[2] if y is not None else None
+            ),
         )
+        .dropna(subset=["author"])
+        .drop_duplicates(subset=["id", "author"])
+        .reset_index(drop=True)
+        .drop(columns=["authorships"])
     )
 
-    # sort to prioritise a strong link
-    sort_order = {"strong": 0, "weak": 1}
-    publications_data["sort_order"] = publications_data.apply(
-        lambda row: (-1 if row["level"] == -1 else sort_order.get(row["intent"], 7)),
-        axis=1,
+    # drop A9999999999
+    author_data = author_data[~(author_data["author"] == "A9999999999")]
+
+    # create quarter column
+    author_data["publication_date"] = pd.to_datetime(author_data["publication_date"])
+    author_data["quarter"] = author_data["publication_date"].dt.to_period("Q")
+
+    # create grouped chain_labels
+    labels = {
+        "strong": ["strong", "partial_strong"],
+        "weak": ["weak", "partial_weak"],
+        "mixed": ["mixed"],
+        "unknown": ["unknown", "no_data"],
+    }
+
+    # create author labels
+    author_data["grouped_chain_label"] = author_data["chain_label"].apply(
+        lambda x: next((k for k, v in labels.items() if x in v), "unknown")
     )
 
-    publications_data = (
-        publications_data.sort_values("sort_order")
-        .groupby(["authorships", "source"])
-        .first()
-        .reset_index()
+    author_labels = (
+        author_data.groupby(["author", "quarter", "grouped_chain_label", "source"])
+        .size()
+        .reset_index(name="counts")
     )
 
-    # col ops
-    publications_data.drop(columns="sort_order", inplace=True)
-    publications_data.reset_index(drop=True, inplace=True)
-    publications_data.rename(columns={"authorships": "pi_id"}, inplace=True)
+    # pivot the author labels
+    author_labels = author_labels.pivot_table(
+        index=["author", "quarter"],
+        columns=["source", "grouped_chain_label"],
+        values="counts",
+        fill_value=0,
+    ).reset_index()
 
-    publications_data.loc[publications_data["source"] == "other", "intent"] = None
+    # join the two-level columns into one
+    author_labels.columns = [
+        f"{col[0]}_{col[1]}" if isinstance(col, tuple) else col
+        for col in author_labels.columns
+    ]
 
-    return publications_data[["pi_id", "source", "intent"]]
+    # rename author_ and quarter_ to author and quarter
+    author_labels.rename(
+        columns={"author_": "author", "quarter_": "quarter"}, inplace=True
+    )
+
+    # make all columns but author_ and quarter_ int
+    author_labels = author_labels.astype(
+        {
+            col: "int"
+            for col in author_labels.columns
+            if col not in ["author", "quarter"]
+        }
+    )
+
+    # create four columns that sum the other counts on row and substract the count of _unknown_
+    author_labels["af_with_intent"] = (
+        author_labels["af_strong"]
+        + author_labels["af_weak"]
+        + author_labels["af_mixed"]
+    )
+    author_labels["ct_ai_with_intent"] = (
+        author_labels["ct_ai_strong"]
+        + author_labels["ct_ai_weak"]
+        + author_labels["ct_ai_mixed"]
+    )
+    author_labels["ct_noai_with_intent"] = (
+        author_labels["ct_noai_strong"]
+        + author_labels["ct_noai_weak"]
+        + author_labels["ct_noai_mixed"]
+    )
+    author_labels["other_with_intent"] = (
+        author_labels["other_strong"]
+        + author_labels["other_weak"]
+        + author_labels["other_mixed"]
+    )
+
+    count_cols = [
+        col for col in author_labels.columns if col not in ["author", "quarter"]
+    ]
+    author_labels[count_cols] = author_labels.groupby("author")[count_cols].cumsum()
+
+    return author_labels
 
 
 def get_pdb_activity(data, pdb_submissions):
@@ -363,29 +481,39 @@ def get_pdb_activity(data, pdb_submissions):
     """
     # Convert resolution and R_free columns to numeric, coercing errors
     # Merge pdb_submissions with data on 'id'
-    submissions = pdb_submissions.merge(
-        data, on="id", how="inner"
-    )
+    submissions = pdb_submissions.merge(data, on="id", how="inner")
 
     # Group by pi_id and time, then calculate metrics
     submissions_grouped = (
         submissions.groupby(["pi_id", "time"])
         .agg(
-            num_uniprot_structures=pd.NamedAgg(column="num_uniprot_structures", aggfunc="sum"),
+            num_uniprot_structures=pd.NamedAgg(
+                column="num_uniprot_structures", aggfunc="sum"
+            ),
             num_pdb_ids=pd.NamedAgg(column="num_pdb_ids", aggfunc="sum"),
-            num_primary_submissions=pd.NamedAgg(column="num_primary_submissions", aggfunc="sum"),
+            num_primary_submissions=pd.NamedAgg(
+                column="num_primary_submissions", aggfunc="sum"
+            ),
             score_mean=pd.NamedAgg(column="score_mean", aggfunc="mean"),
             complexity_sum=pd.NamedAgg(column="complexity_sum", aggfunc="sum"),
             complexity_mean=pd.NamedAgg(column="complexity_mean", aggfunc="mean"),
-            organism_rarity_mean=pd.NamedAgg(column="organism_rarity_mean", aggfunc="mean"),
-            organism_rarity_max=pd.NamedAgg(column="organism_rarity_max", aggfunc="max"),
+            organism_rarity_mean=pd.NamedAgg(
+                column="organism_rarity_mean", aggfunc="mean"
+            ),
+            organism_rarity_max=pd.NamedAgg(
+                column="organism_rarity_max", aggfunc="max"
+            ),
             num_diseases=pd.NamedAgg(column="num_diseases", aggfunc="sum"),
             resolution_mean=pd.NamedAgg(column="resolution_mean", aggfunc="mean"),
             R_free_mean=pd.NamedAgg(column="R_free_mean", aggfunc="mean"),
             mean_tmscore=pd.NamedAgg(column="mean_tmscore", aggfunc="mean"),
             max_tmscore=pd.NamedAgg(column="max_tmscore", aggfunc="max"),
-            normalised_mean_tmscore=pd.NamedAgg(column="normalised_mean_tmscore", aggfunc="mean"),
-            normalised_max_tmscore=pd.NamedAgg(column="normalised_max_tmscore", aggfunc="max"),
+            normalised_mean_tmscore=pd.NamedAgg(
+                column="normalised_mean_tmscore", aggfunc="mean"
+            ),
+            normalised_max_tmscore=pd.NamedAgg(
+                column="normalised_max_tmscore", aggfunc="max"
+            ),
         )
         .reset_index()
     )
@@ -670,7 +798,7 @@ def calculate_mesh_balance(
     df = df.explode("mesh_terms")
 
     # group by author and mesh_terms and calculate the count
-    df = df.groupby(["author", "time", "mesh_terms"]).size().reset_index(name="count")
+    df = df.groupby(["author", "quarter", "mesh_terms"]).size().reset_index(name="count")
 
     # calculate the total count for each author
     total_count = df.groupby("author")["count"].sum()
@@ -681,23 +809,33 @@ def calculate_mesh_balance(
     )
 
     # pivot the DataFrame to get one column for each mesh term
-    df = df.pivot(index=["author", "time"], columns="mesh_terms", values="share")
+    df = df.pivot(index=["author", "quarter"], columns="mesh_terms", values="share")
 
     # reset index
     df.reset_index(inplace=True)
 
     # change column names to be camel case, and prefix with "mesh_"
     df.columns = [
-        "mesh_" + col if col != "author" and col != "time" else col
+        "mesh_" + col if col != "author" and col != "quarter" else col
         for col in df.columns
     ]
 
     # fill NaN values with 0
     df = df.fillna(0)
 
-    # merge with data on author and time
-    data = data.merge(df, on=["author", "time"], how="left")
+    # try to drop "mesh_" column
+    if "mesh_" in df.columns:
+        df = df.drop(columns=["mesh_"])
 
+    # merge with data on author and time
+    data = data.merge(df, on=["author", "quarter"], how="left")
+
+    data.drop(columns=["mesh_terms"], inplace=True)
+
+    # fill NaN for columns that are mesh_
+    mesh_cols = [col for col in data.columns if col.startswith("mesh_")]
+    data[mesh_cols] = data[mesh_cols].fillna(0)
+    
     return data
 
 
@@ -906,3 +1044,28 @@ def _get_yearly_citations(data):
     data["cit_1"] = data["cit_1"].fillna(0)
 
     return data
+
+
+def process_institutional_data(institutional_data: pd.DataFrame) -> pd.DataFrame:
+    """Process the institutional data by dropping duplicates and renaming columns."""
+    # change institutional_data columns to institution, unless column is institution
+    institutional_data.drop_duplicates(subset="institution", inplace=True)
+    institutional_data.columns = [
+        "institution_" + col if col != "institution" else col
+        for col in institutional_data.columns
+    ]
+
+    return institutional_data
+
+
+def process_pdb_data(pdb_submissions: pd.DataFrame) -> pd.DataFrame:
+    """Process the PDB submissions data by exploding the authorships."""
+    return (
+        pdb_submissions.explode("authorships")
+        .assign(
+            authorships=lambda x: x["authorships"].apply(
+                lambda y: y[0] if isinstance(y, np.ndarray) and len(y) > 0 else None
+            )
+        )
+        .rename(columns={"authorships": "author"})
+    )
