@@ -47,7 +47,7 @@ Sys.setenv(
 
 # Define the S3 bucket and path
 bucket <- "igl-alphafold"
-path <- "oct/03_primary/nonecr/publications_quarterly_test.parquet" # nolint
+path <- "oct/03_primary/nonecr/publications_quarterly.parquet" # nolint
 
 # Fetch the data from the S3 bucket
 nonecr_data <- s3read_using(

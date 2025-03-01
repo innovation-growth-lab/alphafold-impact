@@ -150,8 +150,24 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
         etable_output <- fixest::etable(
           results[result_names],
           drop = c(
-            "num_publications", "Constant",
-            "^covid_", "^field_", "^mesh_", "^institution_"
+            # Drop all interaction terms (both colon and underscore format)
+            ".*:.*",
+            ".*_ct_.*",
+            # Drop specific patterns we don't want
+            "^af_ct.*",
+            "^ct_ai_ct.*",
+            # Drop renamed interaction terms
+            ".*\\$\\\\times\\$.*", # matches the LaTeX formatted interactions
+            "AlphaFold.*AI Frontier.*",
+            "AlphaFold.*No AI Frontier.*",
+            "AI Frontier.*No AI Frontier.*",
+            # Drop any other controls
+            "num_publications",
+            "Constant",
+            "^covid_",
+            "^field_",
+            "^mesh_",
+            "^institution_"
           ),
           tex = TRUE,
           dict = dict_vars,
