@@ -365,7 +365,7 @@ field_mapping <- c(
 nonecr_data$primary_field <- recode(nonecr_data$primary_field, !!!field_mapping)
 
 # ------------------------------------------------------------------------------
-# CEM (Coarsened Exact Matching)
+# CEM (Coarsened Exact Matching) - Define matching groups
 # ------------------------------------------------------------------------------
 
 # Define the columns to be used for matching
@@ -396,7 +396,7 @@ quarterly_cem <- nonecr_data %>%
   )
 
 # ------------------------------------------------------------------------------
-# Match
+# CEM (Coarsened Exact Matching) - Match
 # ------------------------------------------------------------------------------
 
 match_out_af_coarse <- matchit(
