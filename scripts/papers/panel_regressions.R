@@ -42,16 +42,8 @@ sub_samples <- readRDS(paste0(pathdir, "data/sub_samples.rds"))
 # DATA PREPARATION
 # ------------------------------------------------------------------------------
 
-field_cols <- grep(
-  "^field_",
-  names(sub_samples$"scope_All__field_All Fields__subgroup_All PDB"),
-  value = TRUE
-)
-mesh_cols <- grep(
-  "^mesh_",
-  names(sub_samples$"scope_All__field_All Fields__subgroup_All PDB"),
-  value = TRUE
-)
+field_cols <- grep("^field_", names(sub_samples[[1]]), value = TRUE)
+mesh_cols <- grep("^mesh_", names(sub_samples[[1]]), value = TRUE)
 
 covs <- list()
 covs[["base0"]] <- c(
