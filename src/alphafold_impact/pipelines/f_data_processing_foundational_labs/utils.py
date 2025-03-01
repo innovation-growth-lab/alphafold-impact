@@ -857,27 +857,27 @@ def collect_covid_references(data: pd.DataFrame) -> pd.DataFrame:
     ]
 
     data_2020["covid_2020"] = data_2020["concepts"].apply(
-        lambda x: (any(element == "C524204448" for element in x))
+        lambda x: any("C524204448" in element for element in x)
     )
 
     # Group the filtered dataframe by pi_id and calculate the share of COVID concepts
     covid_share_2020 = (
-        data_2020.groupby("pi_id")["covid_2020"].sum()
-        / data_2020.groupby("pi_id")["covid_2020"].count()
+        data_2020.groupby("author")["covid_2020"].sum()
+        / data_2020.groupby("author")["covid_2020"].count()
     )
 
     # Convert the Series to a DataFrame
     covid_share_2020 = covid_share_2020.reset_index()
 
     # Rename the column
-    covid_share_2020.columns = ["pi_id", "covid_share_2020"]
+    covid_share_2020.columns = ["author", "covid_share_2020"]
 
     # Create a dictionary from the DataFrame
     covid_share_dict = dict(
-        zip(covid_share_2020["pi_id"], covid_share_2020["covid_share_2020"])
+        zip(covid_share_2020["author"], covid_share_2020["covid_share_2020"])
     )
 
-    data["covid_share_2020"] = data["pi_id"].map(covid_share_dict)
+    data["covid_share_2020"] = data["author"].map(covid_share_dict)
 
     return data
 
