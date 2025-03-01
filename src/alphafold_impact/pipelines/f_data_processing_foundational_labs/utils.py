@@ -851,7 +851,10 @@ def collect_covid_references(data: pd.DataFrame) -> pd.DataFrame:
       pd.DataFrame: The original DataFrame with an additional column "covid_share_2020"
     """
 
-    data_2020 = data[data["time"].isin([9, 10, 11, 12])]
+    data_2020 = data[
+        (data["publication_date"] >= "2020-01-01")
+        & (data["publication_date"] <= "2020-12-31")
+    ]
 
     data_2020["covid_2020"] = data_2020["concepts"].apply(
         lambda x: (any(element == "C524204448" for element in x))
