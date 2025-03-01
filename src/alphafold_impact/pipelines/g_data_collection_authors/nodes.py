@@ -382,8 +382,6 @@ def fetch_author_outputs(
 
     logger.info("Fetching papers for %d author batches", len(slices))
     for i, slice_ in enumerate(slices):
-        if i < 299:
-            continue
         # create a unique list of the authors in the slice
         authors = list(chain.from_iterable([x[1].split("|") for x in slice_]))
 
