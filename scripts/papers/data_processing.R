@@ -146,6 +146,12 @@ papers <- papers %>%
     ct = if_else(source %in% c("ct_ai", "ct_noai"), 1, 0),
     ct_ai = if_else(source == "ct_ai", 1, 0),
     ct_noai = if_else(source == "ct_noai", 1, 0),
+    af_strong0 = if_else(source == "af" & strong == 0, 1, 0),
+    af_strong1 = if_else(source == "af" & strong == 1, 1, 0),
+    ct_ai_strong0 = if_else(source == "ct_ai" & strong == 0, 1, 0),
+    ct_ai_strong1 = if_else(source == "ct_ai" & strong == 1, 1, 0),
+    ct_noai_strong0 = if_else(source == "ct_noai" & strong == 0, 1, 0),
+    ct_noai_strong1 = if_else(source == "ct_noai" & strong == 1, 1, 0),
     institution_type = as.factor(institution_type),
     institution_country_code = as.factor(institution_country_code),
     ln1p_cited_by_count = log1p(cited_by_count),
@@ -232,6 +238,12 @@ papers <- papers %>%
     "ct_noai",
     "strong",
     "depth",
+    "af_strong0",
+    "af_strong1",
+    "ct_ai_strong0",
+    "ct_ai_strong1",
+    "ct_noai_strong0",
+    "ct_noai_strong1",
     "primary_field",
     "q4_pdb_pre2021_any",
     "mesh_C",
@@ -270,7 +282,8 @@ for (scope_lvl in unique_scopes) {
         sub_sample <- subset(sub_sample, !is.na(strong))
       } else {
         # drop strong
-        sub_sample <- subset(sub_sample, select = -strong)
+        sub_sample <- sub_sample %>%
+          select(-matches("strong[01]$|_strong"))
       }
 
       # Apply field filter

@@ -88,20 +88,14 @@ table_info <- list(
 
 dict_vars <- c(
   "af" = "AlphaFold",
-  "ct_ai" = "AI Frontiers",
-  "ct_noai" = "No AI Frontiers",
-  "af:strong0" = "AlphaFold - Background",
-  "af:strong1" = "AlphaFold - Method",
-  "ct_ai:strong0" = "AI Frontiers - Background",
-  "ct_ai:strong1" = "AI Frontiers - Method",
-  "strong0:ct_ai" = "AI Frontiers - Background",
-  "strong1:ct_ai" = "AI Frontiers - Method",
-  "ct_noai:strong0" = "No AI Frontiers - Background",
-  "ct_noai:strong1" = "No AI Frontiers - Method",
-  "strong0:ct_noai" = "No AI Frontiers - Background",
-  "strong1:ct_noai" = "No AI Frontiers - Method",
-  "strong1" = "Method",
-  "strong0" = "Background"
+  "ct_ai" = "AI Frontier",
+  "ct_noai" = "No AI Frontier",
+  "af_strong0" = "AlphaFold - Bkg.",
+  "af_strong1" = "AlphaFold - Method",
+  "ct_ai_strong0" = "AI Frontier - Bkg.",
+  "ct_ai_strong1" = "AI Frontier - Method",
+  "ct_noai_strong0" = "No AI Frontier - Bkg.",
+  "ct_noai_strong1" = "No AI Frontier - Method"
 )
 
 # Function to generate tables

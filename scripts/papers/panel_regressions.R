@@ -93,7 +93,9 @@ dep_vars <- c(
 treat_vars_base <- paste(
   c(
     "af", "ct_ai", "ct_noai",
-    "af:ct_ai", "af:ct_noai"
+    "af:ct_ai", "af:ct_noai",
+    "ct_ai:ct_noai",
+    "af:ct_ai:ct_noai"
   ),
   collapse = " + "
 )
@@ -101,8 +103,12 @@ treat_vars_base <- paste(
 # Define treatment vars with strong interactions
 treat_vars_with_strong <- paste(
   c(
-    "af:strong", "ct_ai:strong", "ct_noai:strong",
-    "af:ct_ai:strong", "af:ct_noai:strong"
+    "af_strong0", "af_strong1",
+    "ct_ai_strong0", "ct_ai_strong1",
+    "ct_noai_strong0", "ct_noai_strong1",
+    "af:ct_ai:strong", "af:ct_noai:strong",
+    "ct_ai:ct_noai:strong",
+    "af:ct_ai:ct_noai:strong"
   ),
   collapse = " + "
 )
@@ -151,8 +157,7 @@ for (dep_var in dep_vars) { # nolint
     # For each formula, compute feols
     for (form in names(form_list)) {
       regression_label <- paste0(sub, "__", form)
-      message("Running regression: ", regression_label)
-
+      message("Running regression: ", substr(regression_label, 1, 100))
 
       # Create a local copy of the subset
       local_data <- sub_samples[[sub]]
@@ -170,7 +175,7 @@ for (dep_var in dep_vars) { # nolint
         n_authors + n_quarters
         > nrow(non_na_data)
       ) {
-        message("Skipping regression: ", regression_label)
+        message("Skipping regression: ", substr(regression_label, 1, 100))
         results[[regression_label]] <- feols(
           as.formula(paste(dep_var, "~ 1")),
           data = local_data
@@ -179,8 +184,8 @@ for (dep_var in dep_vars) { # nolint
       }
 
       # skipping regression if form includes "strong" but no strong var
-      if (grepl("strong", form) && !("strong" %in% names(local_data))) {
-        message("Skipping regression: ", regression_label)
+      if (grepl("strong", form) && !("af_strong0" %in% names(local_data))) {
+        message("Skipping regression: ", substr(regression_label, 1, 100))
         next
       }
 
@@ -221,7 +226,10 @@ for (dep_var in dep_vars) { # nolint
               form_list[[form]],
               data = local_data,
               cluster = c("author", "quarter_year"),
-              control = list(maxit = 500)
+              control = list(maxit = 2000),
+              nthreads = 1,
+              lean = FALSE,
+              mem.clean = TRUE
             )
           },
           error = function(e) {
@@ -236,7 +244,9 @@ for (dep_var in dep_vars) { # nolint
             feols(
               form_list[[form]],
               data = local_data,
-              cluster = c("author", "quarter_year")
+              cluster = c("author", "quarter_year"),
+              lean = FALSE,
+              mem.clean = TRUE
             )
           },
           error = function(e) {
@@ -296,9 +306,9 @@ for (dep_var in dep_vars) { # nolint
         treat_vars = c(treat_vars_base, treat_vars_with_strong),
         treat_var_interest = c(
           "af", "ct_ai", "ct_noai",
-          "af:strong0", "af:strong1",
-          "strong0:ct_ai", "strong1:ct_ai",
-          "strong0:ct_noai", "strong1:ct_noai"
+          "af_strong0", "af_strong1",
+          "ct_ai_strong0", "ct_ai_strong1",
+          "ct_noai_strong0", "ct_noai_strong1"
         )
       )
 
