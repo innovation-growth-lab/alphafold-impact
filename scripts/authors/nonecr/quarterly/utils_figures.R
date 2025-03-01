@@ -37,7 +37,7 @@ extract_coefficients <- function(results, dep_vars, subsets, cov_sets, fe_list, 
                 for (treat_var_interest_item in treat_var_interest) {
                   if (treat_var_interest_item %in% rownames(coef_info)) {
                     parts <- strsplit(result_name, "__")[[1]] # nolint
-                    depth_c <- parts[1]
+                    scope_c <- parts[1]
                     field_c <- parts[2]
                     subgroup_c <- parts[3]
                     dep_var_c <- parts[4]
@@ -46,7 +46,7 @@ extract_coefficients <- function(results, dep_vars, subsets, cov_sets, fe_list, 
                     indep_vars_c <- parts[7]
 
                     coef_data[[length(coef_data) + 1]] <- data.frame(
-                      depth = depth_c,
+                      scope = scope_c,
                       field = field_c,
                       subgroup = subgroup_c,
                       treat_var = treat_var_interest_item,

@@ -69,9 +69,7 @@ author_intent_ratios <- nonecr_data %>%
     ct_ai_intent_ratio = sum(ct_ai_with_intent, na.rm = TRUE) /
       (sum(ct_ai_with_intent, na.rm = TRUE) + sum(ct_ai_unknown, na.rm = TRUE)),
     ct_noai_intent_ratio = sum(ct_noai_with_intent, na.rm = TRUE) /
-      (sum(ct_noai_with_intent, na.rm = TRUE) + sum(ct_noai_unknown, na.rm = TRUE)), # nolint
-    other_intent_ratio = sum(other_with_intent, na.rm = TRUE) /
-      (sum(other_with_intent, na.rm = TRUE) + sum(other_unknown, na.rm = TRUE))
+      (sum(ct_noai_with_intent, na.rm = TRUE) + sum(ct_noai_unknown, na.rm = TRUE)) # nolint
   )
 
 # Join the ratios back to main data and create the strong0/strong1 columns
@@ -84,8 +82,7 @@ nonecr_data <- nonecr_data %>%
         cbind(
           af_intent_ratio,
           ct_ai_intent_ratio,
-          ct_noai_intent_ratio,
-          other_intent_ratio
+          ct_noai_intent_ratio
         ),
         na.rm = TRUE
       )
@@ -94,39 +91,32 @@ nonecr_data <- nonecr_data %>%
     },
 
     # Only pass values if intent ratio mean is high enough
-    "af:strong0" = if_else(all_intents_high, af_weak, NA_real_),
-    "af:strong1" = if_else(all_intents_high, af_strong, NA_real_),
-    "ct_ai:strong0" = if_else(all_intents_high, ct_ai_weak, NA_real_),
-    "ct_ai:strong1" = if_else(all_intents_high, ct_ai_strong, NA_real_),
-    "ct_noai:strong0" = if_else(all_intents_high, ct_noai_weak, NA_real_),
-    "ct_noai:strong1" = if_else(all_intents_high, ct_noai_strong, NA_real_),
-    "other:strong0" = if_else(all_intents_high, other_weak, NA_real_),
-    "other:strong1" = if_else(all_intents_high, other_strong, NA_real_)
+    "af_strong0" = if_else(all_intents_high, af_weak, NA_real_),
+    "af_strong1" = if_else(all_intents_high, af_strong, NA_real_),
+    "ct_ai_strong0" = if_else(all_intents_high, ct_ai_weak, NA_real_),
+    "ct_ai_strong1" = if_else(all_intents_high, ct_ai_strong, NA_real_),
+    "ct_noai_strong0" = if_else(all_intents_high, ct_noai_weak, NA_real_),
+    "ct_noai_strong1" = if_else(all_intents_high, ct_noai_strong, NA_real_)
   )
 
 # If strong1 exists for any type, set corresponding strong0 to 0
 nonecr_data <- nonecr_data %>%
   group_by(author) %>%
   mutate(
-    "af:strong0" = case_when(
-      is.na(`af:strong0`) ~ NA_real_,
-      any(`af:strong1` > 0, na.rm = TRUE) ~ 0,
-      TRUE ~ `af:strong0`
+    "af_strong0" = case_when(
+      is.na(`af_strong0`) ~ NA_real_,
+      any(`af_strong1` > 0, na.rm = TRUE) ~ 0,
+      TRUE ~ `af_strong0`
     ),
-    "ct_ai:strong0" = case_when(
-      is.na(`ct_ai:strong0`) ~ NA_real_,
-      any(`ct_ai:strong1` > 0, na.rm = TRUE) ~ 0,
-      TRUE ~ `ct_ai:strong0`
+    "ct_ai_strong0" = case_when(
+      is.na(`ct_ai_strong0`) ~ NA_real_,
+      any(`ct_ai_strong1` > 0, na.rm = TRUE) ~ 0,
+      TRUE ~ `ct_ai_strong0`
     ),
-    "ct_noai:strong0" = case_when(
-      is.na(`ct_noai:strong0`) ~ NA_real_,
-      any(`ct_noai:strong1` > 0, na.rm = TRUE) ~ 0,
-      TRUE ~ `ct_noai:strong0`
-    ),
-    "other:strong0" = case_when(
-      is.na(`other:strong0`) ~ NA_real_,
-      any(`other:strong1` > 0, na.rm = TRUE) ~ 0,
-      TRUE ~ `other:strong0`
+    "ct_noai_strong0" = case_when(
+      is.na(`ct_noai_strong0`) ~ NA_real_,
+      any(`ct_noai_strong1` > 0, na.rm = TRUE) ~ 0,
+      TRUE ~ `ct_noai_strong0`
     )
   ) %>%
   ungroup()
@@ -134,16 +124,12 @@ nonecr_data <- nonecr_data %>%
 # create interactions between the strong variables
 nonecr_data <- nonecr_data %>%
   mutate(
-    "af:ct_ai:strong0" = `af:strong0` * `ct_ai:strong0`,
-    "af:ct_ai:strong1" = `af:strong1` * `ct_ai:strong1`,
-    "af:ct_noai:strong0" = `af:strong0` * `ct_noai:strong0`,
-    "af:ct_noai:strong1" = `af:strong1` * `ct_noai:strong1`,
-    "af:other:strong0" = `af:strong0` * `other:strong0`,
-    "af:other:strong1" = `af:strong1` * `other:strong1`,
-    "ct_ai:ct_noai:strong0" = `ct_ai:strong0` * `ct_noai:strong0`,
-    "ct_ai:ct_noai:strong1" = `ct_ai:strong1` * `ct_noai:strong1`,
-    "ct_ai:other:strong0" = `ct_ai:strong0` * `other:strong0`,
-    "ct_ai:other:strong1" = `ct_ai:strong1` * `other:strong1`
+    "af_ct_ai_strong0" = `af_strong0` * `ct_ai_strong0`,
+    "af_ct_ai_strong1" = `af_strong1` * `ct_ai_strong1`,
+    "af_ct_noai_strong0" = `af_strong0` * `ct_noai_strong0`,
+    "af_ct_noai_strong1" = `af_strong1` * `ct_noai_strong1`,
+    "ct_ai_ct_noai_strong0" = `ct_ai_strong0` * `ct_noai_strong0`,
+    "ct_ai_ct_noai_strong1" = `ct_ai_strong1` * `ct_noai_strong1`
   )
 
 # ------------------------------------------------------------------------------
@@ -159,96 +145,66 @@ nonecr_data <- nonecr_data %>%
     other = ifelse(other > 0, 1, 0),
 
     # Strong variables - keep NAs as NAs
-    `af:strong0` = case_when(
-      is.na(`af:strong0`) ~ NA_real_,
-      `af:strong0` > 0 ~ 1,
+    "af_strong0" = case_when(
+      is.na(`af_strong0`) ~ NA_real_,
+      `af_strong0` > 0 ~ 1,
       TRUE ~ 0
     ),
-    `af:strong1` = case_when(
-      is.na(`af:strong1`) ~ NA_real_,
-      `af:strong1` > 0 ~ 1,
+    "af_strong1" = case_when(
+      is.na(`af_strong1`) ~ NA_real_,
+      `af_strong1` > 0 ~ 1,
       TRUE ~ 0
     ),
-    `ct_ai:strong0` = case_when(
-      is.na(`ct_ai:strong0`) ~ NA_real_,
-      `ct_ai:strong0` > 0 ~ 1,
+    "ct_ai_strong0" = case_when(
+      is.na(`ct_ai_strong0`) ~ NA_real_,
+      `ct_ai_strong0` > 0 ~ 1,
       TRUE ~ 0
     ),
-    `ct_ai:strong1` = case_when(
-      is.na(`ct_ai:strong1`) ~ NA_real_,
-      `ct_ai:strong1` > 0 ~ 1,
+    "ct_ai_strong1" = case_when(
+      is.na(`ct_ai_strong1`) ~ NA_real_,
+      `ct_ai_strong1` > 0 ~ 1,
       TRUE ~ 0
     ),
-    `ct_noai:strong0` = case_when(
-      is.na(`ct_noai:strong0`) ~ NA_real_,
-      `ct_noai:strong0` > 0 ~ 1,
+    "ct_noai_strong0" = case_when(
+      is.na(`ct_noai_strong0`) ~ NA_real_,
+      `ct_noai_strong0` > 0 ~ 1,
       TRUE ~ 0
     ),
-    `ct_noai:strong1` = case_when(
-      is.na(`ct_noai:strong1`) ~ NA_real_,
-      `ct_noai:strong1` > 0 ~ 1,
-      TRUE ~ 0
-    ),
-    `other:strong0` = case_when(
-      is.na(`other:strong0`) ~ NA_real_,
-      `other:strong0` > 0 ~ 1,
-      TRUE ~ 0
-    ),
-    `other:strong1` = case_when(
-      is.na(`other:strong1`) ~ NA_real_,
-      `other:strong1` > 0 ~ 1,
+    "ct_noai_strong1" = case_when(
+      is.na(`ct_noai_strong1`) ~ NA_real_,
+      `ct_noai_strong1` > 0 ~ 1,
       TRUE ~ 0
     ),
 
     # Interaction variables - keep NAs as NAs
-    `af:ct_ai:strong0` = case_when(
-      is.na(`af:ct_ai:strong0`) ~ NA_real_,
-      `af:ct_ai:strong0` > 0 ~ 1,
+    "af_ct_ai_strong0" = case_when(
+      is.na(`af_ct_ai_strong0`) ~ NA_real_,
+      `af_ct_ai_strong0` > 0 ~ 1,
       TRUE ~ 0
     ),
-    `af:ct_ai:strong1` = case_when(
-      is.na(`af:ct_ai:strong1`) ~ NA_real_,
-      `af:ct_ai:strong1` > 0 ~ 1,
+    "af_ct_ai_strong1" = case_when(
+      is.na(`af_ct_ai_strong1`) ~ NA_real_,
+      `af_ct_ai_strong1` > 0 ~ 1,
       TRUE ~ 0
     ),
-    `af:ct_noai:strong0` = case_when(
-      is.na(`af:ct_noai:strong0`) ~ NA_real_,
-      `af:ct_noai:strong0` > 0 ~ 1,
+    "af_ct_noai_strong0" = case_when(
+      is.na(`af_ct_noai_strong0`) ~ NA_real_,
+      `af_ct_noai_strong0` > 0 ~ 1,
       TRUE ~ 0
     ),
-    `af:ct_noai:strong1` = case_when(
-      is.na(`af:ct_noai:strong1`) ~ NA_real_,
-      `af:ct_noai:strong1` > 0 ~ 1,
+    "af_ct_noai_strong1" = case_when(
+      is.na(`af_ct_noai_strong1`) ~ NA_real_,
+      `af_ct_noai_strong1` > 0 ~ 1,
       TRUE ~ 0
     ),
-    `af:other:strong0` = case_when(
-      is.na(`af:other:strong0`) ~ NA_real_,
-      `af:other:strong0` > 0 ~ 1,
+    "ct_ai_ct_noai_strong0" = case_when(
+      is.na(`ct_ai_ct_noai_strong0`) ~ NA_real_,
+      `ct_ai_ct_noai_strong0` > 0 ~ 1,
       TRUE ~ 0
     ),
-    `af:other:strong1` = case_when(
-      is.na(`af:other:strong1`) ~ NA_real_,
-      `af:other:strong1` > 0 ~ 1,
-      TRUE ~ 0
-    ),
-    `ct_ai:ct_noai:strong0` = case_when(
-      is.na(`ct_ai:ct_noai:strong0`) ~ NA_real_,
-      `ct_ai:ct_noai:strong0` > 0 ~ 1,
-      TRUE ~ 0
-    ),
-    `ct_ai:ct_noai:strong1` = case_when(
-      is.na(`ct_ai:ct_noai:strong1`) ~ NA_real_,
-      `ct_ai:ct_noai:strong1` > 0 ~ 1,
-      TRUE ~ 0
-    ),
-    `ct_ai:other:strong0` = case_when(
-      is.na(`ct_ai:other:strong0`) ~ NA_real_,
-      `ct_ai:other:strong0` > 0 ~ 1,
-      TRUE ~ 0
-    ),
-    `ct_ai:other:strong1` = case_when(
-      is.na(`ct_ai:other:strong1`) ~ NA_real_,
-      `ct_ai:other:strong1` > 0 ~ 1,
+    "ct_ai_ct_noai_strong1" = case_when(
+      is.na(`ct_ai_ct_noai_strong1`) ~ NA_real_,
+      `ct_ai_ct_noai_strong1` > 0 ~ 1,
       TRUE ~ 0
     )
   )
@@ -462,6 +418,9 @@ matched_data <- matched_data %>%
     "patent_citation",
     "ca_count",
 
+    # Covid
+    "covid_share_2020",
+
     # Structure quality metrics
     "ln1p_resolution",
     "ln1p_R_free",
@@ -474,31 +433,25 @@ matched_data <- matched_data %>%
     "other",
 
     # Strong usage
-    "af:strong0",
-    "af:strong1",
-    "ct_ai:strong0",
-    "ct_ai:strong1",
-    "ct_noai:strong0",
-    "ct_noai:strong1",
-    "other:strong0",
-    "other:strong1",
+    "af_strong0",
+    "af_strong1",
+    "ct_ai_strong0",
+    "ct_ai_strong1",
+    "ct_noai_strong0",
+    "ct_noai_strong1",
 
     # Strong usage interactions
-    "af:ct_ai:strong0",
-    "af:ct_ai:strong1",
-    "af:ct_noai:strong0",
-    "af:ct_noai:strong1",
-    "af:other:strong0",
-    "af:other:strong1",
-    "ct_ai:ct_noai:strong0",
-    "ct_ai:ct_noai:strong1",
-    "ct_ai:other:strong0",
-    "ct_ai:other:strong1",
+    "af_ct_ai_strong0",
+    "af_ct_ai_strong1",
+    "af_ct_noai_strong0",
+    "af_ct_noai_strong1",
+    "ct_ai_ct_noai_strong0",
+    "ct_ai_ct_noai_strong1",
 
     # Field and classification
     "primary_field",
     grep("^field_", names(matched_data), value = TRUE),
-    "mesh_C",
+    grep("^mesh_", names(matched_data), value = TRUE),
 
     # Structure metrics
     "num_pdb_ids",
@@ -551,7 +504,7 @@ for (scope_lvl in unique_scopes) {
       } else {
         # drop strong
         sub_sample <- sub_sample %>%
-          select(-matches("strong[01]$|:strong"))
+          select(-matches("strong[01]$|_strong"))
       }
 
       # Apply field filter
