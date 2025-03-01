@@ -166,7 +166,7 @@ for (dep_var in dep_vars) { # nolint
     # For each formula, compute feols
     for (form in names(form_list)) {
       regression_label <- paste0(sub, "__", form)
-      message("Running regression: ", substr(regression_label, 1, 100))
+      message("Setting up regression: ", substr(regression_label, 1, 100))
 
       # Create a local copy of the subset
       local_data <- sub_samples[[sub]]
@@ -231,22 +231,18 @@ for (dep_var in dep_vars) { # nolint
             message(
               "Error in regression: ", regression_label, " - ", e$message
             )
-            if (all(local_data[[dep_var]] == 0)) {
-              message("All zeros in dependent variable")
-              # Create dummy regression with intercept and one coefficient
-              dummy_data <- data.frame(
-                y = c(0, 1, 5, 0, 3),
-                x = c(0, 1, 0, 1, 0)
+            return(
+              tryCatch(
+                feols(as.formula(paste(dep_var, "~ 1")), data = local_data),
+                error = function(e) {
+                  message(
+                    "Error in regression: ",
+                    substr(regression_label, 1, 100), " - ", e$message
+                  )
+                  return(NULL)
+                }
               )
-              return(feols(
-                y ~ x,
-                data = dummy_data
-              ))
-            } else {
-              return(
-                feols(as.formula(paste(dep_var, "~ 1")), data = local_data)
-              )
-            }
+            )
           }
         )
       } else {
@@ -263,7 +259,8 @@ for (dep_var in dep_vars) { # nolint
           },
           error = function(e) {
             message(
-              "Error in regression: ", regression_label, " - ", e$message
+              "Error in regression: ",
+              substr(regression_label, 1, 100), " - ", e$message
             )
             return(
               feols(as.formula(paste(dep_var, "~ 1")), data = local_data)
