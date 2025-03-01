@@ -13,6 +13,7 @@ extract_coefficients <- function(results, dep_vars, subsets, cov_sets, fe_list, 
   coef_data <- list()
   # Iterate over dependent variables
   for (dep_var in dep_vars) {
+    message("Extracting coefficients for: ", dep_var)
     # Iterate over subsets
     for (sub in subsets) {
       # Iterate over covariate sets, fixed effects, and treatment variables # nolint
@@ -26,10 +27,9 @@ extract_coefficients <- function(results, dep_vars, subsets, cov_sets, fe_list, 
 
             # Check if result exists
             if (result_name %in% names(results)) {
-              message("Extracting coefficients for: ", result_name)
               # Check if the result is not null
               if (!is.null(results[[result_name]])) {
-                message("Found coefficients for: ", result_name)
+                # message("Found coefficients for: ", result_name)
                 coef_info <- summary(results[[result_name]])$coeftable
                 n_obs <- summary(results[[result_name]])$nobs
 

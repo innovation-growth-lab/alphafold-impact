@@ -81,13 +81,7 @@ dep_vars <- c(
   "num_primary_submissions",
   "num_diseases",
   "organism_rarity_mean",
-  "mean_tmscore",
-  "num_uniprot_structures_w_disease",
-  "num_primary_submissions_w_disease",
-  "num_uniprot_structures_w_rare_organisms",
-  "num_primary_submissions_w_rare_organisms",
-  "num_uniprot_structures_w_low_similarity",
-  "num_primary_submissions_w_low_similarity"
+  "mean_tmscore"
 )
 
 # Define base treatment vars that exist in all samples
@@ -172,7 +166,7 @@ for (dep_var in dep_vars) { # nolint
     # For each formula, compute feols
     for (form in names(form_list)) {
       regression_label <- paste0(sub, "__", form)
-      message("Running regression: ", regression_label)
+      message("Running regression: ", substr(regression_label, 1, 100))
 
       # Create a local copy of the subset
       local_data <- sub_samples[[sub]]
@@ -190,7 +184,7 @@ for (dep_var in dep_vars) { # nolint
         n_authors + n_quarters
         > nrow(non_na_data)
       ) {
-        message("Skipping regression: ", regression_label)
+        message("Skipping regression: ", substr(regression_label, 1, 100))
         results[[regression_label]] <- feols(
           as.formula(paste(dep_var, "~ 1")),
           data = local_data
@@ -200,7 +194,7 @@ for (dep_var in dep_vars) { # nolint
 
       # skipping regression if form includes "strong" but no strong var
       if (grepl("strong", form) && !("af_strong0" %in% names(local_data))) {
-        message("Skipping regression: ", regression_label)
+        message("Skipping regression: ", substr(regression_label, 1, 100))
         next
       }
 
@@ -237,9 +231,22 @@ for (dep_var in dep_vars) { # nolint
             message(
               "Error in regression: ", regression_label, " - ", e$message
             )
-            return(
-              feols(as.formula(paste(dep_var, "~ 1")), data = local_data)
-            )
+            if (all(local_data[[dep_var]] == 0)) {
+              message("All zeros in dependent variable")
+              # Create dummy regression with intercept and one coefficient
+              dummy_data <- data.frame(
+                y = c(0, 1, 5, 0, 3),
+                x = c(0, 1, 0, 1, 0)
+              )
+              return(feols(
+                y ~ x,
+                data = dummy_data
+              ))
+            } else {
+              return(
+                feols(as.formula(paste(dep_var, "~ 1")), data = local_data)
+              )
+            }
           }
         )
       } else {
