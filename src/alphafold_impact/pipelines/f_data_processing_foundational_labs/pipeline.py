@@ -6,9 +6,7 @@ generated using Kedro 0.19.1
 from kedro.pipeline import Pipeline, pipeline, node
 from .nodes import (
     get_lab_individual_outputs,
-)
-from ..g_data_collection_authors.nodes import (  # pylint: disable=E0402
-    aggregate_to_quarterly,
+    aggregate_to_quarterly
 )
 
 
@@ -29,9 +27,7 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                     "institutional_data": "foundational_lab.data_collection.institution_info.primary",
                     "icite_data": "pubmed.data_processing.icite.intermediate",
                 },
-                outputs=[
-                    "foundational_lab.outputs.primary",
-                ],
+                outputs="foundational_lab.outputs.primary",
                 name="create_foundational_lab_outputs",
             ),
             node(

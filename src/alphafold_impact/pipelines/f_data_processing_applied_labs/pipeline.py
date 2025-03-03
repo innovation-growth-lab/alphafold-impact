@@ -1,11 +1,9 @@
-
 from kedro.pipeline import Pipeline, pipeline, node
-from ..f_data_processing_foundational_labs.nodes import ( # pylint: disable=E0402
+from ..f_data_processing_foundational_labs.nodes import (  # pylint: disable=E0402
     get_lab_individual_outputs,
+    aggregate_to_quarterly
 )
-from ..g_data_collection_authors.nodes import (  # pylint: disable=E0402
-    aggregate_to_quarterly,
-)
+
 
 def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstring
     **kwargs,
@@ -24,9 +22,7 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                     "institutional_data": "applied_lab.data_collection.institution_info.primary",
                     "icite_data": "pubmed.data_processing.icite.intermediate",
                 },
-                outputs=[
-                    "applied_lab.outputs.primary",
-                ],
+                outputs="applied_lab.outputs.primary",
                 name="create_applied_lab_outputs",
             ),
             node(

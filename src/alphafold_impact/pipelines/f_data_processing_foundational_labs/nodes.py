@@ -5,6 +5,7 @@ generated using Kedro 0.19.1
 
 import logging
 import pandas as pd
+import numpy as np
 from kedro.io import AbstractDataset
 from .utils import (
     get_usage,
@@ -14,7 +15,7 @@ from .utils import (
     process_institutional_data,
     process_pdb_data,
 )
-from ..g_data_collection_authors.nodes import ( # pylint: disable=E0402
+from ..g_data_collection_authors.nodes import (  # pylint: disable=E0402
     define_high_pdb_authors,
     calculate_field_share,
     get_patent_citations,
@@ -142,7 +143,11 @@ def get_lab_individual_outputs(
         data = calculate_mesh_balance(data, mesh_terms_dict)
 
         logger.info("Collecting COVID references")
-        data = collect_covid_references(data)
+        try:
+            data = collect_covid_references(data)
+        except Exception:  # pylint: disable=broad-except
+            logger.warning("Could not collect COVID references")
+            data = data.assign(covid_share_2020=0)
 
         for col in ["concepts", "mesh_terms", "grants", "topics", "ids", "authorships"]:
             try:
@@ -186,5 +191,101 @@ def get_lab_individual_outputs(
     output_data["high_pdb_pre2021"] = (
         output_data["num_pdb_submissions_pre2021"] > pdb_threshold
     )
+
+    return output_data
+
+
+def aggregate_to_quarterly(data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Aggregates the input data to the quarterly level.
+
+    Args:
+        data (pd.DataFrame): The input DataFrame containing the data
+            to be aggregated.
+
+    Returns:
+        pd.DataFrame: The aggregated DataFrame with the data aggregated
+            to the quarterly level.
+    """
+
+    def safe_mode(series):
+        mode = series.mode()
+        return mode.iloc[0] if not mode.empty else np.nan
+
+    # aggregation dictionary
+    agg_dict = {
+        "num_publications": ("id", "size"),
+        "num_cited_by_count": ("cited_by_count", "sum"),
+        "cited_by_count": ("cited_by_count", "mean"),
+        "fwci": ("fwci", "mean"),
+        "percentile_value": ("citation_normalized_percentile_value", "mean"),
+        "patent_count": ("patent_count", "sum"),
+        "patent_citation": ("patent_citation", "sum"),
+        "ca_count": ("ca_count", "sum"),
+        "num_uniprot_structures": ("num_uniprot_structures", "sum"),
+        "num_pdb_ids": ("num_pdb_ids", "sum"),
+        "num_primary_submissions": ("num_primary_submissions", "sum"),
+        "score_mean": ("score_mean", "mean"),
+        "complexity_sum": ("complexity_sum", "sum"),
+        "complexity_mean": ("complexity_mean", "mean"),
+        "organism_rarity_mean": ("organism_rarity_mean", "mean"),
+        "organism_rarity_max": ("organism_rarity_max", "mean"),
+        "num_diseases": ("num_diseases", "sum"),
+        "resolution_mean": ("resolution_mean", "mean"),
+        "R_free_mean": ("R_free_mean", "mean"),
+        "pdb_submission": ("pdb_submission", "sum"),
+        "mean_tmscore": ("mean_tmscore", "mean"),
+        "max_tmscore": ("max_tmscore", "max"),
+        "normalised_mean_tmscore": ("normalised_mean_tmscore", "mean"),
+        "normalised_max_tmscore": ("normalised_max_tmscore", "max"),
+        "institution": ("institution", "first"),
+        "institution_cited_by_count": ("institution_cited_by_count", "first"),
+        "institution_country_code": ("institution_country_code", "first"),
+        "institution_type": ("institution_type", "first"),
+        "institution_2yr_mean_citedness": ("institution_2yr_mean_citedness", "first"),
+        "institution_h_index": ("institution_h_index", "first"),
+        "institution_i10_index": ("institution_i10_index", "first"),
+        "institution_works_count": ("institution_works_count", "first"),
+        "af": ("af", safe_mode),
+        "ct_ai": ("ct_ai", safe_mode),
+        "ct_noai": ("ct_noai", safe_mode),
+        "other": ("other", safe_mode),
+        "af_mixed": ("af_mixed", safe_mode),
+        "af_strong": ("af_strong", safe_mode),
+        "af_unknown": ("af_unknown", safe_mode),
+        "af_weak": ("af_weak", safe_mode),
+        "ct_ai_mixed": ("ct_ai_mixed", safe_mode),
+        "ct_ai_strong": ("ct_ai_strong", safe_mode),
+        "ct_ai_unknown": ("ct_ai_unknown", safe_mode),
+        "ct_ai_weak": ("ct_ai_weak", safe_mode),
+        "ct_noai_mixed": ("ct_noai_mixed", safe_mode),
+        "ct_noai_strong": ("ct_noai_strong", safe_mode),
+        "ct_noai_unknown": ("ct_noai_unknown", safe_mode),
+        "ct_noai_weak": ("ct_noai_weak", safe_mode),
+        "other_mixed": ("other_mixed", safe_mode),
+        "other_strong": ("other_strong", safe_mode),
+        "other_unknown": ("other_unknown", safe_mode),
+        "other_weak": ("other_weak", safe_mode),
+        "af_with_intent": ("af_with_intent", safe_mode),
+        "ct_ai_with_intent": ("ct_ai_with_intent", safe_mode),
+        "ct_noai_with_intent": ("ct_noai_with_intent", safe_mode),
+        "other_with_intent": ("other_with_intent", safe_mode),
+        "primary_field": ("primary_field", safe_mode),
+        "high_pdb_pre2021": ("high_pdb_pre2021", safe_mode),
+    }
+
+    # add fields, mesh, covid
+    additional_columns = [
+        col
+        for col in data.columns
+        if col.startswith("field_") or col.startswith("mesh_")
+    ]
+    additional_columns.append("covid_share_2020")
+
+    for col in additional_columns:
+        agg_dict[col] = (col, "first")
+
+    # group by author and quarter, aggregate calcs
+    output_data = data.groupby(["author", "quarter"]).agg(**agg_dict).reset_index()
 
     return output_data
