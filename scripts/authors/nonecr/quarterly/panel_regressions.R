@@ -48,14 +48,8 @@ mesh_cols <- grep("^mesh_", names(sub_samples[[1]]), value = TRUE)
 covs <- list()
 covs[["base0"]] <- c(
   field_cols,
-  "institution_type",
-  "institution_cited_by_count",
-  "institution_2yr_mean_citedness",
-  "institution_h_index",
-  "institution_i10_index",
-  "institution_country_code",
-  "covid_share_2020",
-  "num_publications" # This was commented out
+  mesh_cols,
+  "num_publications"
 )
 
 fes <- list()
@@ -223,15 +217,23 @@ for (dep_var in dep_vars) { # nolint
         message("Running Poisson regression")
         results[[regression_label]] <- tryCatch(
           {
-            fepois(
+            model <- fenegbin(
               form_list[[form]],
               data = local_data,
               cluster = c("author", "quarter"),
-              control = list(maxit = 2000),
+              fixef.iter = 100,
               nthreads = 1,
               lean = FALSE,
               mem.clean = TRUE
             )
+
+            # Check if model converged by looking at convergence code
+            if (model$convStatus == FALSE) {
+              message("Model did not converge, using fallback model")
+              feols(as.formula(paste(dep_var, "~ 1")), data = local_data)
+            } else {
+              model
+            }
           },
           error = function(e) {
             message(

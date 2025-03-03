@@ -59,6 +59,10 @@ papers <- s3read_using(
 # Replace commas in column names
 colnames(papers) <- gsub(",", "", colnames(papers))
 
+# Drop if level is -1
+papers <- papers %>%
+  filter(level != -1)
+
 # creating quantiles for institution controls and translational
 papers <- papers %>%
   mutate(
