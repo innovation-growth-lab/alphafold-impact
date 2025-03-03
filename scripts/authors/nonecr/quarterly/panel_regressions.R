@@ -2,7 +2,7 @@
 rm(list = ls())
 options(max.print = 1000)
 options(width = 250)
-
+source("scripts/utils.R")
 # Check installation & load required packages
 list_of_packages <- c(
   "tidyverse", "zoo", "fixest", "ggh4x"
@@ -43,12 +43,10 @@ sub_samples <- readRDS(paste0(pathdir, "data/sub_samples.rds"))
 # ------------------------------------------------------------------------------
 
 field_cols <- grep("^field_", names(sub_samples[[1]]), value = TRUE)
-mesh_cols <- grep("^mesh_", names(sub_samples[[1]]), value = TRUE)
 
 covs <- list()
 covs[["base0"]] <- c(
   field_cols,
-  mesh_cols,
   "num_publications"
 )
 
@@ -214,21 +212,25 @@ for (dep_var in dep_vars) { # nolint
         "num_uniprot_structures_w_low_similarity",
         "num_primary_submissions_w_low_similarity"
       )) {
-        message("Running Poisson regression")
+        message("Running Negative Binomial regression")
         results[[regression_label]] <- tryCatch(
           {
-            model <- fenegbin(
-              form_list[[form]],
-              data = local_data,
-              cluster = c("author", "quarter"),
-              fixef.iter = 100,
-              nthreads = 1,
-              lean = FALSE,
-              mem.clean = TRUE
+            # values for whome the fixed-effects-grouped data is not all 0
+            local_data <- local_data %>%
+              group_by(author) %>%
+              filter(sum(!!sym(dep_var)) > 0) %>%
+              ungroup() %>%
+              group_by(quarter) %>%
+              filter(sum(!!sym(dep_var)) > 0) %>%
+              ungroup()
+
+            # Apply the collinearity fix function before running the regression
+            local_data <- fix_perfect_collinearity(
+              local_data, fes[["fe1"]], dep_var
             )
 
             # Check if model converged by looking at convergence code
-            if (model$convStatus == FALSE) {
+            if (!is.numeric(model$se[1])) {
               message("Model did not converge, using fallback model")
               feols(as.formula(paste(dep_var, "~ 1")), data = local_data)
             } else {
