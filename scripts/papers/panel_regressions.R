@@ -47,8 +47,7 @@ field_cols <- grep("^field_", names(sub_samples[[1]]), value = TRUE)
 
 covs <- list()
 covs[["base0"]] <- c(
-  field_cols,
-  "num_publications"
+  field_cols
 )
 
 fes <- list()

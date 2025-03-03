@@ -46,8 +46,7 @@ field_cols <- grep("^field_", names(sub_samples[[1]]), value = TRUE)
 
 covs <- list()
 covs[["base0"]] <- c(
-  field_cols,
-  "num_publications"
+  field_cols
 )
 
 fes <- list()
@@ -59,8 +58,6 @@ dep_vars <- c(
   "mesh_C",
   "num_publications",
   "ln1p_cited_by_count",
-  "ln1p_cit_0",
-  "ln1p_cit_1",
   "ln1p_fwci",
   "ln1p_resolution",
   "ln1p_R_free",

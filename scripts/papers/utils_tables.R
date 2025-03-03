@@ -158,7 +158,7 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
           digits = 3,
           digits.stats = 2,
           powerBelow = -20,
-          fitstat = c("n", "r2")
+          fitstat = c("n", "pr2", "r2")
         )
 
         # force mean y to appear
