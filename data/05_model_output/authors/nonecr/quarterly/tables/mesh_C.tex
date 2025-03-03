@@ -1,0 +1,88 @@
+\begingroup
+\centering
+\begin{tabular}{lcccccc}
+   \tabularnewline \midrule \midrule
+   Dependent Variable: & \multicolumn{6}{c}{mesh\_C}\\
+ & \multicolumn{3}{c}{All Authors} & \multicolumn{3}{c}{Experienced Authors} \\
+\cmidrule(lr){2-4} \cmidrule(lr){5-7}
+ & \multicolumn{1}{c}{All} & \multicolumn{2}{c}{With Intent Data} & \multicolumn{1}{c}{All} & \multicolumn{2}{c}{With Intent Data} \\
+\cmidrule(lr){2-2} \cmidrule(lr){3-4} \cmidrule(lr){5-5} \cmidrule(lr){6-7}
+ & \multicolumn{6}{c}{\textit{All Fields}} \\ \\
+   AlphaFold               & 0.002$^{***}$ & 0.002$^{***}$ &               & 0.0008$^{*}$ & 0.0006   &   \\   
+                           & (0.0003)      & (0.0003)      &               & (0.0005)     & (0.0008) &   \\   
+   AI Frontier             & 0.001$^{***}$ & 0.001$^{**}$  &               & -0.0002      & -0.0004  &   \\   
+                           & (0.0004)      & (0.0005)      &               & (0.0007)     & (0.002)  &   \\   
+   No AI Frontier          & 0.0004        & 0.0006        &               & -0.001       & -0.0003  &   \\   
+                           & (0.0003)      & (0.0004)      &               & (0.0007)     & (0.001)  &   \\   
+   AlphaFold - Bkg.        &               &               & 0.002$^{***}$ &              &          & 0.001\\   
+                           &               &               & (0.0004)      &              &          & (0.001)\\   
+   AlphaFold - Method      &               &               & 0.001$^{***}$ &              &          & -0.00007\\   
+                           &               &               & (0.0004)      &              &          & (0.001)\\   
+   AI Frontier - Bkg.      &               &               & 0.0009        &              &          & 0.0009\\   
+                           &               &               & (0.0006)      &              &          & (0.002)\\   
+   AI Frontier - Method    &               &               & 0.0006        &              &          & -0.003$^{*}$\\   
+                           &               &               & (0.0007)      &              &          & (0.001)\\   
+   No AI Frontier - Bkg.   &               &               & -0.0001       &              &          & 0.0004\\   
+                           &               &               & (0.0005)      &              &          & (0.002)\\   
+   No AI Frontier - Method &               &               & -0.0001       &              &          & -0.002\\   
+                           &               &               & (0.0005)      &              &          & (0.002)\\   
+   \midrule
+   \emph{Fit statistics}\\
+   Observations            & 3,076,315     & 495,903       & 495,903       & 146,527      & 26,949   & 26,949\\  
+   R$^2$                   & 0.35          & 0.22          & 0.23          & 0.42         & 0.27     & 0.27\\  
+Mean(Dep. Var.) & 0.014 & 0.012 & 0.012 & 0.012 & 0.011 & 0.011 \\
+   
+ & \multicolumn{6}{c}{\textit{Molecular Biology}} \\ \\
+   AlphaFold               & 0.002$^{***}$ & 0.001$^{**}$  &          & 0.0006   & 0.002       &   \\   
+                           & (0.0004)      & (0.0006)      &          & (0.0007) & (0.001)     &   \\   
+   AI Frontier             & 0.001$^{*}$   & -0.00009      &          & 0.0003   & -0.001      &   \\   
+                           & (0.0006)      & (0.0009)      &          & (0.0009) & (0.002)     &   \\   
+   No AI Frontier          & 0.002$^{***}$ & 0.003$^{***}$ &          & 0.0004   & 0.006$^{*}$ &   \\   
+                           & (0.0006)      & (0.0007)      &          & (0.002)  & (0.003)     &   \\   
+   AlphaFold - Bkg.        &               &               & 0.0001   &          &             & 0.004\\   
+                           &               &               & (0.0009) &          &             & (0.003)\\   
+   AlphaFold - Method      &               &               & 0.0001   &          &             & 0.00003\\   
+                           &               &               & (0.0007) &          &             & (0.001)\\   
+   AI Frontier - Bkg.      &               &               & -0.0008  &          &             & -0.0001\\   
+                           &               &               & (0.001)  &          &             & (0.002)\\   
+   AI Frontier - Method    &               &               & 0.0007   &          &             & -0.003\\   
+                           &               &               & (0.002)  &          &             & (0.003)\\   
+   No AI Frontier - Bkg.   &               &               & 0.001    &          &             & 0.0008\\   
+                           &               &               & (0.0009) &          &             & (0.002)\\   
+   No AI Frontier - Method &               &               & 0.0009   &          &             & 0.002\\   
+                           &               &               & (0.001)  &          &             & (0.005)\\   
+   \midrule
+   \emph{Fit statistics}\\
+   Observations            & 471,627       & 82,616        & 82,616   & 51,693   & 9,283       & 9,283\\  
+   R$^2$                   & 0.64          & 0.54          & 0.54     & 0.62     & 0.54        & 0.54\\  
+   
+Mean(Dep. Var.) & 0.017 & 0.014 & 0.014 & 0.010 & 0.009 & 0.009 \\
+ & \multicolumn{6}{c}{\textit{Medicine}} \\ \\
+   AlphaFold               & 0.002$^{***}$ & 0.001$^{**}$ &               & 0.002        & -0.002  &   \\   
+                           & (0.0007)      & (0.0005)     &               & (0.001)      & (0.003) &   \\   
+   AI Frontier             & 0.002$^{*}$   & 0.002$^{*}$  &               & -0.002       & 0.0002  &   \\   
+                           & (0.0008)      & (0.001)      &               & (0.004)      & (0.010) &   \\   
+   No AI Frontier          & 0.0002        & 0.0006       &               & -0.003$^{*}$ & -0.002  &   \\   
+                           & (0.0005)      & (0.0006)     &               & (0.001)      & (0.003) &   \\   
+   AlphaFold - Bkg.        &               &              & 0.002$^{***}$ &              &         & -0.0004\\   
+                           &               &              & (0.0007)      &              &         & (0.003)\\   
+   AlphaFold - Method      &               &              & 0.0010        &              &         & -0.006$^{*}$\\   
+                           &               &              & (0.0007)      &              &         & (0.003)\\   
+   AI Frontier - Bkg.      &               &              & 0.002         &              &         & -0.003\\   
+                           &               &              & (0.001)       &              &         & (0.009)\\   
+   AI Frontier - Method    &               &              & 0.0002        &              &         & -0.002\\   
+                           &               &              & (0.002)       &              &         & (0.011)\\   
+   No AI Frontier - Bkg.   &               &              & 0.0010        &              &         & 0.0002\\   
+                           &               &              & (0.0007)      &              &         & (0.003)\\   
+   No AI Frontier - Method &               &              & 0.0005        &              &         & -0.004\\   
+                           &               &              & (0.0008)      &              &         & (0.004)\\   
+   \midrule
+   \emph{Fit statistics}\\
+   Observations            & 878,527       & 160,458      & 160,458       & 36,327       & 7,272   & 7,272\\  
+   R$^2$                   & 0.46          & 0.35         & 0.35          & 0.59         & 0.46    & 0.46\\  
+Mean(Dep. Var.) & 0.030 & 0.024 & 0.024 & 0.026 & 0.021 & 0.021 \\
+   \midrule \midrule
+   \multicolumn{7}{l}{\emph{Clustered (author \& quarter) standard-errors in parentheses}}\\
+   \multicolumn{7}{l}{\emph{Signif. Codes: ***: 0.01, **: 0.05, *: 0.1}}\\
+\end{tabular}
+\par\endgroup
