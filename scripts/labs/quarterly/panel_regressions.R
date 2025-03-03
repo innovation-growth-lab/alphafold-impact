@@ -212,7 +212,7 @@ for (dep_var in dep_vars) { # nolint
         "num_uniprot_structures_w_low_similarity",
         "num_primary_submissions_w_low_similarity"
       )) {
-        message("Running Poisson regression")
+        message("Running Negative Binomial regression")
         results[[regression_label]] <- tryCatch(
           {
             model <- fenegbin(
