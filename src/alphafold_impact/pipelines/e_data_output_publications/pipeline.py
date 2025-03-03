@@ -74,12 +74,14 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                 },
                 outputs="publications.data.merged",
                 name="merge_publications_data",
+                tags="complete",
             ),
             node(
                 get_institution_info,
                 inputs={"publications": "publications.data.merged"},
                 outputs="publications.data.intermediate",
                 name="get_last_author_institution_info",
+                tags="complete",
             ),
             node(
                 define_high_pdb_authors,

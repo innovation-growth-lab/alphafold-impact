@@ -596,12 +596,17 @@ def get_institution_info(
         pd.DataFrame: DataFrame containing institution data.
 
     """
-    # keep last author from data authorships
-    publications["last_author_institution"] = publications["authorships"].apply(
-        lambda x: x[-1][1] if x is not None and len(x) > 0 else None
+    # keep first author from data authorships, and year
+    publications["publication_date_dt"] = pd.to_datetime(
+        publications["publication_date"]
+    )
+    publications["year"] = publications["publication_date_dt"].dt.year
+    publications.drop(columns=["publication_date_dt"], inplace=True)
+    publications["institution"] = publications["authorships"].apply(
+        lambda x: x[0][1] if x is not None and len(x) > 0 else None
     )
 
-    institutions = publications["last_author_institution"].unique().tolist()
+    institutions = publications["institution"].unique().tolist()
 
     logger.info("Fetching publications for %d authors", len(institutions))
 
@@ -621,17 +626,42 @@ def get_institution_info(
     # convert the list of dictionaries to a DataFrame
     data = pd.DataFrame(institution_data_list)
 
+    # explode counts by year
+    data = data.explode("counts_by_year")
+
+    # split it into the three columns "year, "work_count", "cited_by_count"
+    # Convert counts_by_year to DataFrame and rename columns
+    data["year"] = (
+        data["counts_by_year"]
+        .apply(lambda x: x.get("year", np.nan) if x is not None else np.nan)
+        .astype("Int64")
+    )
+    data["institution_work_count"] = (
+        data["counts_by_year"]
+        .apply(lambda x: x.get("works_count", np.nan) if x is not None else np.nan)
+        .astype("Int64")
+    )
+    data["institution_cited_by_count"] = (
+        data["counts_by_year"]
+        .apply(lambda x: x.get("cited_by_count", np.nan) if x is not None else np.nan)
+        .astype("Int64")
+    )
+
+    # drop counts_by_year
+    data.drop(columns=["counts_by_year"], inplace=True)
+
+    # drop institution, year duplicates
+    data.drop_duplicates(subset=["institution", "year"], inplace=True)
+
     # merge back on author_ids
     publications = publications.merge(
         data,
-        left_on="last_author_institution",
-        right_on="institution",
+        on=["institution", "year"],
         how="left",
         suffixes=("", "_institution"),
     )
 
     return publications
-
 
 
 def define_high_pdb_authors(
@@ -671,12 +701,12 @@ def define_high_pdb_authors(
     authors_list = authors["author"].unique()
 
     submissions = author_pdb_submissions.copy()
-    submissions_pre2021 = submissions[
-        submissions["publication_date"] < "2021-01-01"
-    ]
-    
+    submissions_pre2021 = submissions[submissions["publication_date"] < "2021-01-01"]
+
     # keep only authors in the data
-    submissions_pre2021 = submissions_pre2021[submissions_pre2021["author"].isin(authors_list)]
+    submissions_pre2021 = submissions_pre2021[
+        submissions_pre2021["author"].isin(authors_list)
+    ]
 
     # make sure each author is only counted once per id
     submissions_pre2021 = submissions_pre2021.drop_duplicates(subset=["id", "author"])
@@ -692,18 +722,29 @@ def define_high_pdb_authors(
     )
 
     # map author num_pdb ids
-    authors["num_pdb_ids_pre2021"] = authors["author"].map(
-        submissions_pre2021.set_index("author")["num_pdb_ids"]
-    ).fillna(0).astype(int)
-    authors["q4_pdb_pre2021"] = authors["author"].map(
-        submissions_pre2021.set_index("author")["q4_pdb_pre2021"]
-    ).fillna(False)
+    authors["num_pdb_ids_pre2021"] = (
+        authors["author"]
+        .map(submissions_pre2021.set_index("author")["num_pdb_ids"])
+        .fillna(0)
+        .astype(int)
+    )
+    authors["q4_pdb_pre2021"] = (
+        authors["author"]
+        .map(submissions_pre2021.set_index("author")["q4_pdb_pre2021"])
+        .fillna(False)
+    )
 
     # group by paper
-    authors_grouped_in_paper = authors.groupby("id").agg(
-        num_pdb_ids_pre2021=pd.NamedAgg(column="num_pdb_ids_pre2021", aggfunc="sum"),
-        q4_pdb_pre2021_any=pd.NamedAgg(column="q4_pdb_pre2021", aggfunc="any")
-    ).reset_index()
+    authors_grouped_in_paper = (
+        authors.groupby("id")
+        .agg(
+            num_pdb_ids_pre2021=pd.NamedAgg(
+                column="num_pdb_ids_pre2021", aggfunc="sum"
+            ),
+            q4_pdb_pre2021_any=pd.NamedAgg(column="q4_pdb_pre2021", aggfunc="any"),
+        )
+        .reset_index()
+    )
 
     # merge back with data
     data = data.merge(
