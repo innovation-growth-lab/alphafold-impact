@@ -229,6 +229,16 @@ for (dep_var in dep_vars) { # nolint
               local_data, fes[["fe1"]], dep_var
             )
 
+            model <- fenegbin(
+              form_list[[form]],
+              data = local_data,
+              cluster = c("author", "quarter"),
+              fixef.iter = 100,
+              nthreads = 1,
+              lean = FALSE,
+              mem.clean = TRUE
+            )
+
             # Check if model converged by looking at convergence code
             if (!is.numeric(model$se[1])) {
               message("Model did not converge, using fallback model")
