@@ -1,0 +1,82 @@
+\begingroup
+\centering
+\begin{tabular}{lccc}
+   \tabularnewline \midrule \midrule
+   Dependent Variable: & \multicolumn{3}{c}{num\_pdb\_ids}\\
+ & \multicolumn{1}{c}{All} & \multicolumn{2}{c}{With Intent Data} \\
+\cmidrule(lr){2-2} \cmidrule(lr){3-4}
+ & \multicolumn{3}{c}{\textit{All Fields}} \\ \\
+   AlphaFold               & 0.717$^{***}$ & 0.172       &   \\   
+                           & (0.246)       & (0.626)     &   \\   
+   AI Frontier             & 1.82$^{***}$  & -1.63$^{*}$ &   \\   
+                           & (0.438)       & (0.855)     &   \\   
+   No AI Frontier          & 0.404         & 0.374       &   \\   
+                           & (0.261)       & (0.718)     &   \\   
+   AlphaFold - Bkg.        &               &             & -0.973\\   
+                           &               &             & (0.716)\\   
+   AlphaFold - Method      &               &             & 0.992\\   
+                           &               &             & (0.989)\\   
+   AI Frontier - Bkg.      &               &             & -2.59$^{*}$\\   
+                           &               &             & (1.41)\\   
+   AI Frontier - Method    &               &             & -4.10\\   
+                           &               &             & (2.89)\\   
+   No AI Frontier - Bkg.   &               &             & 1.89\\   
+                           &               &             & (1.48)\\   
+   No AI Frontier - Method &               &             & 1.45\\   
+                           &               &             & (1.24)\\   
+   \midrule
+   \emph{Fit statistics}\\
+   Convergence             &TRUE           & FALSE       & TRUE\\  
+   Observations            & 1,789         & 388         & 388\\  
+Mean(Dep. Var.) & 1.219 & 1.095 & 1.095 \\
+   
+ & \multicolumn{3}{c}{\textit{Molecular Biology}} \\ \\
+   AlphaFold               & 1.68$^{***}$ & 1.12   &   \\   
+                           & (0.549)      & (1.62) &   \\   
+   AI Frontier             & 2.52$^{***}$ & 1.32   &   \\   
+                           & (0.880)      & (1.16) &   \\   
+   No AI Frontier          & -0.010       & 1.49   &   \\   
+                           & (0.672)      & (1.22) &   \\   
+   AlphaFold - Bkg.        &              &        & -3.32\\   
+                           &              &        & (4.90)\\   
+   AlphaFold - Method      &              &        & 1.25\\   
+                           &              &        & (3.50)\\   
+   AI Frontier - Bkg.      &              &        & -0.294\\   
+                           &              &        & (2.98)\\   
+   AI Frontier - Method    &              &        & 9.77\\   
+                           &              &        & (9.00)\\   
+   No AI Frontier - Bkg.   &              &        & 83.5\\   
+                           &              &        & (1,191.4)\\   
+   No AI Frontier - Method &              &        & 14.6\\   
+                           &              &        & (112.5)\\   
+   \midrule
+   \emph{Fit statistics}\\
+   Convergence             &TRUE          & FALSE  & FALSE\\  
+   Observations            & 782          & 190    & 190\\  
+   
+Mean(Dep. Var.) & 1.629 & 1.421 & 1.421 \\
+ & \multicolumn{3}{c}{\textit{Medicine}} \\ \\
+   AlphaFold               & -2.82$^{**}$ & -75.4$^{***}$ &   \\   
+                           & (1.25)       & (5.54)        &   \\   
+   AI Frontier             & -0.309       &               &   \\   
+                           & (1.61)       &               &   \\   
+   No AI Frontier          & -2.76$^{**}$ & -89.9$^{***}$ &   \\   
+                           & (1.40)       & (10.3)        &   \\   
+   AlphaFold - Bkg.        &              &               & -1,180.6\\   
+                           &              &               & (1,448.1)\\   
+   AlphaFold - Method      &              &               & 63.4\\   
+                           &              &               & (107.9)\\   
+   No AI Frontier - Bkg.   &              &               & 755.6\\   
+                           &              &               & (677.7)\\   
+   No AI Frontier - Method &              &               & 182.2\\   
+                           &              &               & (183.5)\\   
+   \midrule
+   \emph{Fit statistics}\\
+   Convergence             &FALSE         & FALSE         & FALSE\\  
+   Observations            & 256          & 40            & 40\\  
+Mean(Dep. Var.) & 1.336 & 2.100 & 2.100 \\
+   \midrule \midrule
+   \multicolumn{4}{l}{\emph{Clustered (author \& quarter) standard-errors in parentheses}}\\
+   \multicolumn{4}{l}{\emph{Signif. Codes: ***: 0.01, **: 0.05, *: 0.1}}\\
+\end{tabular}
+\par\endgroup

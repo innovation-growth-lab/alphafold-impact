@@ -1,0 +1,78 @@
+\begingroup
+\centering
+\begin{tabular}{lccc}
+   \tabularnewline \midrule \midrule
+   Dependent Variable: & \multicolumn{3}{c}{patent\_citation}\\
+ & \multicolumn{1}{c}{All} & \multicolumn{2}{c}{With Intent Data} \\
+\cmidrule(lr){2-2} \cmidrule(lr){3-4}
+ & \multicolumn{3}{c}{\textit{All Fields}} \\ \\
+   AlphaFold               & -17.4$^{***}$ & -23.3       &   \\   
+                           & (1.17)        & (18.8)      &   \\   
+   AI Frontier             & 3.86$^{***}$  & 0.289       &   \\   
+                           & (0.915)       & (1.65)      &   \\   
+   No AI Frontier          & -0.448        & -4.17$^{*}$ &   \\   
+                           & (0.949)       & (2.50)      &   \\   
+   AlphaFold - Bkg.        &               &             & -26.7\\   
+                           &               &             & (113.8)\\   
+   AlphaFold - Method      &               &             & -12.2$^{**}$\\   
+                           &               &             & (5.54)\\   
+   AI Frontier - Bkg.      &               &             & -13.8\\   
+                           &               &             & (9.67)\\   
+   AI Frontier - Method    &               &             & 18.4\\   
+                           &               &             & (120.5)\\   
+   No AI Frontier - Bkg.   &               &             & -0.588\\   
+                           &               &             & (1.13)\\   
+   No AI Frontier - Method &               &             & -5.26$^{*}$\\   
+                           &               &             & (2.77)\\   
+   \midrule
+   \emph{Fit statistics}\\
+   Convergence             &FALSE          & FALSE       & FALSE\\  
+   Observations            & 2,126         & 347         & 347\\  
+Mean(Dep. Var.) & 1.661 & 2.916 & 2.916 \\
+   
+ & \multicolumn{3}{c}{\textit{Molecular Biology}} \\ \\
+   AlphaFold               & -20.5        & -43.0$^{***}$  &   \\   
+                           & (302.7)      & (0.022)        &   \\   
+   AI Frontier             & 9.10$^{***}$ & -35.8$^{***}$  &   \\   
+                           & (3.02)       & (0.018)        &   \\   
+   No AI Frontier          & 4.44         & -130.8$^{***}$ &   \\   
+                           & (2.97)       & (0.457)        &   \\   
+   AI Frontier - Bkg.      &              &                & 32.8$^{***}$\\   
+                           &              &                & (4.36)\\   
+   AI Frontier - Method    &              &                & -74.5$^{***}$\\   
+                           &              &                & (11.1)\\   
+   No AI Frontier - Bkg.   &              &                & -535.0$^{***}$\\   
+                           &              &                & (45.5)\\   
+   No AI Frontier - Method &              &                & -188.7$^{***}$\\   
+                           &              &                & (28.8)\\   
+   \midrule
+   \emph{Fit statistics}\\
+   Convergence             &FALSE         & FALSE          & FALSE\\  
+   Observations            & 295          & 54             & 54\\  
+   
+Mean(Dep. Var.) & 4.078 & 11.833 & 11.833 \\
+ & \multicolumn{3}{c}{\textit{Medicine}} \\ \\
+   AlphaFold               & -16.6$^{*}$   &               &   \\   
+                           & (9.54)        &               &   \\   
+   AI Frontier             & -19.6$^{***}$ & 663.2$^{***}$ &   \\   
+                           & (5.68)        & (13.5)        &   \\   
+   No AI Frontier          & -0.911        & -27.7$^{***}$ &   \\   
+                           & (0.688)       & (2.09)        &   \\   
+   AlphaFold - Method      &               &               & -61.6\\   
+                           &               &               & (41.3)\\   
+   AI Frontier - Bkg.      &               &               & -71.3$^{**}$\\   
+                           &               &               & (30.4)\\   
+   No AI Frontier - Bkg.   &               &               & -8.56\\   
+                           &               &               & (15.1)\\   
+   No AI Frontier - Method &               &               & 127.5$^{**}$\\   
+                           &               &               & (50.4)\\   
+   \midrule
+   \emph{Fit statistics}\\
+   Convergence             &FALSE          & FALSE         & FALSE\\  
+   Observations            & 600           & 99            & 99\\  
+Mean(Dep. Var.) & 2.412 & 2.929 & 2.929 \\
+   \midrule \midrule
+   \multicolumn{4}{l}{\emph{Clustered (author \& quarter) standard-errors in parentheses}}\\
+   \multicolumn{4}{l}{\emph{Signif. Codes: ***: 0.01, **: 0.05, *: 0.1}}\\
+\end{tabular}
+\par\endgroup
