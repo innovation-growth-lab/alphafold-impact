@@ -42,6 +42,9 @@ table_info <- list(
   "num_pdb_ids" = list(
     file_name = "num_pdb_ids.tex"
   ),
+  "num_pdb_submissions" = list(
+    file_name = "num_pdb_submissions.tex"
+  ),
   "num_publications" = list(
     file_name = "num_publications.tex"
   ),
@@ -85,45 +88,44 @@ table_info <- list(
 
 dict_vars <- c(
   "af" = "AlphaFold",
-  "ct_ai" = "Counterfactual AI",
-  "ct_noai" = "Counterfactual No AI",
-  "strong1" = "Strong",
-  "high_pdb1" = "High PDB",
-  "strong_af" = "AlphaFold - Method",
-  "strong_ct_ai" = "Counterfactual AI - Method",
-  "strong_ct_noai" = "Counterfactual No AI - Method"
+  "ct_ai" = "AI Frontier",
+  "ct_noai" = "No AI Frontier",
+  "af_strong0" = "AlphaFold - Bkg.",
+  "af_strong1" = "AlphaFold - Method",
+  "ct_ai_strong0" = "AI Frontier - Bkg.",
+  "ct_ai_strong1" = "AI Frontier - Method",
+  "ct_noai_strong0" = "No AI Frontier - Bkg.",
+  "ct_noai_strong1" = "No AI Frontier - Method"
 )
 
 # Function to generate tables
 generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe_list, treat_vars) { # nolint
 
-  depths <- c("depth_All Groups", "depth_Foundational", "depth_Applied")
+  scopes <- c("scope_All", "scope_Intent")
   fields <- c(
     "field_All Fields",
     "field_Molecular Biology",
     "field_Medicine"
   )
-  field_labels <- gsub("field_", "", fields)
-  subgroups <- c(
-    "subgroup_All PDB", "subgroup_High PDB",
-    "subgroup_All PDB - CEM", "subgroup_High PDB - CEM"
-  )
+  subgroups <- c("subgroup_All PDB", "subgroup_High PDB")
 
   for (dep_var in dep_vars) {
     file_name <- table_info[[dep_var]]$file_name
 
     # Iterate over subsets
-    for (depth in depths) {
+    latex_output <- list()
+    for (field in fields) {
+      field_label <- gsub("field_", "", field)
       result_names <- c()
-      for (field in fields) {
-        for (subgroup in subgroups) {
+      for (subgroup in subgroups) {
+        for (scope in scopes) {
           # Iterate over covariate sets, fixed effects, and treatment variables # nolint
           for (cov_set in cov_sets) {
             for (fe in fe_list) {
               for (treat_var in treat_vars) {
                 # Build the result name
                 result_name <- paste0(
-                  depth, "__", field, "__", subgroup, "__", # nolint
+                  scope, "__", field, "__", subgroup, "__", # nolint
                   dep_var, "__", cov_set, "__", fe, "__", gsub(" ", "_", treat_var) # nolint
                 )
                 # Check if result exists
@@ -136,36 +138,43 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
         }
       }
 
-      # Use etable to output the table for each depth-field combination
+      # Use etable to output the table for each scope-field combination
       if (length(result_names) > 0) {
         message(
           paste0(
-            "Generating table for depth: ", depth,
-            ", pdb group: ", subgroup,
-            " and ", dep_var
+            "Generating table for dep_var: ", dep_var
           )
         )
-        pathdir <- paste0(
-          tables,
-          depth, "/"
-        )
-        if (!dir.exists(pathdir)) {
-          dir.create(pathdir, recursive = TRUE)
-        }
 
         # Generate the etable output
         etable_output <- fixest::etable(
           results[result_names],
           drop = c(
-            "num_publications", "Constant",
-            "^covid_", "^field_", "^mesh_", "^institution_"
+            # Drop all interaction terms (both colon and underscore format)
+            ".*:.*",
+            ".*_ct_.*",
+            # Drop specific patterns we don't want
+            "^af_ct.*",
+            "^ct_ai_ct.*",
+            # Drop renamed interaction terms
+            ".*\\$\\\\times\\$.*", # matches the LaTeX formatted interactions
+            "AlphaFold.*AI Frontier.*",
+            "AlphaFold.*No AI Frontier.*",
+            "AI Frontier.*No AI Frontier.*",
+            # Drop any other controls
+            "num_publications",
+            "Constant",
+            "^covid_",
+            "^field_",
+            "^mesh_",
+            "^institution_"
           ),
           tex = TRUE,
           dict = dict_vars,
           digits = 3,
           digits.stats = 2,
           powerBelow = -20,
-          fitstat = c("n", "r2", "ar2", "pr2", "sq.cor")
+          fitstat = c("n", "r2")
         )
 
         # force mean y to appear
@@ -177,96 +186,143 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
           "Mean(Dep. Var.) & ", paste(sprintf("%.3f", mean_y_values), collapse = " & "), " \\\\" # nolint
         )
 
-        # Add tech_group headers and \cmidrule after row 5
-        field_headers <- paste0(
-          "\\multicolumn{2}{c}{", field_labels, "}"
-        )
-        field_headers <- paste0(
-          " & ", paste(field_headers, collapse = " & "), " \\\\"
-        )
-
-        field_cmidrules <- paste0(
-          "\\cmidrule(lr){",
-          seq(2, length(field_labels) * 2 + 1, by = 2), "-",
-          seq(3, length(field_labels) * 2 + 1, by = 2), "}"
-        )
-        field_cmidrules <- paste0(
-          paste(field_cmidrules, collapse = " ")
-        )
-
-        # matching headers
-        matching_headers <- paste0(
-          rep(
-            "\\multicolumn{2}{c}{CEM Authors}", # nolint
-            length(field_labels)
-          )
-        )
-
-        matching_headers <- paste0(
-          " & ", paste(matching_headers, collapse = " & "), " \\\\"
-        )
-
-        matching_cmidrules <- paste0(
-          "\\cmidrule(lr){",
-          seq(2, length(field_labels) * 2 + 1, by = 2), "-",
-          seq(3, length(field_labels) * 2 + 1, by = 2), "}"
-        )
-
-        matching_cmidrules <- paste0(
-          paste(matching_cmidrules, collapse = " ")
-        )
-
-        # subgroup headers
-        subgroup_headers <- paste0(
-          rep(
-            "\\multicolumn{1}{c}{All PDB} & \\multicolumn{1}{c}{High PDB}", # nolint
-            length(field_labels)
-          )
-        )
-
-        subgroup_headers <- paste0(
-          " & ", paste(subgroup_headers, collapse = " & "), " \\\\"
-        )
-
-        subgroup_cmidrules <- paste0(
-          "\\cmidrule(lr){",
-          seq(2, length(field_labels) * 2 + 1, by = 1), "-",
-          seq(2, length(field_labels) * 2 + 1, by = 1), "}"
-        )
-
-        subgroup_cmidrules <- paste0(
-          paste(subgroup_cmidrules, collapse = " ")
-        )
-
         etable_lines <- unlist(strsplit(etable_output, "\n"))
 
-        # Insert tech_group headers after row 5
-        etable_lines <- append(etable_lines, field_headers, after = 5)
-        etable_lines <- append(etable_lines, field_cmidrules, after = 6)
+        # Top Field: All Fields
+        if (field_label == "All Fields") {
+          pdb_headers <- c(
+            "\\multicolumn{3}{c}{All Authors} & \\multicolumn{3}{c}{Experienced Authors}" # nolint
+          )
+          pdb_headers <- paste0(
+            " & ", paste(pdb_headers, collapse = " & "), " \\\\"
+          )
+          pdb_cmidrules <- "\\cmidrule(lr){2-4} \\cmidrule(lr){5-7}"
 
-        # Insert matching headers after row 6
-        etable_lines <- append(etable_lines, matching_headers, after = 7)
-        etable_lines <- append(etable_lines, matching_cmidrules, after = 8)
+          # Second level: Intent headers
+          intent_headers <- paste0(
+            rep(
+              "\\multicolumn{1}{c}{All} & \\multicolumn{2}{c}{With Intent Data}", # nolint
+              2
+            )
+          )
+          intent_headers <- paste0(
+            " & ", paste(intent_headers, collapse = " & "), " \\\\"
+          )
+          intent_cmidrules <- paste0(
+            "\\cmidrule(lr){2-2} \\cmidrule(lr){3-4}",
+            " \\cmidrule(lr){5-5} \\cmidrule(lr){6-7}"
+          )
 
-        # Insert subgroup headers after row 6
-        etable_lines <- append(etable_lines, subgroup_headers, after = 9)
-        etable_lines <- append(etable_lines, subgroup_cmidrules, after = 10)
+          # add field label in italics and with midrules
+          field_label_line <- paste0(
+            "\\multicolumn{6}{c}{\\textit{", field_label, "}} \\\\"
+          )
+          field_label_line <- paste0(
+            " & ", paste(field_label_line, collapse = " & "), " \\\\"
+          )
 
-        # add mean y row in 6th last row
-        etable_lines <- append(
-          etable_lines, mean_y_row,
-          after = length(etable_lines) - 5
-        )
+          # Insert headers and cmidrules
+          etable_lines <- append(etable_lines, pdb_headers, after = 5)
+          etable_lines <- append(etable_lines, pdb_cmidrules, after = 6)
+          etable_lines <- append(etable_lines, intent_headers, after = 7)
+          etable_lines <- append(etable_lines, intent_cmidrules, after = 8)
+          etable_lines <- append(etable_lines, field_label_line, after = 9)
+          # drop old header lines
+          etable_lines <- etable_lines[-c(11, 12, 13)]
 
-        # Combine the lines back into a single string
-        etable_output <- paste(etable_lines, collapse = "\n")
 
-        # Write the table to a file
-        writeLines(
-          etable_output,
-          con = paste0(pathdir, file_name)
-        )
+          # add mean y row in 6th last row
+          etable_lines <- append(
+            etable_lines, mean_y_row,
+            after = length(etable_lines) - 5
+          )
+
+          chunks <- unlist(
+            strsplit(paste(etable_lines, collapse = "\n"), "\\\\midrule")
+          )
+          etable_lines <- unlist(
+            strsplit(paste(chunks[c(1, 2, 3, 5)], collapse = "\\midrule"), "\n")
+          )
+          latex_output <- c(latex_output, etable_lines)
+
+
+          # Second Field: Molecular Biology
+        } else if (field_label == "Molecular Biology") {
+          chunks <- unlist(
+            strsplit(paste(etable_lines, collapse = "\n"), "\\\\midrule")
+          )
+          etable_lines <- unlist(
+            strsplit(paste(chunks[c(4, 6)], collapse = "\\midrule"), "\n")
+          )
+
+          # add field label in italics and with midrules
+          field_label_line <- paste0(
+            "\\multicolumn{6}{c}{\\textit{", field_label, "}} \\\\"
+          )
+          field_label_line <- paste0(
+            " & ", paste(field_label_line, collapse = " & "), " \\\\"
+          )
+          # add as new header the field label
+          etable_lines <- append(etable_lines, field_label_line, after = 1)
+
+          # remove "Variables" row (3)
+          etable_lines <- etable_lines[-c(1, 3)]
+
+          # add mean y row in the last row
+          etable_lines <- append(
+            etable_lines, mean_y_row,
+            after = length(etable_lines)
+          )
+          latex_output <- c(latex_output, etable_lines)
+        } else if (field_label == "Medicine") {
+          chunks <- unlist(
+            strsplit(paste(etable_lines, collapse = "\n"), "\\\\midrule")
+          )
+          etable_lines <- unlist(
+            strsplit(paste(chunks[c(4, 6, 7, 8)], collapse = "\\midrule"), "\n")
+          )
+
+          # add field label in italics and with midrules
+          field_label_line <- paste0(
+            "\\multicolumn{6}{c}{\\textit{", field_label, "}} \\\\"
+          )
+          field_label_line <- paste0(
+            " & ", paste(field_label_line, collapse = " & "), " \\\\"
+          )
+          # add as new header the field label
+          etable_lines <- append(etable_lines, field_label_line, after = 1)
+
+          # remove "Variables" row (3)
+          etable_lines <- etable_lines[-c(1, 3)]
+
+          # add mean y row in the 6th last row
+          etable_lines <- append(
+            etable_lines, mean_y_row,
+            after = length(etable_lines) - 5
+          )
+
+          latex_output <- c(latex_output, etable_lines)
+        } else {
+          # raise error
+          stop(paste0("Field label not found: ", field_label))
+        }
       }
     }
+    # join the latex output into a single file
+    latex_output <- paste(latex_output, collapse = "\n")
+
+    pathdir <- paste0(
+      tables,
+      "/"
+    )
+    if (!dir.exists(pathdir)) {
+      dir.create(pathdir, recursive = TRUE)
+    }
+
+    # Write the table to a file
+    writeLines(
+      latex_output,
+      con = paste0(pathdir, file_name)
+    )
   }
 }
