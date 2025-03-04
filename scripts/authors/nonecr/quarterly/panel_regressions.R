@@ -46,8 +46,7 @@ field_cols <- grep("^field_", names(sub_samples[[1]]), value = TRUE)
 
 covs <- list()
 covs[["base0"]] <- c(
-  field_cols,
-  "institution_country_code"
+  field_cols
 )
 
 fes <- list()
@@ -56,22 +55,22 @@ fes[["fe1"]] <- c("author", "quarter")
 cov_sets <- c("base0")
 fe_list <- c("fe1")
 dep_vars <- c(
-  "mesh_C",
-  "num_publications",
-  "ln1p_cited_by_count",
-  "ln1p_fwci",
-  "ln1p_resolution",
-  "ln1p_R_free",
-  "patent_count",
-  "patent_citation",
-  "num_pdb_ids",
-  "num_pdb_submissions",
-  "ca_count",
-  "num_uniprot_structures",
+  # "mesh_C",
+  # "num_publications",
+  # "ln1p_cited_by_count",
+  # "ln1p_fwci",
+  # "ln1p_resolution",
+  # "ln1p_R_free",
+  # "patent_count",
+  # "patent_citation",
+  # "num_pdb_ids",
+  # "num_pdb_submissions",
+  # "ca_count",
+  # "num_uniprot_structures",
   "num_primary_submissions",
-  "num_diseases",
-  "organism_rarity_mean",
-  "mean_tmscore",
+  # "num_diseases",
+  # "organism_rarity_mean",
+  # "mean_tmscore",
   "num_uniprot_structures_w_disease",
   "num_primary_submissions_w_disease",
   "num_uniprot_structures_w_rare_organisms",
@@ -117,13 +116,6 @@ for (dep_var in dep_vars) { # nolint
   for (cov_set in cov_sets) {
     local_covs <- covs[[cov_set]]
     # if dep_var is num_publications, remove it from covs
-    if (dep_var == "num_publications") {
-      local_covs <- covs[[cov_set]][-which(covs[[cov_set]] == "num_publications")] # nolint
-    } else if (dep_var == "mesh_C") {
-      local_covs <- covs[[cov_set]][-which(covs[[cov_set]] == "mesh_C")] # nolint
-    } else {
-      local_covs <- covs[[cov_set]]
-    }
     # Iterate over fixed effects
     for (fe in fe_list) {
       # Iterate over treatment variables
@@ -210,20 +202,20 @@ for (dep_var in dep_vars) { # nolint
         "num_uniprot_structures_w_low_similarity",
         "num_primary_submissions_w_low_similarity"
       )) {
-        message("Running Negative Binomial regression")
+
+        message("Running Poisson regression")
         results[[regression_label]] <- tryCatch(
           {
-
             # Apply the collinearity fix function before running the regression
             local_data <- fix_perfect_collinearity(
               local_data, fes[["fe1"]], dep_var
             )
 
-            model <- fenegbin(
+            model <- fepois(
               form_list[[form]],
               data = local_data,
-              cluster = c("author", "quarter_year"),
-              fixef.iter = 100,
+              cluster = c("author", "quarter"),
+              fixef.iter = 250,
               nthreads = 1,
               lean = FALSE,
               mem.clean = TRUE
@@ -231,9 +223,9 @@ for (dep_var in dep_vars) { # nolint
 
 
             # Check if model converged by looking at convergence code
-            if (!is.numeric(model$se[1])) {
+            if (!model$convStatus) {
               message("Model did not converge, using fallback model")
-              feols(as.formula(paste(dep_var, "~ 1")), data = local_data)
+              model
             } else {
               model
             }
@@ -252,7 +244,7 @@ for (dep_var in dep_vars) { # nolint
         results[[regression_label]] <- tryCatch(
           {
             feols(
-              form_list[[form]],
+              as.formula(form_list[[form]]),
               data = local_data,
               cluster = c("author", "quarter"),
               lean = FALSE,

@@ -47,8 +47,7 @@ field_cols <- grep("^field_", names(sub_samples[[1]]), value = TRUE)
 
 covs <- list()
 covs[["base0"]] <- c(
-  field_cols,
-  "institution_country_code"
+  field_cols
 )
 
 fes <- list()
@@ -212,7 +211,7 @@ for (dep_var in dep_vars) { # nolint
         "num_uniprot_structures_w_low_similarity",
         "num_primary_submissions_w_low_similarity"
       )) {
-        message("Running Negative Binomial regression")
+        message("Running Poisson regression")
         results[[regression_label]] <- tryCatch(
           {
 
@@ -221,18 +220,18 @@ for (dep_var in dep_vars) { # nolint
               local_data, fes[["fe1"]], dep_var
             )
 
-            model <- fenegbin(
+            model <- fepois(
               form_list[[form]],
               data = local_data,
               cluster = c("author", "quarter_year"),
-              fixef.iter = 100,
+              fixef.iter = 250,
               nthreads = 1,
               lean = FALSE,
               mem.clean = TRUE
             )
 
             # Check if model converged by looking at convergence code
-            if (!is.numeric(model$se[1])) {
+            if (!model$convStatus) {
               message("Model did not converge, using fallback model")
               feols(as.formula(paste(dep_var, "~ 1")), data = local_data)
             } else {

@@ -342,7 +342,7 @@ quarterly_cem <- nonecr_data %>%
   mutate(af = max(af)) %>%
   ungroup() %>%
   filter(complete.cases(across(coarse_cols))) %>%
-  filter(quarter %in% 192:204) %>% # (2018-2021)
+  filter(quarter %in% 192:200) %>% # (2018-2022)
   select(af, author, all_of(coarse_cols), all_of(exact_cols)) %>%
   group_by(author) %>%
   summarise(

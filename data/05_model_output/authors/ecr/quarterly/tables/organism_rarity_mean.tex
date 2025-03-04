@@ -1,0 +1,76 @@
+\begingroup
+\centering
+\begin{tabular}{lccc}
+   \tabularnewline \midrule \midrule
+   Dependent Variable: & \multicolumn{3}{c}{organism\_rarity\_mean}\\
+ & \multicolumn{1}{c}{All} & \multicolumn{2}{c}{With Intent Data} \\
+\cmidrule(lr){2-2} \cmidrule(lr){3-4}
+ & \multicolumn{3}{c}{\textit{All Fields}} \\ \\
+   AlphaFold               & -0.026  & -0.195$^{**}$ &   \\   
+                           & (0.041) & (0.093)       &   \\   
+   AI Frontier             & 0.047   & 0.134         &   \\   
+                           & (0.104) & (0.104)       &   \\   
+   No AI Frontier          & -0.022  & -0.044        &   \\   
+                           & (0.057) & (0.063)       &   \\   
+   AlphaFold - Bkg.        &         &               & -0.052\\   
+                           &         &               & (0.256)\\   
+   AlphaFold - Method      &         &               & 0.051\\   
+                           &         &               & (0.212)\\   
+   AI Frontier - Bkg.      &         &               & -0.192\\   
+                           &         &               & (0.267)\\   
+   AI Frontier - Method    &         &               & -0.277\\   
+                           &         &               & (0.201)\\   
+   No AI Frontier - Bkg.   &         &               & -0.098\\   
+                           &         &               & (0.126)\\   
+   No AI Frontier - Method &         &               & -9.11$^{**}$\\   
+                           &         &               & (3.86)\\   
+   \midrule
+   \emph{Fit statistics}\\
+   Observations            & 1,081   & 223           & 223\\  
+   Pseudo R$^2$            & 228.5   & -3,169.3      & -3,388.5\\  
+   R$^2$                   & 0.93    & 0.96          & 0.97\\  
+Mean(Dep. Var.) & 0.116 & 0.110 & 0.110 \\
+   
+ & \multicolumn{3}{c}{\textit{Molecular Biology}} \\ \\
+   AlphaFold               & -0.033  & 0.022$^{***}$  &   \\   
+                           & (0.036) & (0.000003)     &   \\   
+   AI Frontier             & 0.061   & 0.024$^{***}$  &   \\   
+                           & (0.042) & (0.000004)     &   \\   
+   No AI Frontier          & 0.057   & -0.584$^{***}$ &   \\   
+                           & (0.105) & (0.008)        &   \\   
+   AlphaFold - Bkg.        &         &                & -5.41$^{***}$\\   
+                           &         &                & (0.426)\\   
+   AlphaFold - Method      &         &                & -5.08$^{***}$\\   
+                           &         &                & (0.426)\\   
+   AI Frontier - Bkg.      &         &                & -5.60$^{***}$\\   
+                           &         &                & (0.426)\\   
+   AI Frontier - Method    &         &                & 0.268$^{***}$\\   
+                           &         &                & (0.000007)\\   
+   No AI Frontier - Bkg.   &         &                & 0.175$^{***}$\\   
+                           &         &                & (0.00002)\\   
+   No AI Frontier - Method &         &                & 2.47$^{***}$\\   
+                           &         &                & (0.222)\\   
+   \midrule
+   \emph{Fit statistics}\\
+   Observations            & 587     & 127            & 127\\  
+   Pseudo R$^2$            & -43.1   & -55.8          & -52.2\\  
+   R$^2$                   & 0.98    & 1.0            & 1.0\\  
+   
+Mean(Dep. Var.) & 0.102 & 0.072 & 0.072 \\
+ & \multicolumn{3}{c}{\textit{Medicine}} \\ \\
+   AlphaFold      & 0.050$^{***}$  &     &   \\   
+                  & (0.008)        &     &   \\   
+   AI Frontier    & -0.335$^{***}$ &     &   \\   
+                  & (0.030)        &     &   \\   
+   No AI Frontier & -0.234$^{***}$ &     &   \\   
+                  & (0.028)        &     &   \\   
+   \midrule
+   \emph{Fit statistics}\\
+   Observations   & 222            & 54  & 54\\  
+   Pseudo R$^2$   & -94.3          &     & \\  
+Mean(Dep. Var.) & 0.106 & 0.127 & 0.127 \\
+   R$^2$          & 1.0            &     & \\  
+   \midrule \midrule
+   \multicolumn{4}{l}{\emph{Signif. Codes: ***: 0.01, **: 0.05, *: 0.1}}\\
+\end{tabular}
+\par\endgroup
