@@ -61,7 +61,8 @@ colnames(papers) <- gsub(",", "", colnames(papers))
 
 # Drop if level is -1
 papers <- papers %>%
-  filter(level != -1)
+  filter(level != -1) %>%
+  select(-author) 
 
 # creating quantiles for institution controls and translational
 papers <- papers %>%
