@@ -8,79 +8,156 @@
  & \multicolumn{1}{c}{All} & \multicolumn{2}{c}{With Intent Data} & \multicolumn{1}{c}{All} & \multicolumn{2}{c}{With Intent Data} \\
 \cmidrule(lr){2-2} \cmidrule(lr){3-4} \cmidrule(lr){5-5} \cmidrule(lr){6-7}
  & \multicolumn{6}{c}{\textit{All Fields}} \\ \\
-   AlphaFold               & -0.160  & 0.449   &             & -0.116  & 0.446   &   \\   
-                           & (0.176) & (0.326) &             & (0.186) & (0.349) &   \\   
-   AI Frontier             & 0.048   & 1.13    &             & 0.050   & 1.08    &   \\   
-                           & (0.243) & (0.854) &             & (0.250) & (0.979) &   \\   
-   No AI Frontier          & 0.194   & -0.054  &             & 0.254   & -0.102  &   \\   
-                           & (0.228) & (0.382) &             & (0.240) & (0.415) &   \\   
-   AlphaFold - Bkg.        &         &         & 0.439       &         &         & 0.448\\   
-                           &         &         & (0.280)     &         &         & (0.316)\\   
-   AlphaFold - Method      &         &         & 0.458       &         &         & 0.476\\   
-                           &         &         & (0.372)     &         &         & (0.388)\\   
-   AI Frontier - Bkg.      &         &         & -2.00       &         &         & -2.03\\   
-                           &         &         & (1.58)      &         &         & (1.55)\\   
-   AI Frontier - Method    &         &         & 1.72$^{**}$ &         &         & 1.90$^{**}$\\   
-                           &         &         & (0.762)     &         &         & (0.927)\\   
-   No AI Frontier - Bkg.   &         &         & 0.030       &         &         & 0.056\\   
-                           &         &         & (0.410)     &         &         & (0.419)\\   
-   No AI Frontier - Method &         &         & -0.053      &         &         & -0.119\\   
-                           &         &         & (0.456)     &         &         & (0.478)\\   
+   AlphaFold                                                                  & 0.775                  & -2.17  &        & 0.740                  & -1.14 &   \\   
+                                                                              & (NA)                   & (NA)   &        & (NA)                   & (NA)  &   \\   
+   AI Frontier                                                                & 1.34                   & -0.854 &        & 0.763                  & -1.49 &   \\   
+                                                                              & (NA)                   & (NA)   &        & (NA)                   & (NA)  &   \\   
+   No AI Frontier                                                             & -0.427                 & -3.01  &        & -0.370                 & -2.52 &   \\   
+                                                                              & (NA)                   & (NA)   &        & (NA)                   & (NA)  &   \\   
+   AlphaFold $\times$ AI Frontier                                             & $NaN\times 10^{-Inf}$  & -0.323 &        & $NaN\times 10^{-Inf}$  & 2.11  &   \\   
+                                                                              & (NA)                   & (NA)   &        & (NA)                   & (NA)  &   \\   
+   AlphaFold $\times$ No AI Frontier                                          & $NaN\times 10^{-Inf}$  & -0.260 &        & $NaN\times 10^{-Inf}$  & 1.70  &   \\   
+                                                                              & (NA)                   & (NA)   &        & (NA)                   & (NA)  &   \\   
+   AI Frontier $\times$ No AI Frontier                                        & $NaN\times 10^{-Inf}$  & -0.324 &        & $NaN\times 10^{-Inf}$  & 2.11  &   \\   
+                                                                              & (NA)                   & (NA)   &        & (NA)                   & (NA)  &   \\   
+   AlphaFold $\times$ AI Frontier $\times$ No AI Frontier                     & $NaN\times 10^{-Inf}$  & -0.210 &        & $NaN\times 10^{-Inf}$  & 1.37  &   \\   
+                                                                              & (NA)                   & (NA)   &        & (NA)                   & (NA)  &   \\   
+   AlphaFold - Bkg.                                                           &                        &        & -0.938 &                        &       & -0.071\\   
+                                                                              &                        &        & (NA)   &                        &       & (NA)\\   
+   AlphaFold - Method                                                         &                        &        & -3.28  &                        &       & -1.49\\   
+                                                                              &                        &        & (NA)   &                        &       & (NA)\\   
+   AI Frontier - Bkg.                                                         &                        &        & -59.1  &                        &       & -64.2\\   
+                                                                              &                        &        & (NA)   &                        &       & (NA)\\   
+   AI Frontier - Method                                                       &                        &        & -1.13  &                        &       & 0.143\\   
+                                                                              &                        &        & (NA)   &                        &       & (NA)\\   
+   No AI Frontier - Bkg.                                                      &                        &        & -20.3  &                        &       & -24.6\\   
+                                                                              &                        &        & (NA)   &                        &       & (NA)\\   
+   No AI Frontier - Method                                                    &                        &        & -3.43  &                        &       & -2.00\\   
+                                                                              &                        &        & (NA)   &                        &       & (NA)\\   
+   AlphaFold $\times$ AI Frontier $\times$ strong0                            &                        &        & -0.241 &                        &       & -0.575\\   
+                                                                              &                        &        & (NA)   &                        &       & (NA)\\   
+   AlphaFold $\times$ AI Frontier $\times$ strong1                            &                        &        & -0.200 &                        &       & -0.479\\   
+                                                                              &                        &        & (NA)   &                        &       & (NA)\\   
+   AlphaFold $\times$ strong0 $\times$ No AI Frontier                         &                        &        & -0.148 &                        &       & -0.354\\   
+                                                                              &                        &        & (NA)   &                        &       & (NA)\\   
+   AlphaFold $\times$ strong1 $\times$ No AI Frontier                         &                        &        & -0.248 &                        &       & -0.593\\   
+                                                                              &                        &        & (NA)   &                        &       & (NA)\\   
+   AI Frontier $\times$ strong0 $\times$ No AI Frontier                       &                        &        & -0.232 &                        &       & -0.554\\   
+                                                                              &                        &        & (NA)   &                        &       & (NA)\\   
+   AI Frontier $\times$ strong1 $\times$ No AI Frontier                       &                        &        & -0.187 &                        &       & -0.446\\   
+                                                                              &                        &        & (NA)   &                        &       & (NA)\\   
+   AlphaFold $\times$ AI Frontier $\times$ strong0 $\times$ No AI Frontier    &                        &        & -0.232 &                        &       & -0.556\\   
+                                                                              &                        &        & (NA)   &                        &       & (NA)\\   
+   AlphaFold $\times$ AI Frontier $\times$ strong1 $\times$ No AI Frontier    &                        &        & -0.151 &                        &       & -0.360\\   
+                                                                              &                        &        & (NA)   &                        &       & (NA)\\   
    \midrule
    \emph{Fit statistics}\\
-   Observations            & 2,943   & 806     & 806         & 2,787   & 761     & 761\\  
-Mean(Dep. Var.) & 6.350 & 8.149 & 8.149 & 6.449 & 8.356 & 8.356 \\
+   Convergence                                                                &FALSE                   & FALSE  & FALSE  & FALSE                  & FALSE & FALSE\\  
+   Observations                                                               & 439                    & 230    & 230    & 537                    & 261   & 261\\  
+   Pseudo R$^2$                                                               & 0.29                   & 0.37   & 0.41   & 0.33                   & 0.38  & 0.40\\  
+Mean(Dep. Var.) & 7.733 & 7.839 & 7.839 & 7.410 & 7.598 & 7.598 \\
    
  & \multicolumn{6}{c}{\textit{Molecular Biology}} \\ \\
-   AlphaFold               & -0.031  & 1.46$^{***}$ &              & 0.037   & 1.44$^{***}$ &   \\   
-                           & (0.205) & (0.445)      &              & (0.208) & (0.456)      &   \\   
-   AI Frontier             & 0.126   & 1.50         &              & 0.180   & 1.48         &   \\   
-                           & (0.429) & (1.11)       &              & (0.436) & (1.13)       &   \\   
-   No AI Frontier          & 0.195   & 0.615        &              & 0.370   & 0.586        &   \\   
-                           & (0.285) & (0.777)      &              & (0.297) & (0.816)      &   \\   
-   AlphaFold - Bkg.        &         &              & 1.67$^{***}$ &         &              & 1.63$^{***}$\\   
-                           &         &              & (0.406)      &         &              & (0.429)\\   
-   AlphaFold - Method      &         &              & 1.48$^{***}$ &         &              & 1.47$^{***}$\\   
-                           &         &              & (0.511)      &         &              & (0.502)\\   
-   AI Frontier - Bkg.      &         &              & -1.63        &         &              & -1.73\\   
-                           &         &              & (2.44)       &         &              & (2.47)\\   
-   AI Frontier - Method    &         &              & 2.55$^{***}$ &         &              & 2.58$^{***}$\\   
-                           &         &              & (0.635)      &         &              & (0.657)\\   
-   No AI Frontier - Bkg.   &         &              & 0.727        &         &              & 0.715\\   
-                           &         &              & (0.976)      &         &              & (0.998)\\   
-   No AI Frontier - Method &         &              & 0.270        &         &              & 0.232\\   
-                           &         &              & (0.742)      &         &              & (0.785)\\   
+   AlphaFold                                                                  & 0.622                  & 15.9  &                        & 0.932                  & 3.40                   &   \\   
+                                                                              & (NA)                   & (NA)  &                        & (NA)                   & (NA)                   &   \\   
+   AI Frontier                                                                & 0.950                  & -4.94 &                        & -0.331                 & 0.475                  &   \\   
+                                                                              & (NA)                   & (NA)  &                        & (NA)                   & (NA)                   &   \\   
+   No AI Frontier                                                             & 0.092                  & 14.9  &                        & 0.163                  & 2.69                   &   \\   
+                                                                              & (NA)                   & (NA)  &                        & (NA)                   & (NA)                   &   \\   
+   AlphaFold $\times$ AI Frontier                                             & $NaN\times 10^{-Inf}$  & 0.018 &                        & $NaN\times 10^{-Inf}$  & $NaN\times 10^{-Inf}$  &   \\   
+                                                                              & (NA)                   & (NA)  &                        & (NA)                   & (NA)                   &   \\   
+   AlphaFold $\times$ No AI Frontier                                          & $NaN\times 10^{-Inf}$  & 0.014 &                        & $NaN\times 10^{-Inf}$  & $NaN\times 10^{-Inf}$  &   \\   
+                                                                              & (NA)                   & (NA)  &                        & (NA)                   & (NA)                   &   \\   
+   AI Frontier $\times$ No AI Frontier                                        & $NaN\times 10^{-Inf}$  & 0.018 &                        & $NaN\times 10^{-Inf}$  & $NaN\times 10^{-Inf}$  &   \\   
+                                                                              & (NA)                   & (NA)  &                        & (NA)                   & (NA)                   &   \\   
+   AlphaFold $\times$ AI Frontier $\times$ No AI Frontier                     & $NaN\times 10^{-Inf}$  & 0.011 &                        & $NaN\times 10^{-Inf}$  & $NaN\times 10^{-Inf}$  &   \\   
+                                                                              & (NA)                   & (NA)  &                        & (NA)                   & (NA)                   &   \\   
+   AlphaFold - Bkg.                                                           &                        &       & 26.1                   &                        &                        & 28.3\\   
+                                                                              &                        &       & (NA)                   &                        &                        & (NA)\\   
+   AlphaFold - Method                                                         &                        &       & 13.5                   &                        &                        & 4.06\\   
+                                                                              &                        &       & (NA)                   &                        &                        & (NA)\\   
+   AI Frontier - Bkg.                                                         &                        &       & 6.24                   &                        &                        & 18.3\\   
+                                                                              &                        &       & (NA)                   &                        &                        & (NA)\\   
+   AI Frontier - Method                                                       &                        &       & 9.70                   &                        &                        & 13.0\\   
+                                                                              &                        &       & (NA)                   &                        &                        & (NA)\\   
+   No AI Frontier - Bkg.                                                      &                        &       & -5.29                  &                        &                        & -13.4\\   
+                                                                              &                        &       & (NA)                   &                        &                        & (NA)\\   
+   No AI Frontier - Method                                                    &                        &       & 12.5                   &                        &                        & 3.08\\   
+                                                                              &                        &       & (NA)                   &                        &                        & (NA)\\   
+   AlphaFold $\times$ AI Frontier $\times$ strong0                            &                        &       & $NaN\times 10^{-Inf}$  &                        &                        & $NaN\times 10^{-Inf}$\\    
+                                                                              &                        &       & (NA)                   &                        &                        & (NA)\\   
+   AlphaFold $\times$ AI Frontier $\times$ strong1                            &                        &       & $NaN\times 10^{-Inf}$  &                        &                        & $NaN\times 10^{-Inf}$\\    
+                                                                              &                        &       & (NA)                   &                        &                        & (NA)\\   
+   AlphaFold $\times$ strong0 $\times$ No AI Frontier                         &                        &       & $NaN\times 10^{-Inf}$  &                        &                        & $NaN\times 10^{-Inf}$\\    
+                                                                              &                        &       & (NA)                   &                        &                        & (NA)\\   
+   AlphaFold $\times$ strong1 $\times$ No AI Frontier                         &                        &       & $NaN\times 10^{-Inf}$  &                        &                        & $NaN\times 10^{-Inf}$\\    
+                                                                              &                        &       & (NA)                   &                        &                        & (NA)\\   
+   AI Frontier $\times$ strong0 $\times$ No AI Frontier                       &                        &       & $NaN\times 10^{-Inf}$  &                        &                        & $NaN\times 10^{-Inf}$\\    
+                                                                              &                        &       & (NA)                   &                        &                        & (NA)\\   
+   AI Frontier $\times$ strong1 $\times$ No AI Frontier                       &                        &       & $NaN\times 10^{-Inf}$  &                        &                        & $NaN\times 10^{-Inf}$\\    
+                                                                              &                        &       & (NA)                   &                        &                        & (NA)\\   
+   AlphaFold $\times$ AI Frontier $\times$ strong0 $\times$ No AI Frontier    &                        &       & $NaN\times 10^{-Inf}$  &                        &                        & $NaN\times 10^{-Inf}$\\    
+                                                                              &                        &       & (NA)                   &                        &                        & (NA)\\   
+   AlphaFold $\times$ AI Frontier $\times$ strong1 $\times$ No AI Frontier    &                        &       & $NaN\times 10^{-Inf}$  &                        &                        & $NaN\times 10^{-Inf}$\\    
+                                                                              &                        &       & (NA)                   &                        &                        & (NA)\\   
    \midrule
    \emph{Fit statistics}\\
-   Observations            & 1,637   & 464          & 464          & 1,550   & 444          & 444\\  
+   Convergence                                                                &FALSE                   & FALSE & FALSE                  & FALSE                  & FALSE                  & FALSE\\  
+   Observations                                                               & 372                    & 173   & 173                    & 419                    & 186                    & 186\\  
+   Pseudo R$^2$                                                               & 0.31                   & 0.44  & 0.44                   & 0.33                   & 0.41                   & 0.44\\  
    
-Mean(Dep. Var.) & 7.794 & 10.181 & 10.181 & 7.918 & 10.396 & 10.396 \\
+Mean(Dep. Var.) & 7.573 & 8.318 & 8.318 & 7.527 & 7.892 & 7.892 \\
  & \multicolumn{6}{c}{\textit{Medicine}} \\ \\
-   AlphaFold               & -0.471  & -17.9     &                & -0.363  & -17.1$^{***}$ &   \\   
-                           & (0.323) & (27.4)    &                & (0.307) & (0.921)       &   \\   
-   AI Frontier             & -0.298  & 35.6      &                & -0.306  & 31.5$^{***}$  &   \\   
-                           & (0.376) & (174.6)   &                & (0.391) & (0.141)       &   \\   
-   No AI Frontier          & -0.990  & 125.0     &                & -0.989  & 14.7$^{***}$  &   \\   
-                           & (0.694) & (1,674.5) &                & (0.739) & (3.31)        &   \\   
-   AlphaFold - Bkg.        &         &           & -3.49          &         &               & -0.656\\   
-                           &         &           & (2.26)         &         &               & (0.688)\\   
-   AlphaFold - Method      &         &           & -20.8$^{***}$  &         &               & -19.0$^{***}$\\   
-                           &         &           & (1.68)         &         &               & (0.524)\\   
-   AI Frontier - Method    &         &           & 135.9          &         &               & 34.3$^{***}$\\   
-                           &         &           & (107.8)        &         &               & (0.227)\\   
-   No AI Frontier - Bkg.   &         &           & 345.9          &         &               & 8.57\\   
-                           &         &           & (214.7)        &         &               & (10.1)\\   
-   No AI Frontier - Method &         &           & -821.7$^{***}$ &         &               & -42.5$^{***}$\\   
-                           &         &           & (262.2)        &         &               & (11.4)\\   
-   AI Frontier - Bkg.      &         &           &                &         &               & -279.8\\   
-                           &         &           &                &         &               & (797.9)\\   
+   AlphaFold                                                                  & -2.46                  & -15.8                  &                        & -5.90 & 0.356                  &   \\   
+                                                                              & (NA)                   & (NA)                   &                        & (NA)  & (NA)                   &   \\   
+   AI Frontier                                                                & -1.05                  & 12.7                   &                        & -5.80 & 0.414                  &   \\   
+                                                                              & (NA)                   & (NA)                   &                        & (NA)  & (NA)                   &   \\   
+   No AI Frontier                                                             & -0.259                 & 0.006                  &                        & 5.94  & 0.037                  &   \\   
+                                                                              & (NA)                   & (NA)                   &                        & (NA)  & (NA)                   &   \\   
+   AlphaFold $\times$ AI Frontier                                             & $NaN\times 10^{-Inf}$  & $NaN\times 10^{-Inf}$  &                        & 0.874 & $NaN\times 10^{-Inf}$  &   \\   
+                                                                              & (NA)                   & (NA)                   &                        & (NA)  & (NA)                   &   \\   
+   AlphaFold $\times$ No AI Frontier                                          & $NaN\times 10^{-Inf}$  & $NaN\times 10^{-Inf}$  &                        & 0.705 & $NaN\times 10^{-Inf}$  &   \\   
+                                                                              & (NA)                   & (NA)                   &                        & (NA)  & (NA)                   &   \\   
+   AI Frontier $\times$ No AI Frontier                                        & $NaN\times 10^{-Inf}$  & $NaN\times 10^{-Inf}$  &                        & 0.877 & $NaN\times 10^{-Inf}$  &   \\   
+                                                                              & (NA)                   & (NA)                   &                        & (NA)  & (NA)                   &   \\   
+   AlphaFold $\times$ AI Frontier $\times$ No AI Frontier                     & $NaN\times 10^{-Inf}$  & $NaN\times 10^{-Inf}$  &                        & 0.569 & $NaN\times 10^{-Inf}$  &   \\   
+                                                                              & (NA)                   & (NA)                   &                        & (NA)  & (NA)                   &   \\   
+   AlphaFold - Bkg.                                                           &                        &                        & -2.77                  &       &                        & -0.024\\   
+                                                                              &                        &                        & (NA)                   &       &                        & (NA)\\   
+   AlphaFold - Method                                                         &                        &                        & -6.96                  &       &                        & 0.387\\   
+                                                                              &                        &                        & (NA)                   &       &                        & (NA)\\   
+   AI Frontier - Bkg.                                                         &                        &                        & 0.000000001            &       &                        & 0.383\\   
+                                                                              &                        &                        & (NA)                   &       &                        & (NA)\\   
+   AI Frontier - Method                                                       &                        &                        & 7.01                   &       &                        & 0.028\\   
+                                                                              &                        &                        & (NA)                   &       &                        & (NA)\\   
+   No AI Frontier - Bkg.                                                      &                        &                        & 0.008                  &       &                        & 0.037\\   
+                                                                              &                        &                        & (NA)                   &       &                        & (NA)\\   
+   No AI Frontier - Method                                                    &                        &                        & 0.0000000010           &       &                        & 0.0000000000003\\   
+                                                                              &                        &                        & (NA)                   &       &                        & (NA)\\   
+   AlphaFold $\times$ AI Frontier $\times$ strong0                            &                        &                        & $NaN\times 10^{-Inf}$  &       &                        & $NaN\times 10^{-Inf}$\\    
+                                                                              &                        &                        & (NA)                   &       &                        & (NA)\\   
+   AlphaFold $\times$ AI Frontier $\times$ strong1                            &                        &                        & $NaN\times 10^{-Inf}$  &       &                        & $NaN\times 10^{-Inf}$\\    
+                                                                              &                        &                        & (NA)                   &       &                        & (NA)\\   
+   AlphaFold $\times$ strong0 $\times$ No AI Frontier                         &                        &                        & $NaN\times 10^{-Inf}$  &       &                        & $NaN\times 10^{-Inf}$\\    
+                                                                              &                        &                        & (NA)                   &       &                        & (NA)\\   
+   AlphaFold $\times$ strong1 $\times$ No AI Frontier                         &                        &                        & $NaN\times 10^{-Inf}$  &       &                        & $NaN\times 10^{-Inf}$\\    
+                                                                              &                        &                        & (NA)                   &       &                        & (NA)\\   
+   AI Frontier $\times$ strong0 $\times$ No AI Frontier                       &                        &                        & $NaN\times 10^{-Inf}$  &       &                        & $NaN\times 10^{-Inf}$\\    
+                                                                              &                        &                        & (NA)                   &       &                        & (NA)\\   
+   AI Frontier $\times$ strong1 $\times$ No AI Frontier                       &                        &                        & $NaN\times 10^{-Inf}$  &       &                        & $NaN\times 10^{-Inf}$\\    
+                                                                              &                        &                        & (NA)                   &       &                        & (NA)\\   
+   AlphaFold $\times$ AI Frontier $\times$ strong0 $\times$ No AI Frontier    &                        &                        & $NaN\times 10^{-Inf}$  &       &                        & $NaN\times 10^{-Inf}$\\    
+                                                                              &                        &                        & (NA)                   &       &                        & (NA)\\   
+   AlphaFold $\times$ AI Frontier $\times$ strong1 $\times$ No AI Frontier    &                        &                        & $NaN\times 10^{-Inf}$  &       &                        & $NaN\times 10^{-Inf}$\\    
+                                                                              &                        &                        & (NA)                   &       &                        & (NA)\\   
    \midrule
    \emph{Fit statistics}\\
-   Convergence             &TRUE     & FALSE     & FALSE          & TRUE    & FALSE         & FALSE\\  
-   Observations            & 565     & 173       & 173            & 539     & 160           & 160\\  
-Mean(Dep. Var.) & 6.467 & 6.740 & 6.740 & 6.523 & 6.894 & 6.894 \\
+   Convergence                                                                &FALSE                   & FALSE                  & FALSE                  & FALSE & FALSE                  & FALSE\\  
+   Observations                                                               & 177                    & 76                     & 76                     & 192   & 87                     & 87\\  
+   Pseudo R$^2$                                                               & 0.48                   & 0.46                   & 0.46                   & 0.48  & 0.43                   & 0.43\\  
+Mean(Dep. Var.) & 7.480 & 7.842 & 7.842 & 7.161 & 7.310 & 7.310 \\
    \midrule \midrule
-   \multicolumn{7}{l}{\emph{Clustered (author \& quarter\_year) standard-errors in parentheses}}\\
+   \multicolumn{7}{l}{\emph{NA (not-available) standard-errors in parentheses}}\\
    \multicolumn{7}{l}{\emph{Signif. Codes: ***: 0.01, **: 0.05, *: 0.1}}\\
 \end{tabular}
 \par\endgroup
