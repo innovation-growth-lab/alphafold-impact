@@ -105,7 +105,7 @@ papers <- papers %>%
       is.na(institution_cited_by_count), "unknown",
       institution_cited_by_count
     ),
-    pdb_submission = ifelse(pdb_submission > 0, 1, 0),
+    num_pdb_submissions = ifelse(pdb_submission > 0, 1, 0),
     ca_count = ifelse(is.na(ca_count), 0, ca_count),
     fwci = ifelse(is.na(fwci), 0, fwci),
     num_uniprot_structures = ifelse(
@@ -237,7 +237,7 @@ papers <- papers %>%
     "ca_count",
     "ln1p_resolution",
     "ln1p_R_free",
-    "pdb_submission",
+    "num_pdb_submissions",
     "af",
     "ct_ai",
     "ct_noai",

@@ -66,7 +66,7 @@ dep_vars <- c(
   "patent_count",
   "patent_citation",
   "num_pdb_ids",
-  "pdb_submission",
+  "num_pdb_submissions",
   "ca_count",
   "num_uniprot_structures",
   "num_primary_submissions",
@@ -181,25 +181,9 @@ for (dep_var in dep_vars) { # nolint
         next
       }
 
-      # run the regression as linear, but make an exception for pdb_submission
-      if (dep_var == "pdb_submission") {
-        message("Running logistic regression")
-        results[[regression_label]] <- tryCatch(
-          {
-            feglm(
-              form_list[[form]],
-              data = local_data,
-              cluster = c("author", "quarter_year"),
-              family = "logit"
-            )
-          },
-          error = function(e) {
-            message("Error in regression: ", regression_label, " - ", e$message)
-            return(feols(as.formula(paste(dep_var, "~ 1")), data = local_data))
-          }
-        )
-      } else if (dep_var %in% c(
-        "num_publications", "num_pdb_submissions", "num_pdb_ids",
+      # run the regression as linear, but make an exception for counts
+      if (dep_var %in% c(
+        "num_publications", "num_pdb_ids", "num_pdb_submissions",
         "ca_count", "patent_count", "patent_citation",
         "num_uniprot_structures",
         "num_primary_submissions",
