@@ -169,11 +169,11 @@ oa.chain_labels.id.primary: # skip to here because of S2 problems
 
 oa.chain_labels.id.ct.primary:
   <<: *_pq
-  filepath: s3://igl-alphafold/03_primary/oa/works/ct/chain_labels.parquet
+  filepath: s3://igl-alphafold/oct/03_primary/oa/works/ct/chain_labels.parquet
 
 oa.chain_labels.id.other.primary:
   <<: *_pq
-  filepath: s3://igl-alphafold/03_primary/oa/works/other/chain_labels.parquet
+  filepath: s3://igl-alphafold/oct/03_primary/oa/works/other/chain_labels.parquet
 
 # -------------------------------------------------------------
 
