@@ -2,7 +2,7 @@
 library(dplyr)
 library(ggplot2)
 library(showtext)
-library(scales)
+
 font_add_google("Mulish", "muli")
 showtext_auto()
 
@@ -25,7 +25,10 @@ combine_rds_files_with_source <- function(paths) {
     path <- paths[[source_origin]]
 
     # Get all RDS files in the directory
-    rds_files <- list.files(path, pattern = "\\.rds$", full.names = TRUE, recursive = TRUE)
+    rds_files <- list.files(
+      path,
+      pattern = "\\.rds$", full.names = TRUE, recursive = TRUE
+    )
 
     # Load each RDS file and store in a list
     for (file in rds_files) {
@@ -45,40 +48,24 @@ combine_rds_files_with_source <- function(paths) {
 # Run the function
 all_tables_combined <- combine_rds_files_with_source(base_paths)
 
-# if source_origin is papers, change subgroup_order "All PDB" to "All PDB - CEM"
-all_tables_combined <- all_tables_combined %>%
-  mutate( # nolint
-    subgroup = ifelse(
-      source_origin == "papers" & subgroup == "subgroup_All PDB",
-      "subgroup_All PDB - CEM",
-      subgroup
-    )
-  )
-
-# if source origin is papers, add _ind to treat_var
+# if source_origin is papers, change pdb_submission to num_pdb_submissions
 all_tables_combined <- all_tables_combined %>%
   mutate( # nolint
     treat_var = ifelse(
-      source_origin == "papers" & grepl("_ind", treat_var),
-      paste0(treat_var, "_ind"),
+      source_origin == "papers" & treat_var == "pdb_submission",
+      "num_pdb_submissions",
       treat_var
     )
   )
-
-# if source origin is papers, also relabel af:strong1 to strong_af, ct_ai:strong1 to strong_ct_ai, ct_noai:strong1 to strong_ct_noai
-all_tables_combined <- all_tables_combined %>%
-  mutate( # nolint
-    treat_var = recode(treat_var, "af:strong1" = "strong_af", "ct_ai:strong1" = "strong_ct_ai", "ct_noai:strong1" = "strong_ct_noai")
-  )
-
 
 # count values of each source origin
 all_tables_combined %>%
   count(source_origin) %>%
   print()
 
-# change treat_var num_pdb_submissions to num_pdb_ids
-
+# ------------------------- #
+# ------------------------- #
+# ------------------------- #
 # ------------------------- #
 # ------------------------- #
 # ------------------------- #
@@ -95,8 +82,6 @@ all_tables_combined %>%
 
 dep_var_labels <- c(
   "ln1p_cited_by_count" = "ln (1 + Cited by count)",
-  "ln1p_cit_0" = "ln (1 + Citations at month < 12)",
-  "ln1p_cit_1" = "ln (1 + Citations at month < 24)",
   "ln1p_fwci" = "ln (1 + Field-Weighted Citation Impact)",
   "logit_cit_norm_perc" = "logit (Citation percentile)",
   "patent_count" = "Patent citation count",
@@ -104,13 +89,13 @@ dep_var_labels <- c(
   "ca_count" = "Clinical article citation count",
   "ln1p_resolution" = "ln (1 + Resolution)",
   "ln1p_R_free" = "ln (1 + R-free)",
-  "num_pdb_ids" = "PDB submissions",
+  "num_pdb_ids" = "PDB ID submissions",
+  "num_pdb_submissions" = "PDB submissions",
   "num_publications" = "Publications",
   "num_uniprot_structures" = "Uniprot structures",
   "num_primary_submissions" = "Primary submissions",
   "num_diseases" = "Number of Diseases",
-  "organism_rarity_mean" = "Organism Rarity mean",
-  "organism_rarity_max" = "Organism Rarity (Max)",
+  "organism_rarity_mean" = "Organism rarity mean",
   "mean_tmscore" = "Mean TM-score",
   "num_uniprot_structures_w_disease" = "Uniprot structures with disease relevance", # nolint
   "num_primary_submissions_w_disease" = "Primary submissions with disease relevance", # nolint
@@ -120,80 +105,87 @@ dep_var_labels <- c(
   "num_primary_submissions_w_low_similarity" = "Primary submissions with low similarity" # nolint
 )
 
+# Updated coefficient labels with new naming
 coef_labels <- c(
-  "af_ind" = "AlphaFold",
-  "ct_ai_ind" = "AI Frontier",
-  "ct_noai_ind" = "No AI Frontier",
-  "strong_af_ind" = "AlphaFold - Method",
-  "strong_ct_ai_ind" = "AI Frontier - Method",
-  "strong_ct_noai_ind" = "No AI Frontier - Method",
+  # Core coefficients
   "af" = "AlphaFold",
   "ct_ai" = "AI Frontier",
   "ct_noai" = "No AI Frontier",
-  "strong_af" = "AlphaFold - Method",
-  "strong_ct_ai" = "AI Frontier - Method",
-  "strong_ct_noai" = "No AI Frontier - Method"
+
+  # Strong coefficients
+  "af_strong0" = "AlphaFold - Bkg.",
+  "af_strong1" = "AlphaFold - Method",
+  "ct_ai_strong0" = "AI Frontier - Bkg.",
+  "ct_ai_strong1" = "AI Frontier - Method",
+  "ct_noai_strong0" = "No AI Frontier - Bkg.",
+  "ct_noai_strong1" = "No AI Frontier - Method"
 )
 
 strip_colors <- c(
-  "All Groups - All PDB - CEM" = "#092640",
-  "All Groups - High PDB - CEM" = "lightcoral",
-  "Foundational - All PDB - CEM" = "#092640",
-  "Foundational - High PDB - CEM" = "lightcoral",
-  "Applied - All PDB - CEM" = "#092640",
-  "Applied - High PDB - CEM" = "lightcoral",
-  "Principal" = "#00B2A2",
-  "Established" = "#FF5836",
-  "Early Career" = "#FAB61B",
-  "Citation Chains" = "#1F5DAD"
+  "Laboratories" = "#00B2A2",
+  "Researchers" = "#FF5836",
+  # "Early Career Researchers" = "#FAB61B", # nolint
+  "Citing Papers" = "#1F5DAD"
 )
 
-depth_colors <- c(
-  "All Groups" = "#1f77b4", # Blue
-  "Foundational" = "#ff7f0e", # Orange
-  "Applied" = "#2ca02c" # Green
+grouped_strip_colors <- c(
+  "Laboratories" = "#00B2A2",
+  "Researchers" = "#FF5836",
+  "Early Career Researchers" = "#FAB61B",
+  "Citing Papers" = "#1F5DAD"
 )
 
+field_colors <- c(
+  "All Fields" = "black",
+  "Medicine" = "#FF5836",
+  "Molecular Biology" = "#1F5DAD"
+)
 
 # --- Variable definitions ---
 # Set desired orders for variables and names
-subgroup_order <- c("All PDB - CEM", "High PDB - CEM")
-depth_order <- c("All Groups") # , "Foundational", "Applied")
+subgroup_order <- c("All PDB", "High PDB")
+scope_order <- c("scope_All", "scope_Intent")
 field_order <- c(
-  "field_All Fields",
+  "field_Medicine",
   "field_Biochemistry",
-  "field_Medicine"
+  "field_All Fields"
 )
 
-observation_order <- c("papers", "ecr", "nonecr", "labs")
+# Updated observation order - removing ecr
+observation_order <- c("papers", "nonecr", "labs")
+
+grouped_observation_order <- c("papers", "nonecr", "labs", "ecr")
 
 observation_labels <- c(
-  "papers" = "Citation Chains",
-  "ecr" = "Early Career",
-  "nonecr" = "Established",
-  "labs" = "Principal"
+  "papers" = "Citing Papers",
+  "labs" = "Laboratories",
+  "nonecr" = "Researchers"
 )
 
-
-coef_order <- c(
-  "strong_af:strong_ct_noai_ind", "strong_af:strong_ct_ai_ind", "strong_ct_noai_ind", "strong_ct_ai_ind", "strong_af_ind", # nolint
-  "af:ct_noai_ind", "af:ct_ai_ind", "ct_noai_ind", "ct_ai_ind", "af_ind",
-  "strong_af:strong_ct_noai", "strong_af:strong_ct_ai", "strong_ct_noai", "strong_ct_ai", "strong_af", # nolint
-  "af:ct_noai", "af:ct_ai", "ct_noai", "ct_ai", "af"
+grouped_observation_labels <- c(
+  "papers" = "Citing Papers",
+  "labs" = "Laboratories",
+  "nonecr" = "Researchers",
+  "ecr" = "Early Career Researchers"
 )
+
+# Define core coefficients and strong coefficients
+core_coef_vars <- c("af", "ct_ai", "ct_noai")
+strong_coef_vars <- c(
+  "af_strong0", "af_strong1",
+  "ct_ai_strong0", "ct_ai_strong1",
+  "ct_noai_strong0", "ct_noai_strong1"
+)
+
 
 # --- Function to generate coefficient plots ---
-generate_coef_plots <- function(coef_table) { # nolint
+generate_core_coef_plots <- function(coef_table) { # nolint
 
   # rename vars
-  coef_table <- coef_table %>% # nolint
-    mutate( # nolint
-      dep_var = recode(dep_var, !!!dep_var_labels), # nolint
-      treat_var = ifelse(
-        grepl("_ind", indep_vars), # nolint
-        paste0(treat_var, "_ind"), # nolint
-        treat_var
-      )
+  coef_table <- coef_table %>%
+    filter(dep_var %in% names(dep_var_labels)) %>% # nolint
+    mutate(
+      dep_var = recode(dep_var, !!!dep_var_labels) # nolint
     )
 
   unique_dep_vars <- unique(coef_table$dep_var)
@@ -206,146 +198,441 @@ generate_coef_plots <- function(coef_table) { # nolint
 
   for (single_dep_var in unique_dep_vars) {
     coef_plot_data <- coef_table %>% # nolint
-      filter(treat_var %in% names(coef_labels), dep_var == single_dep_var) %>% # nolint
+      filter(
+        treat_var %in% core_coef_vars, # nolint
+        source_origin %in% names(observation_labels), # nolint
+        dep_var == single_dep_var # nolint
+      ) %>%
       mutate( # nolint
-        depth = factor(gsub("depth_", "", depth), levels = gsub("depth_", "", depth_order)), # nolint
-        field = factor(gsub("field_", "", field), levels = gsub("field_", "", field_order)), # nolint
-        subgroup = factor(gsub("subgroup_", "", subgroup), levels = gsub("subgroup_", "", subgroup_order)), # nolint
-        depth_subgroup = factor(paste(field, subgroup, sep = " - "), levels = unique(paste(field, subgroup, sep = " - "))), # nolint
+        scope = factor(gsub("scope_", "", scope), # nolint
+          levels = gsub("scope_", "", scope_order) # nolint
+        ),
+        field = factor(
+          gsub("field_", "", field),
+          levels = gsub("field_", "", field_order)
+        ),
+        subgroup = factor(
+          gsub("subgroup_", "", subgroup), # nolint
+          levels = gsub("subgroup_", "", subgroup_order)
+        ),
+        scope_subgroup = factor(paste(scope, subgroup, sep = " - "),
+          levels = unique(paste(scope, subgroup, sep = " - "))
+        ), # nolint
         source_origin = factor(source_origin, levels = observation_order), # nolint
         source_origin = recode(source_origin, !!!observation_labels), # nolint
         treat_var = factor(
           treat_var,
-          levels = coef_order
+          levels = rev(core_coef_vars) # nolint
         ),
         treat_var = recode(treat_var, !!!coef_labels) # nolint
       )
 
-    coef_plot_data <- coef_plot_data %>% # nolint
-      filter(!is.na(field) & !is.na(depth) & !is.na(subgroup)) # nolint
+    coef_plot_data <- coef_plot_data %>%
+      filter(!is.na(field) & !is.na(scope) & !is.na(subgroup)) # nolint
 
-    for (depthsubgroup in unique(coef_plot_data$depth_subgroup)) {
-      field <- sub(" - .*", "", depthsubgroup)
-      subgroup_coef_plot_data <- coef_plot_data %>% # nolint
-        filter(depth_subgroup == depthsubgroup)
+    for (scopesubgroup in unique(coef_plot_data$scope_subgroup)) { # nolint
+      subgroup_coef_plot_data <- coef_plot_data %>%
+        filter(scope_subgroup == scopesubgroup) %>% # nolint
+        filter(n_obs >= 1000, estimate >= -10, estimate <= 10) # nolint
 
-      # drop levels in column depth_subgroup if they have zero values
-      vertical_levels <- levels(
-        subgroup_coef_plot_data$depth_subgroup
-      )[levels(subgroup_coef_plot_data$depth_subgroup) %in%
-        unique(subgroup_coef_plot_data$depth_subgroup[subgroup_coef_plot_data$depth_subgroup != ""])] # nolint
-      vertical_strip_colors <- strip_colors[vertical_levels]
+      for (field in unique(subgroup_coef_plot_data$field)) { # nolint
+        field_subgroup_coef_plot_data <- subgroup_coef_plot_data %>%
+          filter(field == !!field)
 
+        horizontal_levels <- levels(
+          field_subgroup_coef_plot_data$source_origin
+        )[levels(field_subgroup_coef_plot_data$source_origin) %in%
+          unique(field_subgroup_coef_plot_data$source_origin[field_subgroup_coef_plot_data$source_origin != ""])] # nolint
+        horizontal_strip_colors <- strip_colors[horizontal_levels]
 
-      subgroup_coef_plot_data <- subgroup_coef_plot_data %>% # nolint
-        filter(n_obs >= 950, estimate >= -10, estimate <= 10)
+        # Check if subgroup_coef_plot_data is empty
+        if (nrow(field_subgroup_coef_plot_data) == 0) {
+          message("No data for dep_var: ", single_dep_var) # nolint
+          next
+        }
 
-
-      horizontal_levels <- levels(
-        subgroup_coef_plot_data$source_origin
-      )[levels(subgroup_coef_plot_data$source_origin) %in%
-        unique(subgroup_coef_plot_data$source_origin[subgroup_coef_plot_data$source_origin != ""])] # nolint
-      horizontal_strip_colors <- strip_colors[horizontal_levels]
-
-      # Check if subgroup_coef_plot_data is empty
-      if (nrow(subgroup_coef_plot_data) == 0) {
-        message("No data for dep_var: ", single_dep_var) # nolint
-        next
-      }
-
-      # Create the plot
-      coeffplot <- ggplot( # nolint
-        subgroup_coef_plot_data,
-        aes(x = estimate, y = treat_var) # , color = depth) # nolint
-      ) +
-        geom_point( # nolint
-          size = 4
-          # position = position_dodge(width = 0.5)
+        # Create the plot
+        coeffplot <- ggplot(
+          field_subgroup_coef_plot_data,
+          aes(x = estimate, y = treat_var) # nolint
         ) +
-        geom_errorbarh( # nolint
-          aes(xmin = estimate - 1.645 * std_error, xmax = estimate + 1.645 * std_error), # nolint
-          height = 0, linewidth = 1 # , # thicker for 10% significance
-          # position = position_dodge(width = 0.5)
-        ) +
-        geom_errorbarh( # nolint
-          aes(xmin = conf_low, xmax = conf_high), # nolint
-          height = 0.2, linewidth = 0.5 #  position = position_dodge(width = 0.5) # thinner for 5% significance
-        ) +
-        # scale_color_manual(values = depth_colors) +
-        geom_vline(xintercept = 0, color = "black", linewidth = 1) + # nolint
-        ggh4x::facet_grid2(
-          . ~ source_origin,
-          scales = "free",
-          independent = "x",
-          space = "fixed",
-          labeller = label_wrap_gen(20),
-          strip = ggh4x::strip_themed(
-            background_y = ggh4x::elem_list_rect(
-              fill = vertical_strip_colors
-            ),
-            background_x = ggh4x::elem_list_rect(
-              fill = horizontal_strip_colors
+          geom_point( # nolint
+            size = 4
+          ) +
+          geom_errorbarh( # nolint
+            aes(xmin = estimate - 1.645 * std_error, xmax = estimate + 1.645 * std_error), # nolint
+            height = 0, linewidth = 1
+          ) +
+          geom_errorbarh( # nolint
+            aes(xmin = conf_low, xmax = conf_high), # nolint
+            height = 0.2, linewidth = 0.5
+          ) +
+          # scale_color_manual(values = depth_colors) +
+          geom_vline(xintercept = 0, color = "black", linewidth = 1) + # nolint
+          ggh4x::facet_grid2(
+            . ~ source_origin,
+            scales = "free",
+            independent = "x",
+            space = "fixed",
+            labeller = label_wrap_gen(20),
+            strip = ggh4x::strip_themed(
+              background_x = ggh4x::elem_list_rect(
+                fill = horizontal_strip_colors
+              )
             )
+          ) + # nolint
+          scale_x_continuous(breaks = scales::pretty_breaks(n = 3)) +
+          labs( # nolint
+            title = paste("Dependent Variable:", single_dep_var), # nolint
+            x = "Estimate (with 95% CI)",
+            y = "Coefficient Variable"
+          ) +
+          theme_classic() + # nolint
+          theme( # nolint
+            axis.text.y = element_text(size = 56), # nolint
+            axis.title.x = element_text(size = 56), # nolint
+            axis.title.y = element_text(size = 56), # nolint
+            strip.text = element_text(size = 45), # nolint
+            panel.grid.major.x = element_line(linewidth = 0.2, color = "grey"), # nolint
+            panel.border = element_rect(color = "black", fill = NA, linewidth = 0.8), # nolint
+            panel.spacing = unit(1.5, "lines"), # nolint
+            legend.position = "none",
+            plot.margin = margin(0.1, 0.1, 0.1, 0.1, "cm") # nolint
           )
-        ) + # nolint
-        scale_x_continuous(breaks = scales::pretty_breaks(n = 3)) + # Limit the number of x-axis tick marks
-        labs( # nolint
-          title = paste("Dependent Variable:", single_dep_var, " | ", field), # nolint
-          # subtitle = paste("Field:", field_label), # nolint
-          x = "Estimate (with 95% CI)",
-          y = "Coefficient Variable"
-        ) +
-        theme_classic() + # nolint
-        theme( # nolint
-          axis.text.y = element_text(size = 56), # nolint
-          axis.title.x = element_text(size = 56), # nolint
-          axis.title.y = element_text(size = 56), # nolint
-          strip.text = element_text(size = 45), # nolint
-          panel.grid.major.x = element_line(linewidth = 0.2, color = "grey"), # nolint
-          panel.border = element_rect(color = "black", fill = NA, linewidth = 0.8), # nolint
-          panel.spacing = unit(1.5, "lines"), # nolint
-          legend.position = "none",
-          plot.margin = margin(0.1, 0.1, 0.1, 0.1, "cm") # nolint
+
+        # add counts of obs (subgroup all and ext.)
+        coeffplot <- coeffplot + geom_text( # nolint
+          data = field_subgroup_coef_plot_data, # nolint
+          aes(label = paste0("n = ", n_obs)), # nolint
+          x = Inf, y = Inf,
+          hjust = 1.1, vjust = 21.75,
+          size = 16, color = "black"
+        ) + theme(
+          text = element_text(family = "muli", size = 56), # Base font size
+          axis.text = element_text(size = 56), # Axis tick labels
+          axis.title = element_text(size = 60), # Axis titles
+          strip.text = element_text(size = 60, face = "bold", colour = "white"), # nolint
+          plot.title = element_text(size = 66, face = "bold"), # Title
+          plot.subtitle = element_text(size = 44)
         )
 
-      # add counts of obs (subgroup all and ext.)
-      coeffplot <- coeffplot + geom_text( # nolint
-        data = subgroup_coef_plot_data, # nolint
-        aes(label = paste0("n = ", n_obs)), # nolint
-        x = Inf, y = Inf,
-        hjust = 1.1, vjust = 21.75,
-        size = 16, color = "black"
-      ) + theme(
-        text = element_text(family = "muli", size = 56), # Base font size
-        axis.text = element_text(size = 56), # Axis tick labels
-        axis.title = element_text(size = 60), # Axis titles
-        strip.text = element_text(size = 60, face = "bold", colour = "white"), # Facet strip text
-        plot.title = element_text(size = 66, face = "bold"), # Title
-        plot.subtitle = element_text(size = 44)
-      )
+        # Create the directory if it doesn't exist
+        pathdir <- paste0(
+          "data/08_reporting/2025Q1/coefplots/core/",
+          single_dep_var, "/", field, "/"
+        )
+        outfile <- paste0(pathdir, scopesubgroup, ".png")
+        message("Saving plot to: ", outfile)
+        if (!dir.exists(pathdir)) {
+          message("Creating directory: ", pathdir)
+          dir.create(pathdir, recursive = TRUE)
+        }
 
-      # Create the directory if it doesn't exist
-      pathdir <- paste0("data/08_reporting/november/coefplots/", single_dep_var, "/")
-      outfile <- paste0(pathdir, depthsubgroup, ".png")
-      message("Saving plot to: ", outfile)
-      if (!dir.exists(pathdir)) {
-        message("Creating directory: ", pathdir)
-        dir.create(pathdir, recursive = TRUE)
+        n_y_facet_rows <- length(
+          unique(field_subgroup_coef_plot_data$scope_subgroup)
+        )
+        plot_height <- n_y_facet_rows * 4.5 # nolint
+
+        ggsave( # nolint
+          outfile, # nolint
+          coeffplot,
+          width = 14,
+          height = plot_height,
+          dpi = 300
+        )
       }
-
-      n_y_facet_rows <- length(unique(subgroup_coef_plot_data$depth_subgroup))
-      plot_height <- n_y_facet_rows * 4.5 # nolint
-
-      ggsave( # nolint
-        outfile, # nolint
-        coeffplot,
-        width = 14,
-        height = plot_height,
-        dpi = 300
-      )
     }
   }
 }
 
+
+# --- Function to generate strong coefficient plots ---
+
+# --- Function to generate coefficient plots ---
+generate_strong_coef_plots <- function(coef_table) { # nolint
+
+  # rename vars
+  coef_table <- coef_table %>%
+    filter(dep_var %in% names(dep_var_labels)) %>% # nolint
+    mutate(
+      dep_var = recode(dep_var, !!!dep_var_labels) # nolint
+    )
+
+  unique_dep_vars <- unique(coef_table$dep_var)
+
+  # rename "Molecular Biology" to "Biochemistry"
+  coef_table <- coef_table %>% # nolint
+    mutate( # nolint
+      field = recode(field, "field_Molecular Biology" = "field_Biochemistry")
+    )
+
+  for (single_dep_var in unique_dep_vars) {
+    coef_plot_data <- coef_table %>% # nolint
+      filter(
+        treat_var %in% strong_coef_vars, # nolint
+        source_origin %in% names(observation_labels), # nolint
+        dep_var == single_dep_var # nolint
+      ) %>%
+      mutate( # nolint
+        scope = factor(gsub("scope_", "", scope), # nolint
+          levels = gsub("scope_", "", scope_order) # nolint
+        ),
+        field = factor(
+          gsub("field_", "", field),
+          levels = gsub("field_", "", field_order)
+        ),
+        subgroup = factor(
+          gsub("subgroup_", "", subgroup), # nolint
+          levels = gsub("subgroup_", "", subgroup_order)
+        ),
+        scope_subgroup = factor(paste(scope, subgroup, sep = " - "),
+          levels = unique(paste(scope, subgroup, sep = " - "))
+        ), # nolint
+        source_origin = factor(source_origin, levels = observation_order), # nolint
+        source_origin = recode(source_origin, !!!observation_labels), # nolint
+        treat_var = factor(
+          treat_var,
+          levels = rev(strong_coef_vars) # nolint
+        ),
+        treat_var = recode(treat_var, !!!coef_labels) # nolint
+      )
+
+    coef_plot_data <- coef_plot_data %>%
+      filter(!is.na(field) & !is.na(scope) & !is.na(subgroup)) # nolint
+
+    for (scopesubgroup in unique(coef_plot_data$scope_subgroup)) { # nolint
+      subgroup_coef_plot_data <- coef_plot_data %>%
+        filter(scope_subgroup == scopesubgroup) %>% # nolint
+        filter(n_obs >= 1000, estimate >= -10, estimate <= 10) # nolint
+
+      for (field in unique(subgroup_coef_plot_data$field)) { # nolint
+        field_subgroup_coef_plot_data <- subgroup_coef_plot_data %>%
+          filter(field == !!field)
+
+        horizontal_levels <- levels(
+          field_subgroup_coef_plot_data$source_origin
+        )[levels(field_subgroup_coef_plot_data$source_origin) %in%
+          unique(field_subgroup_coef_plot_data$source_origin[field_subgroup_coef_plot_data$source_origin != ""])] # nolint
+        horizontal_strip_colors <- strip_colors[horizontal_levels]
+
+        # Check if subgroup_coef_plot_data is empty
+        if (nrow(field_subgroup_coef_plot_data) == 0) {
+          message("No data for dep_var: ", single_dep_var) # nolint
+          next
+        }
+
+        # Create the plot
+        coeffplot <- ggplot(
+          field_subgroup_coef_plot_data,
+          aes(x = estimate, y = treat_var) # nolint
+        ) +
+          geom_point( # nolint
+            size = 4
+          ) +
+          geom_errorbarh( # nolint
+            aes(xmin = estimate - 1.645 * std_error, xmax = estimate + 1.645 * std_error), # nolint
+            height = 0, linewidth = 1
+          ) +
+          geom_errorbarh( # nolint
+            aes(xmin = conf_low, xmax = conf_high), # nolint
+            height = 0.2, linewidth = 0.5
+          ) +
+          # scale_color_manual(values = depth_colors) +
+          geom_vline(xintercept = 0, color = "black", linewidth = 1) + # nolint
+          ggh4x::facet_grid2(
+            . ~ source_origin,
+            scales = "free",
+            independent = "x",
+            space = "fixed",
+            labeller = label_wrap_gen(20),
+            strip = ggh4x::strip_themed(
+              background_x = ggh4x::elem_list_rect(
+                fill = horizontal_strip_colors
+              )
+            )
+          ) + # nolint
+          scale_x_continuous(breaks = scales::pretty_breaks(n = 3)) +
+          labs( # nolint
+            title = paste("Dependent Variable:", single_dep_var), # nolint
+            x = "Estimate (with 95% CI)",
+            y = "Coefficient Variable"
+          ) +
+          theme_classic() + # nolint
+          theme( # nolint
+            axis.text.y = element_text(size = 56), # nolint
+            axis.title.x = element_text(size = 56), # nolint
+            axis.title.y = element_text(size = 56), # nolint
+            strip.text = element_text(size = 45), # nolint
+            panel.grid.major.x = element_line(linewidth = 0.2, color = "grey"), # nolint
+            panel.border = element_rect(color = "black", fill = NA, linewidth = 0.8), # nolint
+            panel.spacing = unit(1.5, "lines"), # nolint
+            legend.position = "none",
+            plot.margin = margin(0.1, 0.1, 0.1, 0.1, "cm") # nolint
+          )
+
+        # add counts of obs (subgroup all and ext.)
+        coeffplot <- coeffplot + geom_text( # nolint
+          data = field_subgroup_coef_plot_data, # nolint
+          aes(label = paste0("n = ", n_obs)), # nolint
+          x = Inf, y = Inf,
+          hjust = 1.1, vjust = 21.75,
+          size = 16, color = "black"
+        ) + theme(
+          text = element_text(family = "muli", size = 56), # Base font size
+          axis.text = element_text(size = 56), # Axis tick labels
+          axis.title = element_text(size = 60), # Axis titles
+          strip.text = element_text(size = 60, face = "bold", colour = "white"), # nolint
+          plot.title = element_text(size = 66, face = "bold"), # Title
+          plot.subtitle = element_text(size = 44)
+        )
+
+        # Create the directory if it doesn't exist
+        pathdir <- paste0(
+          "data/08_reporting/2025Q1/coefplots/strong/",
+          single_dep_var, "/", field, "/"
+        )
+        outfile <- paste0(pathdir, scopesubgroup, ".png")
+        message("Saving plot to: ", outfile)
+        if (!dir.exists(pathdir)) {
+          message("Creating directory: ", pathdir)
+          dir.create(pathdir, recursive = TRUE)
+        }
+
+        n_y_facet_rows <- length(
+          unique(field_subgroup_coef_plot_data$scope_subgroup)
+        )
+        plot_height <- n_y_facet_rows * 4.5 # nolint
+
+        ggsave( # nolint
+          outfile, # nolint
+          coeffplot,
+          width = 14,
+          height = plot_height,
+          dpi = 300
+        )
+      }
+    }
+  }
+}
+
+# --- Function to generate grouped coefficient plots ---
+generate_grouped_coef_plots <- function(coef_table) {
+  # Prepare the data
+  plot_data <- coef_table %>%
+    filter(
+      treat_var %in% core_coef_vars,
+      source_origin %in% names(grouped_observation_labels),
+      dep_var %in% names(dep_var_labels),
+      field == "field_All Fields",  # Only All Fields
+      scope == "scope_All",  # Only All scope
+      subgroup == "subgroup_All PDB"  # Only All subgroup
+    ) %>%
+    mutate(
+      dep_var = recode(dep_var, !!!dep_var_labels),
+      source_origin = factor(source_origin, levels = grouped_observation_order),
+      source_origin = recode(source_origin, !!!grouped_observation_labels),
+      treat_var = factor(treat_var, levels = rev(core_coef_vars)),
+      treat_var = recode(treat_var, !!!coef_labels)
+    ) %>%
+    filter(
+      n_obs >= 1000,
+      estimate >= -10,
+      estimate <= 10
+    )
+
+  # Generate plot for each source origin
+  for (source in unique(plot_data$source_origin)) {
+    source_data <- plot_data %>%
+      filter(source_origin == source)
+
+    # Create faceted plot
+    grouped_plot <- ggplot(
+      source_data,
+      aes(x = estimate, y = treat_var)
+    ) +
+      geom_point(size = 12) +
+      geom_errorbarh(
+        aes(xmin = estimate - 1.645 * std_error,
+            xmax = estimate + 1.645 * std_error),
+        height = 0,
+        linewidth = 2
+      ) +
+      geom_errorbarh(
+        aes(xmin = conf_low, xmax = conf_high),
+        height = 0.4,
+        linewidth = 1.2
+      ) +
+      geom_vline(xintercept = 0, color = "black", linewidth = 1) +
+      facet_wrap(
+        ~dep_var,
+        scales = "free_x",
+        ncol = 3
+      ) +
+      scale_x_continuous(breaks = scales::pretty_breaks(n = 3)) +
+      labs(
+        title = paste("Coefficient Estimates for", source),
+        x = "Estimate (with 95% CI)",
+        y = "Coefficient Variable"
+      ) +
+      theme_classic() +
+      theme(
+        text = element_text(family = "muli"),
+        axis.text.y = element_text(size = 84),
+        axis.text.x = element_text(size = 90),
+        axis.title = element_text(size = 90),
+        strip.text = element_text(
+          size = 72,  # Increased from 94
+          face = "bold", 
+          color = "white",
+          margin = margin(t = 10, b = 10)  # Add some vertical padding
+        ),
+        strip.background = element_rect(
+          fill = grouped_strip_colors[source],
+          color = "black",  # Add border
+          linewidth = 1
+        ),
+        panel.grid.major.x = element_line(linewidth = 1.2, color = "grey"),
+        panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+        panel.spacing = unit(2, "lines"),
+        plot.title = element_text(size = 102, face = "bold"),
+        plot.margin = margin(1, 1, 1, 1, "cm")
+      )
+
+    # Add observation counts
+    grouped_plot <- grouped_plot + geom_text(
+      aes(label = paste0("n = ", n_obs), x = Inf, y = -Inf),  # Move x, y into aes()
+      hjust = 1.1,
+      vjust = -0.5,
+      size = 24
+    )
+
+    # Create directory and save plot
+    pathdir <- "data/08_reporting/2025Q1/coefplots/grouped/"
+    if (!dir.exists(pathdir)) {
+      dir.create(pathdir, recursive = TRUE)
+    }
+
+    outfile <- paste0(pathdir, source, "_grouped.png")
+    message("Saving plot to: ", outfile)
+
+    # Calculate dimensions based on number of dependent variables
+    n_deps <- length(unique(source_data$dep_var))
+    n_cols <- 3
+    n_rows <- ceiling(n_deps / n_cols)
+    plot_height <- max(12, n_rows * 4)  # Increased base height
+    plot_width <- min(24, n_cols * 8)   # Increased base width
+
+    ggsave(
+      outfile,
+      grouped_plot,
+      width = plot_width,
+      height = plot_height,
+      dpi = 300
+    )
+  }
+}
+
 # Run the function
-generate_coef_plots(all_tables_combined)
+generate_core_coef_plots(all_tables_combined)
+generate_strong_coef_plots(all_tables_combined)
+generate_grouped_coef_plots(all_tables_combined)
