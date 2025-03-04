@@ -47,7 +47,8 @@ field_cols <- grep("^field_", names(sub_samples[[1]]), value = TRUE)
 
 covs <- list()
 covs[["base0"]] <- c(
-  field_cols
+  field_cols,
+  "institution_country_code"
 )
 
 fes <- list()
@@ -59,8 +60,6 @@ dep_vars <- c(
   "mesh_C",
   "num_publications",
   "ln1p_cited_by_count",
-  "ln1p_cit_0",
-  "ln1p_cit_1",
   "ln1p_fwci",
   "ln1p_resolution",
   "ln1p_R_free",
@@ -209,15 +208,6 @@ for (dep_var in dep_vars) { # nolint
         message("Running Negative Binomial regression")
         results[[regression_label]] <- tryCatch(
           {
-            # values for whome the fixed-effects-grouped data is not all 0
-            local_data <- local_data %>%
-              group_by(author) %>%
-              filter(sum(!!sym(dep_var)) > 0) %>%
-              ungroup() %>%
-              group_by(quarter) %>%
-              filter(sum(!!sym(dep_var)) > 0) %>%
-              ungroup()
-
             # Apply the collinearity fix function before running the regression
             local_data <- fix_perfect_collinearity(
               local_data, fes[["fe1"]], dep_var
