@@ -56,28 +56,28 @@ fes[["fe1"]] <- c("author", "quarter")
 cov_sets <- c("base0")
 fe_list <- c("fe1")
 dep_vars <- c(
-  # "mesh_C",
-  "num_publications"
-  # "ln1p_cited_by_count",
-  # "ln1p_fwci",
-  # "ln1p_resolution",
-  # "ln1p_R_free",
-  # "patent_count",
-  # "patent_citation",
-  # "num_pdb_ids",
-  # "num_pdb_submissions",
-  # "ca_count",
-  # "num_uniprot_structures",
-  # "num_primary_submissions",
-  # "num_diseases",
-  # "organism_rarity_mean",
-  # "mean_tmscore",
-  # "num_uniprot_structures_w_disease",
-  # "num_primary_submissions_w_disease",
-  # "num_uniprot_structures_w_rare_organisms",
-  # "num_primary_submissions_w_rare_organisms",
-  # "num_uniprot_structures_w_low_similarity",
-  # "num_primary_submissions_w_low_similarity"
+  "mesh_C",
+  "num_publications",
+  "ln1p_cited_by_count",
+  "ln1p_fwci",
+  "ln1p_resolution",
+  "ln1p_R_free",
+  "patent_count",
+  "patent_citation",
+  "num_pdb_ids",
+  "num_pdb_submissions",
+  "ca_count",
+  "num_uniprot_structures",
+  "num_primary_submissions",
+  "num_diseases",
+  "organism_rarity_mean",
+  "mean_tmscore",
+  "num_uniprot_structures_w_disease",
+  "num_primary_submissions_w_disease",
+  "num_uniprot_structures_w_rare_organisms",
+  "num_primary_submissions_w_rare_organisms",
+  "num_uniprot_structures_w_low_similarity",
+  "num_primary_submissions_w_low_similarity"
 )
 
 # Define base treatment vars that exist in all samples
