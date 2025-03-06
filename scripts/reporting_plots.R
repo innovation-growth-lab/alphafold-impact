@@ -81,6 +81,7 @@ all_tables_combined %>%
 
 
 dep_var_labels <- c(
+  "mesh_C" = "Proportion of disease-relevant articles",
   "ln1p_cited_by_count" = "ln (1 + Cited by count)",
   "ln1p_fwci" = "ln (1 + Field-Weighted Citation Impact)",
   "logit_cit_norm_perc" = "logit (Citation percentile)",
@@ -283,7 +284,7 @@ generate_core_coef_plots <- function(coef_table) { # nolint
           ) + # nolint
           scale_x_continuous(breaks = scales::pretty_breaks(n = 3)) +
           labs( # nolint
-            title = paste("Dependent Variable:", single_dep_var), # nolint
+            title = paste("Dependent Variable:", single_dep_var, " | ", field), # nolint
             x = "Estimate (with 95% CI)",
             y = "Coefficient Variable"
           ) +
@@ -453,7 +454,7 @@ generate_strong_coef_plots <- function(coef_table) { # nolint
           ) + # nolint
           scale_x_continuous(breaks = scales::pretty_breaks(n = 3)) +
           labs( # nolint
-            title = paste("Dependent Variable:", single_dep_var), # nolint
+            title = paste("Dependent Variable:", single_dep_var, " | ", field), # nolint
             x = "Estimate (with 95% CI)",
             y = "Coefficient Variable"
           ) +
@@ -523,9 +524,8 @@ generate_grouped_coef_plots <- function(coef_table) {
       treat_var %in% core_coef_vars,
       source_origin %in% names(grouped_observation_labels),
       dep_var %in% names(dep_var_labels),
-      field == "field_All Fields",  # Only All Fields
-      scope == "scope_All",  # Only All scope
-      subgroup == "subgroup_All PDB"  # Only All subgroup
+      scope == "scope_All", # Only All scope
+      subgroup == "subgroup_All PDB" # Only All subgroup
     ) %>%
     mutate(
       dep_var = recode(dep_var, !!!dep_var_labels),
@@ -542,93 +542,349 @@ generate_grouped_coef_plots <- function(coef_table) {
 
   # Generate plot for each source origin
   for (source in unique(plot_data$source_origin)) {
-    source_data <- plot_data %>%
-      filter(source_origin == source)
+    for (ufield in unique(plot_data$field)) {
+      source_data <- plot_data %>%
+        filter(source_origin == source, field == ufield)
 
-    # Create faceted plot
-    grouped_plot <- ggplot(
-      source_data,
-      aes(x = estimate, y = treat_var)
-    ) +
-      geom_point(size = 12) +
-      geom_errorbarh(
-        aes(xmin = estimate - 1.645 * std_error,
-            xmax = estimate + 1.645 * std_error),
-        height = 0,
-        linewidth = 2
+      # Create faceted plot
+      grouped_plot <- ggplot(
+        source_data,
+        aes(x = estimate, y = treat_var)
       ) +
-      geom_errorbarh(
-        aes(xmin = conf_low, xmax = conf_high),
-        height = 0.4,
-        linewidth = 1.2
-      ) +
-      geom_vline(xintercept = 0, color = "black", linewidth = 1) +
-      facet_wrap(
-        ~dep_var,
-        scales = "free_x",
-        ncol = 3
-      ) +
-      scale_x_continuous(breaks = scales::pretty_breaks(n = 3)) +
-      labs(
-        title = paste("Coefficient Estimates for", source),
-        x = "Estimate (with 95% CI)",
-        y = "Coefficient Variable"
-      ) +
-      theme_classic() +
-      theme(
-        text = element_text(family = "muli"),
-        axis.text.y = element_text(size = 84),
-        axis.text.x = element_text(size = 90),
-        axis.title = element_text(size = 90),
-        strip.text = element_text(
-          size = 72,  # Increased from 94
-          face = "bold", 
-          color = "white",
-          margin = margin(t = 10, b = 10)  # Add some vertical padding
-        ),
-        strip.background = element_rect(
-          fill = grouped_strip_colors[source],
-          color = "black",  # Add border
-          linewidth = 1
-        ),
-        panel.grid.major.x = element_line(linewidth = 1.2, color = "grey"),
-        panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
-        panel.spacing = unit(2, "lines"),
-        plot.title = element_text(size = 102, face = "bold"),
-        plot.margin = margin(1, 1, 1, 1, "cm")
+        geom_point(size = 12) +
+        geom_errorbarh(
+          aes(
+            xmin = estimate - 1.645 * std_error,
+            xmax = estimate + 1.645 * std_error
+          ),
+          height = 0,
+          linewidth = 2
+        ) +
+        geom_errorbarh(
+          aes(xmin = conf_low, xmax = conf_high),
+          height = 0.4,
+          linewidth = 1.2
+        ) +
+        geom_vline(xintercept = 0, color = "black", linewidth = 1) +
+        facet_wrap(
+          ~dep_var,
+          scales = "free_x",
+          ncol = 3
+        ) +
+        scale_x_continuous(breaks = scales::pretty_breaks(n = 3)) +
+        labs(
+          title = paste("Coefficient Estimates for", source, "|", ufield),
+          x = "Estimate (with 95% CI)",
+          y = "Coefficient Variable"
+        ) +
+        theme_classic() +
+        theme(
+          text = element_text(family = "muli"),
+          axis.text.y = element_text(size = 84),
+          axis.text.x = element_text(size = 90),
+          axis.title = element_text(size = 90),
+          strip.text = element_text(
+            size = 72, # Increased from 94
+            face = "bold",
+            color = "white",
+            margin = margin(t = 10, b = 10) # Add some vertical padding
+          ),
+          strip.background = element_rect(
+            fill = grouped_strip_colors[source],
+            color = "black", # Add border
+            linewidth = 1
+          ),
+          panel.grid.major.x = element_line(linewidth = 1.2, color = "grey"),
+          panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+          panel.spacing = unit(2, "lines"),
+          plot.title = element_text(size = 102, face = "bold"),
+          plot.margin = margin(1, 1, 1, 1, "cm")
+        )
+
+      # Add observation counts
+      grouped_plot <- grouped_plot + geom_text(
+        aes(label = paste0("n = ", n_obs), x = Inf, y = -Inf), # Move x, y into aes()
+        hjust = 1.1,
+        vjust = -0.5,
+        size = 24
       )
 
-    # Add observation counts
-    grouped_plot <- grouped_plot + geom_text(
-      aes(label = paste0("n = ", n_obs), x = Inf, y = -Inf),  # Move x, y into aes()
-      hjust = 1.1,
-      vjust = -0.5,
-      size = 24
-    )
+      # Create directory and save plot
+      pathdir <- paste0(
+        "data/08_reporting/2025Q1/coefplots/grouped/",
+        ufield, "/"
+      )
+      if (!dir.exists(pathdir)) {
+        dir.create(pathdir, recursive = TRUE)
+      }
 
-    # Create directory and save plot
-    pathdir <- "data/08_reporting/2025Q1/coefplots/grouped/"
-    if (!dir.exists(pathdir)) {
-      dir.create(pathdir, recursive = TRUE)
+      outfile <- paste0(pathdir, source, "_grouped.png")
+      message("Saving plot to: ", outfile)
+
+      # Calculate dimensions based on number of dependent variables
+      n_deps <- length(unique(source_data$dep_var))
+      n_cols <- 3
+      n_rows <- ceiling(n_deps / n_cols)
+      plot_height <- max(12, n_rows * 4) # Increased base height
+      plot_width <- min(24, n_cols * 8) # Increased base width
+
+      ggsave(
+        outfile,
+        grouped_plot,
+        width = plot_width,
+        height = plot_height,
+        dpi = 300
+      )
     }
+  }
+}
 
-    outfile <- paste0(pathdir, source, "_grouped.png")
-    message("Saving plot to: ", outfile)
 
-    # Calculate dimensions based on number of dependent variables
-    n_deps <- length(unique(source_data$dep_var))
-    n_cols <- 3
-    n_rows <- ceiling(n_deps / n_cols)
-    plot_height <- max(12, n_rows * 4)  # Increased base height
-    plot_width <- min(24, n_cols * 8)   # Increased base width
-
-    ggsave(
-      outfile,
-      grouped_plot,
-      width = plot_width,
-      height = plot_height,
-      dpi = 300
+# --- Function to generate grouped coefficient plots ---
+generate_grouped_highpdb_coef_plots <- function(coef_table) {
+  # Prepare the data
+  plot_data <- coef_table %>%
+    filter(
+      treat_var %in% core_coef_vars,
+      source_origin %in% names(grouped_observation_labels),
+      dep_var %in% names(dep_var_labels),
+      scope == "scope_All", # Only All scope
+      subgroup == "subgroup_High PDB" # Only All subgroup
+    ) %>%
+    mutate(
+      dep_var = recode(dep_var, !!!dep_var_labels),
+      source_origin = factor(source_origin, levels = grouped_observation_order),
+      source_origin = recode(source_origin, !!!grouped_observation_labels),
+      treat_var = factor(treat_var, levels = rev(core_coef_vars)),
+      treat_var = recode(treat_var, !!!coef_labels)
+    ) %>%
+    filter(
+      n_obs >= 1000,
+      estimate >= -10,
+      estimate <= 10
     )
+
+  # Generate plot for each source origin
+  for (source in unique(plot_data$source_origin)) {
+    for (ufield in unique(plot_data$field)) {
+      source_data <- plot_data %>%
+        filter(source_origin == source, field == ufield)
+
+      # Create faceted plot
+      grouped_plot <- ggplot(
+        source_data,
+        aes(x = estimate, y = treat_var)
+      ) +
+        geom_point(size = 12) +
+        geom_errorbarh(
+          aes(
+            xmin = estimate - 1.645 * std_error,
+            xmax = estimate + 1.645 * std_error
+          ),
+          height = 0,
+          linewidth = 2
+        ) +
+        geom_errorbarh(
+          aes(xmin = conf_low, xmax = conf_high),
+          height = 0.4,
+          linewidth = 1.2
+        ) +
+        geom_vline(xintercept = 0, color = "black", linewidth = 1) +
+        facet_wrap(
+          ~dep_var,
+          scales = "free_x",
+          ncol = 3
+        ) +
+        scale_x_continuous(breaks = scales::pretty_breaks(n = 3)) +
+        labs(
+          title = paste("Coefficient Estimates for", source, "| High PDB |", ufield),
+          x = "Estimate (with 95% CI)",
+          y = "Coefficient Variable"
+        ) +
+        theme_classic() +
+        theme(
+          text = element_text(family = "muli"),
+          axis.text.y = element_text(size = 84),
+          axis.text.x = element_text(size = 90),
+          axis.title = element_text(size = 90),
+          strip.text = element_text(
+            size = 72, # Increased from 94
+            face = "bold",
+            color = "white",
+            margin = margin(t = 10, b = 10) # Add some vertical padding
+          ),
+          strip.background = element_rect(
+            fill = grouped_strip_colors[source],
+            color = "black", # Add border
+            linewidth = 1
+          ),
+          panel.grid.major.x = element_line(linewidth = 1.2, color = "grey"),
+          panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+          panel.spacing = unit(2, "lines"),
+          plot.title = element_text(size = 102, face = "bold"),
+          plot.margin = margin(1, 1, 1, 1, "cm")
+        )
+
+      # Add observation counts
+      grouped_plot <- grouped_plot + geom_text(
+        aes(label = paste0("n = ", n_obs), x = Inf, y = -Inf), # Move x, y into aes()
+        hjust = 1.1,
+        vjust = -0.5,
+        size = 24
+      )
+
+      # Create directory and save plot
+      pathdir <- paste0(
+        "data/08_reporting/2025Q1/coefplots/grouped_highpdb/",
+        ufield, "/"
+      )
+      if (!dir.exists(pathdir)) {
+        dir.create(pathdir, recursive = TRUE)
+      }
+
+      outfile <- paste0(pathdir, source, "_grouped.png")
+      message("Saving plot to: ", outfile)
+
+      # Calculate dimensions based on number of dependent variables
+      n_deps <- length(unique(source_data$dep_var))
+      n_cols <- 3
+      n_rows <- ceiling(n_deps / n_cols)
+      plot_height <- max(12, n_rows * 4) # Increased base height
+      plot_width <- min(24, n_cols * 8) # Increased base width
+
+      ggsave(
+        outfile,
+        grouped_plot,
+        width = plot_width,
+        height = plot_height,
+        dpi = 300
+      )
+    }
+  }
+}
+
+
+
+# --- Function to generate grouped coefficient plots ---
+generate_grouped_strong_coef_plots <- function(coef_table) {
+  # Prepare the data
+  plot_data <- coef_table %>%
+    filter(
+      treat_var %in% strong_coef_vars,
+      source_origin %in% names(grouped_observation_labels),
+      dep_var %in% names(dep_var_labels),
+      scope == "scope_Intent", # Only All scope
+      subgroup == "subgroup_All PDB" # Only All subgroup
+    ) %>%
+    mutate(
+      dep_var = recode(dep_var, !!!dep_var_labels),
+      source_origin = factor(source_origin, levels = grouped_observation_order),
+      source_origin = recode(source_origin, !!!grouped_observation_labels),
+      treat_var = factor(treat_var, levels = rev(strong_coef_vars)),
+      treat_var = recode(treat_var, !!!coef_labels)
+    ) %>%
+    filter(
+      n_obs >= 1000,
+      estimate >= -10,
+      estimate <= 10
+    )
+
+  # Generate plot for each source origin
+  for (source in unique(plot_data$source_origin)) {
+    for (ufield in unique(plot_data$field)) {
+      source_data <- plot_data %>%
+        filter(source_origin == source, field == ufield)
+
+      # Create faceted plot
+      grouped_plot <- ggplot(
+        source_data,
+        aes(x = estimate, y = treat_var)
+      ) +
+        geom_point(size = 12) +
+        geom_errorbarh(
+          aes(
+            xmin = estimate - 1.645 * std_error,
+            xmax = estimate + 1.645 * std_error
+          ),
+          height = 0,
+          linewidth = 2
+        ) +
+        geom_errorbarh(
+          aes(xmin = conf_low, xmax = conf_high),
+          height = 0.4,
+          linewidth = 1.2
+        ) +
+        geom_vline(xintercept = 0, color = "black", linewidth = 1) +
+        facet_wrap(
+          ~dep_var,
+          scales = "free_x",
+          ncol = 3
+        ) +
+        scale_x_continuous(breaks = scales::pretty_breaks(n = 3)) +
+        labs(
+          title = paste("Coefficient Estimates for", source, "|", ufield),
+          x = "Estimate (with 95% CI)",
+          y = "Coefficient Variable"
+        ) +
+        theme_classic() +
+        theme(
+          text = element_text(family = "muli"),
+          axis.text.y = element_text(size = 84),
+          axis.text.x = element_text(size = 90),
+          axis.title = element_text(size = 90),
+          strip.text = element_text(
+            size = 72, # Increased from 94
+            face = "bold",
+            color = "white",
+            margin = margin(t = 10, b = 10) # Add some vertical padding
+          ),
+          strip.background = element_rect(
+            fill = grouped_strip_colors[source],
+            color = "black", # Add border
+            linewidth = 1
+          ),
+          panel.grid.major.x = element_line(linewidth = 1.2, color = "grey"),
+          panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+          panel.spacing = unit(2, "lines"),
+          plot.title = element_text(size = 102, face = "bold"),
+          plot.margin = margin(1, 1, 1, 1, "cm")
+        )
+
+      # Add observation counts
+      grouped_plot <- grouped_plot + geom_text(
+        aes(label = paste0("n = ", n_obs), x = Inf, y = -Inf), # Move x, y into aes()
+        hjust = 1.1,
+        vjust = -0.5,
+        size = 24
+      )
+
+      # Create directory and save plot
+      pathdir <- paste0(
+        "data/08_reporting/2025Q1/coefplots/grouped_strong/",
+        ufield, "/"
+      )
+      if (!dir.exists(pathdir)) {
+        dir.create(pathdir, recursive = TRUE)
+      }
+
+      outfile <- paste0(pathdir, source, "_grouped.png")
+      message("Saving plot to: ", outfile)
+
+      # Calculate dimensions based on number of dependent variables
+      n_deps <- length(unique(source_data$dep_var))
+      n_cols <- 3
+      n_rows <- ceiling(n_deps / n_cols)
+      plot_height <- max(12, n_rows * 4) # Increased base height
+      plot_width <- min(24, n_cols * 8) # Increased base width
+
+      ggsave(
+        outfile,
+        grouped_plot,
+        width = plot_width,
+        height = plot_height,
+        dpi = 300
+      )
+    }
   }
 }
 
@@ -636,3 +892,5 @@ generate_grouped_coef_plots <- function(coef_table) {
 generate_core_coef_plots(all_tables_combined)
 generate_strong_coef_plots(all_tables_combined)
 generate_grouped_coef_plots(all_tables_combined)
+generate_grouped_highpdb_coef_plots(all_tables_combined)
+generate_grouped_strong_coef_plots(all_tables_combined)
