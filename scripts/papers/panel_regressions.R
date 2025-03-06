@@ -217,7 +217,7 @@ for (dep_var in dep_vars) { # nolint
             # Check if model converged by looking at convergence code
             if (!model$convStatus) {
               message("Model did not converge, using fallback model")
-              feols(as.formula(paste(dep_var, "~ 1")), data = local_data)
+              model
             } else {
               model
             }
@@ -289,7 +289,7 @@ for (dep_var in dep_vars) { # nolint
       )
     },
     error = function(e) {
-      message("Error in generating tables: ", e$message)
+      message("Error in generating coef vals: ", e$message)
     }
   )
 
@@ -317,5 +317,4 @@ for (dep_var in dep_vars) { # nolint
       message("Error in generating tables: ", e$message)
     }
   )
-
 }
