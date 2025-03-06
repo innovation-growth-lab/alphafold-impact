@@ -55,22 +55,22 @@ fes[["fe1"]] <- c("author", "quarter")
 cov_sets <- c("base0")
 fe_list <- c("fe1")
 dep_vars <- c(
-  # "mesh_C",
-  # "num_publications",
-  # "ln1p_cited_by_count",
-  # "ln1p_fwci",
-  # "ln1p_resolution",
-  # "ln1p_R_free",
-  # "patent_count",
-  # "patent_citation",
-  # "num_pdb_ids",
-  # "num_pdb_submissions",
-  # "ca_count",
-  # "num_uniprot_structures",
+  "mesh_C",
+  "num_publications",
+  "ln1p_cited_by_count",
+  "ln1p_fwci",
+  "ln1p_resolution",
+  "ln1p_R_free",
+  "patent_count",
+  "patent_citation",
+  "num_pdb_ids",
+  "num_pdb_submissions",
+  "ca_count",
+  "num_uniprot_structures",
   "num_primary_submissions",
-  # "num_diseases",
-  # "organism_rarity_mean",
-  # "mean_tmscore",
+  "num_diseases",
+  "organism_rarity_mean",
+  "mean_tmscore",
   "num_uniprot_structures_w_disease",
   "num_primary_submissions_w_disease",
   "num_uniprot_structures_w_rare_organisms",
@@ -211,7 +211,7 @@ for (dep_var in dep_vars) { # nolint
               local_data, fes[["fe1"]], dep_var
             )
 
-            model <- fepois(
+            model <- fenegbin(
               form_list[[form]],
               data = local_data,
               cluster = c("author", "quarter"),
@@ -265,31 +265,6 @@ for (dep_var in dep_vars) { # nolint
   }
 
   # ------------------------------------------------------------------------
-  # GENERATE TABLES
-  # ------------------------------------------------------------------------
-
-  # import from utils_tables.R
-  source("scripts/authors/nonecr/quarterly/utils_tables.R")
-  message("Generating tables")
-  tryCatch(
-    {
-      # Generate tables
-      generate_tables(
-        results = results,
-        dep_vars = dep_var,
-        table_info = table_info,
-        subsets = names(sub_samples),
-        cov_sets = cov_sets,
-        fe_list = fe_list,
-        treat_vars = c(treat_vars_base, treat_vars_with_strong)
-      )
-    },
-    error = function(e) {
-      message("Error in generating tables: ", e$message)
-    }
-  )
-
-  # ------------------------------------------------------------------------
   # GENERATE PLOTS
   # ------------------------------------------------------------------------
 
@@ -329,4 +304,29 @@ for (dep_var in dep_vars) { # nolint
       message("Error in generating tables: ", e$message)
     }
   )
+  # ------------------------------------------------------------------------
+  # GENERATE TABLES
+  # ------------------------------------------------------------------------
+
+  # import from utils_tables.R
+  source("scripts/authors/nonecr/quarterly/utils_tables.R")
+  message("Generating tables")
+  tryCatch(
+    {
+      # Generate tables
+      generate_tables(
+        results = results,
+        dep_vars = dep_var,
+        table_info = table_info,
+        subsets = names(sub_samples),
+        cov_sets = cov_sets,
+        fe_list = fe_list,
+        treat_vars = c(treat_vars_base, treat_vars_with_strong)
+      )
+    },
+    error = function(e) {
+      message("Error in generating tables: ", e$message)
+    }
+  )
+
 }

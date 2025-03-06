@@ -212,7 +212,7 @@ for (dep_var in dep_vars) { # nolint
               local_data, fes[["fe1"]], dep_var
             )
 
-            model <- fepois(
+            model <- fenegbin(
               form_list[[form]],
               data = local_data,
               cluster = c("author", "quarter"),
@@ -275,31 +275,6 @@ for (dep_var in dep_vars) { # nolint
   }
 
   # ------------------------------------------------------------------------
-  # GENERATE TABLES
-  # ------------------------------------------------------------------------
-
-  # import from utils_tables.R
-  source("scripts/authors/ecr/quarterly/utils_tables.R")
-  message("Generating tables")
-  tryCatch(
-    {
-      # Generate tables
-      generate_tables(
-        results = results,
-        dep_vars = dep_var,
-        table_info = table_info,
-        subsets = names(sub_samples),
-        cov_sets = cov_sets,
-        fe_list = fe_list,
-        treat_vars = c(treat_vars_base, treat_vars_with_strong)
-      )
-    },
-    error = function(e) {
-      message("Error in generating tables: ", e$message)
-    }
-  )
-
-  # ------------------------------------------------------------------------
   # GENERATE PLOTS
   # ------------------------------------------------------------------------
 
@@ -339,4 +314,29 @@ for (dep_var in dep_vars) { # nolint
       message("Error in generating tables: ", e$message)
     }
   )
+  # ------------------------------------------------------------------------
+  # GENERATE TABLES
+  # ------------------------------------------------------------------------
+
+  # import from utils_tables.R
+  source("scripts/authors/ecr/quarterly/utils_tables.R")
+  message("Generating tables")
+  tryCatch(
+    {
+      # Generate tables
+      generate_tables(
+        results = results,
+        dep_vars = dep_var,
+        table_info = table_info,
+        subsets = names(sub_samples),
+        cov_sets = cov_sets,
+        fe_list = fe_list,
+        treat_vars = c(treat_vars_base, treat_vars_with_strong)
+      )
+    },
+    error = function(e) {
+      message("Error in generating tables: ", e$message)
+    }
+  )
+
 }
