@@ -107,12 +107,12 @@ papers <- papers %>%
     ),
     num_pdb_submissions = ifelse(pdb_submission > 0, 1, 0),
     ca_count = ifelse(is.na(ca_count), 0, ca_count),
-    fwci = ifelse(is.na(fwci), 0, fwci),
     num_uniprot_structures = ifelse(
       is.na(num_uniprot_structures), 0, num_uniprot_structures
     ),
     num_pdb_ids = ifelse(is.na(num_pdb_ids), 0, num_pdb_ids),
     num_primary_submissions = ifelse(is.na(num_primary_submissions), 0, num_primary_submissions), # nolint
+    mesh_C = ifelse(is.na(mesh_C), 0, mesh_C)
   )
 
 # adding translational variables
