@@ -284,7 +284,7 @@ generate_core_coef_plots <- function(coef_table) { # nolint
           ) + # nolint
           scale_x_continuous(breaks = scales::pretty_breaks(n = 3)) +
           labs( # nolint
-            title = paste("Dependent Variable:", single_dep_var, " | ", field), # nolint
+            title = paste("Dependent Variable:", single_dep_var, " | ", field, " | ", scopesubgroup), # nolint
             x = "Estimate (with 95% CI)",
             y = "Coefficient Variable"
           ) +
@@ -521,11 +521,11 @@ generate_grouped_coef_plots <- function(coef_table) {
   # Prepare the data
   plot_data <- coef_table %>%
     filter(
-      treat_var %in% core_coef_vars,
-      source_origin %in% names(grouped_observation_labels),
-      dep_var %in% names(dep_var_labels),
-      scope == "scope_All", # Only All scope
-      subgroup == "subgroup_All PDB" # Only All subgroup
+      treat_var %in% core_coef_vars, # nolint
+      source_origin %in% names(grouped_observation_labels), # nolint
+      dep_var %in% names(dep_var_labels), # nolint
+      scope == "scope_All", # nolint
+      subgroup == "subgroup_All PDB" # nolint
     ) %>%
     mutate(
       dep_var = recode(dep_var, !!!dep_var_labels),
@@ -535,33 +535,33 @@ generate_grouped_coef_plots <- function(coef_table) {
       treat_var = recode(treat_var, !!!coef_labels)
     ) %>%
     filter(
-      n_obs >= 1000,
-      estimate >= -10,
-      estimate <= 10
+      n_obs >= 1000, # nolint
+      estimate >= -10, # nolint
+      estimate <= 10 # nolint
     )
 
   # Generate plot for each source origin
   for (source in unique(plot_data$source_origin)) {
     for (ufield in unique(plot_data$field)) {
       source_data <- plot_data %>%
-        filter(source_origin == source, field == ufield)
+        filter(source_origin == source, field == ufield) # nolint
 
       # Create faceted plot
       grouped_plot <- ggplot(
         source_data,
-        aes(x = estimate, y = treat_var)
+        aes(x = estimate, y = treat_var) # nolint
       ) +
         geom_point(size = 12) +
         geom_errorbarh(
           aes(
-            xmin = estimate - 1.645 * std_error,
-            xmax = estimate + 1.645 * std_error
+            xmin = estimate - 1.645 * std_error, # nolint
+            xmax = estimate + 1.645 * std_error # nolint
           ),
           height = 0,
           linewidth = 2
         ) +
         geom_errorbarh(
-          aes(xmin = conf_low, xmax = conf_high),
+          aes(xmin = conf_low, xmax = conf_high), # nolint
           height = 0.4,
           linewidth = 1.2
         ) +
@@ -595,7 +595,7 @@ generate_grouped_coef_plots <- function(coef_table) {
             linewidth = 1
           ),
           panel.grid.major.x = element_line(linewidth = 1.2, color = "grey"),
-          panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+          panel.border = element_rect(color = "black", fill = NA, linewidth = 1), # nolint
           panel.spacing = unit(2, "lines"),
           plot.title = element_text(size = 102, face = "bold"),
           plot.margin = margin(1, 1, 1, 1, "cm")
@@ -603,7 +603,7 @@ generate_grouped_coef_plots <- function(coef_table) {
 
       # Add observation counts
       grouped_plot <- grouped_plot + geom_text(
-        aes(label = paste0("n = ", n_obs), x = Inf, y = -Inf), # Move x, y into aes()
+        aes(label = paste0("n = ", n_obs), x = Inf, y = -Inf), # nolint
         hjust = 1.1,
         vjust = -0.5,
         size = 24
@@ -641,15 +641,15 @@ generate_grouped_coef_plots <- function(coef_table) {
 
 
 # --- Function to generate grouped coefficient plots ---
-generate_grouped_highpdb_coef_plots <- function(coef_table) {
+generate_grouped_highpdb_coef_plots <- function(coef_table) { # nolint
   # Prepare the data
   plot_data <- coef_table %>%
     filter(
-      treat_var %in% core_coef_vars,
-      source_origin %in% names(grouped_observation_labels),
-      dep_var %in% names(dep_var_labels),
-      scope == "scope_All", # Only All scope
-      subgroup == "subgroup_High PDB" # Only All subgroup
+      treat_var %in% core_coef_vars, # nolint
+      source_origin %in% names(grouped_observation_labels), # nolint
+      dep_var %in% names(dep_var_labels), # nolint
+      scope == "scope_All", # nolint
+      subgroup == "subgroup_High PDB" # nolint
     ) %>%
     mutate(
       dep_var = recode(dep_var, !!!dep_var_labels),
@@ -659,8 +659,8 @@ generate_grouped_highpdb_coef_plots <- function(coef_table) {
       treat_var = recode(treat_var, !!!coef_labels)
     ) %>%
     filter(
-      n_obs >= 1000,
-      estimate >= -10,
+      n_obs >= 1000, # nolint
+      estimate >= -10, # nolint
       estimate <= 10
     )
 
@@ -668,24 +668,24 @@ generate_grouped_highpdb_coef_plots <- function(coef_table) {
   for (source in unique(plot_data$source_origin)) {
     for (ufield in unique(plot_data$field)) {
       source_data <- plot_data %>%
-        filter(source_origin == source, field == ufield)
+        filter(source_origin == source, field == ufield) # nolint
 
       # Create faceted plot
       grouped_plot <- ggplot(
         source_data,
-        aes(x = estimate, y = treat_var)
+        aes(x = estimate, y = treat_var) # nolint
       ) +
         geom_point(size = 12) +
         geom_errorbarh(
           aes(
-            xmin = estimate - 1.645 * std_error,
+            xmin = estimate - 1.645 * std_error, # nolint
             xmax = estimate + 1.645 * std_error
           ),
           height = 0,
           linewidth = 2
         ) +
         geom_errorbarh(
-          aes(xmin = conf_low, xmax = conf_high),
+          aes(xmin = conf_low, xmax = conf_high), # nolint
           height = 0.4,
           linewidth = 1.2
         ) +
@@ -697,7 +697,7 @@ generate_grouped_highpdb_coef_plots <- function(coef_table) {
         ) +
         scale_x_continuous(breaks = scales::pretty_breaks(n = 3)) +
         labs(
-          title = paste("Coefficient Estimates for", source, "| High PDB |", ufield),
+          title = paste("Coefficient Estimates for", source, "| High PDB |", ufield), # nolint
           x = "Estimate (with 95% CI)",
           y = "Coefficient Variable"
         ) +
@@ -719,7 +719,7 @@ generate_grouped_highpdb_coef_plots <- function(coef_table) {
             linewidth = 1
           ),
           panel.grid.major.x = element_line(linewidth = 1.2, color = "grey"),
-          panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+          panel.border = element_rect(color = "black", fill = NA, linewidth = 1), # nolint
           panel.spacing = unit(2, "lines"),
           plot.title = element_text(size = 102, face = "bold"),
           plot.margin = margin(1, 1, 1, 1, "cm")
@@ -727,7 +727,7 @@ generate_grouped_highpdb_coef_plots <- function(coef_table) {
 
       # Add observation counts
       grouped_plot <- grouped_plot + geom_text(
-        aes(label = paste0("n = ", n_obs), x = Inf, y = -Inf), # Move x, y into aes()
+        aes(label = paste0("n = ", n_obs), x = Inf, y = -Inf), # nolint
         hjust = 1.1,
         vjust = -0.5,
         size = 24
@@ -770,11 +770,11 @@ generate_grouped_strong_coef_plots <- function(coef_table) {
   # Prepare the data
   plot_data <- coef_table %>%
     filter(
-      treat_var %in% strong_coef_vars,
-      source_origin %in% names(grouped_observation_labels),
-      dep_var %in% names(dep_var_labels),
-      scope == "scope_Intent", # Only All scope
-      subgroup == "subgroup_All PDB" # Only All subgroup
+      treat_var %in% strong_coef_vars, # nolint
+      source_origin %in% names(grouped_observation_labels), # nolint
+      dep_var %in% names(dep_var_labels), # nolint
+      scope == "scope_Intent", # nolint
+      subgroup == "subgroup_All PDB" # nolint
     ) %>%
     mutate(
       dep_var = recode(dep_var, !!!dep_var_labels),
@@ -784,8 +784,8 @@ generate_grouped_strong_coef_plots <- function(coef_table) {
       treat_var = recode(treat_var, !!!coef_labels)
     ) %>%
     filter(
-      n_obs >= 1000,
-      estimate >= -10,
+      n_obs >= 1000, # nolint
+      estimate >= -10, # nolint
       estimate <= 10
     )
 
@@ -793,24 +793,24 @@ generate_grouped_strong_coef_plots <- function(coef_table) {
   for (source in unique(plot_data$source_origin)) {
     for (ufield in unique(plot_data$field)) {
       source_data <- plot_data %>%
-        filter(source_origin == source, field == ufield)
+        filter(source_origin == source, field == ufield) # nolint
 
       # Create faceted plot
       grouped_plot <- ggplot(
         source_data,
-        aes(x = estimate, y = treat_var)
+        aes(x = estimate, y = treat_var) # nolint
       ) +
         geom_point(size = 12) +
         geom_errorbarh(
           aes(
-            xmin = estimate - 1.645 * std_error,
+            xmin = estimate - 1.645 * std_error, # nolint
             xmax = estimate + 1.645 * std_error
           ),
           height = 0,
           linewidth = 2
         ) +
         geom_errorbarh(
-          aes(xmin = conf_low, xmax = conf_high),
+          aes(xmin = conf_low, xmax = conf_high), # nolint
           height = 0.4,
           linewidth = 1.2
         ) +
@@ -844,7 +844,7 @@ generate_grouped_strong_coef_plots <- function(coef_table) {
             linewidth = 1
           ),
           panel.grid.major.x = element_line(linewidth = 1.2, color = "grey"),
-          panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+          panel.border = element_rect(color = "black", fill = NA, linewidth = 1), # nolint
           panel.spacing = unit(2, "lines"),
           plot.title = element_text(size = 102, face = "bold"),
           plot.margin = margin(1, 1, 1, 1, "cm")
@@ -852,7 +852,7 @@ generate_grouped_strong_coef_plots <- function(coef_table) {
 
       # Add observation counts
       grouped_plot <- grouped_plot + geom_text(
-        aes(label = paste0("n = ", n_obs), x = Inf, y = -Inf), # Move x, y into aes()
+        aes(label = paste0("n = ", n_obs), x = Inf, y = -Inf), # nolint
         hjust = 1.1,
         vjust = -0.5,
         size = 24
