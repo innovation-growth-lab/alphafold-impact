@@ -15,6 +15,10 @@ from .nodes import (
     get_baseline_citation_intent_from_oa_dataset,
     get_baseline_seed_intent,
 )
+from .nodes_bulk import (
+    get_s2_presigned_urls,
+    get_s2_bulk_data,
+)
 
 
 def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
@@ -91,9 +95,29 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
         tags=["data_collection_s2"],
     )
 
+    bulk_data_pipeline = pipeline(
+        [
+            node(
+                func=get_s2_presigned_urls,
+                inputs={
+                    "bulk_url": "params:s2.data_collection.strength.api.bulk_url",
+                    "api_key": "params:s2.data_collection.strength.api.key",
+                },
+                outputs="s2.data_collection.strength.api.bulk_urls",
+            ),
+            node(
+                func=get_s2_bulk_data,
+                inputs="s2.data_collection.strength.api.bulk_urls",
+                outputs="s2.data_collection.strength.api.bulk_data",
+                name="fetch_s2_bulk_data",
+            ),
+        ],
+        tags=["bulk_data_s2"],
+    )
     return (
         primary_data_intent_pipeline
         + baseline_seed_pipeline
         + ct_sb_data_intent_pipeline
         + other_sb_data_intent_pipeline
+        + bulk_data_pipeline
     )

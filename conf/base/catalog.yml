@@ -131,7 +131,11 @@ oa.data_processing.depth.ct.primary:
 
 oa.data_processing.depth.other.primary:
   <<: *_pq
-  filepath: s3://igl-alphafold/oct/03_primary/oa/works/depth/other/main.parquet
+  filepath: s3://igl-alphafold/2025Q1/03_primary/oa/works/depth/other/main.parquet
+
+s2.data_collection.strength.api.bulk_data:
+  <<: *_pq_ptd
+  path: s3://igl-alphafold/2025Q1/01_raw/s2/strength/bulk_data/
 
 # -------------------------------------------------------------
 
