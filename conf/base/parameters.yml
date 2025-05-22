@@ -345,14 +345,15 @@ s2:
       af_paper: W3177828909
       af_doi: 10.1038/s41586-021-03819-2
       api:
-        key: 4xdrZY4Ukp2YvjViW2jiT1wIjKCme2AXvQGWQJJi # bse
+        # key: 4xdrZY4Ukp2YvjViW2jiT1wIjKCme2AXvQGWQJJi # bse
         # key: 0lnUkuBhBJ8NUT2RxpK9j82yWGfUL2I81UmlwN6b # nesta
+        key: vOdbPkueUl7rY41Swx6DB8TP0e3Quf1T2UETSpYt # upf
         base_url: https://api.semanticscholar.org/graph/v1/paper
         cites: citations
         cited_by: references
         fields:
           - externalIds
-          - contextsWithIntent
+          - intents
           - isInfluential
         perpage: 500
       min_level: 0

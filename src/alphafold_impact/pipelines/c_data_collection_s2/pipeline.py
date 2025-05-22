@@ -12,6 +12,7 @@ To run this pipeline, use the following command:
 from kedro.pipeline import Pipeline, node, pipeline
 from .nodes import (
     get_citation_intent_from_oa_dataset,
+    process_citation_levels,
     get_baseline_citation_intent_from_oa_dataset,
     get_baseline_seed_intent,
 )
@@ -34,8 +35,17 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                     "api_key": "params:s2.data_collection.strength.api.key",
                     "perpage": "params:s2.data_collection.strength.api.perpage",
                 },
-                outputs="oa.data_processing.depth.af.primary",
+                outputs="s2.af.intents.intermediate",
                 name="fetch_s2_citation_intent_af"
+            ),
+            node(
+                func=process_citation_levels,
+                inputs={
+                    "oa_dataset": "oa.data_processing.depth.intermediate",
+                    "levels": "s2.af.intents.intermediate"
+                },
+                outputs="oa.data_processing.depth.af.primary",
+                name="process_s2_citation_intent_af",
             ),
         ],
         tags=["data_collection_s2"],

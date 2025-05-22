@@ -119,11 +119,17 @@ oa.data_processing.structural_biology.depth.other.intermediate:
   
 oa.data_processing.structural_biology.depth.ct.intermediate:
   <<: *_pq
-  filepath: s3://igl-alphafold/oct/02_intermediate/oa/works/depth/subfield/structural_biology/ct.parquet
+  filepath: s3://igl-alphafold/2025Q1/02_intermediate/oa/works/depth/subfield/structural_biology/ct.parquet
+
+# S2 ----------------------------------------------------------------
+
+s2.af.intents.intermediate:
+  <<: *_pq_ptd
+  path: s3://igl-alphafold/2025Q1/02_intermediate/s2/af/intents/
 
 oa.data_processing.depth.af.primary:
   <<: *_pq
-  filepath: s3://igl-alphafold/oct/03_primary/oa/works/depth/main_all.parquet
+  filepath: s3://igl-alphafold/2025Q1/03_primary/oa/works/depth/main_all.parquet
   
 oa.data_processing.depth.ct.primary:
   <<: *_pq
