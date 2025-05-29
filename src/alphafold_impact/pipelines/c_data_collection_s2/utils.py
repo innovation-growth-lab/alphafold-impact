@@ -414,3 +414,56 @@ def process_intent_citations(
                 )
 
     return rows
+
+
+def create_parent_child_df(oa_dataset: pd.DataFrame) -> pd.DataFrame:
+    """
+    Create a parent-child dataframe from the oa_dataset.
+
+    Args:
+        oa_dataset (pd.DataFrame): The dataset containing the works to process.
+
+    Returns:
+        pd.DataFrame: The parent-child dataframe.
+    """
+    # if level is str, convert to int with "seed" as -1
+    oa_dataset["level"] = oa_dataset["level"].apply(
+        lambda x: -1 if x == "seed" else int(x)
+    )
+
+    # Create a mapping from id to doi and pmid for each level
+    oa_dataset["parent_level"] = oa_dataset["level"] - 1
+
+    oa_dataset = pd.merge(
+        oa_dataset,
+        oa_dataset,
+        left_on=["parent_id", "parent_level"],
+        right_on=["id", "level"],
+        how="left",
+        suffixes=("", "_parent"),
+    )
+    oa_dataset.rename(
+        columns={"doi_parent": "parent_doi", "pmid_parent": "parent_pmid"}, inplace=True
+    )
+
+    # drop the other _parent columns
+    oa_dataset.drop(
+        columns=[col for col in oa_dataset.columns if "_parent" in col], inplace=True
+    )
+
+    # create a dictionary to map parent_id to DOI and PMID
+    parent_info = {
+        "W3177828909": {"doi": "10.1038/s41586-021-03819-2", "pmid": "34265844"},
+        "W3211795435": {"doi": "10.1093/nar/gkab1061", "pmid": "34791371"},
+        "W3202105508": {"doi": "10.1101/2021.10.04.463034", "pmid": None},
+    }
+
+    # replace the values in the 'parent_doi' and 'parent_pmid' columns when level is 0
+    oa_dataset.loc[oa_dataset["level"] == 0, "parent_doi"] = oa_dataset.loc[
+        oa_dataset["level"] == 0, "parent_id"
+    ].map(lambda x: parent_info[str(x)]["doi"])
+    oa_dataset.loc[oa_dataset["level"] == 0, "parent_pmid"] = oa_dataset.loc[
+        oa_dataset["level"] == 0, "parent_id"
+    ].map(lambda x: parent_info[str(x)]["pmid"])
+
+    return oa_dataset
