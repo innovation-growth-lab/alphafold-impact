@@ -141,7 +141,7 @@ s2.baseline.other.intents.intermediate:
 
 oa.data_processing.depth.af.primary:
   <<: *_pq
-  filepath: s3://igl-alphafold/2025Q1/03_primary/oa/works/depth/main_all.parquet
+  filepath: s3://igl-alphafold/2025Q1/03_primary/oa/works/depth/af/main.parquet
   
 oa.data_processing.depth.ct.primary:
   <<: *_pq
