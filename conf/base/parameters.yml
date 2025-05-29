@@ -349,6 +349,7 @@ s2:
         # key: 0lnUkuBhBJ8NUT2RxpK9j82yWGfUL2I81UmlwN6b # nesta
         key: vOdbPkueUl7rY41Swx6DB8TP0e3Quf1T2UETSpYt # upf
         base_url: https://api.semanticscholar.org/graph/v1/paper
+        bulk_url: https://api.semanticscholar.org/datasets/v1/release/latest/dataset/citations
         cites: citations
         cited_by: references
         fields:
@@ -419,7 +420,7 @@ labs:
       protein_design: True
       biochemistry: True
       bioinformatics: True
-    from_date: "2015-01-01"
+    from_date: "2010-01-01"
     api:
       mailto: data_analytics@nesta.org.uk
       perpage: "200"
@@ -432,7 +433,7 @@ ecr:
     from_author_date: "2017-01-01"
     to_author_date: "2019-12-31"
     from_ecr_date: "2020-01-01"
-    from_nonecr_date: "2018-01-01"
+    from_nonecr_date: "2014-12-31"
     api:
       mailto: innovationgrowthlab@nesta.org.uk
       perpage: "200"
