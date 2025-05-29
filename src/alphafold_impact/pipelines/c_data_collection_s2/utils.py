@@ -1,15 +1,27 @@
+"""Utility functions for asynchronous citation data collection from Semantic Scholar.
+
+This module provides the core functionality for making rate-limited API calls to
+Semantic Scholar and processing the responses. It handles both forward citations
+and references with proper error handling and retries.
+"""
+
+import logging
 import asyncio
+from typing import Sequence, Dict, Union, List, Any
 import aiohttp
 import pandas as pd
-from typing import Sequence, Dict, Union, List, Any
 from tqdm import tqdm
-import logging
 
 logger = logging.getLogger(__name__)
 
 
 class RateLimiter:
-    """Rate limiter that ensures minimum delay between operations."""
+    """
+    Rate limiter that ensures minimum delay between operations.
+    This of course renders the async version of the function synchronous,
+    but we could request higher throughput - at which point we would want async, so
+    infrastructure-wise we keep the pipeline async.
+    """
 
     def __init__(self, calls_per_second: float = 1.0):
         self.min_interval = 1.0 / calls_per_second
@@ -37,7 +49,21 @@ async def fetch_citation_details_async(
     rate_limiter: RateLimiter,
     perpage: int = 500,
 ) -> Sequence[Dict[str, str]]:
-    """Async version of fetch_citation_details with rate limiting and retries."""
+    """Fetch citation details asynchronously with rate limiting and retries.
+
+    Args:
+        work_id (str): The ID of the work to fetch citations for.
+        base_url (str): Base URL for the API endpoint.
+        direction (str): Direction of citations ('references' or 'citations').
+        fields (Sequence[str]): Fields to include in the response.
+        api_key (str): API key for authentication.
+        session (aiohttp.ClientSession): HTTP session for making requests.
+        rate_limiter (RateLimiter): Rate limiter instance to control request frequency.
+        perpage (int, optional): Number of results per page. Defaults to 500.
+
+    Returns:
+        Sequence[Dict[str, str]]: List of citation details dictionaries.
+    """
     offset = 0
     data_list = []
     max_retries = 5
@@ -51,7 +77,7 @@ async def fetch_citation_details_async(
         )
 
         for attempt in range(max_retries):
-            # Wait for rate limit BEFORE making request
+            # wait for rate limit
             await rate_limiter.acquire()
 
             try:
@@ -132,7 +158,27 @@ async def iterate_citation_detail_points_async(
     rate_limiter: RateLimiter,
     **kwargs,
 ) -> Dict[str, Union[str, Sequence[Dict[str, Any]]]]:
-    """Async version of iterate_citation_detail_points with rate limiting."""
+    """Async version of iterate_citation_detail_points with rate limiting.
+
+    Args:
+        oa (str): The ID of the work to fetch citations for.
+        parent_doi (str): The DOI of the parent work.
+        doi (str): The DOI of the child work.
+        parent_pmid (str): The PMID of the parent work.
+        pmid (str): The PMID of the child work.
+        direction (str): Direction of citations ('references' or 'citations').
+        session (aiohttp.ClientSession): HTTP session for making requests.
+        pbar (tqdm): Progress bar for tracking progress.
+        rate_limiter (RateLimiter): Rate limiter instance to control request frequency.
+        **kwargs: Additional keyword arguments.
+
+    Returns:
+        Dict[str, Union[str, Sequence[Dict[str, Any]]]]: Dictionary containing
+            the citation details.
+
+    Raises:
+        Exception: If there is an error fetching the citation details.
+    """
     logger.debug("Fetching citation details for %s", oa)
 
     for prefix, id_ in [("DOI:", doi), ("PMID:", pmid)]:
@@ -166,7 +212,7 @@ async def iterate_citation_detail_points_async(
                 pbar.update(1)
                 return data
 
-        except Exception as e:
+        except Exception as e:  # pylint: disable=W0718
             logger.error("Failed to fetch citation details for %s: %s", work_id, str(e))
 
     pbar.update(1)
@@ -177,7 +223,15 @@ async def get_intent_level_0_async(
     oa_dataset: pd.DataFrame,
     **kwargs,
 ) -> pd.DataFrame:
-    """Async version of get_intent_level_0 - queries references from each child paper."""
+    """Async version of get_intent_level_0 - queries references from each child paper.
+
+    Args:
+        oa_dataset (pd.DataFrame): The dataset containing the works to process.
+        **kwargs: Additional keyword arguments.
+
+    Returns:
+        pd.DataFrame: The processed dataset containing the references.
+    """
     inputs = (
         oa_dataset[oa_dataset["level"] == 0]
         .apply(
@@ -185,7 +239,7 @@ async def get_intent_level_0_async(
             axis=1,
         )
         .tolist()
-    )[:30]
+    )
 
     rate_limiter = RateLimiter(calls_per_second=1.0)
     connector = aiohttp.TCPConnector(limit=5)
@@ -227,17 +281,28 @@ async def get_intent_level_0_async(
 
 async def get_intent_level_n_async(
     oa_dataset: pd.DataFrame,
-    level: int,
+    level: Union[int, None],
     **kwargs,
 ) -> pd.DataFrame:
-    """Async version of get_intent_level for levels > 0 - queries forward citations."""
-    level_data = oa_dataset[oa_dataset["level"] == level]
+    """Async version of get_intent_level for levels > 0 - queries forward citations.
+
+    Args:
+        oa_dataset (pd.DataFrame): The dataset containing the works to process.
+        level (Union[int, None]): The level of the intent to process. If None, process all levels.
+        **kwargs: Additional keyword arguments.
+
+    Returns:
+        pd.DataFrame: The processed dataset containing the forward citations.
+    """
+    level_data = (
+        oa_dataset if level is None else oa_dataset[oa_dataset["level"] == level]
+    )
     level_data = level_data.drop_duplicates(subset="parent_id")
 
     inputs = level_data.apply(
         lambda x: (x["parent_id"], "", x["parent_doi"], "", x["parent_pmid"]),
         axis=1,
-    ).tolist()[:30]
+    ).tolist()
 
     rate_limiter = RateLimiter(calls_per_second=1.0)
     connector = aiohttp.TCPConnector(limit=5)
@@ -245,7 +310,11 @@ async def get_intent_level_n_async(
 
     async with aiohttp.ClientSession(connector=connector, timeout=timeout) as session:
         pbar = tqdm(
-            total=len(inputs), desc=f"Processing Level {level} (forward citations)"
+            total=len(inputs),
+            desc=(
+                f"Processing {'All Levels' if level is None else f'Level {level}'} "
+                "(forward citations)"
+            ),
         )
         tasks = [
             iterate_citation_detail_points_async(
@@ -331,14 +400,14 @@ def process_intent_citations(
             external_ids = output.get("citingPaper", {}).get("externalIds", {})
             if not external_ids:
                 continue
-            doi = external_ids.get("DOI", "")
-            pmid = external_ids.get("PubMed", "")
+            child_doi = external_ids.get("DOI", "")
+            child_pmid = external_ids.get("PubMed", "")
             for intent in intent_groups:
                 rows.append(
                     [
                         parent_doi,
-                        pmid,
-                        doi,
+                        child_pmid,
+                        child_doi,
                         influential,
                         intent,
                     ]
