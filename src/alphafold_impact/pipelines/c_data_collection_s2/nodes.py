@@ -149,6 +149,7 @@ def process_citation_levels(
             "authorships",
             "parent_level",
             "strength",
+            "influential",
             "topics",
             "concepts",
         ]
