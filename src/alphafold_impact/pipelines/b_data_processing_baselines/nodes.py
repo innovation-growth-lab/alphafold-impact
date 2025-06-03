@@ -83,7 +83,7 @@ def process_baseline_data(
 
     logger.info("Creating dictionaries for doi matching")
     processed_grouped_data_doi = (
-        intent_data.groupby(["parent_doi", "doi"])[["influential", "intent", "context"]]
+        intent_data.groupby(["parent_doi", "doi"])[["influential", "intent"]]
         .apply(lambda x: x.to_dict(orient="records"))
         .reset_index()
         .rename(columns={0: "strength"})
@@ -92,7 +92,7 @@ def process_baseline_data(
     logger.info("Creating dictionaries for pmid matching")
     processed_grouped_data_pmid = (
         intent_data.groupby(["parent_doi", "pmid"])[
-            ["influential", "intent", "context"]
+            ["influential", "intent"]
         ]
         .apply(lambda x: x.to_dict(orient="records"))
         .reset_index()
@@ -132,7 +132,7 @@ def process_baseline_data(
     logger.info("Remove citation links with no strength")
     processed_data.dropna(subset=["strength"], inplace=True)
 
-    for col in ["intent", "context"]:
+    for col in ["intent"]:
         logger.info("Extracting %s from citation links", col)
         processed_data[col] = processed_data["strength"].apply(
             lambda x: x[col] if x else None  # pylint: disable=cell-var-from-loop
@@ -201,6 +201,13 @@ def process_baseline_data(
         processed_data.groupby("parent_id")["intent"].count().reset_index()["intent"]
     )
 
+    # also the proportion of influential citations (vals are True and False)
+    baseline_agg["influential"] = (
+        processed_data.groupby("parent_id")["influential"]
+        .mean()
+        .reset_index()["influential"]
+    )
+
     # add parent_pp_topic, parent_protein_concept, parent_ai_concept
     baseline_agg = baseline_agg.merge(
         processed_data.groupby("parent_id")[
@@ -258,7 +265,7 @@ def process_af_data(alphafold_data: pd.DataFrame) -> pd.DataFrame:
     # logger.info("Remove citation links with no strength")
     processed_alphafold.dropna(subset=["strength"], inplace=True)
 
-    for col in ["intent", "context"]:
+    for col in ["intent"]:
         logger.info("Extracting %s from citation links", col)
         processed_alphafold[col] = processed_alphafold["strength"].apply(
             lambda x: x[col] if x else None  # pylint: disable=cell-var-from-loop
@@ -297,6 +304,13 @@ def process_af_data(alphafold_data: pd.DataFrame) -> pd.DataFrame:
         .reset_index()["intent"]
     )
 
+    # also the proportion of influential citations (vals are True and False)
+    alphafold_target["influential"] = (
+        processed_alphafold.groupby("parent_id")["influential"]
+        .mean()
+        .reset_index()["influential"]
+    )
+
     return alphafold_target
 
 
@@ -319,8 +333,8 @@ def assign_focal_label(
     for _, row1 in baseline_candidates.iterrows():
         row_distance = []
         for _, row2 in alphafold_target.iterrows():
-            baseline_r = np.array([row1["result"], row1["methodology"]])
-            alphafold_r = np.array([row2["result"], row2["methodology"]])
+            baseline_r = np.array([row1["result"], row1["methodology"], row1["influential"]])
+            alphafold_r = np.array([row2["result"], row2["methodology"], row2["influential"]])
             distance = euclidean(baseline_r, alphafold_r)
             row_distance.append(distance)
         distances.append(row_distance)
@@ -329,7 +343,7 @@ def assign_focal_label(
     baseline_candidates["distance"] = np.mean(distances, axis=1)
 
     # drop any row with a distance larger than the quantile of the distances
-    threshold = baseline_candidates["distance"].quantile(0.35)
+    threshold = baseline_candidates["distance"].quantile(0.5)
     baseline_candidates_thresholded = baseline_candidates[
         baseline_candidates["distance"] < threshold
     ]
