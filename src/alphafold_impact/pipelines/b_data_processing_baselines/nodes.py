@@ -221,7 +221,7 @@ def process_baseline_data(
     # get candidates: more than 50 num_citations
     baseline_candidates = baseline_agg[baseline_agg["num_citations"] > 50]
 
-    # manually remove past matches deemed not suitable W2973523639, W2984761660, W2999044305, W3104537585, W3110645309, W3199799076
+    # manually remove past matches deemed not suitable 
     baseline_candidates = baseline_candidates[
         ~baseline_candidates["parent_id"].isin(
             [
@@ -333,8 +333,8 @@ def assign_focal_label(
     for _, row1 in baseline_candidates.iterrows():
         row_distance = []
         for _, row2 in alphafold_target.iterrows():
-            baseline_r = np.array([row1["result"], row1["methodology"], row1["influential"]])
-            alphafold_r = np.array([row2["result"], row2["methodology"], row2["influential"]])
+            baseline_r = np.array([row1["result"], row1["methodology"]])
+            alphafold_r = np.array([row2["result"], row2["methodology"]])
             distance = euclidean(baseline_r, alphafold_r)
             row_distance.append(distance)
         distances.append(row_distance)
