@@ -248,3 +248,25 @@ def _process_flatten_dict(child_papers_dict: Dict[str, any]) -> Dict[str, any]:
             source.get("publication_date", "0") >= "2021-01-01" for source in sources
         )
     }
+
+def preprocess_ct_level1_data(
+    data: AbstractDataset, alphafold_papers: List[str]
+) -> List[str]:
+    """
+    Preprocesses the baseline data by extracting the paper IDs from the given dataset
+    and removing the IDs that are present in the `alphafold_papers` list.
+
+    Args:
+        data (AbstractDataset): The dataset containing the JSON data.
+        alphafold_papers (List[str]): The list of paper IDs to be excluded.
+
+    Returns:
+        List[str]: The list of paper IDs after preprocessing.
+
+    """
+    level_1_data = data.loc[data["level"] == "1"]
+    seed_papers = set(level_1_data["id"].str.replace("https://openalex.org/", ""))
+    seen_papers = set(level_1_data["parent_id"].str.replace("https://openalex.org/", ""))
+    seed_papers -= set(alphafold_papers)
+    seen_papers -= set(alphafold_papers)
+    return list(seed_papers), list(seen_papers)

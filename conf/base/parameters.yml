@@ -37,7 +37,10 @@ oa:
       api: *api
       get: *get
       filter: cites
-      max_depth: 2
+      af:
+        max_depth: 2
+      sb:
+        max_depth: 1
       levels:
         0: 0
         1: 1

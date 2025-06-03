@@ -65,6 +65,10 @@ oa.data_processing.structural_biology.depth.reassigned.ct.intermediate:
   <<: *_pq
   filepath: s3://igl-alphafold/2025Q1/02_intermediate/oa/works/depth/subfield/structural_biology/reassigned_ct.parquet
 
+oa.data_collection.subfield.ct.depth.2.ptd.intermediate:
+  <<: *_pq_ptd
+  path: s3://igl-alphafold/2025Q1/02_intermediate/oa/works/depth/subfield/structural_biology/level/2/ct_ptd/
+
 oa.data_processing.depth.level.0.baseline.primary:
   <<: *_pq
   filepath: s3://igl-alphafold/2025Q1/03_primary/oa/works/depth/baseline/level/0/main.parquet
@@ -77,17 +81,13 @@ oa.data_collection.subfield.structural_biology.depth.1.intermediate:
   <<: *_pq
   filepath: s3://igl-alphafold/2025Q1/02_intermediate/oa/works/depth/subfield/structural_biology/level/1/main.parquet
 
-oa.data_collection.subfield.structural_biology.depth.2.intermediate:
-  <<: *_pq
-  filepath: s3://igl-alphafold/2025Q1/02_intermediate/oa/works/depth/subfield/structural_biology/level/2/main.parquet
-
 oa.data_collection.subfield.structural_biology.depth.1.ptd.intermediate:
   <<: *_pq_ptd
   path: s3://igl-alphafold/2025Q1/02_intermediate/oa/works/depth/subfield/structural_biology/level/1/ptd/
 
-oa.data_collection.subfield.structural_biology.depth.2.ptd.intermediate:
-  <<: *_pq_ptd
-  path: s3://igl-alphafold/2025Q1/02_intermediate/oa/works/depth/subfield/structural_biology/level/2/ptd/
+# oa.data_collection.subfield.structural_biology.depth.2.ptd.intermediate:
+#   <<: *_pq_ptd
+#   path: s3://igl-alphafold/2025Q1/02_intermediate/oa/works/depth/subfield/structural_biology/level/2/ptd/
 
 oa.data_processing.depth.0.intermediate:
   <<: *_pq
