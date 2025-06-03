@@ -164,7 +164,7 @@ def fetch_citation_to_specific_depth(
     if papers_seen is None:
         papers_seen = set()
     processed_papers, papers_to_process, level = (
-        papers_seen,
+        set(papers_seen),
         set(seed_paper),
         start_level,
     )
