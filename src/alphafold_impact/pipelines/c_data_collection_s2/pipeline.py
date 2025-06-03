@@ -62,18 +62,9 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                     "api_key": "params:s2.data_collection.strength.api.key",
                     "perpage": "params:s2.data_collection.strength.api.perpage",
                 },
-                outputs="s2.baseline.seed.intents.intermediate",
-                name="fetch_s2_citation_intent_baseline_seed",
-            ),
-            node(
-                func=process_citation_levels,
-                inputs={
-                    "oa_dataset": "oa.data_processing.subfield.structural_biology.primary",
-                    "levels": "s2.baseline.seed.intents.intermediate",
-                },
                 outputs="oa.data_processing.depth.level.0.baseline.primary",
-                name="process_s2_citation_intent_baseline_seed",
-            ),
+                name="fetch_s2_citation_intent_baseline_seed",
+            )
         ],
         tags=["data_collection_s2_baseline_seed"],
     )

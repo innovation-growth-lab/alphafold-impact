@@ -78,7 +78,6 @@ def process_citation_levels(
     Returns:
         pd.DataFrame: Processed and combined citation data
     """
-    oa_dataset = create_parent_child_df(oa_dataset)
 
     # Read all level data
     level_dfs = {level: loader() for level, loader in levels.items()}
@@ -190,7 +189,7 @@ def get_baseline_seed_intent(
 
     level_df = asyncio.run(get_intent_level_n_async(oa_dataset, None, **kwargs))
     level_df = level_df.replace("", None)
-    yield {"level_0": level_df}
+    return level_df
 
 
 def get_baseline_intent(

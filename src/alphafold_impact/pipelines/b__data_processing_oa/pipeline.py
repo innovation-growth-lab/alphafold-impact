@@ -39,7 +39,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
             )
             for level in settings.DYNAMIC_PIPELINES_MAPPING["depth_levels"]
         ],
-        tags=["data_processing_oa"],
+        tags=["data_processing_oa", "Q1"],
     )
 
     combine_levels_pipeline = pipeline(
@@ -56,7 +56,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 name="combine_af_levels",
             )
         ],
-        tags=["data_processing_oa"],
+        tags=["data_processing_oa", "Q1"],
     )
 
     structural_biology_processing_pieline = pipeline(
@@ -111,7 +111,6 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
         ],
     )
 
-    # from here tomorrow
     reassign_baseline_levels_pipeline = pipeline(
         [
             node(
