@@ -136,7 +136,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 name="extract_ct_sb_levels",
             ),
         ],
-        tags=["data_processing_oa"],
+        tags=["reassign_ct_levels", "ct_collection"],
     )
 
     post_level2_dw_pipeline = pipeline(
@@ -169,7 +169,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
             ),
         ],
         tags=[
-            "data_processing_oa",
+            "collect_new_level_for_ct", "ct_collection"
         ],
     )
 
