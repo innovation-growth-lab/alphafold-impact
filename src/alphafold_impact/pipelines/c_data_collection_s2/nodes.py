@@ -79,6 +79,8 @@ def process_citation_levels(
         pd.DataFrame: Processed and combined citation data
     """
 
+    oa_dataset = create_parent_child_df(oa_dataset)
+
     # Read all level data
     level_dfs = {level: loader() for level, loader in levels.items()}
 
