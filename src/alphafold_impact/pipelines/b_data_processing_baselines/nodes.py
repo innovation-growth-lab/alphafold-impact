@@ -132,7 +132,7 @@ def process_baseline_data(
     logger.info("Remove citation links with no strength")
     processed_data.dropna(subset=["strength"], inplace=True)
 
-    for col in ["intent"]:
+    for col in ["intent", "influential"]:
         logger.info("Extracting %s from citation links", col)
         processed_data[col] = processed_data["strength"].apply(
             lambda x: x[col] if x else None  # pylint: disable=cell-var-from-loop
@@ -265,7 +265,7 @@ def process_af_data(alphafold_data: pd.DataFrame) -> pd.DataFrame:
     # logger.info("Remove citation links with no strength")
     processed_alphafold.dropna(subset=["strength"], inplace=True)
 
-    for col in ["intent"]:
+    for col in ["intent", "influential"]:
         logger.info("Extracting %s from citation links", col)
         processed_alphafold[col] = processed_alphafold["strength"].apply(
             lambda x: x[col] if x else None  # pylint: disable=cell-var-from-loop
