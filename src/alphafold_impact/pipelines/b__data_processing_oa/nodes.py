@@ -253,10 +253,6 @@ def process_data_by_level(data: Dict[str, AbstractDataset], level: int) -> pd.Da
             "concepts",
             "fwci",
             "citation_normalized_percentile_value",
-            "citation_normalized_percentile_is_in_top_1_percent",
-            "citation_normalized_percentile_is_in_top_10_percent",
-            "cited_by_percentile_year_min",
-            "cited_by_percentile_year_max",
         ]
     ]
 
@@ -405,10 +401,6 @@ def process_data_by_level_ptd(
                     "concepts",
                     "fwci",
                     "citation_normalized_percentile_value",
-                    "citation_normalized_percentile_is_in_top_1_percent",
-                    "citation_normalized_percentile_is_in_top_10_percent",
-                    "cited_by_percentile_year_min",
-                    "cited_by_percentile_year_max",
                 ]
             ]
         }
@@ -625,10 +617,6 @@ def process_subfield_data(data: Dict[str, AbstractDataset]) -> pd.DataFrame:
             "topics",
             "fwci",
             "citation_normalized_percentile_value",
-            "citation_normalized_percentile_is_in_top_1_percent",
-            "citation_normalized_percentile_is_in_top_10_percent",
-            "cited_by_percentile_year_min",
-            "cited_by_percentile_year_max",
         ]
     ]
 
