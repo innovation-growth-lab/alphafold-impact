@@ -23,5 +23,5 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                 outputs="raw",
             ),
         ],
-        namespace="pubmed.data_collection.icite.raw",
+        namespace="pubmed.data_collection.icite",
     )
