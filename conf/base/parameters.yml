@@ -210,6 +210,9 @@ pubmed:
       download_url: https://classic.clinicaltrials.gov/AllAPIJSON.zip
       zip_save_path: data/00_tmp/nih_ct.zip
       extract_path: data/01_raw/nih/clinical_trials/
+      api_v2_download_url: https://clinicaltrials.gov/api/v2/studies/download?format=json.zip
+      # zip_v2_save_path: data/01_raw/clinical_trials/clinical_trials_v2.zip
+      # extract_v2_path: data/01_raw/clinical_trials/extracted_v2/
 nih:
   data_collection:
     funded_projects:
