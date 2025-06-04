@@ -36,7 +36,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                     "zip_save_path": "params:zip_save_path", 
                     "extract_path": "params:extract_path",
                 },
-                outputs="raw_v2",
+                outputs="raw",
                 name="collect_clinical_trials_v2",
             ),
             # Legacy node for backward compatibility
