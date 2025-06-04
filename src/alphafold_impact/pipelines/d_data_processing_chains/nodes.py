@@ -14,7 +14,7 @@ from .utils import (
     ensure_levels,
     breaks_chain,
     transform_long,
-    transform_long_pairs
+    transform_long_pairs,
 )
 
 pd.options.mode.copy_on_write = True
@@ -49,7 +49,7 @@ def filter_relevant_citation_links(
     # logger.info("Remove citation links with no strength")
     # depth_data.dropna(subset=["strength"], inplace=True)
 
-    for col in ["intent", "context"]:
+    for col in ["intent"]:
         logger.info("Extracting %s from citation links", col)
         depth_data[col] = depth_data["strength"].apply(
             lambda x: x[col] if x else None  # pylint: disable=cell-var-from-loop
@@ -71,23 +71,19 @@ def filter_relevant_citation_links(
 
     if identifier == "pmid":
         # assign 99999999 PMID to Multimer paper, with OA id W3202105508
-        depth_data.loc[
-            depth_data["parent_id"] == "W3202105508", "parent_pmid"
-        ] = "99999999"
+        depth_data.loc[depth_data["parent_id"] == "W3202105508", "parent_pmid"] = (
+            "99999999"
+        )
 
     logger.info("Filter nulls for relevant identifier %s", identifier)
     depth_data = depth_data[depth_data[identifier].notnull()]
 
     logger.info("Drop duplicates of parent_id, identifier, and intent")
-    depth_data.drop_duplicates(
-        subset=["parent_id", identifier, "intent"], inplace=True
-    )
+    depth_data.drop_duplicates(subset=["parent_id", identifier, "intent"], inplace=True)
 
     output = []
-    seeds = depth_data[depth_data["level"] == 0][
-        f"parent_{identifier}"
-    ].unique()
-    
+    seeds = depth_data[depth_data["level"] == 0][f"parent_{identifier}"].unique()
+
     if len(seeds) == 0:
         # move level up by 1
         depth_data["level"] = depth_data["level"] - 1
@@ -144,7 +140,9 @@ def filter_relevant_citation_links(
         chains_df[f"intent_{i}"] = chains_df[f"intent_{i}"].apply(
             lambda x: "N/A" if x is np.nan else x
         )
-    complete_chains_df = chains_df[~chains_df.apply(lambda row: breaks_chain(row, num_levels), axis=1)]
+    complete_chains_df = chains_df[
+        ~chains_df.apply(lambda row: breaks_chain(row, num_levels), axis=1)
+    ]
 
     # drop rows that have all four intent as nan or N/A
     columns_to_check = (
