@@ -203,13 +203,15 @@ gtr:
       label: projects
 
 # National Institutes of Health (nih) configuration 
-nih:
+pubmed:
   # Data collection parameters
   data_collection:
-    clinical_trials:
+    icite:
       download_url: https://classic.clinicaltrials.gov/AllAPIJSON.zip
       zip_save_path: data/00_tmp/nih_ct.zip
       extract_path: data/01_raw/nih/clinical_trials/
+nih:
+  data_collection:
     funded_projects:
       api_url: 'https://api.reporter.nih.gov/v2/projects/search'
       years:
@@ -220,6 +222,7 @@ nih:
         - 2022
         - 2023
         - 2024
+        - 2025
     funding_opportunities:
       api_url: 'https://search.grants.nih.gov/guide/api/data'
       end_date: '10022024'
@@ -513,20 +516,20 @@ field_all: "field_All Fields"
 cem: "subgroup_All PDB - CEM"
 
 columns:
-  fig_4:
+  fig_4o:
     - "num_publications"
     - "num_uniprot_structures"
     - "num_pdb_ids"
     - "num_primary_submissions"
 
 labels:
-  fig_4:
+  fig_4o:
     num_uniprot_structures: "UniProt Structures"
     num_pdb_ids: "PDB Submissions"
     num_primary_submissions: "Primary UP Submissions"
 
 chart_titles:
-  fig_4:
+  fig_4o:
       - Uniprot Structures per Publication (4Q RA)
       - PDB Submissions per Publication (4Q RA)
       - Primary Submissions per Publication (4Q RA)

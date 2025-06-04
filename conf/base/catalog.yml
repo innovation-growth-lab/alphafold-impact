@@ -209,7 +209,7 @@ nih.data_collection.mesh_terms:
 
 pubmed.data_collection.icite.raw:
   <<: *_csv_ptd
-  path: s3://igl-alphafold/2025Q1/01_raw/icite/icite_feb_2024/
+  path: s3://igl-alphafold/2025Q1/01_raw/icite/
 
 pubmed.data_processing.icite.intermediate:
   <<: *_pq
@@ -477,6 +477,10 @@ fig.3:
 fig.4:
   <<: *_image
   filepath: s3://igl-alphafold/2025Q1/04_output/figures/fig4.png
+
+fig.4o:
+  <<: *_image
+  filepath: s3://igl-alphafold/2025Q1/04_output/figures/fig4o.png
 
 fig.5:
   <<: *_image
