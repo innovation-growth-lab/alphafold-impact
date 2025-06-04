@@ -1,6 +1,6 @@
 """This module contains the pipeline for data processing for OA data.
 
-The pipeline contains nodes for processing data by level, combining data 
+The pipeline contains nodes for processing data by level, combining data
 from different levels, and mesh tagging.
 
 To run this pipeline, use the following command:
@@ -9,7 +9,7 @@ To run this pipeline, use the following command:
 """
 
 from kedro.pipeline import Pipeline, node, pipeline
-from alphafold_impact import settings # pylint: disable=import-error
+from alphafold_impact import settings  # pylint: disable=import-error
 
 from .nodes import (
     process_subfield_data,
@@ -144,33 +144,32 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
             node(
                 func=process_data_by_level_ptd,
                 inputs={
-                    "data": "oa.data_collection.subfield.structural_biology.depth.raw",
+                    "data": "oa.data_collection.structural_biology.depth.ct.2.ptd.raw",
                     "level": "params:oa.data_collection.depth.levels.2",
+                    # HACK: Legacy from when SB had papers to lvl 3, current input only has lvl 2
                 },
-                outputs="oa.data_collection.subfield.structural_biology.depth.2.ptd.intermediate",
+                outputs="oa.data_collection.structural_biology.depth.ct.2.ptd.intermediate",
                 name="process_ct_sb_level_2",
             ),
             node(
                 func=concat_pq_ptd,
                 inputs={
-                    "data": "oa.data_collection.subfield.structural_biology.depth.2.ptd.intermediate",  # pylint: disable=line-too-long
+                    "data": "oa.data_collection.structural_biology.depth.ct.2.ptd.intermediate",
                 },
-                outputs="oa.data_collection.subfield.structural_biology.depth.2.intermediate",
+                outputs="oa.data_collection.structural_biology.depth.ct.2.intermediate",
                 name="concatenate_ct_sb_partitioned",
             ),
             node(
                 func=combine_levels_data_counterfactuals,
                 inputs={
                     "level1": "oa.data_processing.structural_biology.depth.reassigned.ct.intermediate",  # pylint: disable=line-too-long
-                    "level2": "oa.data_collection.subfield.structural_biology.depth.2.intermediate",
+                    "level2": "oa.data_collection.structural_biology.depth.ct.2.intermediate",
                 },
                 outputs="oa.data_processing.structural_biology.depth.ct.intermediate",
                 name="combine_ct_sb_levels",
             ),
         ],
-        tags=[
-            "collect_new_level_for_ct", "ct_collection"
-        ],
+        tags=["collect_new_level_for_ct", "ct_collection"],
     )
 
     return (

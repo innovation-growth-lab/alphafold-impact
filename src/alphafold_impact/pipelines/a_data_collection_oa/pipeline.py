@@ -115,7 +115,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                     "start_level": "params:oa.data_collection.depth.levels.2",
                     "max_depth": "params:oa.data_collection.depth.af.max_depth",
                 },
-                outputs="oa.data_collection.subfield.ct.depth.2.ptd.raw",
+                outputs="oa.data_collection.structural_biology.depth.ct.2.ptd.raw",
                 name="fetch_ct_level1_citation_to_specific_depth",
             ),
         ],
