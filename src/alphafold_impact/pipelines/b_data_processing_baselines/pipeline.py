@@ -1,6 +1,6 @@
 """
-This is a boilerplate pipeline 'data_analysis_chains'
-generated using Kedro 0.19.1
+The poorly named pipeline for processing the structural biology baseline data to extract
+the counterfactual papers to AlphaFold.
 """
 
 from kedro.pipeline import Pipeline, pipeline, node

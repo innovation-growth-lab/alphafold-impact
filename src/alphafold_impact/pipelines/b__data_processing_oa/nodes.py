@@ -4,12 +4,12 @@ The module contains functions to process data by level, fetch additional mesh te
 and combine data from multiple levels.
 
 Functions:
-    - process_data_by_level: Process data by level and return a DataFrame with 
+    - process_data_by_level: Process data by level and return a DataFrame with
         selected columns.
     - fetch_additional_mesh: Fetch additional mesh terms for DOIs in a DataFrame.
-    - combine_levels_data: Combine multiple dataframes into a single dataframe and 
+    - combine_levels_data: Combine multiple dataframes into a single dataframe and
         remove duplicate rows.
-    - process_subfield_data: Process data by level without enriching the data with 
+    - process_subfield_data: Process data by level without enriching the data with
         additional mesh terms.
 """
 
@@ -17,6 +17,7 @@ import logging
 from typing import Dict, Generator, Tuple
 import pandas as pd
 import numpy as np
+from tqdm import tqdm
 from kedro.io import AbstractDataset
 
 logger = logging.getLogger(__name__)
@@ -350,7 +351,7 @@ def combine_levels_data_counterfactuals(unique: str = "all", **kwargs) -> pd.Dat
                 "authorships",
                 "topics",
                 "concepts",
-                "counts_by_year"
+                "counts_by_year",
             ]
         ]
     )
@@ -381,9 +382,10 @@ def process_data_by_level_ptd(
     # Generate data for current level
     data_gen = _data_generator(data, level)
 
-    # Iterate over data batches in current level
-    for i, df_batch in enumerate(data_gen):
-
+    for i, df_batch in enumerate(
+        tqdm(data_gen, total=len(data), desc="Processing data partitions")
+    ):
+        logger.info("Processing data partition: %s / %s", i + 1, len(data))
         yield {
             f"s{i}": df_batch[
                 [
