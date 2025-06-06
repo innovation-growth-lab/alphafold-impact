@@ -93,7 +93,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                 name="process_s2_citation_intent_baseline_ct",
             ),
         ],
-        tags=["data_collection_s2"],
+        tags=["ct_s2_pipeline"],
     )
 
     other_pipeline = pipeline(

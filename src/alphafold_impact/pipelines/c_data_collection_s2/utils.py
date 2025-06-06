@@ -426,29 +426,33 @@ def create_parent_child_df(oa_dataset: pd.DataFrame) -> pd.DataFrame:
     Returns:
         pd.DataFrame: The parent-child dataframe.
     """
+    inner_df = oa_dataset.copy()
     # if level is str, convert to int with "seed" as -1
-    oa_dataset["level"] = oa_dataset["level"].apply(
+    inner_df["level"] = inner_df["level"].apply(
         lambda x: -1 if x == "seed" else int(x)
     )
 
-    # Create a mapping from id to doi and pmid for each level
-    oa_dataset["parent_level"] = oa_dataset["level"] - 1
+    # drop duplicates within level
+    inner_df = inner_df.drop_duplicates(subset=["id", "parent_id", "level"])
 
-    oa_dataset = pd.merge(
-        oa_dataset,
-        oa_dataset,
+    # Create a mapping from id to doi and pmid for each level
+    inner_df["parent_level"] = inner_df["level"] - 1
+
+    inner_df = pd.merge(
+        inner_df,
+        inner_df,
         left_on=["parent_id", "parent_level"],
         right_on=["id", "level"],
         how="left",
         suffixes=("", "_parent"),
     )
-    oa_dataset.rename(
+    inner_df.rename(
         columns={"doi_parent": "parent_doi", "pmid_parent": "parent_pmid"}, inplace=True
     )
 
     # drop the other _parent columns
-    oa_dataset.drop(
-        columns=[col for col in oa_dataset.columns if "_parent" in col], inplace=True
+    inner_df.drop(
+        columns=[col for col in inner_df.columns if "_parent" in col], inplace=True
     )
 
     # create a dictionary to map parent_id to DOI and PMID
@@ -459,8 +463,8 @@ def create_parent_child_df(oa_dataset: pd.DataFrame) -> pd.DataFrame:
     }
 
     # extend parent_info with all entries that have level -1 (seed level)
-    if -1 in oa_dataset["level"].values:
-        seed_entries = oa_dataset[oa_dataset["level"] == -1]
+    if -1 in inner_df["level"].values:
+        seed_entries = inner_df[inner_df["level"] == -1]
         for _, row in seed_entries.iterrows():
             parent_info[str(row["id"])] = {
                 "doi": row["doi"] if pd.notna(row["doi"]) else None,
@@ -468,11 +472,11 @@ def create_parent_child_df(oa_dataset: pd.DataFrame) -> pd.DataFrame:
             }
 
     # replace the values in the 'parent_doi' and 'parent_pmid' columns when level is 0
-    oa_dataset.loc[oa_dataset["level"] == 0, "parent_doi"] = oa_dataset.loc[
-        oa_dataset["level"] == 0, "parent_id"
+    inner_df.loc[inner_df["level"] == 0, "parent_doi"] = inner_df.loc[
+        inner_df["level"] == 0, "parent_id"
     ].map(lambda x: parent_info[str(x)]["doi"])
-    oa_dataset.loc[oa_dataset["level"] == 0, "parent_pmid"] = oa_dataset.loc[
-        oa_dataset["level"] == 0, "parent_id"
+    inner_df.loc[inner_df["level"] == 0, "parent_pmid"] = inner_df.loc[
+        inner_df["level"] == 0, "parent_id"
     ].map(lambda x: parent_info[str(x)]["pmid"])
 
-    return oa_dataset
+    return inner_df

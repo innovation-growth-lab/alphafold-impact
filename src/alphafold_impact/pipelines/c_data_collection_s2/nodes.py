@@ -14,8 +14,11 @@ Functions:
         OA dataset based on the specified level.
     get_citation_intent_from_oa_dataset: Retrieves citation intent data
         from an Open Access dataset.
-    process_intent_references: Process the reference outputs with simplified intents field and generate a list of rows
-        containing relevant information.
+    process_intent_references: Process the reference outputs with simplified intents
+        field and generate a list of rows containing relevant information.
+    process_citation_levels: Process and combine citation data from all levels.
+    get_baseline_seed_intent: Retrieves the seed intent data from the given baseline OA dataset.
+    get_baseline_intent: Retrieves citation intent data for other baseline papers.
 """
 
 import logging
@@ -234,14 +237,13 @@ def get_baseline_intent(
     )
 
     # Create task definitions for all levels
-    task_definitions = [
-        lambda: get_intent_level_n_async(oa_dataset, 1, **kwargs),
-        lambda: get_intent_level_n_async(oa_dataset, 2, **kwargs),
-    ]
+    task_definitions = {
+        "level_1": lambda: get_intent_level_n_async(oa_dataset, 1, **kwargs),
+        "level_2": lambda: get_intent_level_n_async(oa_dataset, 2, **kwargs),
+    }
 
     # Process tasks as they complete
-    for i, task_def in enumerate(task_definitions):
-        level_name = f"level_{i+1}"  # Start from level 1
+    for level_name, task_def in task_definitions.items():
         level_df = asyncio.run(task_def())
         level_df = level_df.replace("", None)
         yield {level_name: level_df}
