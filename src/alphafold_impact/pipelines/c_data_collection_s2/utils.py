@@ -458,6 +458,15 @@ def create_parent_child_df(oa_dataset: pd.DataFrame) -> pd.DataFrame:
         "W3202105508": {"doi": "10.1101/2021.10.04.463034", "pmid": None},
     }
 
+    # extend parent_info with all entries that have level -1 (seed level)
+    if -1 in oa_dataset["level"].values:
+        seed_entries = oa_dataset[oa_dataset["level"] == -1]
+        for _, row in seed_entries.iterrows():
+            parent_info[str(row["id"])] = {
+                "doi": row["doi"] if pd.notna(row["doi"]) else None,
+                "pmid": row["pmid"] if pd.notna(row["pmid"]) else None,
+            }
+
     # replace the values in the 'parent_doi' and 'parent_pmid' columns when level is 0
     oa_dataset.loc[oa_dataset["level"] == 0, "parent_doi"] = oa_dataset.loc[
         oa_dataset["level"] == 0, "parent_id"
