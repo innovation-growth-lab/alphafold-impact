@@ -16,6 +16,7 @@ def create_pipeline(**kwargs) -> Pipeline: # pylint: disable=unused-argument&mis
                 func=filter_and_combine_icite,
                 inputs="pubmed.data_collection.icite.raw",
                 outputs="pubmed.data_processing.icite.intermediate",
+                name="filter_and_combine_icite",
             ),
         ]
     )
