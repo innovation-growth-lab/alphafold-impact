@@ -49,7 +49,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 name="get_chain_labels_af"
             ),
         ],
-        tags=["data_processing_chains"],
+        tags=["data_processing_af_chains"],
     )
 
     ct_chain_pipeline = pipeline(
@@ -87,7 +87,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 name="get_chain_labels_ct"
             ),
         ],
-        tags=["data_processing_chains"],
+        tags=["data_processing_ct_chains"],
     )
 
     other_chain_pipeline = pipeline(
@@ -125,7 +125,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 name="get_chain_labels_other"
             ),
         ],
-        tags=["data_processing_chains"],
+        tags=["data_processing_other_chains"],
     )
 
     return af_chain_pipeline + ct_chain_pipeline + other_chain_pipeline
