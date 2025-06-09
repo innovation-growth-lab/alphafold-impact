@@ -27,13 +27,13 @@ def _assign_label(row):
         str: The assigned label based on the conditions.
 
     """
-    if row["parent_pp_topic"] or row["parent_protein_concept"]:
-        if not row["parent_ai_concept"]:
-            return "pp"
-        else:
-            return "pp+ai"
-    elif row["parent_ai_concept"]:
-        return "sb+ai"
+    is_protein_related = row["parent_pp_topic"] or row["parent_protein_concept"]
+    is_ai_paper = row["parent_ai_concept"]
+
+    if is_protein_related:
+        return "pp" if not is_ai_paper else "ai"
+    elif is_ai_paper:
+        return "ai"
     else:
         return "sb"
 
@@ -91,9 +91,7 @@ def process_baseline_data(
 
     logger.info("Creating dictionaries for pmid matching")
     processed_grouped_data_pmid = (
-        intent_data.groupby(["parent_doi", "pmid"])[
-            ["influential", "intent"]
-        ]
+        intent_data.groupby(["parent_doi", "pmid"])[["influential", "intent"]]
         .apply(lambda x: x.to_dict(orient="records"))
         .reset_index()
         .rename(columns={0: "strength"})
@@ -182,10 +180,10 @@ def process_baseline_data(
         lambda x: any("C154945302" in sublist[0] for sublist in x)
     )
 
-    # select only if parent_publication_date >= 2018-01-01 and <= 2022-06-15
+    # select only if parent_publication_date >= 2017-01-01 and <= 2022-06-15
     processed_data = processed_data[
-        (processed_data["parent_publication_date"] >= "2018-01-01") &
-        (processed_data["parent_publication_date"] <= "2022-06-15")
+        (processed_data["parent_publication_date"] >= "2017-01-01")
+        & (processed_data["parent_publication_date"] <= "2022-06-15")
     ]
 
     logger.info("Creating aggregated baseline data")
@@ -221,7 +219,7 @@ def process_baseline_data(
     # get candidates: more than 50 num_citations
     baseline_candidates = baseline_agg[baseline_agg["num_citations"] > 50]
 
-    # manually remove past matches deemed not suitable 
+    # manually remove past matches deemed not suitable
     baseline_candidates = baseline_candidates[
         ~baseline_candidates["parent_id"].isin(
             [
@@ -329,12 +327,14 @@ def assign_focal_label(
         pd.DataFrame: DataFrame with assigned labels.
 
     """
+    baseline_candidates["label"] = baseline_candidates.apply(_assign_label, axis=1)
+
     distances = []
     for _, row1 in baseline_candidates.iterrows():
         row_distance = []
         for _, row2 in alphafold_target.iterrows():
-            baseline_r = np.array([row1["result"], row1["methodology"]])
-            alphafold_r = np.array([row2["result"], row2["methodology"]])
+            baseline_r = np.array([row1["influential"], row1["methodology"]])
+            alphafold_r = np.array([row2["influential"], row2["methodology"]])
             distance = euclidean(baseline_r, alphafold_r)
             row_distance.append(distance)
         distances.append(row_distance)
@@ -342,14 +342,18 @@ def assign_focal_label(
     # assign the average of the inner lists back to baseline_candidates
     baseline_candidates["distance"] = np.mean(distances, axis=1)
 
-    # drop any row with a distance larger than the quantile of the distances
-    threshold = baseline_candidates["distance"].quantile(0.5)
-    baseline_candidates_thresholded = baseline_candidates[
-        baseline_candidates["distance"] < threshold
-    ]
-
-    baseline_candidates_thresholded["label"] = baseline_candidates_thresholded.apply(
-        _assign_label, axis=1
+    # Sort each group by distance and take top 30
+    ai_papers = baseline_candidates[baseline_candidates["label"] == "ai"].nsmallest(
+        30, "distance"
     )
+    sb_papers = baseline_candidates[baseline_candidates["label"] == "sb"].nsmallest(
+        30, "distance"
+    )
+    pp_papers = baseline_candidates[baseline_candidates["label"] == "pp"].nsmallest(
+        30, "distance"
+    )
+
+    # Combine the selected papers
+    baseline_candidates_thresholded = pd.concat([ai_papers, sb_papers, pp_papers])
 
     return baseline_candidates_thresholded
