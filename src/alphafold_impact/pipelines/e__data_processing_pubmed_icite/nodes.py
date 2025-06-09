@@ -26,6 +26,11 @@ def filter_and_combine_icite(
         DataFrame of combined and filtered iCite data.
     """
     filtered_icite = []
+    desired_columns = [
+        "pmid",
+        "doi",
+        "cited_by_clin",
+    ]
 
     for name, icite_partition in icite_partitions.items():
         logger.info("Processing iCite partition: %s", name)
@@ -64,34 +69,16 @@ def filter_and_combine_icite(
             current_matches = icite_df
 
         if not current_matches.empty:
-            filtered_icite.append(current_matches)
+            available_columns = [
+                col for col in desired_columns if col in current_matches.columns
+            ]
+            filtered_icite.append(current_matches[available_columns])
 
     if not filtered_icite:
         logger.warning("No data found in any partitions")
         return pd.DataFrame()
 
     # Combine all partitions
-    combined_df = pd.concat(filtered_icite, ignore_index=True)
-
-    # Select relevant columns (only those that exist in the data)
-    desired_columns = [
-        "pmid",
-        "doi",
-        "cited_by_clin",
-    ]
-
-    # Filter to only existing columns
-    available_columns = [col for col in desired_columns if col in combined_df.columns]
-
-    if available_columns:
-        result_df = combined_df[available_columns].reset_index(drop=True)
-        logger.info(
-            "Returning combined dataset with %d records and %d columns",
-            len(result_df),
-            len(available_columns),
-        )
-    else:
-        logger.warning("None of the desired columns were found in the data")
-        result_df = combined_df.reset_index(drop=True)
+    result_df = pd.concat(filtered_icite, ignore_index=True)
 
     return result_df
