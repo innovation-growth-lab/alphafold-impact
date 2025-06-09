@@ -162,7 +162,7 @@ def aggregate_to_pdb_level(similarity_chunks: pd.DataFrame) -> pd.DataFrame:
 
         # Group by PDB-to-PDB comparisons and compute metrics
         pdb_level_chunk = chunk.groupby(["query", "target"], as_index=False).agg({
-            "tmscore": "max",
+            "alntmscore": "max",
             "fident": "max"
         })
 

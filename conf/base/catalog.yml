@@ -211,9 +211,17 @@ pubmed.data_collection.clinical_trials_raw:
   <<: *_csv_ptd
   path: s3://igl-alphafold/2025Q1/01_raw/clinical_trials/
 
+_jsl_ptd: &_jsl_ptd
+  type: partitions.PartitionedDataset
+  dataset:
+    type: alphafold_impact.datasets.jsonl_dataset.JSONLDataset
+    credentials: s3_credentials
+  filename_suffix: ".json"
+  credentials: s3_credentials
+  
 pubmed.data_collection.icite.raw:
 # https://nih.figshare.com/articles/dataset/iCite_Database_Snapshot_2025-04/28968326?backTo=/collections/iCite_Database_Snapshots_NIH_Open_Citation_Collection_/4586573
-  <<: *_js_ptd
+  <<: *_jsl_ptd
   path: s3://igl-alphafold/2025Q1/01_raw/icite/
 
 pubmed.data_processing.icite.intermediate:

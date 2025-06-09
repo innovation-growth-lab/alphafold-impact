@@ -1,7 +1,7 @@
 """This module contains functions to process iCite data.
 
 Functions:
-    - filter_and_combine_icite: Loads iCite data from a partitioned dataset,
+    - filter_and_combine_icite: Loads iCite data from a partitioned JSON dataset,
         filters out records before a specified year and selects only relevant columns.
 """
 
@@ -13,13 +13,13 @@ logger = logging.getLogger(__name__)
 
 
 def filter_and_combine_icite(
-    icite_partitions: Dict[str, Callable[[], Any]], year=2016
+    icite_partitions: Dict[str, Callable[[], Any]], year=2015
 ) -> pd.DataFrame:
-    """Loads iCite data from a partitioned dataset, filters out
+    """Loads iCite data from a partitioned JSON dataset, filters out
     records before a specified year and selects only relevant columns.
 
     Args:
-        icite_partitions (dict): iCite partitioned dataset.
+        icite_partitions (dict): iCite partitioned JSON dataset.
         year (int): Year to filter out records before.
 
     Returns:
@@ -28,26 +28,70 @@ def filter_and_combine_icite(
     filtered_icite = []
 
     for name, icite_partition in icite_partitions.items():
-        logger.info("Filtering iCite partition: %s", name)
-        icite_partition = icite_partition()
-        current_matches = icite_partition.query(f"year >= {year}")
-        logger.info("Adding %s matches", len(current_matches))
-        filtered_icite.append(current_matches)
+        logger.info("Processing iCite partition: %s", name)
 
-    return pd.concat(filtered_icite)[
-        [
-            "pmid",
-            "doi",
-            "title",
-            "authors",
-            "year",
-            "journal",
-            "is_research_article",
-            "citation_count",
-            "apt",
-            "is_clinical",
-            "cited_by_clin",
-            "cited_by",
-            "references",
-        ]
-    ].reset_index(drop=True)
+        # Load the JSON data from the partition
+        json_data = icite_partition()
+
+        # Convert JSON data to DataFrame
+        if isinstance(json_data, list):
+            # If it's a list of records
+            icite_df = pd.DataFrame(json_data)
+        elif isinstance(json_data, dict):
+            # If it's a single record or nested structure
+            icite_df = pd.json_normalize(json_data)
+        else:
+            logger.warning("Unexpected data format in partition %s", name)
+            continue
+
+        if icite_df.empty:
+            logger.warning("No data found in partition %s", name)
+            continue
+
+        # Filter by year if the year column exists
+        if "year" in icite_df.columns:
+            current_matches = icite_df.query(f"year >= {year}")
+            logger.info(
+                "Filtered %d records from partition %s (year >= %d)",
+                len(current_matches),
+                name,
+                year,
+            )
+        else:
+            logger.warning(
+                "Year column not found in partition %s, including all records", name
+            )
+            current_matches = icite_df
+
+        if not current_matches.empty:
+            filtered_icite.append(current_matches)
+
+    if not filtered_icite:
+        logger.warning("No data found in any partitions")
+        return pd.DataFrame()
+
+    # Combine all partitions
+    combined_df = pd.concat(filtered_icite, ignore_index=True)
+
+    # Select relevant columns (only those that exist in the data)
+    desired_columns = [
+        "pmid",
+        "doi",
+        "cited_by_clin",
+    ]
+
+    # Filter to only existing columns
+    available_columns = [col for col in desired_columns if col in combined_df.columns]
+
+    if available_columns:
+        result_df = combined_df[available_columns].reset_index(drop=True)
+        logger.info(
+            "Returning combined dataset with %d records and %d columns",
+            len(result_df),
+            len(available_columns),
+        )
+    else:
+        logger.warning("None of the desired columns were found in the data")
+        result_df = combined_df.reset_index(drop=True)
+
+    return result_df
