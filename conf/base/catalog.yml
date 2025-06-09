@@ -208,6 +208,7 @@ nih.data_collection.mesh_terms:
   filepath: s3://igl-alphafold/2025Q1/01_raw/nih/mesh/gdm_mesh_taxonomy.csv
 
 pubmed.data_collection.icite.raw:
+# https://nih.figshare.com/articles/dataset/iCite_Database_Snapshot_2025-04/28968326?backTo=/collections/iCite_Database_Snapshots_NIH_Open_Citation_Collection_/4586573
   <<: *_csv_ptd
   path: s3://igl-alphafold/2025Q1/01_raw/icite/
 
@@ -421,6 +422,7 @@ foldseek.pdb_similarities.intermediate:
   <<: *_pq
   filepath: s3://igl-alphafold/2025Q1/02_intermediate/foldseek/pdb_similarities.parquet
 # install foldseek, download their pdb database and run the following command
+# up to date data here: https://www.ebi.ac.uk/pdbe/news/pdbe-launches-foldseek-compatible-pdb-collection-fast-protein-structure-searches
 # foldseek easy-search pdb pdb pairwise_similarities.tsv tmp/ --format-output "query,target,alntmscore"
 
 # load_args:
