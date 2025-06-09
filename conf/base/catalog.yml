@@ -207,19 +207,18 @@ nih.data_collection.mesh_terms:
   <<: *_csv
   filepath: s3://igl-alphafold/2025Q1/01_raw/nih/mesh/gdm_mesh_taxonomy.csv
 
+pubmed.data_collection.clinical_trials_raw:
+  <<: *_csv_ptd
+  path: s3://igl-alphafold/2025Q1/01_raw/clinical_trials/
+
 pubmed.data_collection.icite.raw:
 # https://nih.figshare.com/articles/dataset/iCite_Database_Snapshot_2025-04/28968326?backTo=/collections/iCite_Database_Snapshots_NIH_Open_Citation_Collection_/4586573
-  <<: *_csv_ptd
+  <<: *_js_ptd
   path: s3://igl-alphafold/2025Q1/01_raw/icite/
 
 pubmed.data_processing.icite.intermediate:
   <<: *_pq
   filepath: s3://igl-alphafold/2025Q1/02_intermediate/pubmed/icite.parquet
-  load_args:
-    columns:
-      - 'pmid'
-      - 'doi'
-      - 'cited_by_clin'
   
 lens.data_processing.csv.raw:
   <<: *_csv_ptd
@@ -244,6 +243,10 @@ pdb.enhanced_entries.intermediate:
 pdb.entries.primary:
   <<: *_pq
   filepath: s3://igl-alphafold/2025Q1/03_primary/pdb/entries.parquet
+
+pdb.structure_matches.raw:
+  <<: *_pq
+  filepath: s3://igl-alphafold/2025Q1/01_raw/pdb/structure_matches.parquet
   
 publications.data.af:
   <<: *_pq
@@ -416,14 +419,20 @@ foldseek.pdb_similarities.raw:
   type: pandas.CSVDataset
   load_args:
     chunksize: 1000000
+    sep: '\t'
+    names:
+      - query
+      - target
+      - alntmscore
+# install foldseek, download their pdb database and run the following command
+# up to date data here: https://www.ebi.ac.uk/pdbe/news/pdbe-launches-foldseek-compatible-pdb-collection-fast-protein-structure-searches
+# foldseek easy-search pdb pdb pairwise_similarities.tsv tmp/ --format-output "query,target,alntmscore" --max-seqs 200
+# (reduce max seqs to reduce memory usage)
 
 
 foldseek.pdb_similarities.intermediate:
   <<: *_pq
   filepath: s3://igl-alphafold/2025Q1/02_intermediate/foldseek/pdb_similarities.parquet
-# install foldseek, download their pdb database and run the following command
-# up to date data here: https://www.ebi.ac.uk/pdbe/news/pdbe-launches-foldseek-compatible-pdb-collection-fast-protein-structure-searches
-# foldseek easy-search pdb pdb pairwise_similarities.tsv tmp/ --format-output "query,target,alntmscore"
 
 # load_args:
 #   names:
