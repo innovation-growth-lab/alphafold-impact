@@ -81,4 +81,9 @@ def filter_and_combine_icite(
     # Combine all partitions
     result_df = pd.concat(filtered_icite, ignore_index=True)
 
+    # force dtypes: pmid is fancy (nan-tol) int, doi is string, cited_by_clin is string
+    result_df["pmid"] = result_df["pmid"].astype(pd.Int64Dtype())
+    result_df["doi"] = result_df["doi"].astype(str)
+    result_df["cited_by_clin"] = result_df["cited_by_clin"].astype(str)
+
     return result_df
