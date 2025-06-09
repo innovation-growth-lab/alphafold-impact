@@ -10,6 +10,8 @@ import aiohttp
 import pandas as pd
 import json
 from urllib.parse import quote
+import requests
+from requests.adapters import HTTPAdapter, Retry
 from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
@@ -299,10 +301,6 @@ async def _collect_structure_matches_async(
 
 def fetch_pbd_details(config: Dict[str, str]) -> pd.DataFrame:
     """Fetch the details of a PDB id"""
-    # Import requests here since we still use it for the GraphQL API
-    import requests
-    from requests.adapters import HTTPAdapter, Retry
-
     pbd_ids = _fetch_pbd_ids()
     session = requests.Session()
     retries = Retry(
