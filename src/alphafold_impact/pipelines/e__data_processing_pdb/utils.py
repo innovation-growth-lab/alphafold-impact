@@ -204,9 +204,12 @@ def filter_and_compute_metrics(
     Returns:
         pd.DataFrame: The DataFrame containing computed metrics.
     """
-    pairwise_similarities["alntmscore"] = pairwise_similarities["alntmscore"].astype(
-        float
-    )
+    # Convert metrics to float
+    pairwise_similarities["tmscore"] = pairwise_similarities[
+        "tmscore"
+    ].astype(float)
+    pairwise_similarities["fident"] = pairwise_similarities["fident"].astype(float)
+
     pairwise_similarities["query_date"] = pairwise_similarities["query"].map(pdb_dates)
     pairwise_similarities["target_date"] = pairwise_similarities["target"].map(
         pdb_dates
@@ -221,38 +224,43 @@ def filter_and_compute_metrics(
     # extract year from target_date
     valid_targets["query_year"] = valid_targets["query_date"].dt.year
 
-    # compute yearly statistics (mean, std) for alntmscore
+    # compute yearly statistics (mean, std) for both metrics
     yearly_stats = (
-        valid_targets.groupby("query_year")["alntmscore"]
+        valid_targets.groupby("query_year")[["tmscore", "fident"]]
         .agg(["mean", "std"])
         .reset_index()
     )
-    yearly_stats.rename(columns={"mean": "year_mean", "std": "year_std"}, inplace=True)
+    yearly_stats.columns = [
+        "query_year",
+        "tmscore_mean",
+        "tmscore_std",
+        "fident_mean",
+        "fident_std",
+    ]
 
     # merge yearly stats back into valid_targets
     valid_targets = valid_targets.merge(yearly_stats, on="query_year", how="left")
 
-    # compute normalised scores (Z-scores)
-    valid_targets["normalised_score"] = (
-        (valid_targets["alntmscore"] - valid_targets["year_mean"])
-        / valid_targets["year_std"]
-    ).fillna(
-        0
-    )  # Fill NaN for years with no variance
+    # compute normalised scores (Z-scores) for both metrics
+    valid_targets["max_normalised_score"] = (
+        valid_targets["tmscore"] - valid_targets["tmscore_mean"]
+    ) / valid_targets["tmscore_std"]
+    valid_targets["fident_normalised_score"] = (
+        valid_targets["fident"] - valid_targets["fident_mean"]
+    ) / valid_targets["fident_std"]
 
     # Compute metrics for each query
     def compute_metrics(group):
-        top_25 = group.nlargest(25, "alntmscore")
-        mean_tmscore = top_25["alntmscore"].mean()
-        max_tmscore = group["alntmscore"].max()
-        normalised_mean = top_25["normalised_score"].mean()
-        normalised_max = group["normalised_score"].max()
+        max_tmscore = group["tmscore"].max()
+        max_fident = group["fident"].max()
+        normalised_max_tmscore = group["max_normalised_score"].max()
+        normalised_max_fident = group["fident_normalised_score"].max()
         return pd.Series(
             {
-                "mean_tmscore": mean_tmscore,
                 "max_tmscore": max_tmscore,
-                "normalised_mean_tmscore": normalised_mean,
-                "normalised_max_tmscore": normalised_max,
+                "max_fident": max_fident,
+                "normalised_max_tmscore": normalised_max_tmscore,
+                "normalised_max_fident": normalised_max_fident,
             }
         )
 

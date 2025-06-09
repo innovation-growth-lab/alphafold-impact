@@ -5,13 +5,14 @@ The main functions in this module are:
 
 * collect_pdb_details - Collects PDB details from a DataFrame and API configuration.
 * merge_uniprot_data - Merges Uniprot data with PDB data.
-* process_similarity_data - Process the entire similarity data file in chunks and 
+* process_similarity_data - Process the entire similarity data file in chunks and
     compute novelty metrics.
 """
 
 import logging
 import pandas as pd
 import numpy as np
+from tqdm import tqdm
 from .utils import (
     get_papers,
     preprocess_pdb_dates,
@@ -142,7 +143,6 @@ def collect_pdb_details(pdb_df: pd.DataFrame, api_config: dict) -> pd.DataFrame:
 
     return combined_df
 
-
 def aggregate_to_pdb_level(similarity_chunks: pd.DataFrame) -> pd.DataFrame:
     """
     Distill similarity data to PDB-to-PDB level by extracting PDB IDs from
@@ -155,15 +155,24 @@ def aggregate_to_pdb_level(similarity_chunks: pd.DataFrame) -> pd.DataFrame:
         pd.DataFrame: The DataFrame containing computed metrics.
     """
     results = []
-    for i, chunk in enumerate(similarity_chunks):
-        logger.info("Processing chunk %d", i + 1)
+    for chunk in tqdm(similarity_chunks, desc="Processing similarity chunks"):
         chunk["query"] = chunk["query"].str[:4]
         chunk["target"] = chunk["target"].str[:4]
+        chunk = chunk[chunk["query"] != chunk["target"]]
 
         # Group by PDB-to-PDB comparisons and compute metrics
-        pdb_level_chunk = chunk.groupby(["query", "target"], as_index=False).agg(
-            {"alntmscore": "mean"}
-        )
+        pdb_level_chunk = chunk.groupby(["query", "target"], as_index=False).agg({
+            "tmscore": "max",
+            "fident": "max"
+        })
+
+        # rename columns
+        pdb_level_chunk.columns = [
+            "query",
+            "target",
+            "tmscore",
+            "fident"
+        ]
 
         results.append(pdb_level_chunk)
 
@@ -171,16 +180,17 @@ def aggregate_to_pdb_level(similarity_chunks: pd.DataFrame) -> pd.DataFrame:
     pdb_level_df = pd.concat(results, ignore_index=True)
 
     # [HACK] Group again in case chunks split a query in 2+
-    pdb_level_df = pdb_level_df.groupby(["query", "target"], as_index=False).agg(
-        {"alntmscore": "mean"}
-    )
+    pdb_level_df = pdb_level_df.groupby(["query", "target"], as_index=False).agg({
+        "tmscore": "max",
+        "fident": "max"
+    })
 
     return pdb_level_df
 
 
 def process_similarity_data(
-    similarity_df: pd.DataFrame,
     pdb_df: pd.DataFrame,
+    similarity_df: pd.DataFrame,
 ) -> pd.DataFrame:
     """
     Process the entire similarity data file in chunks and compute novelty metrics.

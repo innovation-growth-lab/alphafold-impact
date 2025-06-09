@@ -415,7 +415,7 @@ uniprot.entries.raw:
 # -------------------------------------------------------------
 
 foldseek.pdb_similarities.raw:
-  filepath: data/01_raw/pairwise_similarities.tsv
+  filepath: data/01_raw/pairwise_similarities_o.tsv
   type: pandas.CSVDataset
   load_args:
     chunksize: 1000000
@@ -424,9 +424,10 @@ foldseek.pdb_similarities.raw:
       - query
       - target
       - alntmscore
+      - fident
 # install foldseek, download their pdb database and run the following command
 # up to date data here: https://www.ebi.ac.uk/pdbe/news/pdbe-launches-foldseek-compatible-pdb-collection-fast-protein-structure-searches
-# foldseek easy-search pdb pdb pairwise_similarities.tsv tmp/ --format-output "query,target,alntmscore" --max-seqs 200
+# foldseek easy-search pdb pdb pairwise_similarities.tsv tmp/ --format-output "query,target,fident,alntmscore" --max-seqs 100 --threads 12
 # (reduce max seqs to reduce memory usage)
 
 

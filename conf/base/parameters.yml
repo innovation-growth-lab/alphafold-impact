@@ -206,13 +206,14 @@ gtr:
 pubmed:
   # Data collection parameters
   data_collection:
+    clinical_trials:
+      api_download_url: https://clinicaltrials.gov/api/v2/studies/download?format=json.zip
+      zip_save_path: data/00_tmp/clinical_trials.zip
+      extract_path: data/01_raw/clinical_trials/
     icite:
-      download_url: https://classic.clinicaltrials.gov/AllAPIJSON.zip
-      zip_save_path: data/00_tmp/nih_ct.zip
-      extract_path: data/01_raw/nih/clinical_trials/
-      api_v2_download_url: https://clinicaltrials.gov/api/v2/studies/download?format=json.zip
-      # zip_v2_save_path: data/01_raw/clinical_trials/clinical_trials_v2.zip
-      # extract_v2_path: data/01_raw/clinical_trials/extracted_v2/
+      figshare_download_url: https://nih.figshare.com/ndownloader/articles/28968326/versions/1
+      zip_save_path: data/00_tmp/icite.zip
+      extract_path: data/01_raw/icite/
 nih:
   data_collection:
     funded_projects:
