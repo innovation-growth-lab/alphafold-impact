@@ -488,6 +488,8 @@ pdb:
   config:
     max_retries: 5
     backoff_factor: 0.3
+    calls_per_second: 16
+    max_concurrent: 10
 
 start_level: 1
 max_level: 3
