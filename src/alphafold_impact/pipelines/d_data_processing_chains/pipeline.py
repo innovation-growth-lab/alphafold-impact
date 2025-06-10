@@ -22,7 +22,7 @@ from .nodes import (
 def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstring
     **kwargs,
 ) -> Pipeline:
-    # STEP 7A: Analyze AlphaFold citation chains
+    # STEP 7A: Analyse AlphaFold citation chains
     # ← FROM: c_data_collection_s2 (oa.data_processing.depth.af.primary)
     # FINAL OUTPUT: Chain analysis for AlphaFold papers
     af_chain_pipeline = pipeline(
@@ -63,7 +63,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
         tags=["data_processing_af_chains"],
     )
 
-    # STEP 7B: Analyze counterfactual citation chains
+    # STEP 7B: Analyse counterfactual citation chains
     # ← FROM: c_data_collection_s2 (oa.data_processing.depth.ct.primary)
     # FINAL OUTPUT: Chain analysis for counterfactual papers
     ct_chain_pipeline = pipeline(
@@ -104,7 +104,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
         tags=["data_processing_ct_chains"],
     )
 
-    # STEP 7C: Analyze other structural biology citation chains
+    # STEP 7C: Analyse other structural biology citation chains
     # ← FROM: c_data_collection_s2 (oa.data_processing.depth.other.primary)
     # FINAL OUTPUT: Chain analysis for other structural biology papers
     other_chain_pipeline = pipeline(
