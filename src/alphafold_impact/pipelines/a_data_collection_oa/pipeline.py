@@ -1,6 +1,6 @@
 """
 Pipeline for collecting OpenAlex data. It includes:
-    
+
     Base:
     - Collecting OpenAlex publications given a work_id.
     - Collect references and citations for a work_id.
@@ -11,13 +11,22 @@ Pipeline for collecting OpenAlex data. It includes:
             publications.
         - Collecting all papers that these publications cite.
 
+PIPELINE FLOW:
+    STEP 1: This pipeline (a_data_collection_oa) collects raw OpenAlex data
+    NEXT: → b__data_processing_oa (processes the raw OpenAlex data)
+    THEN: → b_data_processing_baselines (creates counterfactual candidates)
+    THEN: → BACK to a_data_collection_oa (collects more data for counterfactuals)
+    THEN: → b__data_processing_oa (processes new counterfactual data)
+    THEN: → c_data_collection_s2 (adds citation intent from Semantic Scholar)
+    FINALLY: → d_data_processing_chains (final citation chain analysis)
+
 To run this pipeline, use the following command:
 
     $ kedro run --pipeline data_collection_oa
 
 To run a specific pipeline, use a combination of the --namespace and --tags flags:
 
-    $ kedro run --pipeline data_collection_oa --namespace oa.data_collection.gtr 
+    $ kedro run --pipeline data_collection_oa --namespace oa.data_collection.gtr
     $ kedro run --pipeline data_collection_oa --tags downstream_impact
 
 
@@ -35,6 +44,8 @@ from .nodes import (
 
 def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
 
+    # STEP 1A: Collect AlphaFold citations to specific depth
+    # → NEXT: Goes to b__data_processing_oa for processing
     fixed_depth_alphafold_pipeline = pipeline(
         [
             node(
@@ -52,6 +63,8 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
         tags="data_collection_oa",
     )
 
+    # STEP 1B: Collect structural biology baseline papers
+    # → NEXT: Goes to b__data_processing_oa for processing
     structural_biology_pipeline = pipeline(
         [
             node(
@@ -68,6 +81,8 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
         tags="data_collection_oa",
     )
 
+    # STEP 1C: Collect citations for structural biology baseline papers
+    # → NEXT: Goes to b__data_processing_oa for processing
     fixed_depth_structural_biology_pipeline = pipeline(
         [
             node(
@@ -94,6 +109,9 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
         tags=["data_collection_oa"],
     )
 
+    # STEP 4: Collect additional citations for CT papers (runs AFTER b_data_processing_baselines)
+    # This step is triggered by data created in b_data_processing_baselines
+    # → NEXT: Goes back to b__data_processing_oa for processing the new counterfactual data
     last_level_ct_pipeline = pipeline(
         [
             node(
@@ -121,7 +139,6 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
         ],
         tags=["last_level_ct_pipeline"],
     )
-
 
     return (
         fixed_depth_alphafold_pipeline

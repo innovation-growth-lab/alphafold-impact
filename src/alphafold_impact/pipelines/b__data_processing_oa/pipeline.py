@@ -3,6 +3,15 @@
 The pipeline contains nodes for processing data by level, combining data
 from different levels, and mesh tagging.
 
+PIPELINE FLOW:
+    STEP 2: This pipeline (b__data_processing_oa) processes raw OpenAlex data
+    FROM: ← a_data_collection_oa (provides raw OpenAlex data)
+    NEXT: → b_data_processing_baselines (creates counterfactual candidates)
+    ALSO NEXT: → c_data_collection_s2 (adds citation intent from Semantic Scholar)
+    LATER: ← a_data_collection_oa (provides additional counterfactual data)
+    THEN: → c_data_collection_s2 (processes counterfactual citation intent)
+    FINALLY: → d_data_processing_chains (final citation chain analysis)
+
 To run this pipeline, use the following command:
 
     $ kedro run --pipeline oa.data_processing.depth
@@ -26,6 +35,9 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
     **kwargs,
 ) -> Pipeline:
 
+    # STEP 2A: Process AlphaFold citation data by level
+    # ← FROM: a_data_collection_oa (oa.data_collection.triad.depth.level.raw)
+    # → NEXT: Combined in 2B and sent to c_data_collection_s2 for citation intent analysis
     af_processing_pipeline = pipeline(
         [
             node(
@@ -42,6 +54,8 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
         tags=["data_processing_oa", "Q1"],
     )
 
+    # STEP 2B: Combine AlphaFold levels for processing
+    # → NEXT: Goes to c_data_collection_s2 for citation intent analysis
     combine_levels_pipeline = pipeline(
         [
             node(
@@ -59,6 +73,9 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
         tags=["data_processing_oa", "Q1"],
     )
 
+    # STEP 2C: Process structural biology baseline data
+    # ← FROM: a_data_collection_oa (oa.data_collection.subfield.structural_biology.raw)
+    # → NEXT: Goes to b_data_processing_baselines and c_data_collection_s2
     structural_biology_processing_pieline = pipeline(
         [
             node(
@@ -71,6 +88,9 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
         tags=["data_processing_oa"],
     )
 
+    # STEP 2D: Process baseline level 0 data
+    # ← FROM: a_data_collection_oa
+    # → NEXT: Combined with other levels and sent to b_data_processing_baselines
     baseline_level0_pipeline = pipeline(
         [
             node(
@@ -86,6 +106,9 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
         tags=["data_processing_oa"],
     )
 
+    # STEP 2E: Process baseline level 1 data (large dataset, requires partitioning)
+    # ← FROM: a_data_collection_oa
+    # → NEXT: Combined with other levels and sent to b_data_processing_baselines
     baseline_level1_pipeline = pipeline(
         [
             node(
@@ -111,6 +134,9 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
         ],
     )
 
+    # STEP 2F: Combine baseline levels and split into counterfactual vs other papers
+    # → NEXT: Goes to b_data_processing_baselines (for counterfactual identification)
+    # → ALSO: The output is used by a_data_collection_oa for additional data collection
     reassign_baseline_levels_pipeline = pipeline(
         [
             node(
@@ -139,6 +165,9 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
         tags=["reassign_ct_levels", "ct_collection"],
     )
 
+    # STEP 5: Process additional CT data (runs AFTER a_data_collection_oa collects more data)
+    # ← FROM: a_data_collection_oa (oa.data_collection.structural_biology.depth.ct.2.ptd.raw)
+    # → NEXT: Goes to c_data_collection_s2 for citation intent analysis
     post_level2_dw_pipeline = pipeline(
         [
             node(
