@@ -252,6 +252,8 @@ def merge_uniprot_data(pdb_df: pd.DataFrame, uniprot_df: pd.DataFrame) -> pd.Dat
     Returns:
         pd.DataFrame: The combined DataFrame with PDB and Uniprot details.
     """
+    logger.info("remove legacy columns")
+    pdb_df.drop(columns=["query_x", "query_y"], inplace=True)
 
     logger.info("Transformations to PDB data")
     pdb_df["R_free"] = pd.to_numeric(pdb_df["R_free"], errors="coerce")
@@ -262,13 +264,17 @@ def merge_uniprot_data(pdb_df: pd.DataFrame, uniprot_df: pd.DataFrame) -> pd.Dat
         quarter=pd.PeriodIndex(pdb_df["publication_date"], freq="Q"),
     )
 
+    # get the best metrics for each PDB (ie. look at the most novel contribution, 
+    # and more precise metrics)
     pdb_oa_means = pdb_df.groupby("id").agg(
-        resolution_mean=("resolution", "mean"),
-        R_free_mean=("R_free", "mean"),
-        mean_tmscore=("mean_tmscore", "mean"),
-        max_tmscore=("max_tmscore", "mean"),
-        normalised_mean_tmscore=("normalised_mean_tmscore", "mean"),
-        normalised_max_tmscore=("normalised_max_tmscore", "mean"),
+        resolution=("resolution", "min"),
+        R_free=("R_free", "min"),
+        max_tmscore=("max_tmscore", "min"),
+        normalised_max_tmscore=("normalised_max_tmscore", "min"),
+        max_score=("max_score", "min"),
+        normalised_max_score=("normalised_max_score", "min"),
+        max_fident=("max_fident", "min"),
+        normalised_max_fident=("normalised_max_fident", "min"),
     )
 
     logger.info("merging to uniprot to get per-PDB primary status")
