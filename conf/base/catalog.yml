@@ -189,7 +189,7 @@ chains.complete_strong_links.id.other.primary:
   <<: *_pq
   filepath: s3://igl-alphafold/2025Q1/03_primary/oa/works/chains/other/id/complete_strong_links.parquet
 
-oa.chain_labels.id.af.primary: # skip to here because of S2 problems
+oa.chain_labels.id.af.primary: # oct: skip to here because of S2 problems
   <<: *_pq
   filepath: s3://igl-alphafold/03_primary/oa/works/af/chain_labels.parquet
 
