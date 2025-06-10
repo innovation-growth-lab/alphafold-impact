@@ -16,7 +16,8 @@ from tqdm import tqdm
 from .utils import (
     get_papers,
     preprocess_pdb_dates,
-    filter_and_compute_metrics,
+    filter_and_compute_foldseek_metrics,
+    filter_and_compute_rcsb_metrics,
 )
 
 logger = logging.getLogger(__name__)
@@ -143,7 +144,8 @@ def collect_pdb_details(pdb_df: pd.DataFrame, api_config: dict) -> pd.DataFrame:
 
     return combined_df
 
-def aggregate_to_pdb_level(similarity_chunks: pd.DataFrame) -> pd.DataFrame:
+
+def aggregate_foldseek_to_pdb_level(similarity_chunks: pd.DataFrame) -> pd.DataFrame:
     """
     Distill similarity data to PDB-to-PDB level by extracting PDB IDs from
         query and target.
@@ -161,18 +163,12 @@ def aggregate_to_pdb_level(similarity_chunks: pd.DataFrame) -> pd.DataFrame:
         chunk = chunk[chunk["query"] != chunk["target"]]
 
         # Group by PDB-to-PDB comparisons and compute metrics
-        pdb_level_chunk = chunk.groupby(["query", "target"], as_index=False).agg({
-            "alntmscore": "max",
-            "fident": "max"
-        })
+        pdb_level_chunk = chunk.groupby(["query", "target"], as_index=False).agg(
+            {"alntmscore": "max", "fident": "max"}
+        )
 
         # rename columns
-        pdb_level_chunk.columns = [
-            "query",
-            "target",
-            "tmscore",
-            "fident"
-        ]
+        pdb_level_chunk.columns = ["query", "target", "tmscore", "fident"]
 
         results.append(pdb_level_chunk)
 
@@ -180,17 +176,17 @@ def aggregate_to_pdb_level(similarity_chunks: pd.DataFrame) -> pd.DataFrame:
     pdb_level_df = pd.concat(results, ignore_index=True)
 
     # [HACK] Group again in case chunks split a query in 2+
-    pdb_level_df = pdb_level_df.groupby(["query", "target"], as_index=False).agg({
-        "tmscore": "max",
-        "fident": "max"
-    })
+    pdb_level_df = pdb_level_df.groupby(["query", "target"], as_index=False).agg(
+        {"tmscore": "max", "fident": "max"}
+    )
 
     return pdb_level_df
 
 
 def process_similarity_data(
     pdb_df: pd.DataFrame,
-    similarity_df: pd.DataFrame,
+    foldseek_df: pd.DataFrame,
+    rcsb_df: pd.DataFrame,
 ) -> pd.DataFrame:
     """
     Process the entire similarity data file in chunks and compute novelty metrics.
@@ -218,14 +214,31 @@ def process_similarity_data(
     logger.info("Preprocessing PDB dates")
     pdb_dates = preprocess_pdb_dates(pdb_df)
 
-    logger.info("Filtering and computing metrics")
-    results = filter_and_compute_metrics(similarity_df, pdb_dates)
+    logger.info("Filtering and computing Foldseek metrics")
+    foldseek_results = filter_and_compute_foldseek_metrics(foldseek_df, pdb_dates)
+
+    logger.info("Filtering and computing RCSB metrics")
+    rcsb_results = filter_and_compute_rcsb_metrics(rcsb_df, pdb_dates)
 
     logger.info("Merging results with PDB data")
     pdb_df["rcsb_id"] = pdb_df["rcsb_id"].str.upper()
-    pdb_df = pdb_df.merge(results, how="left", left_on="rcsb_id", right_on="query")
+    pdb_df = pdb_df.merge(
+        foldseek_results, how="left", left_on="rcsb_id", right_on="query"
+    ).merge(rcsb_results, how="left", left_on="rcsb_id", right_on="query")
 
     return pdb_df
+
+
+def process_rcsb_structure_matches(structure_matches: pd.DataFrame) -> pd.DataFrame:
+    """
+    Process the RCSB structure matches data.
+    """
+    structure_matches = structure_matches[
+        structure_matches["query"] != structure_matches["target"]
+    ]
+
+    structure_matches = structure_matches.groupby(["query"], as_index=False).max()
+    return structure_matches
 
 
 def merge_uniprot_data(pdb_df: pd.DataFrame, uniprot_df: pd.DataFrame) -> pd.DataFrame:

@@ -191,7 +191,7 @@ def preprocess_pdb_dates(pdb_df: pd.DataFrame) -> Dict[str, pd.Timestamp]:
     return dict(zip(pdb_df["rcsb_id"], pdb_df["publication_date"]))
 
 
-def filter_and_compute_metrics(
+def filter_and_compute_foldseek_metrics(
     pairwise_similarities: pd.DataFrame, pdb_dates: Dict[str, pd.Timestamp]
 ) -> pd.DataFrame:
     """
@@ -205,9 +205,7 @@ def filter_and_compute_metrics(
         pd.DataFrame: The DataFrame containing computed metrics.
     """
     # Convert metrics to float
-    pairwise_similarities["tmscore"] = pairwise_similarities[
-        "tmscore"
-    ].astype(float)
+    pairwise_similarities["tmscore"] = pairwise_similarities["tmscore"].astype(float)
     pairwise_similarities["fident"] = pairwise_similarities["fident"].astype(float)
 
     pairwise_similarities["query_date"] = pairwise_similarities["query"].map(pdb_dates)
@@ -261,6 +259,61 @@ def filter_and_compute_metrics(
                 "max_fident": max_fident,
                 "normalised_max_tmscore": normalised_max_tmscore,
                 "normalised_max_fident": normalised_max_fident,
+            }
+        )
+
+    metrics = valid_targets.groupby("query").apply(compute_metrics).reset_index()
+
+    # Ensure query IDs are uppercase
+    metrics["query"] = metrics["query"].str.upper()
+
+    return metrics
+
+
+def filter_and_compute_rcsb_metrics(
+    rcsb_df: pd.DataFrame, pdb_dates: Dict[str, pd.Timestamp]
+) -> pd.DataFrame:
+    """
+    Filter RCSB structure matches data for valid targets and compute metrics.
+    """
+    rcsb_df["query_date"] = rcsb_df["query"].str.lower().map(pdb_dates)
+    rcsb_df["target_date"] = rcsb_df["target"].str.lower().map(pdb_dates)
+
+    # filter valid targets (target must be earlier or equal to query date, not self)
+    valid_targets = rcsb_df[
+        (rcsb_df["target_date"] < rcsb_df["query_date"])
+        & (rcsb_df["query"] != rcsb_df["target"])
+    ]
+
+    # extract year from target_date
+    valid_targets["query_year"] = valid_targets["query_date"].dt.year
+
+    # compute yearly statistics (mean, std) for both metrics
+    yearly_stats = (
+        valid_targets.groupby("query_year")["score"].agg(["mean", "std"]).reset_index()
+    )
+    yearly_stats.columns = [
+        "query_year",
+        "score_mean",
+        "score_std",
+    ]
+
+    # merge yearly stats back into valid_targets
+    valid_targets = valid_targets.merge(yearly_stats, on="query_year", how="left")
+
+    # compute normalised scores (Z-scores) for both metrics
+    valid_targets["max_normalised_score"] = (
+        valid_targets["score"] - valid_targets["score_mean"]
+    ) / valid_targets["score_std"]
+
+    # Compute metrics for each query
+    def compute_metrics(group):
+        max_score = group["score"].max()
+        normalised_max_score = group["max_normalised_score"].max()
+        return pd.Series(
+            {
+                "max_score": max_score,
+                "normalised_max_score": normalised_max_score,
             }
         )
 

@@ -8,7 +8,7 @@ from .nodes import (
     collect_pdb_details,
     merge_uniprot_data,
     process_similarity_data,
-    aggregate_to_pdb_level,
+    aggregate_foldseek_to_pdb_level
 )
 
 
@@ -27,7 +27,7 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                 name="fetch_oa_details_from_pdb_pubs",
             ),
             node(
-                aggregate_to_pdb_level,
+                aggregate_foldseek_to_pdb_level,
                 inputs={"similarity_chunks": "foldseek.pdb_similarities.raw"},
                 outputs="foldseek.pdb_similarities.intermediate",
                 name="aggregate_foldseek_to_pdb_level",
@@ -36,7 +36,8 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                 process_similarity_data,
                 inputs={
                     "pdb_df": "pdb.entries.intermediate",
-                    "similarity_df": "foldseek.pdb_similarities.intermediate",
+                    "foldseek_df": "foldseek.pdb_similarities.intermediate",
+                    "rcsb_df": "pdb.structure_matches.raw",
                 },
                 outputs="pdb.enhanced_entries.intermediate",
                 name="process_pdb_similarity_data",
