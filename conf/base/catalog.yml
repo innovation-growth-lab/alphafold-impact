@@ -423,8 +423,9 @@ uniprot.entries.raw:
 # -------------------------------------------------------------
 
 foldseek.pdb_similarities.raw:
-  filepath: data/01_raw/pairwise_similarities_o.tsv
+  filepath: s3://igl-alphafold/2025Q1/01_raw/pairwise_similarities.tsv
   type: pandas.CSVDataset
+  credentials: s3_credentials
   load_args:
     chunksize: 1000000
     sep: '\t'
