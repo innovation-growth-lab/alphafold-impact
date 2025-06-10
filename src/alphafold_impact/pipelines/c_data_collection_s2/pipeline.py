@@ -120,7 +120,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                 name="process_s2_citation_intent_baseline_other",
             ),
         ],
-        tags=["data_collection_s2"],
+        tags=["sb_s2_pipeline"],
     )
 
     bulk_data_pipeline = pipeline(
