@@ -165,13 +165,13 @@ chains.seed_technologies.intermediate:
   <<: *_pq
   filepath: s3://igl-alphafold/2025Q1/02_intermediate/oa/works/chains/baseline/seed_technologies.parquet
 
-chains.complete_links.id.primary:
+chains.complete_links.id.af.primary:
   <<: *_pq
-  filepath: s3://igl-alphafold/2025Q1/03_primary/oa/works/chains/id/complete_links.parquet
+  filepath: s3://igl-alphafold/2025Q1/03_primary/oa/works/chains/af/id/complete_links.parquet
 
-chains.complete_strong_links.id.primary:
+chains.complete_strong_links.id.af.primary:
   <<: *_pq
-  filepath: s3://igl-alphafold/2025Q1/03_primary/oa/works/chains/id/complete_strong_links.parquet
+  filepath: s3://igl-alphafold/2025Q1/03_primary/oa/works/chains/af/id/complete_strong_links.parquet
 
 chains.complete_links.id.ct.primary:
   <<: *_pq
@@ -189,9 +189,9 @@ chains.complete_strong_links.id.other.primary:
   <<: *_pq
   filepath: s3://igl-alphafold/2025Q1/03_primary/oa/works/chains/other/id/complete_strong_links.parquet
 
-oa.chain_labels.id.primary: # skip to here because of S2 problems
+oa.chain_labels.id.af.primary: # skip to here because of S2 problems
   <<: *_pq
-  filepath: s3://igl-alphafold/03_primary/oa/works/chain_labels.parquet
+  filepath: s3://igl-alphafold/03_primary/oa/works/af/chain_labels.parquet
 
 oa.chain_labels.id.ct.primary:
   <<: *_pq

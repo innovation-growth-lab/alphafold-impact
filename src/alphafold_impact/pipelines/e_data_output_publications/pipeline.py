@@ -20,15 +20,15 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
             node(
                 update_alphafold_triad,
                 inputs={
-                    "data": "oa.chain_labels.id.primary",
+                    "data": "oa.chain_labels.id.af.primary",
                 },
-                outputs="oa.chain_labels.id.updated",
+                outputs="oa.chain_labels.id.af.updated",
                 name="update_alphafold_triad",
             ),
             node(
                 create_publications_data,
                 inputs={
-                    "data": "oa.chain_labels.id.updated",
+                    "data": "oa.chain_labels.id.af.updated",
                     "source": "params:publications.source.af",
                     "mesh_terms": "nih.data_collection.mesh_terms",
                     "patents_data": "lens.data_processing.primary",
