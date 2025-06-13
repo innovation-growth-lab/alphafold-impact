@@ -471,12 +471,12 @@ def create_parent_child_df(oa_dataset: pd.DataFrame) -> pd.DataFrame:
                 "pmid": row["pmid"] if pd.notna(row["pmid"]) else None,
             }
 
-    # replace the values in the 'parent_doi' and 'parent_pmid' columns when level is 0
-    inner_df.loc[inner_df["level"] == 0, "parent_doi"] = inner_df.loc[
-        inner_df["level"] == 0, "parent_id"
-    ].map(lambda x: parent_info[str(x)]["doi"])
-    inner_df.loc[inner_df["level"] == 0, "parent_pmid"] = inner_df.loc[
-        inner_df["level"] == 0, "parent_id"
-    ].map(lambda x: parent_info[str(x)]["pmid"])
+        # replace the values in the 'parent_doi' and 'parent_pmid' columns when level is 0
+        inner_df.loc[inner_df["level"] == 0, "parent_doi"] = inner_df.loc[
+            inner_df["level"] == 0, "parent_id"
+        ].map(lambda x: parent_info[str(x)]["doi"])
+        inner_df.loc[inner_df["level"] == 0, "parent_pmid"] = inner_df.loc[
+            inner_df["level"] == 0, "parent_id"
+        ].map(lambda x: parent_info[str(x)]["pmid"])
 
     return inner_df

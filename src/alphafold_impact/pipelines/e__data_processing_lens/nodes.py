@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 def create_and_explode_manual_data(
-    data_loaders: Dict[str, AbstractDataset]
+    data_loaders: Dict[str, AbstractDataset],
 ) -> pd.DataFrame:
     """
     Create and explode manual data by loading patents from data loaders, filtering and transforming the data.
@@ -35,6 +35,23 @@ def create_and_explode_manual_data(
         # Call the loader function to get a dataframe
         df = loader()
 
+        # Handle Spanish column names if present
+        spanish_to_english = {
+            "Jurisdicción": "Jurisdiction",
+            "Tipo": "Kind",
+            "Fecha de publicación": "Publication Date",
+            "Título": "Title",
+            "Recuento de patentes de citas": "Cites Patent Count",
+            "Citado por recuento de patentes": "Cited by Patent Count",
+            "NPL ID externos resueltos": "NPL Resolved External ID(s)",
+            "Clasificaciones CPC": "CPC Classifications",
+            "Clasificaciones IPCR": "IPCR Classifications",
+            "Estado legal": "Legal Status",
+        }
+
+        # Rename Spanish columns if they exist
+        df = df.rename(columns=spanish_to_english)
+
         # Keep the ones that have NPL Resolved External ID(s)
         df = df[df["NPL Resolved External ID(s)"].notnull()]
 
@@ -50,7 +67,7 @@ def create_and_explode_manual_data(
                 "NPL Resolved External ID(s)",
                 "CPC Classifications",
                 "IPCR Classifications",
-                "Legal Status"
+                "Legal Status",
             ]
         ]
 

@@ -205,7 +205,7 @@ oa.chain_labels.id.other.primary:
 
 nih.data_collection.mesh_terms:
   <<: *_csv
-  filepath: s3://igl-alphafold/2025Q1/01_raw/nih/mesh/gdm_mesh_taxonomy.csv
+  filepath: s3://igl-alphafold/oct/01_raw/nih/mesh/gdm_mesh_taxonomy.csv
 
 pubmed.data_collection.clinical_trials_raw:
   <<: *_csv_ptd
