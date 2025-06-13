@@ -492,26 +492,30 @@ def _assign_seed_technologies(
             & (ct_data["parent_id"].isin(ct_data_previous["id"]))
         ]
 
-    # create seed papers
+    # create seed papers for each technology type
     ai_seeds = seed_papers[seed_papers["label"].str.contains("ai")]
-    noai_seeds = seed_papers[~seed_papers["label"].str.contains("ai")]
+    pp_seeds = seed_papers[seed_papers["label"].str.contains("pp")]
+    sb_seeds = seed_papers[seed_papers["label"].str.contains("sb")]
 
-    # initialise level 0 papers
+    # initialise level 0 papers for each technology
     ai_l0 = data[(data["parent_id"].isin(ai_seeds["parent_id"])) & (data["level"] <= 0)]
     ai_l0["ct_tech"] = "ai"
 
-    noai_l0 = data[
-        (data["parent_id"].isin(noai_seeds["parent_id"])) & (data["level"] <= 0)
-    ]
-    noai_l0["ct_tech"] = "noai"
+    pp_l0 = data[(data["parent_id"].isin(pp_seeds["parent_id"])) & (data["level"] <= 0)]
+    pp_l0["ct_tech"] = "pp"
 
-    levels = [ai_l0, noai_l0]
+    sb_l0 = data[(data["parent_id"].isin(sb_seeds["parent_id"])) & (data["level"] <= 0)]
+    sb_l0["ct_tech"] = "sb"
+
+    levels = [ai_l0, pp_l0, sb_l0]
     for level in range(1, 3):
-        ai_level = create_subgroup(data, levels[-2], level)
+        ai_level = create_subgroup(data, levels[-3], level)
         ai_level["ct_tech"] = "ai"
-        noai_level = create_subgroup(data, levels[-1], level)
-        noai_level["ct_tech"] = "noai"
-        levels.extend([ai_level, noai_level])
+        pp_level = create_subgroup(data, levels[-2], level)
+        pp_level["ct_tech"] = "pp"
+        sb_level = create_subgroup(data, levels[-1], level)
+        sb_level["ct_tech"] = "sb"
+        levels.extend([ai_level, pp_level, sb_level])
 
     # concatenate all levels and remove duplicates
     data = (
@@ -633,7 +637,6 @@ def get_institution_info(
     return publications
 
 
-
 def define_high_pdb_authors(
     data: pd.DataFrame, pdb_submissions: pd.DataFrame
 ) -> pd.DataFrame:
@@ -671,12 +674,12 @@ def define_high_pdb_authors(
     authors_list = authors["author"].unique()
 
     submissions = author_pdb_submissions.copy()
-    submissions_pre2021 = submissions[
-        submissions["publication_date"] < "2021-01-01"
-    ]
-    
+    submissions_pre2021 = submissions[submissions["publication_date"] < "2021-01-01"]
+
     # keep only authors in the data
-    submissions_pre2021 = submissions_pre2021[submissions_pre2021["author"].isin(authors_list)]
+    submissions_pre2021 = submissions_pre2021[
+        submissions_pre2021["author"].isin(authors_list)
+    ]
 
     # make sure each author is only counted once per id
     submissions_pre2021 = submissions_pre2021.drop_duplicates(subset=["id", "author"])
@@ -692,18 +695,29 @@ def define_high_pdb_authors(
     )
 
     # map author num_pdb ids
-    authors["num_pdb_ids_pre2021"] = authors["author"].map(
-        submissions_pre2021.set_index("author")["num_pdb_ids"]
-    ).fillna(0).astype(int)
-    authors["q4_pdb_pre2021"] = authors["author"].map(
-        submissions_pre2021.set_index("author")["q4_pdb_pre2021"]
-    ).fillna(False)
+    authors["num_pdb_ids_pre2021"] = (
+        authors["author"]
+        .map(submissions_pre2021.set_index("author")["num_pdb_ids"])
+        .fillna(0)
+        .astype(int)
+    )
+    authors["q4_pdb_pre2021"] = (
+        authors["author"]
+        .map(submissions_pre2021.set_index("author")["q4_pdb_pre2021"])
+        .fillna(False)
+    )
 
     # group by paper
-    authors_grouped_in_paper = authors.groupby("id").agg(
-        num_pdb_ids_pre2021=pd.NamedAgg(column="num_pdb_ids_pre2021", aggfunc="sum"),
-        q4_pdb_pre2021_any=pd.NamedAgg(column="q4_pdb_pre2021", aggfunc="any")
-    ).reset_index()
+    authors_grouped_in_paper = (
+        authors.groupby("id")
+        .agg(
+            num_pdb_ids_pre2021=pd.NamedAgg(
+                column="num_pdb_ids_pre2021", aggfunc="sum"
+            ),
+            q4_pdb_pre2021_any=pd.NamedAgg(column="q4_pdb_pre2021", aggfunc="any"),
+        )
+        .reset_index()
+    )
 
     # merge back with data
     data = data.merge(
