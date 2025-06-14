@@ -166,10 +166,15 @@ def _get_candidate_authors(data: pd.DataFrame) -> pd.DataFrame:
         + author_labels["ct_ai_weak"]
         + author_labels["ct_ai_mixed"]
     )
-    author_labels["ct_noai_with_intent"] = (
-        author_labels["ct_noai_strong"]
-        + author_labels["ct_noai_weak"]
-        + author_labels["ct_noai_mixed"]
+    author_labels["ct_pp_with_intent"] = (
+        author_labels["ct_pp_strong"]
+        + author_labels["ct_pp_weak"]
+        + author_labels["ct_pp_mixed"]
+    )
+    author_labels["ct_sb_with_intent"] = (
+        author_labels["ct_sb_strong"]
+        + author_labels["ct_sb_weak"]
+        + author_labels["ct_sb_mixed"]
     )
     author_labels["other_with_intent"] = (
         author_labels["other_strong"]
@@ -232,7 +237,7 @@ def get_unique_authors(
     ).reset_index()
 
     # make source cols int
-    for col in ["af", "ct_ai", "ct_noai", "other"]:
+    for col in ["af", "ct_ai", "ct_pp", "ct_sb", "other"]:
         authors[col] = authors[col].astype(int)
 
     authors = authors.merge(strength_labels, on=["author", "quarter"], how="left")
@@ -559,7 +564,7 @@ def merge_author_data(
         data = data.merge(institutions, on="institution", how="left")
         data = data.merge(candidate_authors, on=["author", "quarter"], how="left")
 
-        # sort by quarter, bfill and ffill for missing af. ct_ai, ct_noai, other
+        # sort by quarter, bfill and ffill for missing af. ct_ai, ct_pp, ct_sb, other
         data = data.sort_values(by=["author", "quarter"])
         cols_to_fill = [
             col for col in candidate_authors.columns if col not in ["author", "quarter"]
@@ -876,19 +881,24 @@ def aggregate_to_quarterly(data: pd.DataFrame) -> pd.DataFrame:
         "num_uniprot_structures": ("num_uniprot_structures", "sum"),
         "num_pdb_ids": ("num_pdb_ids", "sum"),
         "num_primary_submissions": ("num_primary_submissions", "sum"),
-        "score_mean": ("score_mean", "mean"),
-        "complexity_sum": ("complexity_sum", "sum"),
-        "complexity_mean": ("complexity_mean", "mean"),
         "organism_rarity_mean": ("organism_rarity_mean", "mean"),
         "organism_rarity_max": ("organism_rarity_max", "mean"),
         "num_diseases": ("num_diseases", "sum"),
-        "resolution_mean": ("resolution_mean", "mean"),
-        "R_free_mean": ("R_free_mean", "mean"),
+        "resolution": ("resolution", "mean"),
+        "R_free": ("R_free", "mean"),
         "pdb_submission": ("pdb_submission", "sum"),
-        "mean_tmscore": ("mean_tmscore", "mean"),
         "max_tmscore": ("max_tmscore", "max"),
-        "normalised_mean_tmscore": ("normalised_mean_tmscore", "mean"),
+        "max_score": ("max_score", "max"),
+        "max_fident": ("max_fident", "max"),
+        "mean_max_tmscore": ("max_tmscore", "mean"),
+        "mean_max_score": ("max_score", "mean"),
+        "mean_max_fident": ("max_fident", "mean"),
         "normalised_max_tmscore": ("normalised_max_tmscore", "max"),
+        "normalised_max_score": ("normalised_max_score", "max"),
+        "normalised_max_fident": ("normalised_max_fident", "max"),
+        "mean_normalised_max_tmscore": ("normalised_max_tmscore", "mean"),
+        "mean_normalised_max_score": ("normalised_max_score", "mean"),
+        "mean_normalised_max_fident": ("normalised_max_fident", "mean"),
         "institution": ("institution", "first"),
         "institution_cited_by_count": ("institution_cited_by_count", "first"),
         "institution_country_code": ("country_code", "first"),
@@ -899,7 +909,8 @@ def aggregate_to_quarterly(data: pd.DataFrame) -> pd.DataFrame:
         "institution_works_count": ("works_count", "first"),
         "af": ("af", safe_mode),
         "ct_ai": ("ct_ai", safe_mode),
-        "ct_noai": ("ct_noai", safe_mode),
+        "ct_pp": ("ct_pp", safe_mode),
+        "ct_sb": ("ct_sb", safe_mode),
         "other": ("other", safe_mode),
         "af_mixed": ("af_mixed", safe_mode),
         "af_strong": ("af_strong", safe_mode),
@@ -909,17 +920,22 @@ def aggregate_to_quarterly(data: pd.DataFrame) -> pd.DataFrame:
         "ct_ai_strong": ("ct_ai_strong", safe_mode),
         "ct_ai_unknown": ("ct_ai_unknown", safe_mode),
         "ct_ai_weak": ("ct_ai_weak", safe_mode),
-        "ct_noai_mixed": ("ct_noai_mixed", safe_mode),
-        "ct_noai_strong": ("ct_noai_strong", safe_mode),
-        "ct_noai_unknown": ("ct_noai_unknown", safe_mode),
-        "ct_noai_weak": ("ct_noai_weak", safe_mode),
+        "ct_pp_mixed": ("ct_pp_mixed", safe_mode),
+        "ct_pp_strong": ("ct_pp_strong", safe_mode),
+        "ct_pp_unknown": ("ct_pp_unknown", safe_mode),
+        "ct_pp_weak": ("ct_pp_weak", safe_mode),
+        "ct_sb_mixed": ("ct_sb_mixed", safe_mode),
+        "ct_sb_strong": ("ct_sb_strong", safe_mode),
+        "ct_sb_unknown": ("ct_sb_unknown", safe_mode),
+        "ct_sb_weak": ("ct_sb_weak", safe_mode),
         "other_mixed": ("other_mixed", safe_mode),
         "other_strong": ("other_strong", safe_mode),
         "other_unknown": ("other_unknown", safe_mode),
         "other_weak": ("other_weak", safe_mode),
         "af_with_intent": ("af_with_intent", safe_mode),
         "ct_ai_with_intent": ("ct_ai_with_intent", safe_mode),
-        "ct_noai_with_intent": ("ct_noai_with_intent", safe_mode),
+        "ct_pp_with_intent": ("ct_pp_with_intent", safe_mode),
+        "ct_sb_with_intent": ("ct_sb_with_intent", safe_mode),
         "other_with_intent": ("other_with_intent", safe_mode),
         "primary_field": ("primary_field", safe_mode),
         "author_position": ("author_position", safe_mode),
