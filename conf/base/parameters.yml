@@ -440,8 +440,6 @@ labs:
 
 ecr:
   data_collection:
-    from_author_date: "2017-01-01"
-    to_author_date: "2019-12-31"
     from_ecr_date: "2020-01-01"
     from_nonecr_date: "2014-12-31"
     api:

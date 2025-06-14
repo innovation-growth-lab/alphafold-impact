@@ -224,7 +224,7 @@ def is_likely_pi(group: pd.DataFrame, quantile: float) -> bool:
     above = group["score"] > quantile
     return (
         above.rolling(3).sum().eq(3).any()
-        or (group["year"].isin([2022, 2023]) & above).any()
+        or (group["year"].isin([2023, 2024]) & above).any()
     )
 
 

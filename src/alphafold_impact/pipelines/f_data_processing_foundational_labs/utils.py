@@ -12,6 +12,8 @@ Entrez.email = "david.ampudia@nesta.org.uk"
 logger = logging.getLogger(__name__)
 
 QUARTER_MAPPING = {  # HACK
+    "2015Q1": -11,
+    "2015Q2": -10,
     "2015Q3": -9,
     "2015Q4": -8,
     "2016Q1": -7,

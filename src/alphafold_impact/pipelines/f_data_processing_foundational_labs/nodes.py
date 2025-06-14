@@ -114,8 +114,8 @@ def get_lab_individual_outputs(
         # Help use functions designed for authors
         data.rename(columns={"pi_id": "author"}, inplace=True)
 
-        # drop rows with publication_date older than 2017-06-01
-        data = data[data["publication_date"] >= "2017-06-01"]
+        # drop rows with publication_date older than 2015-01-01
+        data = data[data["publication_date"] >= "2015-01-01"]
 
         # define whether author is a high pdb author
         data = define_high_pdb_authors(data, author_submissions)
