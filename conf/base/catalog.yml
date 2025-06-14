@@ -297,7 +297,7 @@ foundational_lab.data_collection.candidates.scores.primary:
 
 foundational_lab.data_collection.assignment.primary:
   <<: *_pq
-  filepath: s3://igl-alphafold/2025Q1/03_primary/oa/foundational_labs/assignments.parquet
+  filepath: s3://igl-alphafold/oct/03_primary/oa/foundational_labs/assignments.parquet
 
 foundational_lab.data_collection.publications.raw:
   <<: *_pq_ptd
@@ -325,7 +325,7 @@ applied_lab.data_collection.candidates.scores.primary:
 
 applied_lab.data_collection.assignment.primary:
   <<: *_pq
-  filepath: s3://igl-alphafold/2025Q1/03_primary/oa/applied_labs/assignments.parquet
+  filepath: s3://igl-alphafold/oct/03_primary/oa/applied_labs/assignments.parquet
 
 applied_lab.data_collection.publications.raw:
   <<: *_pq_ptd
