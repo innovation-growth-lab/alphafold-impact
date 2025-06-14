@@ -64,7 +64,7 @@ def separate_ct_from_seed(
     seed_baseline_data,
     ct_data,
 ):
-    """Separate the CT data from the seed data."""
+    """Separate the CT data from the seed data into three technology types: ai, pp, and sb."""
     # create ct_level_0_ai_papers
     ct_level_0_ai_papers = baseline_data[
         baseline_data["parent_id"].isin(
@@ -72,10 +72,17 @@ def separate_ct_from_seed(
         )
     ]
 
-    # create ct_level_0_noai_papers
-    ct_level_0_noai_papers = baseline_data[
+    # create ct_level_0_pp_papers
+    ct_level_0_pp_papers = baseline_data[
         baseline_data["parent_id"].isin(
-            ct_data[~ct_data["label"].str.contains("ai")]["parent_id"]
+            ct_data[ct_data["label"].str.contains("pp")]["parent_id"]
+        )
+    ]
+
+    # create ct_level_0_sb_papers
+    ct_level_0_sb_papers = baseline_data[
+        baseline_data["parent_id"].isin(
+            ct_data[ct_data["label"].str.contains("sb")]["parent_id"]
         )
     ]
 
@@ -84,7 +91,12 @@ def separate_ct_from_seed(
         ~seed_baseline_data["id"].isin(ct_data["parent_id"])
     ]
 
-    return ct_level_0_ai_papers, ct_level_0_noai_papers, other_level_0_papers
+    return (
+        ct_level_0_ai_papers,
+        ct_level_0_pp_papers,
+        ct_level_0_sb_papers,
+        other_level_0_papers,
+    )
 
 
 def compute_apf(author_data: pd.DataFrame) -> pd.DataFrame:
@@ -214,7 +226,6 @@ def is_likely_pi(group: pd.DataFrame, quantile: float) -> bool:
         above.rolling(3).sum().eq(3).any()
         or (group["year"].isin([2022, 2023]) & above).any()
     )
-
 
 
 def fetch_institution_data(institution):

@@ -90,7 +90,8 @@ def get_ai_noai_div(ct_data, seed_papers):
     Returns:
         tuple: A tuple containing two DataFrames - ct_ai_papers and ct_noai_papers.
             - ct_ai_papers: The DataFrame containing AI papers.
-            - ct_noai_papers: The DataFrame containing non-AI papers.
+            - ct_pp_papers: The DataFrame containing PP papers.
+            - ct_sb_papers: The DataFrame containing SB papers.
     """
 
     def create_df(ct_data, ct_data_previous, level):
@@ -120,31 +121,44 @@ def get_ai_noai_div(ct_data, seed_papers):
     ]
 
     # create ct_level_0_noai_papers
-    ct_level_0_noai_papers = ct_data[
+    ct_level_0_pp_papers = ct_data[
         ct_data["parent_id"].isin(
             seed_papers[~seed_papers["label"].str.contains("ai")]["parent_id"]
         )
     ]
 
+    # create ct_level_0_sb_papers
+    ct_level_0_sb_papers = ct_data[
+        ct_data["parent_id"].isin(
+            seed_papers[seed_papers["label"].str.contains("sb")]["parent_id"]
+        )
+    ]
+
     ct_level_1_ai_papers = create_df(ct_data, ct_level_0_ai_papers, 1)
-    ct_level_1_noai_papers = create_df(ct_data, ct_level_0_noai_papers, 1)
+    ct_level_1_pp_papers = create_df(ct_data, ct_level_0_pp_papers, 1)
+    ct_level_1_sb_papers = create_df(ct_data, ct_level_0_sb_papers, 1)
 
     ct_level_2_ai_papers = create_df(ct_data, ct_level_1_ai_papers, 2)
-    ct_level_2_noai_papers = create_df(ct_data, ct_level_1_noai_papers, 2)
+    ct_level_2_pp_papers = create_df(ct_data, ct_level_1_pp_papers, 2)
+    ct_level_2_sb_papers = create_df(ct_data, ct_level_1_sb_papers, 2)
 
-    # Concatenate the "ai" and "noai" dataframes
+    # Concatenate the "ai", "pp", and "sb" dataframes
     ct_ai_papers = pd.concat(
         [ct_level_0_ai_papers, ct_level_1_ai_papers, ct_level_2_ai_papers]
     )
-    ct_noai_papers = pd.concat(
-        [ct_level_0_noai_papers, ct_level_1_noai_papers, ct_level_2_noai_papers]
+    ct_pp_papers = pd.concat(
+        [ct_level_0_pp_papers, ct_level_1_pp_papers, ct_level_2_pp_papers]
+    )
+    ct_sb_papers = pd.concat(
+        [ct_level_0_sb_papers, ct_level_1_sb_papers, ct_level_2_sb_papers]
     )
 
     # Drop duplicates
     ct_ai_papers = ct_ai_papers.drop_duplicates(subset=["parent_id", "id", "level"])
-    ct_noai_papers = ct_noai_papers.drop_duplicates(subset=["parent_id", "id", "level"])
+    ct_pp_papers = ct_pp_papers.drop_duplicates(subset=["parent_id", "id", "level"])
+    ct_sb_papers = ct_sb_papers.drop_duplicates(subset=["parent_id", "id", "level"])
 
-    return ct_ai_papers, ct_noai_papers
+    return ct_ai_papers, ct_pp_papers, ct_sb_papers
 
 
 def get_candidate_authors(
@@ -171,10 +185,11 @@ def get_candidate_authors(
     ct_authors = _get_applied_candidate_authors(ct_data)
 
     # create ct_level_0_ai_papers
-    ct_ai_papers, ct_noai_papers = get_ai_noai_div(ct_data, seed_papers)
+    ct_ai_papers, ct_pp_papers, ct_sb_papers = get_ai_noai_div(ct_data, seed_papers)
 
     ct_ai_authors = _get_applied_candidate_authors(ct_ai_papers)
-    ct_noai_authors = _get_applied_candidate_authors(ct_noai_papers)
+    ct_pp_authors = _get_applied_candidate_authors(ct_pp_papers)
+    ct_sb_authors = _get_applied_candidate_authors(ct_sb_papers)
 
     # get the last authors from the other SB data
     other_authors = _get_applied_candidate_authors(other_data)
@@ -187,7 +202,8 @@ def get_candidate_authors(
         alphafold_authors,
         ct_authors,
         ct_ai_authors,
-        ct_noai_authors,
+        ct_pp_authors,
+        ct_sb_authors,
         other_authors,
     )
 
@@ -195,7 +211,8 @@ def get_candidate_authors(
 def create_candidates_map(
     alphafold_authors: List,
     ct_ai_authors: List,
-    ct_noai_authors: List,
+    ct_pp_authors: List,
+    ct_sb_authors: List,
     other_authors: List,
 ) -> pd.DataFrame:
     """
@@ -218,14 +235,17 @@ def create_candidates_map(
     ct_ai_df = pd.DataFrame(ct_ai_authors, columns=["author", "institution"])
     ct_ai_df["seed"] = "ct_ai"
 
-    ct_noai_df = pd.DataFrame(ct_noai_authors, columns=["author", "institution"])
-    ct_noai_df["seed"] = "ct_noai"
+    ct_pp_df = pd.DataFrame(ct_pp_authors, columns=["author", "institution"])
+    ct_pp_df["seed"] = "ct_pp"
+
+    ct_sb_df = pd.DataFrame(ct_sb_authors, columns=["author", "institution"])
+    ct_sb_df["seed"] = "ct_sb"
 
     other_df = pd.DataFrame(other_authors, columns=["author", "institution"])
     other_df["seed"] = "other"
 
     # combine the candidate dataframes
-    candidate_data = pd.concat([alphafold_df, ct_ai_df, ct_noai_df, other_df])
+    candidate_data = pd.concat([alphafold_df, ct_ai_df, ct_pp_df, ct_sb_df, other_df])
 
     # check for duplicates in candidate_data
     # candidate_data = candidate_data.drop_duplicates(subset=["author", "institution"])
@@ -246,9 +266,14 @@ def create_candidates_map(
         lambda x: "ct_ai" if "ct_ai" in x else x
     )
 
-    # if seed contains ct_noai, go to ct_noai
+    # if seed contains ct_pp, go to ct_pp
     candidate_data["seed"] = candidate_data["seed"].apply(
-        lambda x: "ct_noai" if "ct_noai" in x else x
+        lambda x: "ct_pp" if "ct_pp" in x else x
+    )
+
+    # if seed contains ct_sb, go to ct_sb
+    candidate_data["seed"] = candidate_data["seed"].apply(
+        lambda x: "ct_sb" if "ct_sb" in x else x
     )
 
     return candidate_data
@@ -258,7 +283,8 @@ def calculate_lab_determinants(
     dict_loader: AbstractDataset,
     alphafold_authors: List,
     ct_ai_authors: List,
-    ct_noai_authors: List,
+    ct_pp_authors: List,
+    ct_sb_authors: List,
     other_authors: List,
 ) -> Generator[Dict[str, pd.DataFrame], None, None]:
     """
@@ -332,7 +358,11 @@ def calculate_lab_determinants(
 
         # get mapping between candidates and chain seeds
         candidate_map = create_candidates_map(
-            alphafold_authors, ct_ai_authors, ct_noai_authors, other_authors
+            alphafold_authors,
+            ct_ai_authors,
+            ct_pp_authors,
+            ct_sb_authors,
+            other_authors,
         )
 
         # keep if author, institution pair is in candidate_map author institution columns

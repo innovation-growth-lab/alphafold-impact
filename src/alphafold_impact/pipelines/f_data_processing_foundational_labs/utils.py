@@ -194,7 +194,7 @@ def get_cum_sums(pi_data, publication_data):
         fill_value=0,
     ).reset_index()
 
-    for col in ["af", "ct_ai", "ct_noai", "other"]:
+    for col in ["af", "ct_ai", "ct_pp", "ct_sb", "other"]:
         pi_relevant_pubs.rename(columns={col: "cum_" + col}, inplace=True)
         pi_relevant_pubs["cum_" + col] = pi_relevant_pubs["cum_" + col].astype(int)
 
@@ -204,8 +204,8 @@ def get_cum_sums(pi_data, publication_data):
     pi_data = pi_data.sort_values(by=["pi_id", "quarter"])
 
     # ffill the four columns
-    pi_data[["cum_af", "cum_ct_ai", "cum_ct_noai", "cum_other"]] = (
-        pi_data.groupby("pi_id")[["cum_af", "cum_ct_ai", "cum_ct_noai", "cum_other"]]
+    pi_data[["cum_af", "cum_ct_ai", "cum_ct_pp", "cum_ct_sb", "cum_other"]] = (
+        pi_data.groupby("pi_id")[["cum_af", "cum_ct_ai", "cum_ct_pp", "cum_ct_sb", "cum_other"]]
         .ffill()
         .fillna(0)
         .astype(int)
@@ -254,7 +254,7 @@ def get_strong_cum_sums(
         fill_value=0,
     ).reset_index()
 
-    for col in ["af", "ct_ai", "ct_noai"]:
+    for col in ["af", "ct_ai", "ct_pp", "ct_sb"]:
         pi_relevant_pubs.rename(columns={col: "strong_cumul_" + col}, inplace=True)
         pi_relevant_pubs["strong_cumul_" + col] = pi_relevant_pubs[
             "strong_cumul_" + col
@@ -270,14 +270,16 @@ def get_strong_cum_sums(
         [
             "strong_cumul_af",
             "strong_cumul_ct_ai",
-            "strong_cumul_ct_noai",
+            "strong_cumul_ct_pp",
+            "strong_cumul_ct_sb",
         ]
     ] = (
         pi_data.groupby("pi_id")[
             [
                 "strong_cumul_af",
                 "strong_cumul_ct_ai",
-                "strong_cumul_ct_noai",
+                "strong_cumul_ct_pp",
+                "strong_cumul_ct_sb",
             ]
         ]
         .ffill()
@@ -341,7 +343,7 @@ def get_usage(data: pd.DataFrame) -> pd.DataFrame:
     ).reset_index()
 
     # make source cols int
-    for col in ["af", "ct_ai", "ct_noai", "other"]:
+    for col in ["af", "ct_ai", "ct_pp", "ct_sb", "other"]:
         author_data[col] = author_data[col].astype(int)
 
     return author_data
@@ -445,10 +447,15 @@ def get_intent(data: pd.DataFrame) -> pd.DataFrame:
         + author_labels["ct_ai_weak"]
         + author_labels["ct_ai_mixed"]
     )
-    author_labels["ct_noai_with_intent"] = (
-        author_labels["ct_noai_strong"]
-        + author_labels["ct_noai_weak"]
-        + author_labels["ct_noai_mixed"]
+    author_labels["ct_pp_with_intent"] = (
+        author_labels["ct_pp_strong"]
+        + author_labels["ct_pp_weak"]
+        + author_labels["ct_pp_mixed"]
+    )
+    author_labels["ct_sb_with_intent"] = (
+        author_labels["ct_sb_strong"]
+        + author_labels["ct_sb_weak"]
+        + author_labels["ct_sb_mixed"]
     )
     author_labels["other_with_intent"] = (
         author_labels["other_strong"]
@@ -504,16 +511,14 @@ def get_pdb_activity(data, pdb_submissions):
                 column="organism_rarity_max", aggfunc="max"
             ),
             num_diseases=pd.NamedAgg(column="num_diseases", aggfunc="sum"),
-            resolution_mean=pd.NamedAgg(column="resolution_mean", aggfunc="mean"),
-            R_free_mean=pd.NamedAgg(column="R_free_mean", aggfunc="mean"),
-            mean_tmscore=pd.NamedAgg(column="mean_tmscore", aggfunc="mean"),
+            resolution=pd.NamedAgg(column="resolution", aggfunc="mean"),
+            R_free=pd.NamedAgg(column="R_free", aggfunc="mean"),
             max_tmscore=pd.NamedAgg(column="max_tmscore", aggfunc="max"),
-            normalised_mean_tmscore=pd.NamedAgg(
-                column="normalised_mean_tmscore", aggfunc="mean"
-            ),
-            normalised_max_tmscore=pd.NamedAgg(
-                column="normalised_max_tmscore", aggfunc="max"
-            ),
+            max_score=pd.NamedAgg(column="max_score", aggfunc="max"),
+            max_fident=pd.NamedAgg(column="max_fident", aggfunc="max"),
+            normalised_max_tmscore=pd.NamedAgg(column="normalised_max_tmscore", aggfunc="max"),
+            normalised_max_score=pd.NamedAgg(column="normalised_max_score", aggfunc="max"),
+            normalised_max_fident=pd.NamedAgg(column="normalised_max_fident", aggfunc="max"),
         )
         .reset_index()
     )
@@ -882,92 +887,94 @@ def collect_covid_references(data: pd.DataFrame) -> pd.DataFrame:
     return data
 
 
-def get_quarterly_aggregate_outputs(data):
-    """
-    Aggregate the data by 'pi_id' and 'time' (quarter) and calculate various metrics.
+# def get_quarterly_aggregate_outputs(data):
+#     """
+#     Aggregate the data by 'pi_id' and 'time' (quarter) and calculate various metrics.
 
-    Args:
-        data (pandas.DataFrame): The input data containing the columns 'pi_id', 'time',
-        and other metrics.
+#     Args:
+#         data (pandas.DataFrame): The input data containing the columns 'pi_id', 'time',
+#         and other metrics.
 
-    Returns:
-        pandas.DataFrame: The aggregated data with calculated metrics.
+#     Returns:
+#         pandas.DataFrame: The aggregated data with calculated metrics.
 
-    """
+#     """
 
-    def safe_mode(series):
-        mode = series.mode()
-        return mode.iloc[0] if not mode.empty else np.nan
+#     def safe_mode(series):
+#         mode = series.mode()
+#         return mode.iloc[0] if not mode.empty else np.nan
 
-    # Define aggregation functions for each column
-    agg_funcs = {
-        "cited_by_count": "sum",
-        "seed": "first",
-        "cit_0": "sum",
-        "cit_1": "sum",
-        "parent_time": "first",
-        "num_uniprot_structures": safe_mode,
-        "num_pdb_ids": safe_mode,
-        "num_primary_submissions": safe_mode,
-        "score_mean": safe_mode,
-        "complexity_sum": safe_mode,
-        "complexity_mean": safe_mode,
-        "organism_rarity_mean": safe_mode,
-        "organism_rarity_max": safe_mode,
-        "num_diseases": safe_mode,
-        "resolution_mean": safe_mode,
-        "R_free_mean": safe_mode,
-        "mean_tmscore": safe_mode,
-        "max_tmscore": safe_mode,
-        "normalised_mean_tmscore": safe_mode,
-        "normalised_max_tmscore": safe_mode,
-        "pdb_submission": "sum",
-        "intent": "first",
-        "ai_concept": lambda x: x.sum(),
-        "protein_concept": lambda x: x.sum(),
-        "experimental": lambda x: x.sum(),
-        "covid_share_2020": "first",
-        "patent_count": "sum",
-        "patent_citation": "sum",
-        "CPCs": lambda x: ";;".join(
-            filter(lambda i: i != "nan" and i != "None", map(str, x))
-        ),
-        "ca_count": "sum",
-        "fwci": "mean",
-        "citation_normalized_percentile_value": "mean",
-        "citation_normalized_percentile_is_in_top_1_percent": lambda x: int(x.sum()),
-        "citation_normalized_percentile_is_in_top_10_percent": lambda x: int(x.sum()),
-        "cum_af": safe_mode,
-        "cum_ct_ai": safe_mode,
-        "cum_ct_noai": safe_mode,
-        "cum_other": safe_mode,
-        "strong_cumul_af": safe_mode,
-        "strong_cumul_ct_ai": safe_mode,
-        "strong_cumul_ct_noai": safe_mode,
-        "primary_field": safe_mode,
-    }
+#     # Define aggregation functions for each column
+#     agg_funcs = {
+#         "cited_by_count": "sum",
+#         "seed": "first",
+#         "cit_0": "sum",
+#         "cit_1": "sum",
+#         "parent_time": "first",
+#         "num_uniprot_structures": safe_mode,
+#         "num_pdb_ids": safe_mode,
+#         "num_primary_submissions": safe_mode,
+#         "score_mean": safe_mode,
+#         "complexity_sum": safe_mode,
+#         "complexity_mean": safe_mode,
+#         "organism_rarity_mean": safe_mode,
+#         "organism_rarity_max": safe_mode,
+#         "num_diseases": safe_mode,
+#         "resolution": safe_mode,
+#         "R_free": safe_mode,
+#         "max_tmscore": safe_mode,
+#         "max_score": safe_mode,
+#         "max_fident": safe_mode,
+#         "normalised_max_tmscore": safe_mode,
+#         "normalised_max_score": safe_mode,
+#         "normalised_max_fident": safe_mode,
+#         "pdb_submission": "sum",
+#         "intent": "first",
+#         "ai_concept": lambda x: x.sum(),
+#         "protein_concept": lambda x: x.sum(),
+#         "experimental": lambda x: x.sum(),
+#         "covid_share_2020": "first",
+#         "patent_count": "sum",
+#         "patent_citation": "sum",
+#         "CPCs": lambda x: ";;".join(
+#             filter(lambda i: i != "nan" and i != "None", map(str, x))
+#         ),
+#         "ca_count": "sum",
+#         "fwci": "mean",
+#         "citation_normalized_percentile_value": "mean",
+#         "citation_normalized_percentile_is_in_top_1_percent": lambda x: int(x.sum()),
+#         "citation_normalized_percentile_is_in_top_10_percent": lambda x: int(x.sum()),
+#         "cum_af": safe_mode,
+#         "cum_ct_ai": safe_mode,
+#         "cum_ct_noai": safe_mode,
+#         "cum_other": safe_mode,
+#         "strong_cumul_af": safe_mode,
+#         "strong_cumul_ct_ai": safe_mode,
+#         "strong_cumul_ct_noai": safe_mode,
+#         "primary_field": safe_mode,
+#     }
 
-    # Assume `data` is your original data
-    for column in data.columns:
-        if (
-            column.startswith("field_")
-            or column.startswith("mesh_")
-            or column.startswith("institution_")
-            or column.startswith("ext_")
-        ):
-            agg_funcs[column] = "first"
+#     # Assume `data` is your original data
+#     for column in data.columns:
+#         if (
+#             column.startswith("field_")
+#             or column.startswith("mesh_")
+#             or column.startswith("institution_")
+#             or column.startswith("ext_")
+#         ):
+#             agg_funcs[column] = "first"
 
-    # Group by 'pi_id' and 'time' (quarter) and aggregate
-    data_grouped = data.groupby(["pi_id", "time"]).agg(agg_funcs).reset_index()
+#     # Group by 'pi_id' and 'time' (quarter) and aggregate
+#     data_grouped = data.groupby(["pi_id", "time"]).agg(agg_funcs).reset_index()
 
-    # remove ";;None" in CPCs
-    data_grouped["CPCs"] = data_grouped["CPCs"].str.replace(";;None", "")
-    data_grouped["CPCs"] = data_grouped["CPCs"].str.replace("None;;", "")
+#     # remove ";;None" in CPCs
+#     data_grouped["CPCs"] = data_grouped["CPCs"].str.replace(";;None", "")
+#     data_grouped["CPCs"] = data_grouped["CPCs"].str.replace("None;;", "")
 
-    # adding counts
-    data_grouped["num_publications"] = data.groupby(["pi_id", "time"]).size().values
+#     # adding counts
+#     data_grouped["num_publications"] = data.groupby(["pi_id", "time"]).size().values
 
-    return data_grouped
+#     return data_grouped
 
 
 def _get_time(data):
