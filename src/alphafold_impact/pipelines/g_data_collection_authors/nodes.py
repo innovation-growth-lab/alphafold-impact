@@ -440,8 +440,6 @@ def fetch_author_outputs(
         slice_papers.drop(
             columns=[
                 "counts_by_year",
-                "cited_by_percentile_year",
-                "citation_normalized_percentile",
             ],
             inplace=True,
         )
@@ -874,7 +872,6 @@ def aggregate_to_quarterly(data: pd.DataFrame) -> pd.DataFrame:
         "cit_0": ("cit_0", "mean"),
         "cit_1": ("cit_1", "mean"),
         "fwci": ("fwci", "mean"),
-        "percentile_value": ("citation_normalized_percentile_value", "mean"),
         "patent_count": ("patent_count", "sum"),
         "patent_citation": ("patent_citation", "sum"),
         "ca_count": ("ca_count", "sum"),
@@ -1013,8 +1010,6 @@ def _result_transformations(data: pd.DataFrame) -> pd.DataFrame:
         1. Extracts and restructures the 'authorships' field.
         2. Creates a list of topics from the 'topics' field.
         3. Extracts concepts from the 'concepts' field.
-        4. Extracts the content of 'citation_normalized_percentile' into separate columns.
-        5. Extracts the content of 'cited_by_percentile_year' into separate columns.
 
     Args:
         data (pd.DataFrame): The input DataFrame containing the data to be transformed.
@@ -1115,19 +1110,6 @@ def _result_transformations(data: pd.DataFrame) -> pd.DataFrame:
             if x
             else None
         )
-    )
-
-    # Extract the content of citation_normalized_percentile
-    data[
-        [
-            "citation_normalized_percentile_value",
-            "citation_normalized_percentile_is_in_top_1_percent",
-            "citation_normalized_percentile_is_in_top_10_percent",
-        ]
-    ] = data.apply(
-        lambda x: (pd.Series(x["citation_normalized_percentile"])),
-        axis=1,
-        result_type="expand",
     )
 
     data.drop(

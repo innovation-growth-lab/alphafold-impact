@@ -49,6 +49,10 @@ QUARTER_MAPPING = {  # HACK
     "2023Q3": 23,
     "2023Q4": 24,
     "2024Q1": 25,
+    "2024Q2": 26,
+    "2024Q3": 27,
+    "2024Q4": 28,
+    "2025Q1": 29,
 }
 
 
@@ -207,7 +211,9 @@ def get_cum_sums(pi_data, publication_data):
 
     # ffill the four columns
     pi_data[["cum_af", "cum_ct_ai", "cum_ct_pp", "cum_ct_sb", "cum_other"]] = (
-        pi_data.groupby("pi_id")[["cum_af", "cum_ct_ai", "cum_ct_pp", "cum_ct_sb", "cum_other"]]
+        pi_data.groupby("pi_id")[
+            ["cum_af", "cum_ct_ai", "cum_ct_pp", "cum_ct_sb", "cum_other"]
+        ]
         .ffill()
         .fillna(0)
         .astype(int)
@@ -333,15 +339,17 @@ def get_usage(data: pd.DataFrame) -> pd.DataFrame:
         .reset_index(name="counts")
         .sort_values(by=["author", "source", "quarter"])
     )
-    
-    author_data["cumulative_counts"] = author_data.groupby(["author", "source"])["counts"].cumsum()
+
+    author_data["cumulative_counts"] = author_data.groupby(["author", "source"])[
+        "counts"
+    ].cumsum()
 
     logger.info("Pivoting table")
     author_data = author_data.pivot_table(
         index=["author", "quarter"],
-        columns="source", 
+        columns="source",
         values="cumulative_counts",
-        fill_value=0
+        fill_value=0,
     ).reset_index()
 
     # make source cols int
@@ -349,7 +357,6 @@ def get_usage(data: pd.DataFrame) -> pd.DataFrame:
         author_data[col] = author_data[col].astype(int)
 
     return author_data
-
 
 
 def get_intent(data: pd.DataFrame) -> pd.DataFrame:
@@ -518,9 +525,15 @@ def get_pdb_activity(data, pdb_submissions):
             max_tmscore=pd.NamedAgg(column="max_tmscore", aggfunc="max"),
             max_score=pd.NamedAgg(column="max_score", aggfunc="max"),
             max_fident=pd.NamedAgg(column="max_fident", aggfunc="max"),
-            normalised_max_tmscore=pd.NamedAgg(column="normalised_max_tmscore", aggfunc="max"),
-            normalised_max_score=pd.NamedAgg(column="normalised_max_score", aggfunc="max"),
-            normalised_max_fident=pd.NamedAgg(column="normalised_max_fident", aggfunc="max"),
+            normalised_max_tmscore=pd.NamedAgg(
+                column="normalised_max_tmscore", aggfunc="max"
+            ),
+            normalised_max_score=pd.NamedAgg(
+                column="normalised_max_score", aggfunc="max"
+            ),
+            normalised_max_fident=pd.NamedAgg(
+                column="normalised_max_fident", aggfunc="max"
+            ),
         )
         .reset_index()
     )
@@ -805,7 +818,9 @@ def calculate_mesh_balance(
     df = df.explode("mesh_terms")
 
     # group by author and mesh_terms and calculate the count
-    df = df.groupby(["author", "quarter", "mesh_terms"]).size().reset_index(name="count")
+    df = (
+        df.groupby(["author", "quarter", "mesh_terms"]).size().reset_index(name="count")
+    )
 
     # calculate the total count for each author
     total_count = df.groupby("author")["count"].sum()
@@ -842,7 +857,7 @@ def calculate_mesh_balance(
     # fill NaN for columns that are mesh_
     mesh_cols = [col for col in data.columns if col.startswith("mesh_")]
     data[mesh_cols] = data[mesh_cols].fillna(0)
-    
+
     return data
 
 
@@ -887,96 +902,6 @@ def collect_covid_references(data: pd.DataFrame) -> pd.DataFrame:
     data["covid_share_2020"] = data["author"].map(covid_share_dict)
 
     return data
-
-
-# def get_quarterly_aggregate_outputs(data):
-#     """
-#     Aggregate the data by 'pi_id' and 'time' (quarter) and calculate various metrics.
-
-#     Args:
-#         data (pandas.DataFrame): The input data containing the columns 'pi_id', 'time',
-#         and other metrics.
-
-#     Returns:
-#         pandas.DataFrame: The aggregated data with calculated metrics.
-
-#     """
-
-#     def safe_mode(series):
-#         mode = series.mode()
-#         return mode.iloc[0] if not mode.empty else np.nan
-
-#     # Define aggregation functions for each column
-#     agg_funcs = {
-#         "cited_by_count": "sum",
-#         "seed": "first",
-#         "cit_0": "sum",
-#         "cit_1": "sum",
-#         "parent_time": "first",
-#         "num_uniprot_structures": safe_mode,
-#         "num_pdb_ids": safe_mode,
-#         "num_primary_submissions": safe_mode,
-#         "score_mean": safe_mode,
-#         "complexity_sum": safe_mode,
-#         "complexity_mean": safe_mode,
-#         "organism_rarity_mean": safe_mode,
-#         "organism_rarity_max": safe_mode,
-#         "num_diseases": safe_mode,
-#         "resolution": safe_mode,
-#         "R_free": safe_mode,
-#         "max_tmscore": safe_mode,
-#         "max_score": safe_mode,
-#         "max_fident": safe_mode,
-#         "normalised_max_tmscore": safe_mode,
-#         "normalised_max_score": safe_mode,
-#         "normalised_max_fident": safe_mode,
-#         "pdb_submission": "sum",
-#         "intent": "first",
-#         "ai_concept": lambda x: x.sum(),
-#         "protein_concept": lambda x: x.sum(),
-#         "experimental": lambda x: x.sum(),
-#         "covid_share_2020": "first",
-#         "patent_count": "sum",
-#         "patent_citation": "sum",
-#         "CPCs": lambda x: ";;".join(
-#             filter(lambda i: i != "nan" and i != "None", map(str, x))
-#         ),
-#         "ca_count": "sum",
-#         "fwci": "mean",
-#         "citation_normalized_percentile_value": "mean",
-#         "citation_normalized_percentile_is_in_top_1_percent": lambda x: int(x.sum()),
-#         "citation_normalized_percentile_is_in_top_10_percent": lambda x: int(x.sum()),
-#         "cum_af": safe_mode,
-#         "cum_ct_ai": safe_mode,
-#         "cum_ct_noai": safe_mode,
-#         "cum_other": safe_mode,
-#         "strong_cumul_af": safe_mode,
-#         "strong_cumul_ct_ai": safe_mode,
-#         "strong_cumul_ct_noai": safe_mode,
-#         "primary_field": safe_mode,
-#     }
-
-#     # Assume `data` is your original data
-#     for column in data.columns:
-#         if (
-#             column.startswith("field_")
-#             or column.startswith("mesh_")
-#             or column.startswith("institution_")
-#             or column.startswith("ext_")
-#         ):
-#             agg_funcs[column] = "first"
-
-#     # Group by 'pi_id' and 'time' (quarter) and aggregate
-#     data_grouped = data.groupby(["pi_id", "time"]).agg(agg_funcs).reset_index()
-
-#     # remove ";;None" in CPCs
-#     data_grouped["CPCs"] = data_grouped["CPCs"].str.replace(";;None", "")
-#     data_grouped["CPCs"] = data_grouped["CPCs"].str.replace("None;;", "")
-
-#     # adding counts
-#     data_grouped["num_publications"] = data.groupby(["pi_id", "time"]).size().values
-
-#     return data_grouped
 
 
 def _get_time(data):

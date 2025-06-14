@@ -49,8 +49,8 @@ def get_candidate_authors(
     alphafold_authors = get_sb_candidate_authors(alphafold_data)
 
     # separate the CT data from the seed data
-    ct_long_ai_data, ct_long_pp_data, ct_long_sb_data, other_data = separate_ct_from_seed(
-        baseline_data, seed_data, ct_data
+    ct_long_ai_data, ct_long_pp_data, ct_long_sb_data, other_data = (
+        separate_ct_from_seed(baseline_data, seed_data, ct_data)
     )
 
     # get the last authors from the CT data
@@ -229,7 +229,11 @@ def calculate_lab_determinants(
 
         # get mapping between candidates and chain seeds
         candidate_map = create_candidates_map(
-            alphafold_authors, ct_ai_authors, ct_pp_authors, ct_sb_authors, other_authors
+            alphafold_authors,
+            ct_ai_authors,
+            ct_pp_authors,
+            ct_sb_authors,
+            other_authors,
         )
 
         # keep if author, institution pair is in candidate_map author institution columns
@@ -502,7 +506,6 @@ def get_publications_from_labs(
                         "concepts",
                         "topics",
                         "fwci",
-                        "citation_normalized_percentile",
                     ]
                 }
                 for item in children_list
@@ -627,31 +630,6 @@ def get_publications_from_labs(
                     )
                 )
 
-                # Extract the content of citation_normalized_percentile
-                try:
-                    df[
-                        [
-                            "citation_normalized_percentile_value",
-                            "citation_normalized_percentile_is_in_top_1_percent",
-                            "citation_normalized_percentile_is_in_top_10_percent",
-                        ]
-                    ] = df.apply(
-                        lambda x: (pd.Series(x["citation_normalized_percentile"])),
-                        axis=1,
-                        result_type="expand",
-                    )
-
-                except ValueError:
-                    logger.warning(
-                        "citation_normalized_percentile not found in %s",
-                        df["id"].values[0],
-                    )
-                except TypeError:
-                    logger.warning(
-                        "citation_normalized_percentile wrong type in %s",
-                        df["id"].values[0],
-                    )
-
                 # change doi to remove the url
                 df["doi"] = df["doi"].str.replace("https://doi.org/", "")
 
@@ -664,12 +642,9 @@ def get_publications_from_labs(
         df = pd.concat(output)
 
         # force new vars to float
-        for col in ["citation_normalized_percentile_value", "fwci"]:
+        for col in ["fwci"]:
             # set any values with "" as NaN
             df[col] = df[col].replace("", np.nan).astype(float)
-
-        # drop column citation_normalized_percentile
-        df = df.drop(columns=["citation_normalized_percentile"])
 
         yield {f"s{i}": df}
 

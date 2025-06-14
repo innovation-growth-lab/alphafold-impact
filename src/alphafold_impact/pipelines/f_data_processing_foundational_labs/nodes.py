@@ -218,7 +218,6 @@ def aggregate_to_quarterly(data: pd.DataFrame) -> pd.DataFrame:
         "num_cited_by_count": ("cited_by_count", "sum"),
         "cited_by_count": ("cited_by_count", "mean"),
         "fwci": ("fwci", "mean"),
-        "percentile_value": ("citation_normalized_percentile_value", "mean"),
         "patent_count": ("patent_count", "sum"),
         "patent_citation": ("patent_citation", "sum"),
         "ca_count": ("ca_count", "sum"),
