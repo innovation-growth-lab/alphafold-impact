@@ -122,6 +122,7 @@ def create_publications_data(
 def _sort_drop(data: pd.DataFrame) -> pd.DataFrame:
     """
     Sorts and filters a DataFrame based on specific criteria.
+    First sorts by level (closest to 0), then by strength within each level.
     Args:
         data (pd.DataFrame): The input DataFrame to be sorted and filtered.
     Returns:
@@ -137,12 +138,18 @@ def _sort_drop(data: pd.DataFrame) -> pd.DataFrame:
         "unknown": 5,
         "no_data": 6,
     }
-    data["sort_order"] = data.apply(
+    data["strength_order"] = data.apply(
         lambda row: -1 if row["level"] == -1 else sort_order.get(row["chain_label"], 7),
         axis=1,
     )
 
-    data = data.sort_values("sort_order").groupby(["id"]).first().reset_index()
+    # First sort by level (closest to 0), then by strength within each level
+    data = (
+        data.sort_values(["level", "strength_order"])
+        .groupby(["id"])
+        .first()
+        .reset_index()
+    )
 
     data = data[
         ~(
@@ -151,10 +158,11 @@ def _sort_drop(data: pd.DataFrame) -> pd.DataFrame:
         )
     ]
 
-    data.sort_values("sort_order").drop_duplicates(subset="id", inplace=True)
+    # Sort again to maintain the order
+    data = data.sort_values(["level", "strength_order"]).drop_duplicates(subset="id")
 
     # drop the sort_order column, reindex
-    data.drop(columns="sort_order", inplace=True)
+    data.drop(columns="strength_order", inplace=True)
     data.reset_index(drop=True, inplace=True)
 
     return data
@@ -430,18 +438,17 @@ def _get_pdb_activity(
                 "num_uniprot_structures",
                 "num_pdb_ids",
                 "num_primary_submissions",
-                "score_mean",
-                "complexity_sum",
-                "complexity_mean",
                 "organism_rarity_mean",
                 "organism_rarity_max",
                 "num_diseases",
-                "resolution_mean",
-                "R_free_mean",
-                "mean_tmscore",
+                "resolution",
+                "R_free",
                 "max_tmscore",
-                "normalised_mean_tmscore",
                 "normalised_max_tmscore",
+                "max_score",
+                "normalised_max_score",
+                "max_fident",
+                "normalised_max_fident",
             ]
         ],
         on="id",
