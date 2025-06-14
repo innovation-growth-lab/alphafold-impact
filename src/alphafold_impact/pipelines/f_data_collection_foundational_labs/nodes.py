@@ -589,31 +589,35 @@ def get_publications_from_labs(
                 )
 
                 # create a list of topics
-                df["topics"] = df["topics"].apply(
-                    lambda x: (
-                        [
-                            (
-                                topic["id"].replace("https://openalex.org/", ""),
-                                topic["display_name"],
-                                topic["subfield"]["id"].replace(
-                                    "https://openalex.org/", ""
-                                ),
-                                topic["subfield"]["display_name"],
-                                topic["field"]["id"].replace(
-                                    "https://openalex.org/", ""
-                                ),
-                                topic["field"]["display_name"],
-                                topic["domain"]["id"].replace(
-                                    "https://openalex.org/", ""
-                                ),
-                                topic["domain"]["display_name"],
-                            )
-                            for topic in x
-                        ]
-                        if x
-                        else None
+                try:
+                    df["topics"] = df["topics"].apply(
+                        lambda x: (
+                            [
+                                (
+                                    topic["id"].replace("https://openalex.org/", ""),
+                                    topic["display_name"],
+                                    topic["subfield"]["id"].replace(
+                                        "https://openalex.org/", ""
+                                    ),
+                                    topic["subfield"]["display_name"],
+                                    topic["field"]["id"].replace(
+                                        "https://openalex.org/", ""
+                                    ),
+                                    topic["field"]["display_name"],
+                                    topic["domain"]["id"].replace(
+                                        "https://openalex.org/", ""
+                                    ),
+                                    topic["domain"]["display_name"],
+                                )
+                                for topic in x
+                            ]
+                            if x
+                            else None
+                        )
                     )
-                )
+                except KeyError:
+                    logger.warning("KeyError in topics for %s", df["id"].values[0])
+                    df["topics"] = None
 
                 # extract concepts
                 df["concepts"] = df["concepts"].apply(
