@@ -87,7 +87,7 @@ field_order <- c(
 
 
 coef_order <- c(
-  "ct_noai:strong1", "ct_ai:strong1", "af:strong1", "ct_noai", "ct_ai", "af"
+  "ct_sb:strong1", "ct_pp:strong1", "ct_ai:strong1", "af:strong1", "ct_sb", "ct_pp", "ct_ai", "af"
 )
 
 dep_var_labels <- c(
@@ -105,8 +105,14 @@ dep_var_labels <- c(
   "num_uniprot_structures" = "Uniprot structures",
   "num_primary_submissions" = "Primary submissions",
   "num_diseases" = "Number of Diseases",
-  "organism_rarity_mean" = "Organism rarity mean",
-  "mean_tmscore" = "Mean TM-score",
+  "ln1p_organism_rarity_mean" = "ln (1 + Organism rarity mean)",
+  "ln1p_organism_rarity_max" = "ln (1 + Organism rarity max)",
+  "ln1p_max_tmscore" = "ln (1 + Max TM-score)",
+  "ln1p_max_fident" = "ln (1 + Max Fident)",
+  "ln1p_max_score" = "ln (1 + Max Score)",
+  "normalised_max_tmscore" = "Normalised max TM-score",
+  "normalised_max_fident" = "Normalised max Fident",
+  "normalised_max_score" = "Normalised max Score",
   "num_uniprot_structures_w_disease" = "Uniprot structures with disease relevance", # nolint
   "num_primary_submissions_w_disease" = "Primary submissions with disease relevance", # nolint
   "num_uniprot_structures_w_rare_organisms" = "Uniprot structures with rare organisms", # nolint
@@ -117,14 +123,17 @@ dep_var_labels <- c(
 
 coef_labels <- c(
   "af" = "AlphaFold",
-  "ct_ai" = "Counterfactual AI",
-  "ct_noai" = "Counterfactual no AI",
-  "af:strong0" = "AlphaFold - Background",
+  "ct_ai" = "AI Frontier",
+  "ct_pp" = "PP Frontier",
+  "ct_sb" = "SB Frontier",
+  "af:strong0" = "AlphaFold - Bkg.",
   "af:strong1" = "AlphaFold - Method",
-  "ct_ai:strong0" = "AI Frontiers - Background",
-  "ct_ai:strong1" = "AI Frontiers - Method",
-  "ct_noai:strong0" = "No AI Frontiers - Background",
-  "ct_noai:strong1" = "No AI Frontiers - Method"
+  "ct_ai:strong0" = "AI Frontier - Bkg.",
+  "ct_ai:strong1" = "AI Frontier - Method",
+  "ct_pp:strong0" = "PP Frontier - Background",
+  "ct_pp:strong1" = "PP Frontier - Method",
+  "ct_sb:strong0" = "SB Frontier - Background",
+  "ct_sb:strong1" = "SB Frontier - Method"
 )
 
 strip_colors <- c(

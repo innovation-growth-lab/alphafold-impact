@@ -46,7 +46,7 @@ Sys.setenv(
 
 # Define the S3 bucket and path
 bucket <- "igl-alphafold"
-path <- "oct/04_output/publications/regression_inputs.parquet" # nolint
+path <- "2025Q1/04_output/publications/regression_inputs.parquet" # nolint
 
 
 # Fetch the data from the S3 bucket
@@ -77,8 +77,9 @@ papers <- papers %>%
     ),
     organism_rarity_mean_quantile = factor(ntile(organism_rarity_mean, 4)),
     organism_rarity_max_quantile = factor(ntile(organism_rarity_max, 4)),
-    mean_tmscore_quantile = factor(ntile(mean_tmscore, 4)),
-    max_tmscore_quantile = factor(ntile(max_tmscore, 4))
+    max_tmscore_quantile = factor(ntile(max_tmscore, 4)),
+    max_score_quantile = factor(ntile(max_score, 4)),
+    max_fident_quantile = factor(ntile(max_fident, 4))
   )
 
 # for duplicate ids, keep first. fill few nas
@@ -131,10 +132,10 @@ papers <- papers %>%
       num_primary_submissions > 0 & organism_rarity_mean_quantile == 4, num_primary_submissions, 0 # nolint
     ),
     num_uniprot_structures_w_low_similarity = ifelse(
-      num_uniprot_structures > 0 & mean_tmscore_quantile == 1, num_uniprot_structures, 0 # nolint
+      num_uniprot_structures > 0 & max_tmscore_quantile == 1, num_uniprot_structures, 0 # nolint
     ),
     num_primary_submissions_w_low_similarity = ifelse(
-      num_primary_submissions > 0 & mean_tmscore_quantile == 1, num_primary_submissions, 0 # nolint
+      num_primary_submissions > 0 & max_tmscore_quantile == 1, num_primary_submissions, 0 # nolint
     )
   )
 
@@ -148,36 +149,39 @@ papers <- papers %>%
     )),
     depth = as.factor(if_else(level == 0, "foundational", "applied")),
     af = if_else(source == "af", 1, 0),
-    ct = if_else(source %in% c("ct_ai", "ct_noai"), 1, 0),
+    ct = if_else(source %in% c("ct_ai", "ct_pp", "ct_sb"), 1, 0),
     ct_ai = if_else(source == "ct_ai", 1, 0),
-    ct_noai = if_else(source == "ct_noai", 1, 0),
+    ct_pp = if_else(source == "ct_pp", 1, 0),
+    ct_sb = if_else(source == "ct_sb", 1, 0),
     af_strong0 = if_else(source == "af" & strong == 0, 1, 0),
     af_strong1 = if_else(source == "af" & strong == 1, 1, 0),
     ct_ai_strong0 = if_else(source == "ct_ai" & strong == 0, 1, 0),
     ct_ai_strong1 = if_else(source == "ct_ai" & strong == 1, 1, 0),
-    ct_noai_strong0 = if_else(source == "ct_noai" & strong == 0, 1, 0),
-    ct_noai_strong1 = if_else(source == "ct_noai" & strong == 1, 1, 0),
+    ct_pp_strong0 = if_else(source == "ct_pp" & strong == 0, 1, 0),
+    ct_pp_strong1 = if_else(source == "ct_pp" & strong == 1, 1, 0),
+    ct_sb_strong0 = if_else(source == "ct_sb" & strong == 0, 1, 0),
+    ct_sb_strong1 = if_else(source == "ct_sb" & strong == 1, 1, 0),
     institution_type = as.factor(institution_type),
     institution_country_code = as.factor(institution_country_code),
     ln1p_cited_by_count = log1p(cited_by_count),
-    ln1p_fwci = log1p(fwci), # nolint
-    ln1p_cit_norm_perc = log1p(citation_normalized_percentile_value),
-    logit_cit_norm_perc = log(
-      citation_normalized_percentile_value /
-        (1 - citation_normalized_percentile_value)
-    ),
+    ln1p_fwci = log1p(fwci),
     ln1p_ca_count = log1p(ca_count),
     ln1p_patent_count = log1p(patent_count),
     ln1p_patent_citation = log1p(patent_citation),
     primary_field = as.factor(primary_field), # nolint
     publication_date = as.Date(publication_date),
-    ln1p_resolution = log1p(as.numeric(resolution_mean)),
-    ln1p_R_free = log1p(as.numeric(R_free_mean)),
-    ln1p_score = log1p(as.numeric(score_mean)),
+    ln1p_resolution = log1p(as.numeric(resolution)),
+    ln1p_R_free = log1p(as.numeric(R_free)),
+    ln1p_organism_rarity_mean = log1p(as.numeric(organism_rarity_mean)),
+    ln1p_organism_rarity_max = log1p(as.numeric(organism_rarity_max)),
+    ln1p_max_tmscore = log1p(as.numeric(max_tmscore)),
+    ln1p_max_fident = log1p(as.numeric(max_fident)),
+    ln1p_max_score = log1p(as.numeric(max_score)),
     year = as.integer(str_sub(publication_date, 1, 4)),
     quarter_year = paste0(
       year(publication_date), " Q", quarter(publication_date)
     ),
+    year = year(publication_date)
   ) %>%
   rename(author = last_author)
 
@@ -221,6 +225,7 @@ unique_fields <- c(
 papers <- papers %>%
   select(c(
     "quarter_year",
+    "year",
     "author",
     "institution_type",
     "institution_country_code",
@@ -231,7 +236,6 @@ papers <- papers %>%
     "num_publications",
     "ln1p_cited_by_count",
     "ln1p_fwci",
-    "logit_cit_norm_perc",
     "patent_count",
     "patent_citation",
     "ca_count",
@@ -240,15 +244,18 @@ papers <- papers %>%
     "num_pdb_submissions",
     "af",
     "ct_ai",
-    "ct_noai",
+    "ct_pp",
+    "ct_sb",
     "strong",
     "depth",
     "af_strong0",
     "af_strong1",
     "ct_ai_strong0",
     "ct_ai_strong1",
-    "ct_noai_strong0",
-    "ct_noai_strong1",
+    "ct_pp_strong0",
+    "ct_pp_strong1",
+    "ct_sb_strong0",
+    "ct_sb_strong1",
     "primary_field",
     "q4_pdb_pre2021_any",
     "mesh_C",
@@ -257,9 +264,14 @@ papers <- papers %>%
     "num_pdb_ids",
     "num_primary_submissions",
     "num_diseases",
-    "organism_rarity_mean",
-    "mean_tmscore",
-    "ln1p_score",
+    "ln1p_organism_rarity_mean",
+    "ln1p_organism_rarity_max",
+    "ln1p_max_score",
+    "ln1p_max_tmscore",
+    "ln1p_max_fident",
+    "normalised_max_score",
+    "normalised_max_tmscore",
+    "normalised_max_fident",
     "num_pdb_ids",
     "num_uniprot_structures_w_disease",
     "num_primary_submissions_w_disease",
