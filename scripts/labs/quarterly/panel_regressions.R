@@ -70,8 +70,14 @@ dep_vars <- c(
   "num_uniprot_structures",
   "num_primary_submissions",
   "num_diseases",
-  "organism_rarity_mean",
-  "mean_tmscore",
+  "ln1p_organism_rarity_mean",
+  "ln1p_organism_rarity_max",
+  "ln1p_max_tmscore",
+  "ln1p_max_fident",
+  "ln1p_max_score",
+  "normalised_max_tmscore",
+  "normalised_max_fident",
+  "normalised_max_score",
   "num_uniprot_structures_w_disease",
   "num_primary_submissions_w_disease",
   "num_uniprot_structures_w_rare_organisms",
@@ -83,9 +89,14 @@ dep_vars <- c(
 # Define base treatment vars that exist in all samples
 treat_vars_base <- paste(
   c(
-    "af", "ct_ai", "ct_noai",
-    "af:ct_ai", "af:ct_noai", "ct_ai:ct_noai",
-    "af:ct_ai:ct_noai"
+    "af", "ct_ai", "ct_pp", "ct_sb",
+    "af:ct_ai", "af:ct_pp", "af:ct_sb",
+    "ct_ai:ct_pp", "ct_ai:ct_sb",
+    "ct_pp:ct_sb",
+    "af:ct_ai:ct_pp", "af:ct_ai:ct_sb",
+    "af:ct_pp:ct_sb",
+    "ct_ai:ct_pp:ct_sb",
+    "af:ct_ai:ct_pp:ct_sb"
   ),
   collapse = " + "
 )
@@ -97,14 +108,24 @@ treat_vars_with_strong <- paste(
     "af_strong1",
     "ct_ai_strong0",
     "ct_ai_strong1",
-    "ct_noai_strong0",
-    "ct_noai_strong1",
+    "ct_pp_strong0",
+    "ct_pp_strong1",
+    "ct_sb_strong0",
+    "ct_sb_strong1",
     "af_ct_ai_strong0",
     "af_ct_ai_strong1",
-    "af_ct_noai_strong0",
-    "af_ct_noai_strong1",
-    "ct_ai_ct_noai_strong0",
-    "ct_ai_ct_noai_strong1"
+    "af_ct_pp_strong0",
+    "af_ct_pp_strong1",
+    "af_ct_sb_strong0",
+    "af_ct_sb_strong1",
+    "ct_ai_ct_pp_strong0",
+    "ct_ai_ct_pp_strong1",
+    "ct_ai_ct_sb_strong0",
+    "ct_ai_ct_sb_strong1",
+    "ct_pp_ct_sb_strong0",
+    "ct_pp_ct_sb_strong1",
+    "ct_pp_ct_ai_strong0",
+    "ct_pp_ct_ai_strong1"
   ),
   collapse = " + "
 )
@@ -161,6 +182,37 @@ for (dep_var in dep_vars) { # nolint
 
       # consider skipping regression if saturated
       dep_var <- strsplit(form, "__")[[1]][1]
+
+      if (dep_var %in% c("patent_count", "patent_citation")) {
+        local_data <- local_data[
+          # did not update prior to 2021
+          local_data$year >= 2021 & local_data$year <= 2025,
+        ]
+      }
+      if (dep_var %in% c(
+        "num_uniprot_structures",
+        "num_pdb_ids",
+        "num_primary_submissions",
+        "num_diseases",
+        "ln1p_organism_rarity_mean",
+        "ln1p_organism_rarity_max",
+        "ln1p_max_score",
+        "ln1p_max_tmscore",
+        "ln1p_max_fident",
+        "normalised_max_score",
+        "normalised_max_tmscore",
+        "normalised_max_fident",
+        "num_pdb_ids",
+        "num_uniprot_structures_w_disease",
+        "num_primary_submissions_w_disease",
+        "num_uniprot_structures_w_rare_organisms",
+        "num_primary_submissions_w_rare_organisms",
+        "num_uniprot_structures_w_low_similarity",
+        "num_primary_submissions_w_low_similarity"
+      )) {
+        # PDB not updated for 2025. 
+        local_data <- local_data[local_data$year < 2025, ]
+      }
 
       non_na_data <- local_data[!is.na(local_data[[dep_var]]), ]
 
@@ -279,10 +331,18 @@ for (dep_var in dep_vars) { # nolint
         fe_list = fe_list,
         treat_vars = c(treat_vars_base, treat_vars_with_strong),
         treat_var_interest = c(
-          "af", "ct_ai", "ct_noai",
+          "af", "ct_ai", "ct_pp", "ct_sb",
           "af_strong0", "af_strong1",
           "ct_ai_strong0", "ct_ai_strong1",
-          "ct_noai_strong0", "ct_noai_strong1"
+          "ct_pp_strong0", "ct_pp_strong1",
+          "ct_sb_strong0", "ct_sb_strong1",
+          "af_ct_ai_strong0", "af_ct_ai_strong1",
+          "af_ct_pp_strong0", "af_ct_pp_strong1",
+          "af_ct_sb_strong0", "af_ct_sb_strong1",
+          "ct_ai_ct_pp_strong0", "ct_ai_ct_pp_strong1",
+          "ct_ai_ct_sb_strong0", "ct_ai_ct_sb_strong1",
+          "ct_pp_ct_sb_strong0", "ct_pp_ct_sb_strong1",
+          "ct_pp_ct_ai_strong0", "ct_pp_ct_ai_strong1"
         )
       )
 

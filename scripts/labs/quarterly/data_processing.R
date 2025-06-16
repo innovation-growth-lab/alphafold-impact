@@ -47,8 +47,8 @@ Sys.setenv(
 
 # Define the S3 bucket and path
 bucket <- "igl-alphafold"
-foundational_path <- "oct/04_output/analysis/foundational_labs/individual/outputs_quarterly.parquet" # nolint
-applied_path <- "oct/04_output/analysis/applied_labs/individual/outputs_quarterly.parquet" # nolint
+foundational_path <- "2025Q1/04_output/analysis/foundational_labs/individual/outputs_quarterly.parquet" # nolint
+applied_path <- "2025Q1/04_output/analysis/applied_labs/individual/outputs_quarterly.parquet" # nolint
 
 # Fetch the data from the S3 bucket
 foundational_labs_data <- s3read_using(
@@ -82,8 +82,10 @@ author_intent_ratios <- labs_data %>%
       (sum(af_with_intent, na.rm = TRUE) + sum(af_unknown, na.rm = TRUE)),
     ct_ai_intent_ratio = sum(ct_ai_with_intent, na.rm = TRUE) /
       (sum(ct_ai_with_intent, na.rm = TRUE) + sum(ct_ai_unknown, na.rm = TRUE)),
-    ct_noai_intent_ratio = sum(ct_noai_with_intent, na.rm = TRUE) /
-      (sum(ct_noai_with_intent, na.rm = TRUE) + sum(ct_noai_unknown, na.rm = TRUE)) # nolint
+    ct_pp_intent_ratio = sum(ct_pp_with_intent, na.rm = TRUE) /
+      (sum(ct_pp_with_intent, na.rm = TRUE) + sum(ct_pp_unknown, na.rm = TRUE)),
+    ct_sb_intent_ratio = sum(ct_sb_with_intent, na.rm = TRUE) /
+      (sum(ct_sb_with_intent, na.rm = TRUE) + sum(ct_sb_unknown, na.rm = TRUE)) # nolint
   )
 
 # Join the ratios back to main data and create the strong0/strong1 columns
@@ -96,7 +98,8 @@ labs_data <- labs_data %>%
         cbind(
           af_intent_ratio,
           ct_ai_intent_ratio,
-          ct_noai_intent_ratio
+          ct_pp_intent_ratio,
+          ct_sb_intent_ratio
         ),
         na.rm = TRUE
       )
@@ -109,8 +112,10 @@ labs_data <- labs_data %>%
     "af_strong1" = if_else(all_intents_high, af_strong, NA_real_),
     "ct_ai_strong0" = if_else(all_intents_high, ct_ai_weak, NA_real_),
     "ct_ai_strong1" = if_else(all_intents_high, ct_ai_strong, NA_real_),
-    "ct_noai_strong0" = if_else(all_intents_high, ct_noai_weak, NA_real_),
-    "ct_noai_strong1" = if_else(all_intents_high, ct_noai_strong, NA_real_)
+    "ct_pp_strong0" = if_else(all_intents_high, ct_pp_weak, NA_real_),
+    "ct_pp_strong1" = if_else(all_intents_high, ct_pp_strong, NA_real_),
+    "ct_sb_strong0" = if_else(all_intents_high, ct_sb_weak, NA_real_),
+    "ct_sb_strong1" = if_else(all_intents_high, ct_sb_strong, NA_real_)
   )
 
 # If strong1 exists for any type, set corresponding strong0 to 0
@@ -127,10 +132,15 @@ labs_data <- labs_data %>%
       any(`ct_ai_strong1` > 0, na.rm = TRUE) ~ 0,
       TRUE ~ `ct_ai_strong0`
     ),
-    "ct_noai_strong0" = case_when(
-      is.na(`ct_noai_strong0`) ~ NA_real_,
-      any(`ct_noai_strong1` > 0, na.rm = TRUE) ~ 0,
-      TRUE ~ `ct_noai_strong0`
+    "ct_pp_strong0" = case_when(
+      is.na(`ct_pp_strong0`) ~ NA_real_,
+      any(`ct_pp_strong1` > 0, na.rm = TRUE) ~ 0,
+      TRUE ~ `ct_pp_strong0`
+    ),
+    "ct_sb_strong0" = case_when(
+      is.na(`ct_sb_strong0`) ~ NA_real_,
+      any(`ct_sb_strong1` > 0, na.rm = TRUE) ~ 0,
+      TRUE ~ `ct_sb_strong0`
     )
   ) %>%
   ungroup()
@@ -140,10 +150,18 @@ labs_data <- labs_data %>%
   mutate(
     "af_ct_ai_strong0" = `af_strong0` * `ct_ai_strong0`,
     "af_ct_ai_strong1" = `af_strong1` * `ct_ai_strong1`,
-    "af_ct_noai_strong0" = `af_strong0` * `ct_noai_strong0`,
-    "af_ct_noai_strong1" = `af_strong1` * `ct_noai_strong1`,
-    "ct_ai_ct_noai_strong0" = `ct_ai_strong0` * `ct_noai_strong0`,
-    "ct_ai_ct_noai_strong1" = `ct_ai_strong1` * `ct_noai_strong1`
+    "af_ct_pp_strong0" = `af_strong0` * `ct_pp_strong0`,
+    "af_ct_pp_strong1" = `af_strong1` * `ct_pp_strong1`,
+    "af_ct_sb_strong0" = `af_strong0` * `ct_sb_strong0`,
+    "af_ct_sb_strong1" = `af_strong1` * `ct_sb_strong1`,
+    "ct_ai_ct_pp_strong0" = `ct_ai_strong0` * `ct_pp_strong0`,
+    "ct_ai_ct_pp_strong1" = `ct_ai_strong1` * `ct_pp_strong1`,
+    "ct_ai_ct_sb_strong0" = `ct_ai_strong0` * `ct_sb_strong0`,
+    "ct_ai_ct_sb_strong1" = `ct_ai_strong1` * `ct_sb_strong1`,
+    "ct_pp_ct_sb_strong0" = `ct_pp_strong0` * `ct_sb_strong0`,
+    "ct_pp_ct_sb_strong1" = `ct_pp_strong1` * `ct_sb_strong1`,
+    "ct_pp_ct_ai_strong0" = `ct_pp_strong0` * `ct_ai_strong0`,
+    "ct_pp_ct_ai_strong1" = `ct_pp_strong1` * `ct_ai_strong1`
   )
 
 # ------------------------------------------------------------------------------
@@ -155,7 +173,8 @@ labs_data <- labs_data %>%
     # Basic variables - convert NAs to 0 and then to binary
     af = ifelse(af > 0, 1, 0),
     ct_ai = ifelse(ct_ai > 0, 1, 0),
-    ct_noai = ifelse(ct_noai > 0, 1, 0),
+    ct_pp = ifelse(ct_pp > 0, 1, 0),
+    ct_sb = ifelse(ct_sb > 0, 1, 0),
     other = ifelse(other > 0, 1, 0),
 
     # Strong variables - keep NAs as NAs
@@ -179,14 +198,24 @@ labs_data <- labs_data %>%
       `ct_ai_strong1` > 0 ~ 1,
       TRUE ~ 0
     ),
-    "ct_noai_strong0" = case_when(
-      is.na(`ct_noai_strong0`) ~ NA_real_,
-      `ct_noai_strong0` > 0 ~ 1,
+    "ct_pp_strong0" = case_when(
+      is.na(`ct_pp_strong0`) ~ NA_real_,
+      `ct_pp_strong0` > 0 ~ 1,
       TRUE ~ 0
     ),
-    "ct_noai_strong1" = case_when(
-      is.na(`ct_noai_strong1`) ~ NA_real_,
-      `ct_noai_strong1` > 0 ~ 1,
+    "ct_pp_strong1" = case_when(
+      is.na(`ct_pp_strong1`) ~ NA_real_,
+      `ct_pp_strong1` > 0 ~ 1,
+      TRUE ~ 0
+    ),
+    "ct_sb_strong0" = case_when(
+      is.na(`ct_sb_strong0`) ~ NA_real_,
+      `ct_sb_strong0` > 0 ~ 1,
+      TRUE ~ 0
+    ),
+    "ct_sb_strong1" = case_when(
+      is.na(`ct_sb_strong1`) ~ NA_real_,  
+      `ct_sb_strong1` > 0 ~ 1,
       TRUE ~ 0
     ),
 
@@ -201,24 +230,64 @@ labs_data <- labs_data %>%
       `af_ct_ai_strong1` > 0 ~ 1,
       TRUE ~ 0
     ),
-    "af_ct_noai_strong0" = case_when(
-      is.na(`af_ct_noai_strong0`) ~ NA_real_,
-      `af_ct_noai_strong0` > 0 ~ 1,
+    "af_ct_pp_strong0" = case_when(
+      is.na(`af_ct_pp_strong0`) ~ NA_real_,
+      `af_ct_pp_strong0` > 0 ~ 1,
       TRUE ~ 0
     ),
-    "af_ct_noai_strong1" = case_when(
-      is.na(`af_ct_noai_strong1`) ~ NA_real_,
-      `af_ct_noai_strong1` > 0 ~ 1,
+    "af_ct_pp_strong1" = case_when(
+      is.na(`af_ct_pp_strong1`) ~ NA_real_,
+      `af_ct_pp_strong1` > 0 ~ 1,
       TRUE ~ 0
     ),
-    "ct_ai_ct_noai_strong0" = case_when(
-      is.na(`ct_ai_ct_noai_strong0`) ~ NA_real_,
-      `ct_ai_ct_noai_strong0` > 0 ~ 1,
+    "af_ct_sb_strong0" = case_when(
+      is.na(`af_ct_sb_strong0`) ~ NA_real_,
+      `af_ct_sb_strong0` > 0 ~ 1,
       TRUE ~ 0
     ),
-    "ct_ai_ct_noai_strong1" = case_when(
-      is.na(`ct_ai_ct_noai_strong1`) ~ NA_real_,
-      `ct_ai_ct_noai_strong1` > 0 ~ 1,
+    "af_ct_sb_strong1" = case_when(
+      is.na(`af_ct_sb_strong1`) ~ NA_real_,
+      `af_ct_sb_strong1` > 0 ~ 1,
+      TRUE ~ 0
+    ),
+    "ct_ai_ct_pp_strong0" = case_when(
+      is.na(`ct_ai_ct_pp_strong0`) ~ NA_real_,
+      `ct_ai_ct_pp_strong0` > 0 ~ 1,
+      TRUE ~ 0
+    ),
+    "ct_ai_ct_pp_strong1" = case_when(
+      is.na(`ct_ai_ct_pp_strong1`) ~ NA_real_,
+      `ct_ai_ct_pp_strong1` > 0 ~ 1,
+      TRUE ~ 0
+    ),
+    "ct_ai_ct_sb_strong0" = case_when(
+      is.na(`ct_ai_ct_sb_strong0`) ~ NA_real_,
+      `ct_ai_ct_sb_strong0` > 0 ~ 1,  
+      TRUE ~ 0
+    ),
+    "ct_ai_ct_sb_strong1" = case_when(
+      is.na(`ct_ai_ct_sb_strong1`) ~ NA_real_,
+      `ct_ai_ct_sb_strong1` > 0 ~ 1,
+      TRUE ~ 0
+    ),
+    "ct_pp_ct_sb_strong0" = case_when(
+      is.na(`ct_pp_ct_sb_strong0`) ~ NA_real_,
+      `ct_pp_ct_sb_strong0` > 0 ~ 1,
+      TRUE ~ 0
+    ),
+    "ct_pp_ct_sb_strong1" = case_when(
+      is.na(`ct_pp_ct_sb_strong1`) ~ NA_real_,
+      `ct_pp_ct_sb_strong1` > 0 ~ 1,
+      TRUE ~ 0
+    ),
+    "ct_pp_ct_ai_strong0" = case_when(
+      is.na(`ct_pp_ct_ai_strong0`) ~ NA_real_,
+      `ct_pp_ct_ai_strong0` > 0 ~ 1,
+      TRUE ~ 0
+    ),
+    "ct_pp_ct_ai_strong1" = case_when(
+      is.na(`ct_pp_ct_ai_strong1`) ~ NA_real_,
+      `ct_pp_ct_ai_strong1` > 0 ~ 1,
       TRUE ~ 0
     )
   )
@@ -240,8 +309,9 @@ labs_data <- labs_data %>%
     ),
     organism_rarity_mean_quantile = factor(ntile(organism_rarity_mean, 4)),
     organism_rarity_max_quantile = factor(ntile(organism_rarity_max, 4)),
-    mean_tmscore_quantile = factor(ntile(mean_tmscore, 4)),
-    max_tmscore_quantile = factor(ntile(max_tmscore, 4))
+    max_tmscore_quantile = factor(ntile(max_tmscore, 4)),
+    max_score_quantile = factor(ntile(max_score, 4)),
+    max_fident_quantile = factor(ntile(max_fident, 4))
   )
 
 # fill with nan
@@ -295,10 +365,10 @@ labs_data <- labs_data %>%
       num_primary_submissions > 0 & organism_rarity_mean_quantile == 4, num_primary_submissions, 0 # nolint
     ),
     num_uniprot_structures_w_low_similarity = ifelse(
-      num_uniprot_structures > 0 & mean_tmscore_quantile == 1, num_uniprot_structures, 0 # nolint
+      num_uniprot_structures > 0 & max_tmscore_quantile == 1, num_uniprot_structures, 0 # nolint
     ),
     num_primary_submissions_w_low_similarity = ifelse(
-      num_primary_submissions > 0 & mean_tmscore_quantile == 1, num_primary_submissions, 0 # nolint
+      num_primary_submissions > 0 & max_tmscore_quantile == 1, num_primary_submissions, 0 # nolint
     )
   )
 # create factors, log transforms
@@ -310,18 +380,18 @@ labs_data <- labs_data %>%
     institution_country_code = as.factor(institution_country_code),
     ln1p_cited_by_count = log1p(cited_by_count),
     ln1p_fwci = log1p(fwci),
-    ln1p_cit_norm_perc = log1p(percentile_value),
-    logit_cit_norm_perc = log(
-      percentile_value /
-        (1 - percentile_value)
-    ),
     ln1p_ca_count = log1p(ca_count),
     ln1p_patent_count = log1p(patent_count),
     ln1p_patent_citation = log1p(patent_citation),
     primary_field = as.factor(primary_field),
-    ln1p_resolution = log1p(as.numeric(resolution_mean)),
-    ln1p_R_free = log1p(as.numeric(R_free_mean)),
-    ln1p_score = log1p(as.numeric(score_mean))
+    ln1p_resolution = log1p(as.numeric(resolution)),
+    ln1p_R_free = log1p(as.numeric(R_free)),
+    ln1p_organism_rarity_mean = log1p(as.numeric(organism_rarity_mean)),
+    ln1p_organism_rarity_max = log1p(as.numeric(organism_rarity_max)),
+    ln1p_max_tmscore = log1p(as.numeric(max_tmscore)),
+    ln1p_max_fident = log1p(as.numeric(max_fident)),
+    ln1p_max_score = log1p(as.numeric(max_score)),
+    year = as.integer(str_sub(quarter, 1, 4))
   )
 # Define the mapping of old values to new values
 field_mapping <- c(
@@ -353,7 +423,7 @@ quarterly_cem <- labs_data %>%
   mutate(af = max(af)) %>%
   ungroup() %>%
   filter(complete.cases(across(coarse_cols))) %>%
-  filter(quarter %in% 192:204) %>% # (2018-2021)
+  filter(year < 2021) %>% # (2015-2020)
   select(af, author, all_of(coarse_cols), all_of(exact_cols)) %>%
   group_by(author) %>%
   summarise(
@@ -408,6 +478,7 @@ matched_data <- matched_data %>%
 
     # Basic identifiers and time
     "quarter",
+    "year",
     "author",
 
     # Institution variables
@@ -433,12 +504,12 @@ matched_data <- matched_data %>%
     # Structure quality metrics
     "ln1p_resolution",
     "ln1p_R_free",
-    "ln1p_score",
 
     # Basic usage
     "af",
     "ct_ai",
-    "ct_noai",
+    "ct_pp",
+    "ct_sb",
     "other",
 
     # Strong usage
@@ -446,16 +517,26 @@ matched_data <- matched_data %>%
     "af_strong1",
     "ct_ai_strong0",
     "ct_ai_strong1",
-    "ct_noai_strong0",
-    "ct_noai_strong1",
+    "ct_pp_strong0",
+    "ct_pp_strong1",
+    "ct_sb_strong0",
+    "ct_sb_strong1",
 
     # Strong usage interactions
     "af_ct_ai_strong0",
     "af_ct_ai_strong1",
-    "af_ct_noai_strong0",
-    "af_ct_noai_strong1",
-    "ct_ai_ct_noai_strong0",
-    "ct_ai_ct_noai_strong1",
+    "af_ct_pp_strong0",
+    "af_ct_pp_strong1",
+    "af_ct_sb_strong0",
+    "af_ct_sb_strong1",
+    "ct_ai_ct_pp_strong0",
+    "ct_ai_ct_pp_strong1",
+    "ct_ai_ct_sb_strong0",
+    "ct_ai_ct_sb_strong1",
+    "ct_pp_ct_sb_strong0",
+    "ct_pp_ct_sb_strong1",
+    "ct_pp_ct_ai_strong0",
+    "ct_pp_ct_ai_strong1",
 
     # Field and classification
     "primary_field",
@@ -470,8 +551,14 @@ matched_data <- matched_data %>%
 
     # Disease and organism metrics
     "num_diseases",
-    "organism_rarity_mean",
-    "mean_tmscore",
+    "ln1p_organism_rarity_max",
+    "ln1p_organism_rarity_mean",
+    "ln1p_max_score",
+    "ln1p_max_tmscore",
+    "ln1p_max_fident",
+    "normalised_max_score",
+    "normalised_max_tmscore",
+    "normalised_max_fident",
 
     # Translational variables
     "num_uniprot_structures_w_disease",

@@ -54,12 +54,31 @@ table_info <- list(
   "num_primary_submissions" = list(
     file_name = "num_primary_submissions.tex"
   ),
-  "organism_rarity_mean" = list(
-    file_name = "organism_rarity_mean.tex"
+  "ln1p_organism_rarity_mean" = list(
+    file_name = "ln1p_organism_rarity_mean.tex"
   ),
-  "mean_tmscore" = list(
-    file_name = "mean_tmscore.tex"
+  "ln1p_organism_rarity_max" = list(
+    file_name = "ln1p_organism_rarity_max.tex"
   ),
+  "ln1p_max_tmscore" = list(
+    file_name = "ln1p_max_tmscore.tex"
+  ),
+  "ln1p_max_fident" = list(
+    file_name = "ln1p_max_fident.tex"
+  ),
+  "ln1p_max_score" = list(
+    file_name = "ln1p_max_score.tex"
+  ),
+  "normalised_max_tmscore" = list(
+    file_name = "normalised_max_tmscore.tex"
+  ),
+  "normalised_max_fident" = list(
+    file_name = "normalised_max_fident.tex"
+  ),
+  "normalised_max_score" = list(
+    file_name = "normalised_max_score.tex"
+  ),
+
   "num_uniprot_structures_w_disease" = list(
     file_name = "num_uniprot_structures_w_disease.tex"
   ),
@@ -89,13 +108,16 @@ table_info <- list(
 dict_vars <- c(
   "af" = "AlphaFold",
   "ct_ai" = "AI Frontier",
-  "ct_noai" = "No AI Frontier",
+  "ct_pp" = "PP Frontier",
+  "ct_sb" = "SB Frontier",
   "af_strong0" = "AlphaFold - Bkg.",
   "af_strong1" = "AlphaFold - Method",
   "ct_ai_strong0" = "AI Frontier - Bkg.",
   "ct_ai_strong1" = "AI Frontier - Method",
-  "ct_noai_strong0" = "No AI Frontier - Bkg.",
-  "ct_noai_strong1" = "No AI Frontier - Method"
+  "ct_pp_strong0" = "PP Frontier - Bkg.",
+  "ct_pp_strong1" = "PP Frontier - Method",
+  "ct_sb_strong0" = "SB Frontier - Bkg.",
+  "ct_sb_strong1" = "SB Frontier - Method"
 )
 
 # Function to generate tables

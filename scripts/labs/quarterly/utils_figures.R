@@ -87,8 +87,8 @@ field_order <- c(
 
 
 coef_order <- c(
-  "strong_af:strong_ct_noai_ind", "strong_af:strong_ct_ai_ind", "strong_ct_noai_ind", "strong_ct_ai_ind", "strong_af_ind", # nolint
-  "af:ct_noai_ind", "af:ct_ai_ind", "ct_noai_ind", "ct_ai_ind", "af_ind"
+  "strong_af:strong_ct_pp_ind", "strong_af:strong_ct_ai_ind", "strong_af:strong_ct_sb_ind", "strong_ct_pp_ind", "strong_ct_ai_ind", "strong_ct_sb_ind", "strong_af_ind", # nolint
+  "af:ct_pp_ind", "af:ct_ai_ind", "af:ct_sb_ind", "ct_pp_ind", "ct_ai_ind", "ct_sb_ind", "af_ind"
 )
 
 dep_var_labels <- c(
@@ -107,8 +107,14 @@ dep_var_labels <- c(
   "num_uniprot_structures" = "Uniprot structures",
   "num_primary_submissions" = "Primary submissions",
   "num_diseases" = "Number of Diseases",
-  "organism_rarity_mean" = "Organism rarity mean",
-  "mean_tmscore" = "Mean TM-score",
+  "ln1p_organism_rarity_mean" = "ln (1 + Organism rarity mean)",
+  "ln1p_organism_rarity_max" = "ln (1 + Organism rarity max)",
+  "ln1p_max_tmscore" = "ln (1 + Max TM-score)",
+  "ln1p_max_fident" = "ln (1 + Max Fident)",
+  "ln1p_max_score" = "ln (1 + Max Score)",
+  "normalised_max_tmscore" = "Normalised max TM-score",
+  "normalised_max_fident" = "Normalised max Fident",
+  "normalised_max_score" = "Normalised max Score",
   "num_uniprot_structures_w_disease" = "Uniprot structures with disease relevance", # nolint
   "num_primary_submissions_w_disease" = "Primary submissions with disease relevance", # nolint
   "num_uniprot_structures_w_rare_organisms" = "Uniprot structures with rare organisms", # nolint
@@ -120,16 +126,20 @@ dep_var_labels <- c(
 coef_labels <- c(
   "af_ind" = "AlphaFold (ext.)",
   "ct_ai_ind" = "Counterfactual AI (ext.)",
-  "ct_noai_ind" = "Counterfactual no AI (ext.)",
+  "ct_pp_ind" = "Counterfactual PP (ext.)",
+  "ct_sb_ind" = "Counterfactual SB (ext.)",
   "strong_af_ind" = "AlphaFold - Method (ext.)",
   "strong_ct_ai_ind" = "Counterfactual AI - Method (ext.)",
-  "strong_ct_noai_ind" = "Counterfactual no AI - Method (ext.)",
+  "strong_ct_pp_ind" = "Counterfactual PP - Method (ext.)",
+  "strong_ct_sb_ind" = "Counterfactual SB - Method (ext.)",
   "af" = "AlphaFold (int.)",
   "ct_ai" = "Counterfactual AI (int.)",
-  "ct_noai" = "Counterfactual no AI (int.)",
+  "ct_pp" = "Counterfactual PP (int.)",
+  "ct_sb" = "Counterfactual SB (int.)",
   "strong_af" = "AlphaFold - Method (int.)",
   "strong_ct_ai" = "Counterfactual AI - Method (int.)",
-  "strong_ct_noai" = "Counterfactual no AI - Method (int.)"
+  "strong_ct_pp" = "Counterfactual PP - Method (int.)",
+  "strong_ct_sb" = "Counterfactual SB - Method (int.)"
 )
 
 strip_colors <- c(
