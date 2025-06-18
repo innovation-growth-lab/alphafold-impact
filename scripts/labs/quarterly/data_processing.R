@@ -69,10 +69,20 @@ labs_data <- bind_rows(foundational_labs_data, applied_labs_data)
 # drop duplicates by author, quarter
 labs_data <- labs_data %>%
   distinct(author, quarter, .keep_all = TRUE)
-  
+
 # ------------------------------------------------------------------------------
 # Strong Data Prep
 # ------------------------------------------------------------------------------
+
+# replace core counts to correct cumul ones
+labs_data <- labs_data %>%
+  mutate(
+    af = af_strong + af_weak + af_mixed + af_unknown,
+    ct_ai = ct_ai_strong + ct_ai_weak + ct_ai_mixed + ct_ai_unknown,
+    ct_pp = ct_pp_strong + ct_pp_weak + ct_pp_mixed + ct_pp_unknown,
+    ct_sb = ct_sb_strong + ct_sb_weak + ct_sb_mixed + ct_sb_unknown,
+    other = other_strong + other_weak + other_mixed + other_unknown
+  )
 
 # Calculate intent ratios for each author across all periods
 author_intent_ratios <- labs_data %>%
@@ -88,81 +98,95 @@ author_intent_ratios <- labs_data %>%
       (sum(ct_sb_with_intent, na.rm = TRUE) + sum(ct_sb_unknown, na.rm = TRUE)) # nolint
   )
 
-# Join the ratios back to main data and create the strong0/strong1 columns
-labs_data <- labs_data %>%
-  left_join(author_intent_ratios, by = "author") %>%
-  mutate(
-    # Calculate row mean of intent ratios, handling NaN cases properly
-    all_intents_high = {
-      means <- rowMeans(
-        cbind(
-          af_intent_ratio,
-          ct_ai_intent_ratio,
-          ct_pp_intent_ratio,
-          ct_sb_intent_ratio
-        ),
-        na.rm = TRUE
+# ------------------------------------------------------------------------------
+# Create Hierarchical Intent Variables (all untriggered = 0)
+# ------------------------------------------------------------------------------
+
+create_hierarchical_intent <- function(data, tech_prefix) {
+  strong_var <- paste0(tech_prefix, "_strong")
+  mixed_var <- paste0(tech_prefix, "_mixed")
+  weak_var <- paste0(tech_prefix, "_weak")
+
+  intent_strong_var <- paste0(tech_prefix, "_intent_strong")
+  intent_mixed_var <- paste0(tech_prefix, "_intent_mixed")
+  intent_weak_var <- paste0(tech_prefix, "_intent_weak")
+
+  data %>% # nolint
+    group_by(author) %>% # nolint
+    mutate( # nolint
+      has_strong = any(!!sym(strong_var) > 0, na.rm = TRUE), # nolint
+      has_mixed = !has_strong & any(!!sym(mixed_var) > 0, na.rm = TRUE), # nolint
+      has_weak = !has_strong & !has_mixed & any(!!sym(weak_var) > 0, na.rm = TRUE), # nolint
+      !!intent_strong_var := ifelse(has_strong & !!sym(strong_var) > 0, 1, 0), # nolint
+      !!intent_mixed_var := ifelse(has_strong, 0, ifelse(has_mixed & !!sym(mixed_var) > 0, 1, 0)), # nolint
+      !!intent_weak_var := ifelse(has_strong | has_mixed, 0, ifelse(has_weak & !!sym(weak_var) > 0, 1, 0)) # nolint
+    ) %>%
+    ungroup() %>% # nolint
+    select(-has_strong, -has_mixed, -has_weak)
+}
+
+labs_data <- create_hierarchical_intent(labs_data, "af")
+labs_data <- create_hierarchical_intent(labs_data, "ct_ai")
+labs_data <- create_hierarchical_intent(labs_data, "ct_pp")
+labs_data <- create_hierarchical_intent(labs_data, "ct_sb")
+
+# ------------------------------------------------------------------------------
+# Mask intent variables for authors with too much unknown (less than 1/3 intent)
+# ------------------------------------------------------------------------------
+
+mask_intent_for_unknown <- function(data) {
+  # Get all technology prefixes
+  tech_prefixes <- c("af", "ct_ai", "ct_pp", "ct_sb")
+
+  # Calculate mask per author based on any technology having too much unknown
+  mask_df <- data %>% # nolint
+    group_by(author) %>% # nolint
+    summarise(
+      # For each technology, calculate the ratio of intent to total citations
+      across( # nolint
+        all_of(tech_prefixes), # nolint
+        ~ {
+          unknown_sum <- sum(get(paste0(cur_column(), "_unknown")), na.rm = TRUE) # nolint
+          intent_sum <- sum(get(paste0(cur_column(), "_strong")), na.rm = TRUE) + # nolint
+            sum(get(paste0(cur_column(), "_mixed")), na.rm = TRUE) +
+            sum(get(paste0(cur_column(), "_weak")), na.rm = TRUE)
+          total_sum <- unknown_sum + intent_sum
+          # If no citations, return 1 (don't mask)
+          if (total_sum == 0) 1 else intent_sum / total_sum
+        }
+      ),
+      .groups = "drop"
+    ) %>%
+    # If any technology has ratio < 1/3, mask all intent variables
+    mutate( # nolint
+      mask = if_else( # nolint
+        if_any(all_of(tech_prefixes), ~ . < 1 / 4), # nolint
+        TRUE,
+        FALSE
       )
-      # If all values were NA (resulting in NaN), or mean <= 0.5, return FALSE
-      !is.nan(means) & means > 0.5
-    },
+    ) %>%
+    select(author, mask) # nolint
 
-    # Only pass values if intent ratio mean is high enough
-    "af_strong0" = if_else(all_intents_high, af_weak, NA_real_),
-    "af_strong1" = if_else(all_intents_high, af_strong, NA_real_),
-    "ct_ai_strong0" = if_else(all_intents_high, ct_ai_weak, NA_real_),
-    "ct_ai_strong1" = if_else(all_intents_high, ct_ai_strong, NA_real_),
-    "ct_pp_strong0" = if_else(all_intents_high, ct_pp_weak, NA_real_),
-    "ct_pp_strong1" = if_else(all_intents_high, ct_pp_strong, NA_real_),
-    "ct_sb_strong0" = if_else(all_intents_high, ct_sb_weak, NA_real_),
-    "ct_sb_strong1" = if_else(all_intents_high, ct_sb_strong, NA_real_)
-  )
+  # Join mask and set all intent variables to NA if mask is TRUE
+  data <- data %>% # nolint
+    left_join(mask_df, by = "author") %>% # nolint
+    mutate( # nolint1
+      across( # nolint
+        c(
+          ends_with(c("_intent_strong", "_intent_mixed", "_intent_weak")), # nolint
+          ends_with("_with_intent") # nolint
+        ),
+        ~ if_else(mask, NA_real_, .)
+      )
+    ) %>%
+    select(-mask) # nolint
 
-# If strong1 exists for any type, set corresponding strong0 to 0
-labs_data <- labs_data %>%
-  group_by(author) %>%
-  mutate(
-    "af_strong0" = case_when(
-      is.na(`af_strong0`) ~ NA_real_,
-      any(`af_strong1` > 0, na.rm = TRUE) ~ 0,
-      TRUE ~ `af_strong0`
-    ),
-    "ct_ai_strong0" = case_when(
-      is.na(`ct_ai_strong0`) ~ NA_real_,
-      any(`ct_ai_strong1` > 0, na.rm = TRUE) ~ 0,
-      TRUE ~ `ct_ai_strong0`
-    ),
-    "ct_pp_strong0" = case_when(
-      is.na(`ct_pp_strong0`) ~ NA_real_,
-      any(`ct_pp_strong1` > 0, na.rm = TRUE) ~ 0,
-      TRUE ~ `ct_pp_strong0`
-    ),
-    "ct_sb_strong0" = case_when(
-      is.na(`ct_sb_strong0`) ~ NA_real_,
-      any(`ct_sb_strong1` > 0, na.rm = TRUE) ~ 0,
-      TRUE ~ `ct_sb_strong0`
-    )
-  ) %>%
-  ungroup()
+  data
+}
 
-# create interactions between the strong variables
-labs_data <- labs_data %>%
-  mutate(
-    "af_ct_ai_strong0" = `af_strong0` * `ct_ai_strong0`,
-    "af_ct_ai_strong1" = `af_strong1` * `ct_ai_strong1`,
-    "af_ct_pp_strong0" = `af_strong0` * `ct_pp_strong0`,
-    "af_ct_pp_strong1" = `af_strong1` * `ct_pp_strong1`,
-    "af_ct_sb_strong0" = `af_strong0` * `ct_sb_strong0`,
-    "af_ct_sb_strong1" = `af_strong1` * `ct_sb_strong1`,
-    "ct_ai_ct_pp_strong0" = `ct_ai_strong0` * `ct_pp_strong0`,
-    "ct_ai_ct_pp_strong1" = `ct_ai_strong1` * `ct_pp_strong1`,
-    "ct_ai_ct_sb_strong0" = `ct_ai_strong0` * `ct_sb_strong0`,
-    "ct_ai_ct_sb_strong1" = `ct_ai_strong1` * `ct_sb_strong1`,
-    "ct_pp_ct_sb_strong0" = `ct_pp_strong0` * `ct_sb_strong0`,
-    "ct_pp_ct_sb_strong1" = `ct_pp_strong1` * `ct_sb_strong1`,
-    "ct_pp_ct_ai_strong0" = `ct_pp_strong0` * `ct_ai_strong0`,
-    "ct_pp_ct_ai_strong1" = `ct_pp_strong1` * `ct_ai_strong1`
-  )
+# Apply the masking function once for all technologies
+labs_data <- mask_intent_for_unknown(labs_data)
+
 
 # ------------------------------------------------------------------------------
 # Create Extensive Margin Variables
@@ -176,120 +200,11 @@ labs_data <- labs_data %>%
     ct_pp = ifelse(ct_pp > 0, 1, 0),
     ct_sb = ifelse(ct_sb > 0, 1, 0),
     other = ifelse(other > 0, 1, 0),
-
-    # Strong variables - keep NAs as NAs
-    "af_strong0" = case_when(
-      is.na(`af_strong0`) ~ NA_real_,
-      `af_strong0` > 0 ~ 1,
-      TRUE ~ 0
-    ),
-    "af_strong1" = case_when(
-      is.na(`af_strong1`) ~ NA_real_,
-      `af_strong1` > 0 ~ 1,
-      TRUE ~ 0
-    ),
-    "ct_ai_strong0" = case_when(
-      is.na(`ct_ai_strong0`) ~ NA_real_,
-      `ct_ai_strong0` > 0 ~ 1,
-      TRUE ~ 0
-    ),
-    "ct_ai_strong1" = case_when(
-      is.na(`ct_ai_strong1`) ~ NA_real_,
-      `ct_ai_strong1` > 0 ~ 1,
-      TRUE ~ 0
-    ),
-    "ct_pp_strong0" = case_when(
-      is.na(`ct_pp_strong0`) ~ NA_real_,
-      `ct_pp_strong0` > 0 ~ 1,
-      TRUE ~ 0
-    ),
-    "ct_pp_strong1" = case_when(
-      is.na(`ct_pp_strong1`) ~ NA_real_,
-      `ct_pp_strong1` > 0 ~ 1,
-      TRUE ~ 0
-    ),
-    "ct_sb_strong0" = case_when(
-      is.na(`ct_sb_strong0`) ~ NA_real_,
-      `ct_sb_strong0` > 0 ~ 1,
-      TRUE ~ 0
-    ),
-    "ct_sb_strong1" = case_when(
-      is.na(`ct_sb_strong1`) ~ NA_real_,  
-      `ct_sb_strong1` > 0 ~ 1,
-      TRUE ~ 0
-    ),
-
-    # Interaction variables - keep NAs as NAs
-    "af_ct_ai_strong0" = case_when(
-      is.na(`af_ct_ai_strong0`) ~ NA_real_,
-      `af_ct_ai_strong0` > 0 ~ 1,
-      TRUE ~ 0
-    ),
-    "af_ct_ai_strong1" = case_when(
-      is.na(`af_ct_ai_strong1`) ~ NA_real_,
-      `af_ct_ai_strong1` > 0 ~ 1,
-      TRUE ~ 0
-    ),
-    "af_ct_pp_strong0" = case_when(
-      is.na(`af_ct_pp_strong0`) ~ NA_real_,
-      `af_ct_pp_strong0` > 0 ~ 1,
-      TRUE ~ 0
-    ),
-    "af_ct_pp_strong1" = case_when(
-      is.na(`af_ct_pp_strong1`) ~ NA_real_,
-      `af_ct_pp_strong1` > 0 ~ 1,
-      TRUE ~ 0
-    ),
-    "af_ct_sb_strong0" = case_when(
-      is.na(`af_ct_sb_strong0`) ~ NA_real_,
-      `af_ct_sb_strong0` > 0 ~ 1,
-      TRUE ~ 0
-    ),
-    "af_ct_sb_strong1" = case_when(
-      is.na(`af_ct_sb_strong1`) ~ NA_real_,
-      `af_ct_sb_strong1` > 0 ~ 1,
-      TRUE ~ 0
-    ),
-    "ct_ai_ct_pp_strong0" = case_when(
-      is.na(`ct_ai_ct_pp_strong0`) ~ NA_real_,
-      `ct_ai_ct_pp_strong0` > 0 ~ 1,
-      TRUE ~ 0
-    ),
-    "ct_ai_ct_pp_strong1" = case_when(
-      is.na(`ct_ai_ct_pp_strong1`) ~ NA_real_,
-      `ct_ai_ct_pp_strong1` > 0 ~ 1,
-      TRUE ~ 0
-    ),
-    "ct_ai_ct_sb_strong0" = case_when(
-      is.na(`ct_ai_ct_sb_strong0`) ~ NA_real_,
-      `ct_ai_ct_sb_strong0` > 0 ~ 1,  
-      TRUE ~ 0
-    ),
-    "ct_ai_ct_sb_strong1" = case_when(
-      is.na(`ct_ai_ct_sb_strong1`) ~ NA_real_,
-      `ct_ai_ct_sb_strong1` > 0 ~ 1,
-      TRUE ~ 0
-    ),
-    "ct_pp_ct_sb_strong0" = case_when(
-      is.na(`ct_pp_ct_sb_strong0`) ~ NA_real_,
-      `ct_pp_ct_sb_strong0` > 0 ~ 1,
-      TRUE ~ 0
-    ),
-    "ct_pp_ct_sb_strong1" = case_when(
-      is.na(`ct_pp_ct_sb_strong1`) ~ NA_real_,
-      `ct_pp_ct_sb_strong1` > 0 ~ 1,
-      TRUE ~ 0
-    ),
-    "ct_pp_ct_ai_strong0" = case_when(
-      is.na(`ct_pp_ct_ai_strong0`) ~ NA_real_,
-      `ct_pp_ct_ai_strong0` > 0 ~ 1,
-      TRUE ~ 0
-    ),
-    "ct_pp_ct_ai_strong1" = case_when(
-      is.na(`ct_pp_ct_ai_strong1`) ~ NA_real_,
-      `ct_pp_ct_ai_strong1` > 0 ~ 1,
-      TRUE ~ 0
-    )
+    af_with_intent = ifelse(af_with_intent > 0, 1, 0),
+    ct_ai_with_intent = ifelse(ct_ai_with_intent > 0, 1, 0),
+    ct_pp_with_intent = ifelse(ct_pp_with_intent > 0, 1, 0),
+    ct_sb_with_intent = ifelse(ct_sb_with_intent > 0, 1, 0),
+    other_with_intent = ifelse(other_with_intent > 0, 1, 0)
   )
 
 # ------------------------------------------------------------------------------
@@ -391,6 +306,7 @@ labs_data <- labs_data %>%
     ln1p_max_tmscore = log1p(as.numeric(max_tmscore)),
     ln1p_max_fident = log1p(as.numeric(max_fident)),
     ln1p_max_score = log1p(as.numeric(max_score)),
+    ln1p_mesh_C = log1p(as.numeric(mesh_C)),
     year = as.integer(str_sub(quarter, 1, 4))
   )
 # Define the mapping of old values to new values
@@ -473,7 +389,7 @@ matched_data <- labs_data %>%
 matched_data <- matched_data %>%
   select(
     # Sample-defining variables
-    "all_intents_high",
+    # "all_intents_high",
     "high_pdb_pre2021",
 
     # Basic identifiers and time
@@ -492,11 +408,12 @@ matched_data <- matched_data %>%
 
     # Publication metrics
     "num_publications",
-    "ln1p_cited_by_count",
-    "ln1p_fwci",
+    "cited_by_count",
     "patent_count",
     "patent_citation",
     "ca_count",
+    "ln1p_fwci",
+    "ln1p_mesh_C",
 
     # Covid
     "covid_share_2020",
@@ -512,31 +429,25 @@ matched_data <- matched_data %>%
     "ct_sb",
     "other",
 
-    # Strong usage
-    "af_strong0",
-    "af_strong1",
-    "ct_ai_strong0",
-    "ct_ai_strong1",
-    "ct_pp_strong0",
-    "ct_pp_strong1",
-    "ct_sb_strong0",
-    "ct_sb_strong1",
+    # Intent usage
+    "af_with_intent",
+    "ct_ai_with_intent",
+    "ct_pp_with_intent",
+    "ct_sb_with_intent",
 
-    # Strong usage interactions
-    "af_ct_ai_strong0",
-    "af_ct_ai_strong1",
-    "af_ct_pp_strong0",
-    "af_ct_pp_strong1",
-    "af_ct_sb_strong0",
-    "af_ct_sb_strong1",
-    "ct_ai_ct_pp_strong0",
-    "ct_ai_ct_pp_strong1",
-    "ct_ai_ct_sb_strong0",
-    "ct_ai_ct_sb_strong1",
-    "ct_pp_ct_sb_strong0",
-    "ct_pp_ct_sb_strong1",
-    "ct_pp_ct_ai_strong0",
-    "ct_pp_ct_ai_strong1",
+    # Intent variables
+    "af_intent_strong",
+    "af_intent_weak",
+    "af_intent_mixed",
+    "ct_ai_intent_strong",
+    "ct_ai_intent_weak",
+    "ct_ai_intent_mixed",
+    "ct_pp_intent_strong",
+    "ct_pp_intent_weak",
+    "ct_pp_intent_mixed",
+    "ct_sb_intent_strong",
+    "ct_sb_intent_weak",
+    "ct_sb_intent_mixed",
 
     # Field and classification
     "primary_field",
@@ -596,7 +507,7 @@ for (scope_lvl in unique_scopes) {
 
       # # Apply depth filter
       if (scope_lvl == "Intent") {
-        sub_sample <- subset(sub_sample, all_intents_high == TRUE)
+        # sub_sample <- subset(sub_sample, all_intents_high == TRUE)
       } else {
         # drop strong
         sub_sample <- sub_sample %>%

@@ -9,8 +9,8 @@ if (!dir.exists(tables)) {
 # ------------------------------------------------------------------------------
 
 table_info <- list(
-  "ln1p_cited_by_count" = list(
-    file_name = "ln1p_cited_by_count.tex"
+  "cited_by_count" = list(
+    file_name = "cited_by_count.tex"
   ),
   "ln1p_cit_0" = list(
     file_name = "ln1p_cit_0.tex"
@@ -100,8 +100,8 @@ table_info <- list(
   "num_diseases" = list(
     file_name = "num_diseases.tex"
   ),
-  "mesh_C" = list(
-    file_name = "mesh_C.tex"
+  "ln1p_mesh_C" = list(
+    file_name = "ln1p_mesh_C.tex"
   )
 )
 
@@ -110,14 +110,18 @@ dict_vars <- c(
   "ct_ai" = "AI Frontier",
   "ct_pp" = "PP Frontier",
   "ct_sb" = "SB Frontier",
-  "af_strong0" = "AlphaFold - Bkg.",
-  "af_strong1" = "AlphaFold - Method",
-  "ct_ai_strong0" = "AI Frontier - Bkg.",
-  "ct_ai_strong1" = "AI Frontier - Method",
-  "ct_pp_strong0" = "PP Frontier - Bkg.",
-  "ct_pp_strong1" = "PP Frontier - Method",
-  "ct_sb_strong0" = "SB Frontier - Bkg.",
-  "ct_sb_strong1" = "SB Frontier - Method"
+  "af_intent_strong" = "AlphaFold - Method",
+  "af_intent_weak" = "AlphaFold - Bkg.",
+  "af_intent_mixed" = "AlphaFold - Mixed",
+  "ct_ai_intent_strong" = "AI Frontier - Method",
+  "ct_ai_intent_weak" = "AI Frontier - Bkg.",
+  "ct_ai_intent_mixed" = "AI Frontier - Mixed",
+  "ct_pp_intent_strong" = "PP Frontier - Method",
+  "ct_pp_intent_weak" = "PP Frontier - Bkg.",
+  "ct_pp_intent_mixed" = "PP Frontier - Mixed",
+  "ct_sb_intent_strong" = "SB Frontier - Method",
+  "ct_sb_intent_weak" = "SB Frontier - Bkg.",
+  "ct_sb_intent_mixed" = "SB Frontier - Mixed"
 )
 
 # Function to generate tables

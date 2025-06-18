@@ -56,9 +56,9 @@ fes[["fe1"]] <- c("author", "quarter")
 cov_sets <- c("base0")
 fe_list <- c("fe1")
 dep_vars <- c(
-  "mesh_C",
+  "ln1p_mesh_C",
   "num_publications",
-  "ln1p_cited_by_count",
+  "cited_by_count",
   "ln1p_fwci",
   "ln1p_resolution",
   "ln1p_R_free",
@@ -104,28 +104,18 @@ treat_vars_base <- paste(
 # Define treatment vars with strong interactions
 treat_vars_with_strong <- paste(
   c(
-    "af_strong0",
-    "af_strong1",
-    "ct_ai_strong0",
-    "ct_ai_strong1",
-    "ct_pp_strong0",
-    "ct_pp_strong1",
-    "ct_sb_strong0",
-    "ct_sb_strong1",
-    "af_ct_ai_strong0",
-    "af_ct_ai_strong1",
-    "af_ct_pp_strong0",
-    "af_ct_pp_strong1",
-    "af_ct_sb_strong0",
-    "af_ct_sb_strong1",
-    "ct_ai_ct_pp_strong0",
-    "ct_ai_ct_pp_strong1",
-    "ct_ai_ct_sb_strong0",
-    "ct_ai_ct_sb_strong1",
-    "ct_pp_ct_sb_strong0",
-    "ct_pp_ct_sb_strong1",
-    "ct_pp_ct_ai_strong0",
-    "ct_pp_ct_ai_strong1"
+    "af_intent_strong",
+    "af_intent_weak",
+    "af_intent_mixed",
+    "ct_ai_intent_strong",
+    "ct_ai_intent_weak",
+    "ct_ai_intent_mixed",
+    "ct_pp_intent_strong",
+    "ct_pp_intent_weak",
+    "ct_pp_intent_mixed",
+    "ct_sb_intent_strong",
+    "ct_sb_intent_weak",
+    "ct_sb_intent_mixed"
   ),
   collapse = " + "
 )
@@ -180,6 +170,19 @@ for (dep_var in dep_vars) { # nolint
       # Create a local copy of the subset
       local_data <- sub_samples[[sub]]
 
+      # if "intent" in form name, swap the "*_with_intent" variables for the "*" variables
+      if (grepl("scope_Intent", sub)) {
+        # Get columns ending with _with_intent
+        intent_cols <- names(local_data)[endsWith(names(local_data), "_with_intent")]
+        # For each intent column, overwrite the base column with its value
+        for (col in intent_cols) {
+          base_col <- gsub("_with_intent", "", col)
+          local_data[[base_col]] <- local_data[[col]]
+        }
+        # Drop the _with_intent columns
+        local_data <- local_data %>% select(-all_of(intent_cols))
+      }
+
       # consider skipping regression if saturated
       dep_var <- strsplit(form, "__")[[1]][1]
 
@@ -210,7 +213,7 @@ for (dep_var in dep_vars) { # nolint
         "num_uniprot_structures_w_low_similarity",
         "num_primary_submissions_w_low_similarity"
       )) {
-        # PDB not updated for 2025. 
+        # PDB not updated for 2025.
         local_data <- local_data[local_data$year < 2025, ]
       }
 
@@ -224,7 +227,7 @@ for (dep_var in dep_vars) { # nolint
         n_authors + n_quarters
         > nrow(non_na_data)
       ) {
-        message("Skipping regression: ", regression_label)
+        message("Skipping regression: ", regression_label, ". Not enough data.")
         results[[regression_label]] <- feols(
           as.formula(paste(dep_var, "~ 1")),
           data = local_data
@@ -233,8 +236,8 @@ for (dep_var in dep_vars) { # nolint
       }
 
       # skipping regression if form includes "strong" but no strong var
-      if (grepl("strong", form) && !("af_strong0" %in% names(local_data))) {
-        message("Skipping regression: ", regression_label)
+      if (grepl("strong", form) && !("af_intent_strong" %in% names(local_data))) {
+        message("Skipping regression: ", regression_label, ". No strong intent data.")
         next
       }
 
@@ -244,7 +247,7 @@ for (dep_var in dep_vars) { # nolint
       if (dep_var %in% c(
         "num_publications", "num_pdb_ids", "num_pdb_submissions",
         "ca_count", "patent_count", "patent_citation",
-        "num_uniprot_structures",
+        "num_uniprot_structures", "cited_by_count",
         "num_primary_submissions",
         "num_diseases",
         "num_uniprot_structures_w_disease",
@@ -257,13 +260,12 @@ for (dep_var in dep_vars) { # nolint
         message("Running Poisson regression")
         results[[regression_label]] <- tryCatch(
           {
-
             # Apply the collinearity fix function before running the regression
             local_data <- fix_perfect_collinearity(
               local_data, fes[["fe1"]], dep_var
             )
 
-            model <- fenegbin(
+            model <- fepois(
               form_list[[form]],
               data = local_data,
               cluster = c("author", "quarter"),
@@ -332,17 +334,10 @@ for (dep_var in dep_vars) { # nolint
         treat_vars = c(treat_vars_base, treat_vars_with_strong),
         treat_var_interest = c(
           "af", "ct_ai", "ct_pp", "ct_sb",
-          "af_strong0", "af_strong1",
-          "ct_ai_strong0", "ct_ai_strong1",
-          "ct_pp_strong0", "ct_pp_strong1",
-          "ct_sb_strong0", "ct_sb_strong1",
-          "af_ct_ai_strong0", "af_ct_ai_strong1",
-          "af_ct_pp_strong0", "af_ct_pp_strong1",
-          "af_ct_sb_strong0", "af_ct_sb_strong1",
-          "ct_ai_ct_pp_strong0", "ct_ai_ct_pp_strong1",
-          "ct_ai_ct_sb_strong0", "ct_ai_ct_sb_strong1",
-          "ct_pp_ct_sb_strong0", "ct_pp_ct_sb_strong1",
-          "ct_pp_ct_ai_strong0", "ct_pp_ct_ai_strong1"
+          "af_intent_strong", "af_intent_weak", "af_intent_mixed",
+          "ct_ai_intent_strong", "ct_ai_intent_weak", "ct_ai_intent_mixed",
+          "ct_pp_intent_strong", "ct_pp_intent_weak", "ct_pp_intent_mixed",
+          "ct_sb_intent_strong", "ct_sb_intent_weak", "ct_sb_intent_mixed"
         )
       )
 
@@ -386,6 +381,4 @@ for (dep_var in dep_vars) { # nolint
       message("Error in generating tables: ", e$message)
     }
   )
-
-
 }
