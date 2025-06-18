@@ -62,7 +62,7 @@ colnames(papers) <- gsub(",", "", colnames(papers))
 # Drop if level is -1
 papers <- papers %>%
   filter(level != -1) %>%
-  select(-author) 
+  select(-author)
 
 # creating quantiles for institution controls and translational
 papers <- papers %>%
@@ -142,25 +142,74 @@ papers <- papers %>%
 # Create 'strong' variable
 papers <- papers %>%
   mutate(
-    strong = as.factor(case_when(
-      chain_label %in% c("strong", "partial_strong") ~ 1,
-      chain_label %in% c("weak", "partial_weak") ~ 0,
-      TRUE ~ NA_real_
-    )),
     depth = as.factor(if_else(level == 0, "foundational", "applied")),
+    is_applied = if_else(depth == "applied", 1, 0),
     af = if_else(source == "af", 1, 0),
     ct = if_else(source %in% c("ct_ai", "ct_pp", "ct_sb"), 1, 0),
     ct_ai = if_else(source == "ct_ai", 1, 0),
     ct_pp = if_else(source == "ct_pp", 1, 0),
     ct_sb = if_else(source == "ct_sb", 1, 0),
-    af_strong0 = if_else(source == "af" & strong == 0, 1, 0),
-    af_strong1 = if_else(source == "af" & strong == 1, 1, 0),
-    ct_ai_strong0 = if_else(source == "ct_ai" & strong == 0, 1, 0),
-    ct_ai_strong1 = if_else(source == "ct_ai" & strong == 1, 1, 0),
-    ct_pp_strong0 = if_else(source == "ct_pp" & strong == 0, 1, 0),
-    ct_pp_strong1 = if_else(source == "ct_pp" & strong == 1, 1, 0),
-    ct_sb_strong0 = if_else(source == "ct_sb" & strong == 0, 1, 0),
-    ct_sb_strong1 = if_else(source == "ct_sb" & strong == 1, 1, 0),
+    unknown = if_else(chain_label %in% c("no_data", NA), 1, 0),
+    af_intent_strong = if_else(
+      source == "af" & chain_label %in% c("strong", "partial_strong"), 1, 0
+    ),
+    af_intent_mixed = if_else(
+      source == "af" & chain_label %in% c("mixed", "partial_mixed"), 1, 0
+    ),
+    af_intent_weak = if_else(
+      source == "af" & chain_label %in% c("weak", "partial_weak"), 1, 0
+    ),
+    ct_ai_intent_strong = if_else(
+      source == "ct_ai" & chain_label %in% c("strong", "partial_strong"), 1, 0
+    ),
+    ct_ai_intent_mixed = if_else(
+      source == "ct_ai" & chain_label %in% c("mixed", "partial_mixed"), 1, 0
+    ),
+    ct_ai_intent_weak = if_else(
+      source == "ct_ai" & chain_label %in% c("weak", "partial_weak"), 1, 0
+    ),
+    ct_pp_intent_strong = if_else(
+      source == "ct_pp" & chain_label %in% c("strong", "partial_strong"), 1, 0
+    ),
+    ct_pp_intent_mixed = if_else(
+      source == "ct_pp" & chain_label %in% c("mixed", "partial_mixed"), 1, 0
+    ),
+    ct_pp_intent_weak = if_else(
+      source == "ct_pp" & chain_label %in% c("weak", "partial_weak"), 1, 0
+    ),
+    ct_sb_intent_strong = if_else(
+      source == "ct_sb" & chain_label %in% c("strong", "partial_strong"), 1, 0
+    ),
+    ct_sb_intent_mixed = if_else(
+      source == "ct_sb" & chain_label %in% c("mixed", "partial_mixed"), 1, 0
+    ),
+    ct_sb_intent_weak = if_else(
+      source == "ct_sb" & chain_label %in% c("weak", "partial_weak"), 1, 0
+    ),
+    af_with_intent = if_else(
+      source == "af" & chain_label %in% c(
+        "strong", "partial_strong", "mixed",
+        "partial_mixed", "weak", "partial_weak"
+      ), 1, 0
+    ),
+    ct_ai_with_intent = if_else(
+      source == "ct_ai" & chain_label %in% c(
+        "strong", "partial_strong", "mixed",
+        "partial_mixed", "weak", "partial_weak"
+      ), 1, 0
+    ),
+    ct_pp_with_intent = if_else(
+      source == "ct_pp" & chain_label %in% c(
+        "strong", "partial_strong", "mixed",
+        "partial_mixed", "weak", "partial_weak"
+      ), 1, 0
+    ),
+    ct_sb_with_intent = if_else(
+      source == "ct_sb" & chain_label %in% c(
+        "strong", "partial_strong", "mixed",
+        "partial_mixed", "weak", "partial_weak"
+      ), 1, 0
+    ),
     institution_type = as.factor(institution_type),
     institution_country_code = as.factor(institution_country_code),
     ln1p_cited_by_count = log1p(cited_by_count),
@@ -170,6 +219,7 @@ papers <- papers %>%
     ln1p_patent_citation = log1p(patent_citation),
     primary_field = as.factor(primary_field), # nolint
     publication_date = as.Date(publication_date),
+    ln1p_mesh_C = log1p(mesh_C),
     ln1p_resolution = log1p(as.numeric(resolution)),
     ln1p_R_free = log1p(as.numeric(R_free)),
     ln1p_organism_rarity_mean = log1p(as.numeric(organism_rarity_mean)),
@@ -234,7 +284,7 @@ papers <- papers %>%
     "institution_h_index",
     "institution_i10_index",
     "num_publications",
-    "ln1p_cited_by_count",
+    "cited_by_count",
     "ln1p_fwci",
     "patent_count",
     "patent_citation",
@@ -242,23 +292,31 @@ papers <- papers %>%
     "ln1p_resolution",
     "ln1p_R_free",
     "num_pdb_submissions",
+    "is_applied",
+    "unknown",
     "af",
     "ct_ai",
     "ct_pp",
     "ct_sb",
-    "strong",
-    "depth",
-    "af_strong0",
-    "af_strong1",
-    "ct_ai_strong0",
-    "ct_ai_strong1",
-    "ct_pp_strong0",
-    "ct_pp_strong1",
-    "ct_sb_strong0",
-    "ct_sb_strong1",
+    "af_with_intent",
+    "ct_ai_with_intent",
+    "ct_pp_with_intent",
+    "ct_sb_with_intent",
+    "af_intent_strong",
+    "af_intent_mixed",
+    "af_intent_weak",
+    "ct_ai_intent_strong",
+    "ct_ai_intent_mixed",
+    "ct_ai_intent_weak",
+    "ct_pp_intent_strong",
+    "ct_pp_intent_mixed",
+    "ct_pp_intent_weak",
+    "ct_sb_intent_strong",
+    "ct_sb_intent_mixed",
+    "ct_sb_intent_weak",
     "primary_field",
     "q4_pdb_pre2021_any",
-    "mesh_C",
+    "ln1p_mesh_C",
     grep("^field_", names(papers), value = TRUE),
     "num_uniprot_structures",
     "num_pdb_ids",
@@ -296,9 +354,9 @@ for (scope_lvl in unique_scopes) {
 
       # # Apply depth filter
       if (scope_lvl == "Intent") {
-        sub_sample <- subset(sub_sample, !is.na(strong))
+        sub_sample <- subset(sub_sample, unknown == 0)
       } else {
-        # drop strong
+        # drop strong (for it to skip during table creation)
         sub_sample <- sub_sample %>%
           select(-matches("strong[01]$|_strong"))
       }

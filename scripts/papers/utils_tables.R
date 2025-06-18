@@ -9,8 +9,8 @@ if (!dir.exists(tables)) {
 # ------------------------------------------------------------------------------
 
 table_info <- list(
-  "ln1p_cited_by_count" = list(
-    file_name = "ln1p_cited_by_count.tex"
+  "cited_by_count" = list(
+    file_name = "cited_by_count.tex"
   ),
   "ln1p_cit_0" = list(
     file_name = "ln1p_cit_0.tex"
@@ -99,8 +99,8 @@ table_info <- list(
   "num_diseases" = list(
     file_name = "num_diseases.tex"
   ),
-  "mesh_C" = list(
-    file_name = "mesh_C.tex"
+  "ln1p_mesh_C" = list(
+    file_name = "ln1p_mesh_C.tex"
   )
 )
 
@@ -109,18 +109,39 @@ dict_vars <- c(
   "ct_ai" = "AI Frontier",
   "ct_pp" = "PP Frontier",
   "ct_sb" = "SB Frontier",
-  "af_strong0" = "AlphaFold - Bkg.",
-  "af_strong1" = "AlphaFold - Method",
-  "ct_ai_strong0" = "AI Frontier - Bkg.",
-  "ct_ai_strong1" = "AI Frontier - Method",
-  "ct_pp_strong0" = "PP Frontier - Bkg.",
-  "ct_pp_strong1" = "PP Frontier - Method",
-  "ct_sb_strong0" = "SB Frontier - Bkg.",
-  "ct_sb_strong1" = "SB Frontier - Method"
+  "af:is_applied" = "AlphaFold x Applied",
+  "ct_ai:is_applied" = "AI Frontier x Applied",
+  "ct_pp:is_applied" = "PP Frontier x Applied",
+  "ct_sb:is_applied" = "SB Frontier x Applied",
+  "af_intent_strong" = "AlphaFold - Method",
+  "af_intent_weak" = "AlphaFold - Bkg.",
+  "af_intent_mixed" = "AlphaFold x Applied - Mixed",
+  "af_intent_strong:is_applied" = "AlphaFold x Applied - Method",
+  "af_intent_weak:is_applied" = "AlphaFold x Applied - Bkg.",
+  "ct_ai_intent_strong" = "AI Frontier - Method",
+  "ct_ai_intent_weak" = "AI Frontier - Bkg.",
+  "ct_ai_intent_mixed" = "AI Frontier x Applied - Mixed",
+  "ct_ai_intent_strong:is_applied" = "AI Frontier x Applied - Method",
+  "is_applied:ct_ai_intent_strong" = "AI Frontier x Applied - Method",
+  "ct_ai_intent_weak:is_applied" = "AI Frontier x Applied - Bkg.",
+  "is_applied:ct_ai_intent_weak" = "AI Frontier x Applied - Bkg.",
+  "ct_pp_intent_strong" = "PP Frontier - Method",
+  "ct_pp_intent_weak" = "PP Frontier - Bkg.",
+  "ct_pp_intent_mixed" = "PP Frontier x Applied - Mixed",
+  "ct_pp_intent_strong:is_applied" = "PP Frontier x Applied - Method",
+  "is_applied:ct_pp_intent_strong" = "PP Frontier x Applied - Method",
+  "ct_pp_intent_weak:is_applied" = "PP Frontier x Applied - Bkg.",
+  "is_applied:ct_pp_intent_weak" = "PP Frontier x Applied - Bkg.",
+  "ct_sb_intent_strong" = "SB Frontier - Method",
+  "ct_sb_intent_weak" = "SB Frontier - Bkg.",
+  "ct_sb_intent_mixed" = "SB Frontier x Applied - Mixed",
+  "ct_sb_intent_strong:is_applied" = "SB Frontier x Applied - Method",
+  "ct_sb_intent_weak:is_applied" = "SB Frontier x Applied - Bkg.",
+  "is_applied:ct_sb_intent_weak" = "SB Frontier x Applied - Bkg."
 )
 
 # Function to generate tables
-generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe_list, treat_vars) { # nolint
+generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe_list, treat_vars, intermediate_path) { # nolint
 
   scopes <- c("scope_All", "scope_Intent")
   fields <- c(
@@ -318,6 +339,8 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
 
     pathdir <- paste0(
       tables,
+      "/",
+      intermediate_path,
       "/"
     )
     if (!dir.exists(pathdir)) {
