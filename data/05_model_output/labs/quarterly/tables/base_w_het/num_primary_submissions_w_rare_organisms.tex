@@ -1,0 +1,82 @@
+\begingroup
+\centering
+\begin{tabular}{lcccccc}
+   \tabularnewline \midrule \midrule
+   Dependent Variable: & \multicolumn{6}{c}{num\_primary\_submissions\_w\_rare\_organisms}\\
+ & \multicolumn{3}{c}{All Authors} & \multicolumn{3}{c}{Experienced Authors} \\
+\cmidrule(lr){2-4} \cmidrule(lr){5-7}
+ & \multicolumn{1}{c}{All} & \multicolumn{2}{c}{With Intent Data} & \multicolumn{1}{c}{All} & \multicolumn{2}{c}{With Intent Data} \\
+\cmidrule(lr){2-2} \cmidrule(lr){3-4} \cmidrule(lr){5-5} \cmidrule(lr){6-7}
+ & \multicolumn{6}{c}{\textit{All Fields}} \\ \\
+   \emph{Variables}\\
+   AlphaFold             & 0.466$^{***}$ &         &         & 0.381$^{**}$  &         &   \\   
+                         & (0.167)       &         &         & (0.171)       &         &   \\   
+   AI Frontier           & 0.812$^{***}$ &         &         & 0.821$^{***}$ &         &   \\   
+                         & (0.187)       &         &         & (0.182)       &         &   \\   
+   PP Frontier           & 0.493$^{*}$   &         &         & 0.057         &         &   \\   
+                         & (0.283)       &         &         & (0.258)       &         &   \\   
+   SB Frontier           & -0.441        &         &         & -0.236        &         &   \\   
+                         & (0.297)       &         &         & (0.303)       &         &   \\   
+   AlphaFold x Applied   & 0.593$^{**}$  &         &         & 0.343         &         &   \\   
+                         & (0.294)       &         &         & (0.301)       &         &   \\   
+   AI Frontier x Applied & 0.045         &         &         & -0.134        &         &   \\   
+                         & (0.260)       &         &         & (0.338)       &         &   \\   
+   PP Frontier x Applied & -0.232        &         &         & -0.204        &         &   \\   
+                         & (0.303)       &         &         & (0.358)       &         &   \\   
+   SB Frontier x Applied & -0.312        &         &         & -0.137        &         &   \\   
+                         & (0.340)       &         &         & (0.436)       &         &   \\   
+   \midrule
+   \emph{Fit statistics}\\
+   Observations          & 61,117        & 619,087 & 619,087 & 45,171        & 105,190 & 105,190\\  
+Mean(Dep. Var.) & 0.190 & 0.019 & 0.019 & 0.224 & 0.096 & 0.096 \\
+   Pseudo R$^2$          & 0.27          &         &         & 0.27          &         & \\  
+   
+ & \multicolumn{6}{c}{\textit{Molecular Biology}} \\ \\
+   AlphaFold             & 0.288         &         &         & 0.279         &        &   \\   
+                         & (0.273)       &         &         & (0.258)       &        &   \\   
+   AI Frontier           & 0.904$^{***}$ &         &         & 0.919$^{***}$ &        &   \\   
+                         & (0.307)       &         &         & (0.276)       &        &   \\   
+   PP Frontier           & 1.22$^{**}$   &         &         & 0.361         &        &   \\   
+                         & (0.499)       &         &         & (0.364)       &        &   \\   
+   SB Frontier           & -0.265        &         &         & -0.325        &        &   \\   
+                         & (0.387)       &         &         & (0.366)       &        &   \\   
+   AlphaFold x Applied   & 0.826$^{*}$   &         &         & 0.359         &        &   \\   
+                         & (0.455)       &         &         & (0.522)       &        &   \\   
+   AI Frontier x Applied & 0.638         &         &         & 0.193         &        &   \\   
+                         & (0.405)       &         &         & (0.435)       &        &   \\   
+   PP Frontier x Applied & -0.870$^{*}$  &         &         & -0.622        &        &   \\   
+                         & (0.518)       &         &         & (0.582)       &        &   \\   
+   SB Frontier x Applied & -0.572        &         &         & -0.151        &        &   \\   
+                         & (0.517)       &         &         & (0.671)       &        &   \\   
+   \midrule
+   \emph{Fit statistics}\\
+   Observations          & 22,741        & 203,153 & 203,153 & 17,877        & 50,137 & 50,137\\  
+   Pseudo R$^2$          & 0.28          &         &         & 0.27          &        & \\  
+   
+Mean(Dep. Var.) & 0.272 & 0.030 & 0.030 & 0.298 & 0.106 & 0.106 \\
+ & \multicolumn{6}{c}{\textit{Medicine}} \\ \\
+   AlphaFold             & 0.146    &         &         & -0.083  &        &   \\   
+                         & (0.468)  &         &         & (0.520) &        &   \\   
+   AI Frontier           & -0.647   &         &         & -0.753  &        &   \\   
+                         & (0.477)  &         &         & (0.698) &        &   \\   
+   PP Frontier           & -0.350   &         &         & -0.521  &        &   \\   
+                         & (0.355)  &         &         & (0.381) &        &   \\   
+   SB Frontier           & -1.21    &         &         & -0.953  &        &   \\   
+                         & (0.809)  &         &         & (0.688) &        &   \\   
+   AlphaFold x Applied   & 0.148    &         &         & -0.003  &        &   \\   
+                         & (0.462)  &         &         & (0.448) &        &   \\   
+   AI Frontier x Applied & 0.076    &         &         & 0.099   &        &   \\   
+                         & (0.467)  &         &         & (0.485) &        &   \\   
+   PP Frontier x Applied & 0.296    &         &         & 0.108   &        &   \\   
+                         & (0.404)  &         &         & (0.523) &        &   \\   
+   SB Frontier x Applied & -0.364   &         &         & -0.132  &        &   \\   
+                         & (0.488)  &         &         & (0.546) &        &   \\   
+   \midrule
+   \emph{Fit statistics}\\
+   Observations          & 8,047    & 195,428 & 195,428 & 5,950   & 25,962 & 25,962\\  
+Mean(Dep. Var.) & 0.306 & 0.013 & 0.013 & 0.375 & 0.086 & 0.086 \\
+   Pseudo R$^2$          & 0.37     &         &         & 0.37    &        & \\  
+   \midrule \midrule
+   \multicolumn{7}{l}{\emph{Signif. Codes: ***: 0.01, **: 0.05, *: 0.1}}\\
+\end{tabular}
+\par\endgroup

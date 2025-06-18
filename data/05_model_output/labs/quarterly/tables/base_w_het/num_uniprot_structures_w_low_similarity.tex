@@ -1,0 +1,82 @@
+\begingroup
+\centering
+\begin{tabular}{lcccccc}
+   \tabularnewline \midrule \midrule
+   Dependent Variable: & \multicolumn{6}{c}{num\_uniprot\_structures\_w\_low\_similarity}\\
+ & \multicolumn{3}{c}{All Authors} & \multicolumn{3}{c}{Experienced Authors} \\
+\cmidrule(lr){2-4} \cmidrule(lr){5-7}
+ & \multicolumn{1}{c}{All} & \multicolumn{2}{c}{With Intent Data} & \multicolumn{1}{c}{All} & \multicolumn{2}{c}{With Intent Data} \\
+\cmidrule(lr){2-2} \cmidrule(lr){3-4} \cmidrule(lr){5-5} \cmidrule(lr){6-7}
+ & \multicolumn{6}{c}{\textit{All Fields}} \\ \\
+   \emph{Variables}\\
+   AlphaFold             & 0.669$^{***}$  &         &         & 0.904$^{***}$ &         &   \\   
+                         & (0.168)        &         &         & (0.216)       &         &   \\   
+   AI Frontier           & 0.187          &         &         & 0.353         &         &   \\   
+                         & (0.318)        &         &         & (0.390)       &         &   \\   
+   PP Frontier           & -0.566$^{***}$ &         &         & -0.546$^{**}$ &         &   \\   
+                         & (0.190)        &         &         & (0.224)       &         &   \\   
+   SB Frontier           & 0.772$^{**}$   &         &         & -0.045        &         &   \\   
+                         & (0.381)        &         &         & (0.192)       &         &   \\   
+   AlphaFold x Applied   & -0.134         &         &         & -0.167        &         &   \\   
+                         & (0.180)        &         &         & (0.202)       &         &   \\   
+   AI Frontier x Applied & -0.272         &         &         & -0.373$^{*}$  &         &   \\   
+                         & (0.208)        &         &         & (0.217)       &         &   \\   
+   PP Frontier x Applied & 0.563$^{***}$  &         &         & 0.555$^{***}$ &         &   \\   
+                         & (0.166)        &         &         & (0.190)       &         &   \\   
+   SB Frontier x Applied & -0.212         &         &         & -0.228        &         &   \\   
+                         & (0.216)        &         &         & (0.252)       &         &   \\   
+   \midrule
+   \emph{Fit statistics}\\
+   Observations          & 86,653         & 618,866 & 618,866 & 61,495        & 105,020 & 105,020\\  
+Mean(Dep. Var.) & 0.169 & 0.024 & 0.024 & 0.200 & 0.117 & 0.117 \\
+   Pseudo R$^2$          & 0.22           &         &         & 0.22          &         & \\  
+   
+ & \multicolumn{6}{c}{\textit{Molecular Biology}} \\ \\
+   AlphaFold             & 0.407$^{*}$  &         &         & 0.726$^{**}$ &        &   \\   
+                         & (0.224)      &         &         & (0.301)      &        &   \\   
+   AI Frontier           & 0.264        &         &         & 0.457        &        &   \\   
+                         & (0.507)      &         &         & (0.601)      &        &   \\   
+   PP Frontier           & -0.502$^{*}$ &         &         & -0.262       &        &   \\   
+                         & (0.268)      &         &         & (0.240)      &        &   \\   
+   SB Frontier           & 1.04$^{***}$ &         &         & 0.147        &        &   \\   
+                         & (0.374)      &         &         & (0.254)      &        &   \\   
+   AlphaFold x Applied   & -0.039       &         &         & -0.127       &        &   \\   
+                         & (0.275)      &         &         & (0.295)      &        &   \\   
+   AI Frontier x Applied & -0.492       &         &         & -0.325       &        &   \\   
+                         & (0.317)      &         &         & (0.374)      &        &   \\   
+   PP Frontier x Applied & 0.534$^{*}$  &         &         & 0.433        &        &   \\   
+                         & (0.284)      &         &         & (0.317)      &        &   \\   
+   SB Frontier x Applied & -0.188       &         &         & -0.265       &        &   \\   
+                         & (0.265)      &         &         & (0.318)      &        &   \\   
+   \midrule
+   \emph{Fit statistics}\\
+   Observations          & 37,582       & 203,044 & 203,044 & 28,511       & 50,049 & 50,049\\  
+   Pseudo R$^2$          & 0.23         &         &         & 0.22         &        & \\  
+   
+Mean(Dep. Var.) & 0.239 & 0.044 & 0.044 & 0.263 & 0.150 & 0.150 \\
+ & \multicolumn{6}{c}{\textit{Medicine}} \\ \\
+   AlphaFold             & 0.729$^{*}$  &         &         & 0.812$^{*}$  &        &   \\   
+                         & (0.423)      &         &         & (0.439)      &        &   \\   
+   AI Frontier           & -0.132       &         &         & 0.026        &        &   \\   
+                         & (0.422)      &         &         & (0.422)      &        &   \\   
+   PP Frontier           & -0.650$^{*}$ &         &         & -1.11$^{*}$  &        &   \\   
+                         & (0.376)      &         &         & (0.626)      &        &   \\   
+   SB Frontier           & -0.178       &         &         & 0.106        &        &   \\   
+                         & (0.501)      &         &         & (0.603)      &        &   \\   
+   AlphaFold x Applied   & -0.216       &         &         & -0.411       &        &   \\   
+                         & (0.446)      &         &         & (0.434)      &        &   \\   
+   AI Frontier x Applied & 0.390        &         &         & 0.216        &        &   \\   
+                         & (0.519)      &         &         & (0.496)      &        &   \\   
+   PP Frontier x Applied & 0.638        &         &         & 0.982$^{**}$ &        &   \\   
+                         & (0.434)      &         &         & (0.499)      &        &   \\   
+   SB Frontier x Applied & -1.07$^{**}$ &         &         & -0.807       &        &   \\   
+                         & (0.542)      &         &         & (0.622)      &        &   \\   
+   \midrule
+   \emph{Fit statistics}\\
+   Observations          & 9,082        & 195,364 & 195,364 & 6,291        & 25,915 & 25,915\\  
+Mean(Dep. Var.) & 0.238 & 0.011 & 0.011 & 0.285 & 0.069 & 0.069 \\
+   Pseudo R$^2$          & 0.37         &         &         & 0.38         &        & \\  
+   \midrule \midrule
+   \multicolumn{7}{l}{\emph{Signif. Codes: ***: 0.01, **: 0.05, *: 0.1}}\\
+\end{tabular}
+\par\endgroup
