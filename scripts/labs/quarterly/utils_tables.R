@@ -110,22 +110,30 @@ dict_vars <- c(
   "ct_ai" = "AI Frontier",
   "ct_pp" = "PP Frontier",
   "ct_sb" = "SB Frontier",
+  "af:is_applied" = "AlphaFold x Applied",
+  "ct_ai:is_applied" = "AI Frontier x Applied",
+  "ct_pp:is_applied" = "PP Frontier x Applied",
+  "ct_sb:is_applied" = "SB Frontier x Applied",
   "af_intent_strong" = "AlphaFold - Method",
   "af_intent_weak" = "AlphaFold - Bkg.",
-  "af_intent_mixed" = "AlphaFold - Mixed",
+  "af_intent_strong:is_applied" = "AlphaFold x Applied - Method",
+  "af_intent_weak:is_applied" = "AlphaFold x Applied - Bkg.",
   "ct_ai_intent_strong" = "AI Frontier - Method",
   "ct_ai_intent_weak" = "AI Frontier - Bkg.",
-  "ct_ai_intent_mixed" = "AI Frontier - Mixed",
+  "is_applied:ct_ai_intent_strong" = "AI Frontier x Applied - Method",
+  "is_applied:ct_ai_intent_weak" = "AI Frontier x Applied - Bkg.",
   "ct_pp_intent_strong" = "PP Frontier - Method",
   "ct_pp_intent_weak" = "PP Frontier - Bkg.",
-  "ct_pp_intent_mixed" = "PP Frontier - Mixed",
+  "is_applied:ct_pp_intent_strong" = "PP Frontier x Applied - Method",
+  "is_applied:ct_pp_intent_weak" = "PP Frontier x Applied - Bkg.",
   "ct_sb_intent_strong" = "SB Frontier - Method",
   "ct_sb_intent_weak" = "SB Frontier - Bkg.",
-  "ct_sb_intent_mixed" = "SB Frontier - Mixed"
+  "is_applied:ct_sb_intent_strong" = "SB Frontier x Applied - Method",
+  "is_applied:ct_sb_intent_weak" = "SB Frontier x Applied - Bkg."
 )
 
 # Function to generate tables
-generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe_list, treat_vars) { # nolint
+generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe_list, treat_vars, intermediate_path) { # nolint
 
   scopes <- c("scope_All", "scope_Intent")
   fields <- c(
@@ -182,6 +190,8 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
             # Drop specific patterns we don't want
             "^af_ct.*",
             "^ct_ai_ct.*",
+            # anything with intent_mixed
+            ".*intent_mixed.*",
             # Drop renamed interaction terms
             ".*\\$\\\\times\\$.*", # matches the LaTeX formatted interactions
             "AlphaFold.*AI Frontier.*",
@@ -200,6 +210,7 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
           digits = 3,
           digits.stats = 2,
           powerBelow = -20,
+          order = c("^AlphaFold", "^AI Frontier", "^PP Frontier", "^SB Frontier"),
           fitstat = c("n", "pr2", "r2")
         )
 
@@ -339,12 +350,13 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
 
     pathdir <- paste0(
       tables,
+      "/",
+      intermediate_path,
       "/"
     )
     if (!dir.exists(pathdir)) {
       dir.create(pathdir, recursive = TRUE)
     }
-
     # Write the table to a file
     writeLines(
       latex_output,

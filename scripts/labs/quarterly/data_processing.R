@@ -63,12 +63,22 @@ applied_labs_data <- s3read_using(
   bucket = bucket
 )
 
+# create column is_applied
+foundational_labs_data <- foundational_labs_data %>%
+  mutate(is_applied = 0)
+applied_labs_data <- applied_labs_data %>%
+  mutate(is_applied = 1)
+
 # merge the data
 labs_data <- bind_rows(foundational_labs_data, applied_labs_data)
 
 # drop duplicates by author, quarter
 labs_data <- labs_data %>%
   distinct(author, quarter, .keep_all = TRUE)
+
+# drop obs after 2025Q1 (ie. 2025Q2)
+labs_data <- labs_data %>%
+  filter(quarter <= "2025Q1")
 
 # ------------------------------------------------------------------------------
 # Strong Data Prep
@@ -323,10 +333,17 @@ labs_data$primary_field <- recode(labs_data$primary_field, !!!field_mapping)
 
 # Define the columns to be used for matching
 coarse_cols <- c(
-  "ln1p_cited_by_count", "num_publications"
+  "cited_by_count", "ln1p_fwci", "num_publications", "num_pdb_submissions",
+  "field_biochemist", "field_chemistry", "field_medicine",
+  "covid_share_2020"
 )
 
-exact_cols <- c("institution_country_code")
+exact_cols <- c(
+  "institution_country_code",
+  "institution_h_index",
+  "institution_2yr_mean_citedness",
+  "institution_i10_index"
+)
 
 mode_function <- function(x) {
   ux <- unique(x)
@@ -379,7 +396,7 @@ combined_cem_data <- intersect(
 )
 
 matched_data <- labs_data %>%
-  filter(author %in% combined_cem_data | high_pdb_pre2021 == TRUE)
+  filter(author %in% combined_cem_data)
 
 # ------------------------------------------------------------------------------
 # Sample Prep
@@ -389,7 +406,7 @@ matched_data <- labs_data %>%
 matched_data <- matched_data %>%
   select(
     # Sample-defining variables
-    # "all_intents_high",
+    "is_applied",
     "high_pdb_pre2021",
 
     # Basic identifiers and time
@@ -506,9 +523,7 @@ for (scope_lvl in unique_scopes) {
       sub_sample <- matched_data
 
       # # Apply depth filter
-      if (scope_lvl == "Intent") {
-        # sub_sample <- subset(sub_sample, all_intents_high == TRUE)
-      } else {
+      if (scope_lvl == "All") {
         # drop strong
         sub_sample <- sub_sample %>%
           select(-matches("strong[01]$|_strong"))

@@ -56,9 +56,9 @@ fes[["fe1"]] <- c("author", "quarter")
 cov_sets <- c("base0")
 fe_list <- c("fe1")
 dep_vars <- c(
-  "ln1p_mesh_C",
   "num_publications",
   "cited_by_count",
+  "ln1p_mesh_C",
   "ln1p_fwci",
   "ln1p_resolution",
   "ln1p_R_free",
@@ -101,6 +101,36 @@ treat_vars_base <- paste(
   collapse = " + "
 )
 
+treat_vars_base_w_het <- paste(
+  c(
+    "af", "ct_ai", "ct_pp", "ct_sb",
+    "af:ct_ai", "af:ct_pp", "af:ct_sb",
+    "ct_ai:ct_pp", "ct_ai:ct_sb",
+    "ct_pp:ct_sb",
+    "af:ct_ai:ct_pp", "af:ct_ai:ct_sb",
+    "af:ct_pp:ct_sb",
+    "ct_ai:ct_pp:ct_sb",
+    "af:ct_ai:ct_pp:ct_sb",
+    "af:is_applied", "ct_ai:is_applied", "ct_pp:is_applied", "ct_sb:is_applied"
+  ),
+  collapse = " + "
+)
+
+strong_base_list <- c(
+  "af_intent_strong",
+  "af_intent_weak",
+  "af_intent_mixed",
+  "ct_ai_intent_strong",
+  "ct_ai_intent_weak",
+  "ct_ai_intent_mixed",
+  "ct_pp_intent_strong",
+  "ct_pp_intent_weak",
+  "ct_pp_intent_mixed",
+  "ct_sb_intent_strong",
+  "ct_sb_intent_weak",
+  "ct_sb_intent_mixed"
+)
+
 # Define treatment vars with strong interactions
 treat_vars_with_strong <- paste(
   c(
@@ -120,6 +150,32 @@ treat_vars_with_strong <- paste(
   collapse = " + "
 )
 
+treat_vars_with_strong_w_het <- paste(
+  c(
+    "af_intent_strong",
+    "af_intent_weak",
+    "af_intent_strong:is_applied",
+    "af_intent_weak:is_applied",
+    "ct_ai_intent_strong",
+    "ct_ai_intent_weak",
+    "ct_ai_intent_strong:is_applied",
+    "ct_ai_intent_weak:is_applied",
+    "ct_pp_intent_strong",
+    "ct_pp_intent_weak",
+    "ct_pp_intent_strong:is_applied",
+    "ct_pp_intent_weak:is_applied",
+    "ct_sb_intent_strong",
+    "ct_sb_intent_weak",
+    "ct_sb_intent_strong:is_applied",
+    "ct_sb_intent_weak:is_applied",
+    "af_intent_mixed",
+    "ct_ai_intent_mixed",
+    "ct_pp_intent_mixed",
+    "ct_sb_intent_mixed"
+  ),
+  collapse = " + "
+)
+
 for (dep_var in dep_vars) { # nolint
   form_list <- list()
   # Iterate over dependent variables
@@ -130,8 +186,12 @@ for (dep_var in dep_vars) { # nolint
     # Iterate over fixed effects
     for (fe in fe_list) {
       # Iterate over treatment variables
-      for (local_treat_vars in c(treat_vars_base, treat_vars_with_strong)) {
-        # Create formula name using the subset and treatment vars
+      for (local_treat_vars in c(
+        treat_vars_base,
+        treat_vars_base_w_het,
+        treat_vars_with_strong,
+        treat_vars_with_strong_w_het
+      )) {        # Create formula name using the subset and treatment vars
         form_name <- paste0(
           dep_var, "__", cov_set, "__", fe, "__",
           gsub(" ", "_", local_treat_vars)
@@ -170,10 +230,12 @@ for (dep_var in dep_vars) { # nolint
       # Create a local copy of the subset
       local_data <- sub_samples[[sub]]
 
-      # if "intent" in form name, swap the "*_with_intent" variables for the "*" variables
+      # if "intent" in form name, swap the "*_with_intent" vars
       if (grepl("scope_Intent", sub)) {
         # Get columns ending with _with_intent
-        intent_cols <- names(local_data)[endsWith(names(local_data), "_with_intent")]
+        intent_cols <- names(local_data)[endsWith(
+          names(local_data), "_with_intent"
+        )]
         # For each intent column, overwrite the base column with its value
         for (col in intent_cols) {
           base_col <- gsub("_with_intent", "", col)
@@ -227,7 +289,7 @@ for (dep_var in dep_vars) { # nolint
         n_authors + n_quarters
         > nrow(non_na_data)
       ) {
-        message("Skipping regression: ", regression_label, ". Not enough data.")
+        message("Skipping regression. Not enough data.")
         results[[regression_label]] <- feols(
           as.formula(paste(dep_var, "~ 1")),
           data = local_data
@@ -236,8 +298,12 @@ for (dep_var in dep_vars) { # nolint
       }
 
       # skipping regression if form includes "strong" but no strong var
-      if (grepl("strong", form) && !("af_intent_strong" %in% names(local_data))) {
-        message("Skipping regression: ", regression_label, ". No strong intent data.")
+      if (
+        grepl("strong", form) && !("af_intent_strong" %in% names(local_data))
+      ) {
+        message(
+          "Skipping regression. No strong intent data."
+        )
         next
       }
 
@@ -334,10 +400,16 @@ for (dep_var in dep_vars) { # nolint
         treat_vars = c(treat_vars_base, treat_vars_with_strong),
         treat_var_interest = c(
           "af", "ct_ai", "ct_pp", "ct_sb",
-          "af_intent_strong", "af_intent_weak", "af_intent_mixed",
-          "ct_ai_intent_strong", "ct_ai_intent_weak", "ct_ai_intent_mixed",
-          "ct_pp_intent_strong", "ct_pp_intent_weak", "ct_pp_intent_mixed",
-          "ct_sb_intent_strong", "ct_sb_intent_weak", "ct_sb_intent_mixed"
+          "af_intent_strong", "af_intent_weak",
+          "ct_ai_intent_strong", "ct_ai_intent_weak",
+          "ct_pp_intent_strong", "ct_pp_intent_weak",
+          "ct_sb_intent_strong", "ct_sb_intent_weak",
+          "af:is_applied", "ct_ai:is_applied", "ct_pp:is_applied",
+          "ct_sb:is_applied", "af_intent_strong:is_applied",
+          "af_intent_weak:is_applied", "ct_ai_intent_strong:is_applied",
+          "ct_ai_intent_weak:is_applied", "ct_pp_intent_strong:is_applied",
+          "ct_pp_intent_weak:is_applied", "ct_sb_intent_strong:is_applied",
+          "ct_sb_intent_weak:is_applied"
         )
       )
 
@@ -374,7 +446,18 @@ for (dep_var in dep_vars) { # nolint
         subsets = names(sub_samples),
         cov_sets = cov_sets,
         fe_list = fe_list,
-        treat_vars = c(treat_vars_base, treat_vars_with_strong)
+        treat_vars = c(treat_vars_base, treat_vars_with_strong),
+        intermediate_path = "base"
+      )
+      generate_tables(
+        results = results,
+        dep_vars = dep_var,
+        table_info = table_info,
+        subsets = names(sub_samples),
+        cov_sets = cov_sets,
+        fe_list = fe_list,
+        treat_vars = c(treat_vars_base_w_het, treat_vars_with_strong_w_het),
+        intermediate_path = "base_w_het"
       )
     },
     error = function(e) {
