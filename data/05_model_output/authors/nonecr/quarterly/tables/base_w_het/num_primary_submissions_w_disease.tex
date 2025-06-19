@@ -1,0 +1,33 @@
+\begingroup
+\centering
+\begin{tabular}{lcccccc}
+   \tabularnewline \midrule \midrule
+   Dependent Variable: & \multicolumn{6}{c}{num\_primary\_submissions\_w\_disease}\\
+ & \multicolumn{3}{c}{All Authors} & \multicolumn{3}{c}{Experienced Authors} \\
+\cmidrule(lr){2-4} \cmidrule(lr){5-7}
+ & \multicolumn{1}{c}{All} & \multicolumn{2}{c}{With Intent Data} & \multicolumn{1}{c}{All} & \multicolumn{2}{c}{With Intent Data} \\
+\cmidrule(lr){2-2} \cmidrule(lr){3-4} \cmidrule(lr){5-5} \cmidrule(lr){6-7}
+ & \multicolumn{6}{c}{\textit{All Fields}} \\ \\
+   \emph{Variables}\\
+   AlphaFold             & 1.48$^{***}$ &           &           & 1.08$^{**}$ &         &   \\   
+                         & (0.481)      &           &           & (0.487)     &         &   \\   
+   AlphaFold x Applied   & -0.490       &           &           & -0.571      &         &   \\   
+                         & (0.643)      &           &           & (0.737)     &         &   \\   
+   AI Frontier           & 1.36$^{***}$ &           &           & 1.15$^{*}$  &         &   \\   
+                         & (0.390)      &           &           & (0.619)     &         &   \\   
+   AI Frontier x Applied & -0.878       &           &           & -1.10       &         &   \\   
+                         & (0.693)      &           &           & (0.937)     &         &   \\   
+   PP Frontier           & 0.126        &           &           & 0.216       &         &   \\   
+                         & (0.802)      &           &           & (0.936)     &         &   \\   
+   PP Frontier x Applied & 1.13         &           &           & 1.09        &         &   \\   
+                         & (0.687)      &           &           & (0.863)     &         &   \\   
+   SB Frontier           & 0.374        &           &           & 0.395       &         &   \\   
+                         & (0.389)      &           &           & (0.495)     &         &   \\   
+   SB Frontier x Applied & 0.211        &           &           & -0.356      &         &   \\   
+                         & (0.893)      &           &           & (0.848)     &         &   \\   
+   \midrule
+   \emph{Fit statistics}\\
+   Observations          & 6,737        & 5,606,963 & 5,606,963 & 5,941       & 304,871 & 304,871\\  
+Mean(Dep. Var.) & 0.338 & 0.000 & 0.000 & 0.334 & 0.007 & 0.007 \\
+   Pseudo R$^2$          & 0.39         &           &           & 0.34        &         & \\  
+   

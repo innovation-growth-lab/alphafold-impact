@@ -1,73 +1,127 @@
 \begingroup
 \centering
-\begin{tabular}{lcccccc}
+\begin{tabular}{lcccccccc}
    \tabularnewline \midrule \midrule
-   Dependent Variable: & \multicolumn{6}{c}{patent\_citation}\\
+   Dependent Variable: & \multicolumn{8}{c}{patent\_citation}\\
  & \multicolumn{3}{c}{All Authors} & \multicolumn{3}{c}{Experienced Authors} \\
 \cmidrule(lr){2-4} \cmidrule(lr){5-7}
  & \multicolumn{1}{c}{All} & \multicolumn{2}{c}{With Intent Data} & \multicolumn{1}{c}{All} & \multicolumn{2}{c}{With Intent Data} \\
 \cmidrule(lr){2-2} \cmidrule(lr){3-4} \cmidrule(lr){5-5} \cmidrule(lr){6-7}
  & \multicolumn{6}{c}{\textit{All Fields}} \\ \\
-   AlphaFold               & -0.231  & 2.35$^{*}$    &              & 1.14         & -1.29     &   \\   
-                           & (0.790) & (1.32)        &              & (0.750)      & (2.38)    &   \\   
-   AI Frontier             & -0.666  & -17.1$^{***}$ &              & -0.489       & -63.2     &   \\   
-                           & (0.957) & (6.23)        &              & (0.815)      & (7,788.8) &   \\   
-   No AI Frontier          & 0.462   & 2.35$^{***}$  &              & 1.50$^{***}$ & 0.145     &   \\   
-                           & (0.756) & (0.600)       &              & (0.258)      & (1.42)    &   \\   
-   AlphaFold - Bkg.        &         &               & 812.6        &              &           & 12.6$^{***}$\\   
-                           &         &               & (76,661.1)   &              &           & (1.89)\\   
-   AlphaFold - Method      &         &               & 1.99$^{*}$   &              &           & -1.16\\   
-                           &         &               & (1.07)       &              &           & (2.94)\\   
-   AI Frontier - Bkg.      &         &               & 790.4        &              &           &   \\   
-                           &         &               & (76,682.0)   &              &           &   \\   
-   No AI Frontier - Bkg.   &         &               & 0.885$^{*}$  &              &           & -0.651\\   
-                           &         &               & (0.488)      &              &           & (1.64)\\   
-   No AI Frontier - Method &         &               & 2.48$^{***}$ &              &           & 0.993\\   
-                           &         &               & (0.563)      &              &           & (1.56)\\   
+   AlphaFold                                      & 0.707$^{**}$ &               &       &       & 0.691         &               &       &   \\   
+                                                  & (0.304)      &               &       &       & (0.474)       &               &       &   \\   
+   AI Frontier                                    & -0.419       &               &       &       & 0.178         &               &       &   \\   
+                                                  & (0.270)      &               &       &       & (0.402)       &               &       &   \\   
+   PP Frontier                                    & 0.451$^{**}$ &               &       &       & 0.979$^{***}$ &               &       &   \\   
+                                                  & (0.218)      &               &       &       & (0.329)       &               &       &   \\   
+   SB Frontier                                    & 0.007        &               &       &       & -0.008        &               &       &   \\   
+                                                  & (0.295)      &               &       &       & (0.372)       &               &       &   \\   
+   AlphaFold $\times$ depthfoundational           & -0.202       &               &       &       & 0.105         &               &       &   \\   
+                                                  & (0.452)      &               &       &       & (0.577)       &               &       &   \\   
+   AlphaFold - Method                             &              & 0.194         &       &       &               & -0.374        &       &   \\   
+                                                  &              & (0.368)       &       &       &               & (0.267)       &       &   \\   
+   AlphaFold - Bkg.                               &              & 0.964$^{***}$ &       &       &               & -0.077        &       &   \\   
+                                                  &              & (0.372)       &       &       &               & (0.269)       &       &   \\   
+   AlphaFold - Mixed                              &              & 0.879         &       &       &               & 1.04          &       &   \\   
+                                                  &              & (0.609)       &       &       &               & (0.750)       &       &   \\   
+   AI Frontier - Method                           &              & -1.12$^{*}$   &       &       &               & -17.2$^{***}$ &       &   \\   
+                                                  &              & (0.672)       &       &       &               & (1.67)        &       &   \\   
+   AI Frontier - Bkg.                             &              & -1.28$^{***}$ &       &       &               & -16.1$^{***}$ &       &   \\   
+                                                  &              & (0.331)       &       &       &               & (1.86)        &       &   \\   
+   PP Frontier - Method                           &              & 0.480         &       &       &               & 0.430         &       &   \\   
+                                                  &              & (0.468)       &       &       &               & (0.434)       &       &   \\   
+   PP Frontier - Bkg.                             &              & -0.187        &       &       &               & 0.001         &       &   \\   
+                                                  &              & (0.365)       &       &       &               & (0.332)       &       &   \\   
+   SB Frontier - Method                           &              & -0.865        &       &       &               & 2.10$^{**}$   &       &   \\   
+                                                  &              & (1.27)        &       &       &               & (1.03)        &       &   \\   
+   SB Frontier - Bkg.                             &              & -0.341        &       &       &               & -1.03         &       &   \\   
+                                                  &              & (0.303)       &       &       &               & (1.25)        &       &   \\   
+   AlphaFold - Method $\times$ depthfoundational  &              & -0.890$^{*}$  &       &       &               & -0.516        &       &   \\   
+                                                  &              & (0.505)       &       &       &               & (0.636)       &       &   \\   
+   AlphaFold - Bkg. $\times$ depthfoundational    &              & -0.999        &       &       &               & -0.033        &       &   \\   
+                                                  &              & (1.05)        &       &       &               & (2.02)        &       &   \\   
    \midrule
    \emph{Fit statistics}\\
-   Convergence             &FALSE    & TRUE          & TRUE         & TRUE         & TRUE      & FALSE\\  
-   Observations            & 1,176   & 337           & 337          & 538          & 135       & 135\\  
-   Pseudo R$^2$            & 0.69    & 0.71          & 0.72         & 0.73         & 0.71      & 0.72\\  
-Mean(Dep. Var.) & 3.712 & 3.700 & 3.700 & 4.353 & 3.844 & 3.844 \\
+   Observations                                   & 3,898        & 3,898         & 2,729 & 2,729 & 1,412         & 1,412         & 1,031 & 1,031\\  
+   Pseudo R$^2$                                   & 0.64         & 0.64          & 0.68  & 0.68  & 0.54          & 0.54          & 0.56  & 0.56\\  
+Mean(Dep. Var.) & 2.344 & 2.344 & 2.712 & 2.712 & 2.194 & 2.194 & 2.479 & 2.479 \\
    
  & \multicolumn{6}{c}{\textit{Molecular Biology}} \\ \\
-   AlphaFold      & -150.9     &      &      & 72.8    &      &   \\   
-                  & (955.3)    &      &      & (196.0) &      &   \\   
-   AI Frontier    & 337.0      &      &      & 28.6    &      &   \\   
-                  & (14,165.9) &      &      & (197.4) &      &   \\   
-   No AI Frontier & -364.0     &      &      & 89.9    &      &   \\   
-                  & (5,508.3)  &      &      & (410.3) &      &   \\   
+   AlphaFold                                      & 0.697   &               &      &      & 0.578      &              &      &   \\   
+                                                  & (0.986) &               &      &      & (0.730)    &              &      &   \\   
+   AI Frontier                                    & -0.012  &               &      &      & 0.764      &              &      &   \\   
+                                                  & (0.784) &               &      &      & (1.40)     &              &      &   \\   
+   PP Frontier                                    & 0.980   &               &      &      & 0.521      &              &      &   \\   
+                                                  & (0.642) &               &      &      & (1.21)     &              &      &   \\   
+   SB Frontier                                    & -0.051  &               &      &      & 0.159      &              &      &   \\   
+                                                  & (0.433) &               &      &      & (0.366)    &              &      &   \\   
+   AlphaFold $\times$ depthfoundational           & 0.953   &               &      &      & 1.17$^{*}$ &              &      &   \\   
+                                                  & (0.599) &               &      &      & (0.637)    &              &      &   \\   
+   AlphaFold - Method                             &         & 0.067         &      &      &            & -1.41        &      &   \\   
+                                                  &         & (0.642)       &      &      &            & (1.16)       &      &   \\   
+   AlphaFold - Bkg.                               &         & 1.61$^{**}$   &      &      &            & -0.246       &      &   \\   
+                                                  &         & (0.729)       &      &      &            & (0.223)      &      &   \\   
+   AlphaFold - Mixed                              &         & -0.177        &      &      &            & 0.931        &      &   \\   
+                                                  &         & (1.34)        &      &      &            & (1.26)       &      &   \\   
+   AI Frontier - Method                           &         & -19.7         &      &      &            &              &      &   \\   
+                                                  &         & (662.3)       &      &      &            &              &      &   \\   
+   AI Frontier - Bkg.                             &         & -1.70$^{*}$   &      &      &            &              &      &   \\   
+                                                  &         & (0.964)       &      &      &            &              &      &   \\   
+   PP Frontier - Bkg.                             &         & -1.78$^{**}$  &      &      &            & -21.7        &      &   \\   
+                                                  &         & (0.738)       &      &      &            & (7,118.2)    &      &   \\   
+   SB Frontier - Method                           &         & 0.132         &      &      &            & 2.89         &      &   \\   
+                                                  &         & (1.82)        &      &      &            & (2.44)       &      &   \\   
+   SB Frontier - Bkg.                             &         & -0.997$^{**}$ &      &      &            & -21.7        &      &   \\   
+                                                  &         & (0.480)       &      &      &            & (3,628.3)    &      &   \\   
+   AlphaFold - Method $\times$ depthfoundational  &         & -0.976        &      &      &            & 2.17         &      &   \\   
+                                                  &         & (1.05)        &      &      &            & (1.55)       &      &   \\   
+   AlphaFold - Bkg. $\times$ depthfoundational    &         & 2.02$^{*}$    &      &      &            & 4.06$^{***}$ &      &   \\   
+                                                  &         & (1.13)        &      &      &            & (0.979)      &      &   \\   
    \midrule
    \emph{Fit statistics}\\
-   Convergence    &FALSE       & TRUE & TRUE & FALSE   & TRUE & TRUE\\  
-   Observations   & 282        & 394  & 394  & 104     & 107  & 107\\  
-   Pseudo R$^2$   & 0.65       &      &      & 0.52    &      & \\  
+   Observations                                   & 1,011   & 1,011         & 714  & 714  & 315        & 315          & 239  & 239\\  
+   Pseudo R$^2$                                   & 0.78    & 0.78          & 0.82 & 0.82 & 0.45       & 0.46         & 0.48 & 0.48\\  
    
-Mean(Dep. Var.) & 2.504 & 0.685 & 0.685 & 2.029 & 0.243 & 0.243 \\
+Mean(Dep. Var.) & 2.870 & 2.870 & 3.398 & 3.398 & 1.768 & 1.768 & 1.837 & 1.837 \\
  & \multicolumn{6}{c}{\textit{Medicine}} \\ \\
-   AlphaFold               & -0.493        & 1.68         &              & 1.26         & -1.56  &   \\   
-                           & (0.833)       & (1.74)       &              & (0.990)      & (2.50) &   \\   
-   AI Frontier             & -2.43$^{***}$ & -18.1        &              & -22.2        & -20.6  &   \\   
-                           & (0.738)       & (23.1)       &              & (104.6)      & (45.6) &   \\   
-   No AI Frontier          & 0.539         & 2.30$^{***}$ &              & 1.67$^{***}$ & 0.032  &   \\   
-                           & (0.430)       & (0.617)      &              & (0.384)      & (1.52) &   \\   
-   AlphaFold - Bkg.        &               &              & 18.6$^{***}$ &              &        & 20.1$^{***}$\\   
-                           &               &              & (1.81)       &              &        & (4.43)\\   
-   AlphaFold - Method      &               &              & 1.11         &              &        & -1.30\\   
-                           &               &              & (1.57)       &              &        & (2.90)\\   
-   No AI Frontier - Bkg.   &               &              & 0.687        &              &        & -0.601\\   
-                           &               &              & (0.499)      &              &        & (1.63)\\   
-   No AI Frontier - Method &               &              & 2.32$^{***}$ &              &        & 0.817\\   
-                           &               &              & (0.533)      &              &        & (1.65)\\   
+   AlphaFold                                      & 0.190   &               &       &       & 0.375       &               &      &   \\   
+                                                  & (0.369) &               &       &       & (0.411)     &               &      &   \\   
+   AI Frontier                                    & -0.815  &               &       &       & -0.815      &               &      &   \\   
+                                                  & (0.556) &               &       &       & (0.933)     &               &      &   \\   
+   PP Frontier                                    & 0.203   &               &       &       & 0.479$^{*}$ &               &      &   \\   
+                                                  & (0.245) &               &       &       & (0.289)     &               &      &   \\   
+   SB Frontier                                    & -0.439  &               &       &       & -0.450      &               &      &   \\   
+                                                  & (0.435) &               &       &       & (0.603)     &               &      &   \\   
+   AlphaFold $\times$ depthfoundational           & -1.06   &               &       &       & 0.246       &               &      &   \\   
+                                                  & (0.810) &               &       &       & (0.833)     &               &      &   \\   
+   AlphaFold - Method                             &         & -0.114        &       &       &             & -0.286        &      &   \\   
+                                                  &         & (0.193)       &       &       &             & (0.244)       &      &   \\   
+   AlphaFold - Bkg.                               &         & -0.809        &       &       &             & -14.7$^{***}$ &      &   \\   
+                                                  &         & (0.606)       &       &       &             & (1.04)        &      &   \\   
+   AlphaFold - Mixed                              &         & 0.756         &       &       &             & -14.4$^{***}$ &      &   \\   
+                                                  &         & (1.00)        &       &       &             & (2.88)        &      &   \\   
+   AI Frontier - Method                           &         & -16.1$^{***}$ &       &       &             & -18.2$^{***}$ &      &   \\   
+                                                  &         & (0.401)       &       &       &             & (1.82)        &      &   \\   
+   AI Frontier - Bkg.                             &         & 13.5$^{***}$  &       &       &             &               &      &   \\   
+                                                  &         & (0.570)       &       &       &             &               &      &   \\   
+   PP Frontier - Method                           &         & 0.561         &       &       &             & 0.746         &      &   \\   
+                                                  &         & (0.480)       &       &       &             & (0.547)       &      &   \\   
+   PP Frontier - Bkg.                             &         & -0.0006       &       &       &             & 0.073         &      &   \\   
+                                                  &         & (0.280)       &       &       &             & (0.323)       &      &   \\   
+   SB Frontier - Bkg.                             &         & -0.326        &       &       &             & -16.2$^{***}$ &      &   \\   
+                                                  &         & (1.14)        &       &       &             & (2.72)        &      &   \\   
+   AlphaFold - Method $\times$ depthfoundational  &         & -1.25         &       &       &             & -0.775        &      &   \\   
+                                                  &         & (1.19)        &       &       &             & (1.21)        &      &   \\   
+   AlphaFold - Bkg. $\times$ depthfoundational    &         & -0.963        &       &       &             &               &      &   \\   
+                                                  &         & (1.28)        &       &       &             &               &      &   \\   
    \midrule
    \emph{Fit statistics}\\
-   Convergence             &TRUE           & TRUE         & FALSE        & TRUE         & FALSE  & FALSE\\  
-   Observations            & 668           & 221          & 221          & 374          & 115    & 115\\  
-   Pseudo R$^2$            & 0.72          & 0.70         & 0.72         & 0.74         & 0.73   & 0.73\\  
-Mean(Dep. Var.) & 4.958 & 3.995 & 3.995 & 5.548 & 4.174 & 4.174 \\
+   Convergence                                    &TRUE     & FALSE         & TRUE  & TRUE  & TRUE        & TRUE          & TRUE & TRUE\\  
+   Observations                                   & 1,671   & 1,671         & 1,192 & 1,192 & 829         & 829           & 613  & 613\\  
+   Pseudo R$^2$                                   & 0.60    & 0.61          & 0.63  & 0.63  & 0.58        & 0.58          & 0.60 & 0.60\\  
+Mean(Dep. Var.) & 2.713 & 2.713 & 3.139 & 3.139 & 2.747 & 2.747 & 3.096 & 3.096 \\
    \midrule \midrule
-   \multicolumn{7}{l}{\emph{Clustered (author \& quarter\_year) standard-errors in parentheses}}\\
-   \multicolumn{7}{l}{\emph{Signif. Codes: ***: 0.01, **: 0.05, *: 0.1}}\\
+   \multicolumn{9}{l}{\emph{Clustered (author \& quarter\_year) standard-errors in parentheses}}\\
+   \multicolumn{9}{l}{\emph{Signif. Codes: ***: 0.01, **: 0.05, *: 0.1}}\\
 \end{tabular}
 \par\endgroup
