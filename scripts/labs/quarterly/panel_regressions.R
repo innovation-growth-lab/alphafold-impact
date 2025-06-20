@@ -44,10 +44,13 @@ sub_samples <- readRDS(paste0(pathdir, "data/sub_samples.rds"))
 # ------------------------------------------------------------------------------
 
 field_cols <- grep("^field_", names(sub_samples[[1]]), value = TRUE)
+mesh_cols <- grep("^mesh_", names(sub_samples[[1]]), value = TRUE)
 
 covs <- list()
 covs[["base0"]] <- c(
-  field_cols
+  field_cols,
+  mesh_cols,
+  "num_publications"
 )
 
 fes <- list()
@@ -183,6 +186,16 @@ for (dep_var in dep_vars) { # nolint
   # Iterate over covariate sets
   for (cov_set in cov_sets) {
     local_covs <- covs[[cov_set]]
+
+    # if dep_var is num_publications, remove it from covs
+    if (dep_var == "num_publications") {
+      local_covs <- covs[[cov_set]][
+        -which(covs[[cov_set]] == "num_publications")
+        ]
+    } else if (dep_var == "ln1p_mesh_C") {
+      local_covs <- covs[[cov_set]][-which(covs[[cov_set]] == "mesh_C")]
+    }
+
     # Iterate over fixed effects
     for (fe in fe_list) {
       # Iterate over treatment variables

@@ -472,7 +472,7 @@ combined_cem_data_treatment <- intersect(
 
 # union with af
 combined_cem_data <- union(
-  cem_data_coarse_treatment$author,
+  combined_cem_data_treatment,
   cem_data_coarse_af$author
 )
 
@@ -614,9 +614,9 @@ sub_samples <- list()
 sub_groups <- c("All PDB", "High PDB")
 unique_scopes <- c("All", "Intent") # Changed to All/Intent distinction
 unique_fields <- c(
-  "All Fields",
-  "Molecular Biology",
-  "Medicine"
+  "All Fields"#,
+  # "Molecular Biology",
+  # "Medicine"
 )
 
 # Create subsets for all combinations of depth, field, and sub_group
