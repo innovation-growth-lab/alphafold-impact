@@ -319,6 +319,40 @@ labs_data <- labs_data %>%
     ln1p_mesh_C = log1p(as.numeric(mesh_C)),
     year = as.integer(str_sub(quarter, 1, 4))
   )
+
+# Calculate pre-2021 PDB submissions per author and identify top decile authors
+# First calculate the submissions per author
+author_submissions <- labs_data %>%
+  group_by(author) %>%
+  summarise(pre_2021_pdb_submissions = sum(num_pdb_submissions[year < 2021]))
+
+# Calculate the 90th percentile threshold across all authors
+submission_threshold <- quantile(
+  author_submissions$pre_2021_pdb_submissions, 0.9,
+  na.rm = TRUE
+)
+
+# Join back and create the indicator
+labs_data <- labs_data %>%
+  left_join(author_submissions, by = "author") %>%
+  mutate(
+    high_pdb_pre2021 = pre_2021_pdb_submissions > submission_threshold
+  )
+
+# Print diagnostics
+print(paste0(
+  "90th percentile threshold of pre-2021 PDB submissions: ",
+  round(submission_threshold, 2)
+))
+
+print(paste0(
+  "Number of unique authors with high_pdb_pre2021 = TRUE: ",
+  labs_data %>% filter(
+    high_pdb_pre2021 == TRUE
+  ) %>% pull(author) %>% n_distinct()
+))
+
+
 # Define the mapping of old values to new values
 field_mapping <- c(
   "Biochemistry, Genetics and Molecular Biology" = "Molecular Biology"
@@ -338,11 +372,13 @@ coarse_cols <- c(
   "covid_share_2020"
 )
 
+pdb_cols <- c(
+  "ln1p_max_tmscore", "ln1p_max_fident", "ln1p_max_score"
+)
+
 exact_cols <- c(
   "institution_country_code",
-  "institution_h_index",
-  "institution_2yr_mean_citedness",
-  "institution_i10_index"
+  "institution_h_index"
 )
 
 mode_function <- function(x) {
@@ -353,50 +389,124 @@ mode_function <- function(x) {
 # Filter and prepare data for collapsing
 quarterly_cem <- labs_data %>%
   group_by(author) %>%
-  mutate(af = max(af)) %>%
+  mutate(treatment = max(af, ct_ai, ct_pp, ct_sb), af = max(af)) %>%
   ungroup() %>%
   filter(complete.cases(across(coarse_cols))) %>%
   filter(year < 2021) %>% # (2015-2020)
-  select(af, author, all_of(coarse_cols), all_of(exact_cols)) %>%
+  select(
+    af, treatment, author, other, high_pdb_pre2021,
+    all_of(coarse_cols), all_of(exact_cols), all_of(pdb_cols)
+  ) %>%
   group_by(author) %>%
   summarise(
     af = max(af),
+    other = max(other),
+    treatment = max(treatment),
+    high_pdb_pre2021 = max(high_pdb_pre2021),
     across(coarse_cols, \(x) mean(x, na.rm = TRUE)),
-    across(exact_cols, mode_function)
+    across(exact_cols, mode_function),
+    across(pdb_cols, \(x) mean(x, na.rm = TRUE))
   )
 
 # ------------------------------------------------------------------------------
 # CEM (Coarsened Exact Matching) - Match
 # ------------------------------------------------------------------------------
 
+# ---- Treatment ----
+match_out_af_coarse_treatment <- matchit(
+  as.formula(paste0(
+    "treatment ~ ",
+    paste(coarse_cols, collapse = " + ")
+  )),
+  data = quarterly_cem, method = "cem", k2k = TRUE
+)
+
+# Store matched data for coarse_cols
+cem_data_coarse_treatment <- match.data(match_out_af_coarse_treatment)
+
+# ---- AlphaFold ----
 match_out_af_coarse <- matchit(
   as.formula(paste0(
     "af ~ ",
     paste(coarse_cols, collapse = " + ")
   )),
-  data = quarterly_cem, method = "cem", k2k = FALSE
+  data = quarterly_cem, method = "cem", k2k = TRUE
 )
 
-# Store matched data for coarse_cols
-cem_data_coarse <- match.data(match_out_af_coarse)
+cem_data_coarse_af <- match.data(match_out_af_coarse)
 
-# Exact matching on the collapsed data using exact_cols
-match_out_af_exact <- matchit(
-  as.formula(paste0("af ~ ", paste0(exact_cols, collapse = " + "))),
+# ---- Treatment - Exact ----
+match_out_treatment_exact <- matchit(
+  as.formula(paste0("treatment ~ ", paste0(exact_cols, collapse = " + "))),
   data = quarterly_cem, method = "exact"
 )
 
 # Store matched data for exact_cols
-cem_data_exact <- match.data(match_out_af_exact)
+cem_data_exact_treatment <- match.data(match_out_treatment_exact)
+
+# ---- PDB Submissions - Less Strict Matching ----
+
+# quarterly_cem with no na values for the pdb_cols
+quarterly_cem_pdb <- quarterly_cem %>%
+  filter(complete.cases(across(pdb_cols)))
+
+# Use quartiles instead of binary threshold for PDB matching
+match_out_pdb <- matchit(
+  as.formula(
+    paste0(
+      "high_pdb_pre2021 ~ ",
+      paste0(pdb_cols, collapse = " + ")
+    )
+  ),
+  data = quarterly_cem_pdb, method = "cem",
+  k2k = FALSE
+)
+
+cem_data_pdb <- match.data(match_out_pdb)
 
 # Combine the matched results
-combined_cem_data <- intersect(
-  cem_data_coarse$author,
-  cem_data_exact$author
+combined_cem_data_treatment <- intersect(
+  cem_data_coarse_treatment$author,
+  cem_data_exact_treatment$author
+)
+
+# union with af
+combined_cem_data <- union(
+  cem_data_coarse_treatment$author,
+  cem_data_coarse_af$author
+)
+
+# union with af and pdb
+combined_cem_data <- union(
+  combined_cem_data,
+  cem_data_pdb$author
 )
 
 matched_data <- labs_data %>%
   filter(author %in% combined_cem_data)
+
+
+# Print number of unique authors for each tool type
+print(paste0(
+  "Number of AlphaFold authors: ",
+  matched_data %>% filter(af == 1) %>% pull(author) %>% n_distinct()
+))
+print(paste0(
+  "Number of AI tool authors: ",
+  matched_data %>% filter(ct_ai == 1) %>% pull(author) %>% n_distinct()
+))
+print(paste0(
+  "Number of protein prediction tool authors: ",
+  matched_data %>% filter(ct_pp == 1) %>% pull(author) %>% n_distinct()
+))
+print(paste0(
+  "Number of structure biology tool authors: ",
+  matched_data %>% filter(ct_sb == 1) %>% pull(author) %>% n_distinct()
+))
+print(paste0(
+  "Number of other authors: ",
+  matched_data %>% filter(other == 1) %>% pull(author) %>% n_distinct()
+))
 
 # ------------------------------------------------------------------------------
 # Sample Prep

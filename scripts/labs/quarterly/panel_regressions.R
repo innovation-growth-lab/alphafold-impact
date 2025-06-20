@@ -191,7 +191,7 @@ for (dep_var in dep_vars) { # nolint
         treat_vars_base_w_het,
         treat_vars_with_strong,
         treat_vars_with_strong_w_het
-      )) {        # Create formula name using the subset and treatment vars
+      )) { # Create formula name using the subset and treatment vars
         form_name <- paste0(
           dep_var, "__", cov_set, "__", fe, "__",
           gsub(" ", "_", local_treat_vars)
