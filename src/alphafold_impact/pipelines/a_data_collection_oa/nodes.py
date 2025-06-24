@@ -233,7 +233,7 @@ def preprocess_baseline_data(
 
 
 def _process_flatten_dict(child_papers_dict: Dict[str, any]) -> Dict[str, any]:
-    """Process and flatten, removing entries before 2021 and cleaning IDs."""
+    """Process and flatten, removing entries before 2018 and cleaning IDs."""
     return {
         target: [
             {
@@ -241,11 +241,11 @@ def _process_flatten_dict(child_papers_dict: Dict[str, any]) -> Dict[str, any]:
                 "id": source.get("id", "").replace("https://openalex.org/", ""),
             }
             for source in sources
-            if source.get("publication_date", "0") >= "2021-01-01"
+            if source.get("publication_date", "0") >= "2018-01-01"
         ]
         for target, sources in child_papers_dict.items()
         if any(
-            source.get("publication_date", "0") >= "2021-01-01" for source in sources
+            source.get("publication_date", "0") >= "2018-01-01" for source in sources
         )
     }
 
