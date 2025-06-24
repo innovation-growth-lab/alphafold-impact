@@ -1,64 +1,33 @@
 \begingroup
 \centering
-\begin{tabular}{lcccccc}
+\begin{tabular}{lccc}
    \tabularnewline \midrule \midrule
-   Dependent Variable: & \multicolumn{6}{c}{num\_primary\_submissions\_w\_low\_similarity}\\
+   Dependent Variable: & \multicolumn{3}{c}{num\_primary\_submissions\_w\_low\_similarity}\\
  & \multicolumn{3}{c}{All Authors} & \multicolumn{3}{c}{Experienced Authors} \\
 \cmidrule(lr){2-4} \cmidrule(lr){5-7}
  & \multicolumn{1}{c}{All} & \multicolumn{2}{c}{With Intent Data} & \multicolumn{1}{c}{All} & \multicolumn{2}{c}{With Intent Data} \\
 \cmidrule(lr){2-2} \cmidrule(lr){3-4} \cmidrule(lr){5-5} \cmidrule(lr){6-7}
  & \multicolumn{6}{c}{\textit{All Fields}} \\ \\
-   AlphaFold                      & 0.989$^{***}$ & 0.984$^{***}$ &               & 1.07$^{***}$  & 1.11$^{***}$  &   \\   
-                                  & (0.205)       & (0.237)       &               & (0.237)       & (0.245)       &   \\   
-   AlphaFold x Applied            & -0.365$^{*}$  & -0.501        &               & -0.556$^{*}$  & -1.35$^{***}$ &   \\   
-                                  & (0.203)       & (0.329)       &               & (0.285)       & (0.460)       &   \\   
-   AlphaFold - Method             &               &               & 0.884$^{***}$ &               &               & 0.955$^{***}$\\   
-                                  &               &               & (0.272)       &               &               & (0.275)\\   
-   AlphaFold - Bkg.               &               &               & 0.827$^{**}$  &               &               & 0.754\\   
-                                  &               &               & (0.338)       &               &               & (0.467)\\   
-   AlphaFold x Applied - Method   &               &               & -0.698        &               &               & -2.00$^{***}$\\   
-                                  &               &               & (0.442)       &               &               & (0.634)\\   
-   AlphaFold x Applied - Bkg.     &               &               & -0.300        &               &               & -0.220\\   
-                                  &               &               & (0.461)       &               &               & (0.687)\\   
-   AI Frontier                    & 0.521$^{***}$ & 0.617         &               & 0.633$^{***}$ & 0.695         &   \\   
-                                  & (0.192)       & (0.677)       &               & (0.213)       & (0.790)       &   \\   
-   AI Frontier x Applied          & 0.261         & 0.237         &               & -0.324        & 0.259         &   \\   
-                                  & (0.279)       & (0.686)       &               & (0.358)       & (0.811)       &   \\   
-   AI Frontier - Method           &               &               & -0.030        &               &               & 0.268\\   
-                                  &               &               & (0.860)       &               &               & (0.821)\\   
-   AI Frontier - Bkg.             &               &               & 0.752         &               &               & 0.887\\   
-                                  &               &               & (0.472)       &               &               & (0.546)\\   
-   AI Frontier x Applied - Method &               &               & 0.051         &               &               & -16.8$^{***}$\\   
-                                  &               &               & (1.19)        &               &               & (0.862)\\   
-   AI Frontier x Applied - Bkg.   &               &               & 0.136         &               &               & 0.422\\   
-                                  &               &               & (0.667)       &               &               & (0.889)\\   
-   PP Frontier                    & 0.294         & -0.290        &               & 0.622         & -0.133        &   \\   
-                                  & (0.649)       & (0.599)       &               & (0.689)       & (0.789)       &   \\   
-   PP Frontier x Applied          & -0.544        & 0.542         &               & -0.933        & 0.349         &   \\   
-                                  & (0.472)       & (0.882)       &               & (0.611)       & (1.40)        &   \\   
-   PP Frontier - Method           &               &               & 0.525         &               &               & 0.912\\   
-                                  &               &               & (2.14)        &               &               & (2.11)\\   
-   PP Frontier - Bkg.             &               &               & -1.44         &               &               & -1.25\\   
-                                  &               &               & (0.883)       &               &               & (0.913)\\   
-   PP Frontier x Applied - Method &               &               & -17.8$^{***}$ &               &               & -18.2$^{***}$\\   
-                                  &               &               & (2.55)        &               &               & (2.53)\\   
-   PP Frontier x Applied - Bkg.   &               &               & 1.56          &               &               & 1.58\\   
-                                  &               &               & (1.20)        &               &               & (1.87)\\   
-   SB Frontier                    & 0.191         & 1.06          &               & 0.166         & 1.53          &   \\   
-                                  & (0.305)       & (1.03)        &               & (0.349)       & (1.03)        &   \\   
-   SB Frontier x Applied          & -0.403        & -2.00         &               & -0.123        & -17.1$^{***}$ &   \\   
-                                  & (0.349)       & (2.30)        &               & (0.467)       & (1.39)        &   \\   
-   SB Frontier - Method           &               &               & 1.71          &               &               & -17.9$^{***}$\\   
-                                  &               &               & (1.27)        &               &               & (0.603)\\   
-   SB Frontier - Bkg.             &               &               & 0.072         &               &               & 0.269\\   
-                                  &               &               & (0.698)       &               &               & (0.925)\\   
-   SB Frontier x Applied - Method &               &               & -18.6$^{***}$ &               &               & 1.43$^{*}$\\   
-                                  &               &               & (1.39)        &               &               & (0.787)\\   
-   SB Frontier x Applied - Bkg.   &               &               & -0.790        &               &               & -17.4$^{***}$\\   
-                                  &               &               & (1.63)        &               &               & (1.40)\\   
+   \emph{Variables}\\
+   AlphaFold             & 0.841$^{***}$ &           &   \\   
+                         & (0.264)       &           &   \\   
+   AlphaFold x Applied   & -0.248        &           &   \\   
+                         & (0.467)       &           &   \\   
+   AI Frontier           & -0.363        &           &   \\   
+                         & (0.269)       &           &   \\   
+   AI Frontier x Applied & 0.915$^{**}$  &           &   \\   
+                         & (0.408)       &           &   \\   
+   PP Frontier           & 1.04          &           &   \\   
+                         & (0.639)       &           &   \\   
+   PP Frontier x Applied & -1.13$^{*}$   &           &   \\   
+                         & (0.580)       &           &   \\   
+   SB Frontier           & 0.603         &           &   \\   
+                         & (0.437)       &           &   \\   
+   SB Frontier x Applied & -0.889        &           &   \\   
+                         & (0.563)       &           &   \\   
    \midrule
    \emph{Fit statistics}\\
-   Observations                   & 22,322        & 9,786         & 9,786         & 19,726        & 8,872         & 8,872\\  
-   Pseudo R$^2$                   & 0.25          & 0.27          & 0.27          & 0.26          & 0.28          & 0.28\\  
-Mean(Dep. Var.) & 0.298 & 0.336 & 0.336 & 0.305 & 0.343 & 0.343 \\
+   Observations          & 11,807        & 3,368,275 & 3,368,275\\  
+Mean(Dep. Var.) & 0.241 & 0.001 & 0.001 \\
+   Pseudo R$^2$          & 0.30          &           & \\  
    
