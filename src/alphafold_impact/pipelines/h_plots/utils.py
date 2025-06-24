@@ -197,9 +197,8 @@ def save_chart_as_image(chart: alt.Chart) -> Image.Image:
 
 
 def normalise_january_counts(monthly_counts: pd.DataFrame):
-    """Normalise January counts in the input DataFrame."""
+    """Normalise January counts in the input DataFrame, avoiding negative values."""
     adjusted_counts = monthly_counts.copy()
-
     adjusted_counts["count"] = adjusted_counts["count"].astype(float)
 
     for (year, adjacent, downstream), group in monthly_counts.groupby(
@@ -225,6 +224,11 @@ def normalise_january_counts(monthly_counts: pd.DataFrame):
             # calculate original January count
             original_january_count = group[group["month"] == 1]["count"].values[0]
 
+            # Only adjust if imputed value is non-negative
+            if imputed_january_count < 0:
+                # Skip adjustment if imputed value is negative
+                continue
+
             # compute the adjustment difference
             adjustment_difference = original_january_count - imputed_january_count
 
@@ -243,127 +247,130 @@ def normalise_january_counts(monthly_counts: pd.DataFrame):
                 "count",
             ] = imputed_january_count
 
-            # adjust all months
-            adjusted_counts.loc[
+            # adjust all months, but ensure no negative values
+            mask = (
                 (adjusted_counts["year"] == year)
                 & (adjusted_counts["adjacent"] == adjacent)
-                & (adjusted_counts["downstream"] == downstream),
-                "count",
-            ] += monthly_adjustment
+                & (adjusted_counts["downstream"] == downstream)
+            )
+            adjusted_counts.loc[mask, "count"] += monthly_adjustment
+            # Set any negative counts to zero
+            adjusted_counts.loc[mask & (adjusted_counts["count"] < 0), "count"] = 0.0
 
     return adjusted_counts
 
 
-def add_researcher_label(data: pd.DataFrame) -> pd.DataFrame:
-    """Add a researcher label to the data."""
-    data = data.sort_values(by=["author", "quarter"])
-    final_observation = data.groupby("author").last().reset_index()
-    conditions = [
-        final_observation["af"] > 0,
-        final_observation["ct_ai"] > 0,
-        final_observation["ct_noai"] > 0,
-    ]
+# def add_researcher_label(data: pd.DataFrame) -> pd.DataFrame:
+#     """Add a researcher label to the data."""
+#     data = data.sort_values(by=["author", "quarter"])
+#     final_observation = data.groupby("author").last().reset_index()
+#     conditions = [
+#         final_observation["af"] > 0,
+#         final_observation["ct_ai"] > 0,
+#         final_observation["ct_noai"] > 0,
+#     ]
 
-    choices = ["af", "ct_ai", "ct_noai"]
-    final_observation["source"] = np.select(conditions, choices, default="other")
+#     choices = ["af", "ct_ai", "ct_noai"]
+#     final_observation["source"] = np.select(conditions, choices, default="other")
 
-    # merge the source classification back into the original DataFrame
-    data = data.merge(final_observation[["author", "source"]], on="author", how="left")
+#     # merge the source classification back into the original DataFrame
+#     data = data.merge(final_observation[["author", "source"]], on="author", how="left")
 
-    return data
-
-
-def create_quarterly_vals(
-    data: pd.DataFrame, variables: List[str], oper: str
-) -> pd.DataFrame:
-    vals_over_time = (
-        data.groupby(["quarter", "source"])
-        .agg({var: oper for var in variables})
-        .reset_index()
-    )
-
-    # only keep until 2024Q1
-    vals_over_time = vals_over_time[
-        (vals_over_time["quarter"] <= "2024Q1")
-        & (vals_over_time["quarter"] >= "2021Q1")
-    ]
-
-    # delete 2021Q1 and 2021Q2 for AF
-    vals_over_time = vals_over_time[
-        ~((vals_over_time["quarter"] == "2021Q1") & (vals_over_time["source"] == "af"))
-        & ~(
-            (vals_over_time["quarter"] == "2021Q2") & (vals_over_time["source"] == "af")
-        )
-    ]
-
-    vals_over_time["quarter"] = vals_over_time["quarter"].astype(str)
-
-    # map the source labels
-    vals_over_time["source"] = vals_over_time["source"].map(source_labels)
-
-    return vals_over_time
+#     return data
 
 
-def create_quarterly_charts(structures, columns, y_titles, titles):
-    charts = []
-    for column, y_label, title in zip(columns, y_titles, titles):
-        scatter = (
-            alt.Chart(structures)
-            .mark_circle(size=60)
-            .encode(
-                x=alt.X("quarter:N", title="Quarter"),
-                y=alt.Y(
-                    f"{column}:Q",
-                    title=y_label,
-                    # scale=alt.Scale(
-                    #     domain=[structures[column].min(), structures[column].max()]
-                    # ),
-                    axis=alt.Axis(grid=True),
-                ),
-                color=alt.Color(
-                    "source:N",
-                    title=None,
-                    sort=[
-                        "AlphaFold",
-                        "AI-intensive Frontier",
-                        "Non-AI Frontier",
-                        "Other Struct. Biol.",
-                    ],
-                ),
-            )
-            .properties(width=300, height=200)
-        )
+# def create_quarterly_vals(
+#     data: pd.DataFrame, variables: List[str], oper: str
+# ) -> pd.DataFrame:
+#     """Create a DataFrame of values over time."""
+#     vals_over_time = (
+#         data.groupby(["quarter", "source"])
+#         .agg({var: oper for var in variables})
+#         .reset_index()
+#     )
 
-        line = (
-            alt.Chart(structures)
-            .mark_line()
-            .encode(
-                x=alt.X("quarter:N", title="Quarter"),
-                y=alt.Y(
-                    f"{column}:Q",
-                    title=y_label,
-                    # scale=alt.Scale(
-                    #     domain=[structures[column].min(), structures[column].max()]
-                    # ),
-                ),
-                color=alt.Color(
-                    "source:N",
-                    title=None,
-                    sort=[
-                        "AlphaFold",
-                        "AI-intensive Frontier",
-                        "Non-AI Frontier",
-                        "Other Struct. Biol.",
-                    ],
-                ),
-            )
-            # .properties(width=300, height=200)
-        )
+#     # only keep until 2024Q1
+#     vals_over_time = vals_over_time[
+#         (vals_over_time["quarter"] <= "2025Q1")
+#         & (vals_over_time["quarter"] >= "2021Q1")
+#     ]
 
-        chart = (
-            alt.layer(scatter, line)
-            .resolve_scale(y="shared")
-            .properties(title=alt.TitleParams(title, fontSize=14))
-        )
-        charts.append(chart)
-    return charts
+#     # delete 2021Q1 and 2021Q2 for AF
+#     vals_over_time = vals_over_time[
+#         ~((vals_over_time["quarter"] == "2021Q1") & (vals_over_time["source"] == "af"))
+#         & ~(
+#             (vals_over_time["quarter"] == "2021Q2") & (vals_over_time["source"] == "af")
+#         )
+#     ]
+
+#     vals_over_time["quarter"] = vals_over_time["quarter"].astype(str)
+
+#     # map the source labels
+#     vals_over_time["source"] = vals_over_time["source"].map(source_labels)
+
+#     return vals_over_time
+
+
+# def create_quarterly_charts(structures, columns, y_titles, titles):
+#     charts = []
+#     for column, y_label, title in zip(columns, y_titles, titles):
+#         scatter = (
+#             alt.Chart(structures)
+#             .mark_circle(size=60)
+#             .encode(
+#                 x=alt.X("quarter:N", title="Quarter"),
+#                 y=alt.Y(
+#                     f"{column}:Q",
+#                     title=y_label,
+#                     # scale=alt.Scale(
+#                     #     domain=[structures[column].min(), structures[column].max()]
+#                     # ),
+#                     axis=alt.Axis(grid=True),
+#                 ),
+#                 color=alt.Color(
+#                     "source:N",
+#                     title=None,
+#                     sort=[
+#                         "AlphaFold",
+#                         "AI-intensive Frontier",
+#                         "Non-AI Frontier",
+#                         "Other Struct. Biol.",
+#                     ],
+#                 ),
+#             )
+#             .properties(width=300, height=200)
+#         )
+
+#         line = (
+#             alt.Chart(structures)
+#             .mark_line()
+#             .encode(
+#                 x=alt.X("quarter:N", title="Quarter"),
+#                 y=alt.Y(
+#                     f"{column}:Q",
+#                     title=y_label,
+#                     # scale=alt.Scale(
+#                     #     domain=[structures[column].min(), structures[column].max()]
+#                     # ),
+#                 ),
+#                 color=alt.Color(
+#                     "source:N",
+#                     title=None,
+#                     sort=[
+#                         "AlphaFold",
+#                         "AI-intensive Frontier",
+#                         "Non-AI Frontier",
+#                         "Other Struct. Biol.",
+#                     ],
+#                 ),
+#             )
+#             # .properties(width=300, height=200)
+#         )
+
+#         chart = (
+#             alt.layer(scatter, line)
+#             .resolve_scale(y="shared")
+#             .properties(title=alt.TitleParams(title, fontSize=14))
+#         )
+#         charts.append(chart)
+#     return charts

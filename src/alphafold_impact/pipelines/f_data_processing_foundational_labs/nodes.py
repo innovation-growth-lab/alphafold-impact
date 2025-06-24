@@ -186,11 +186,23 @@ def get_lab_individual_outputs(
         ["author", "num_pdb_submissions_pre2021"]
     ].drop_duplicates()
     # calculate threshold based on author-level data
-    pdb_threshold = author_pdb["num_pdb_submissions_pre2021"].quantile(0.75)
+    pdb_threshold = author_pdb["num_pdb_submissions_pre2021"].quantile(0.9)
     # merge back to full dataset
     output_data["high_pdb_pre2021"] = (
         output_data["num_pdb_submissions_pre2021"] > pdb_threshold
     )
+
+    # add field-year weighted normalisation clinical and patent counts
+    output_data["year"] = output_data["quarter"].astype(str).str.slice(0, 4).astype(int)
+    norm_vars = ["patent_count", "ca_count"]
+
+    for var in norm_vars:
+        group_mean = output_data.groupby(["primary_field", "year"])[var].transform("mean")
+
+        # Avoid division by zero
+        group_mean.replace(0, np.nan, inplace=True)
+
+        output_data[f"normalised_{var}"] = output_data[var] / group_mean
 
     return output_data
 
@@ -242,6 +254,8 @@ def aggregate_to_quarterly(data: pd.DataFrame) -> pd.DataFrame:
         "mean_normalised_max_tmscore": ("normalised_max_tmscore", "mean"),
         "mean_normalised_max_score": ("normalised_max_score", "mean"),
         "mean_normalised_max_fident": ("normalised_max_fident", "mean"),
+        "mean_normalised_patent_count": ("normalised_patent_count", "mean"),
+        "mean_normalised_ca_count": ("normalised_ca_count", "mean"),
         "institution": ("institution", "first"),
         "institution_cited_by_count": ("institution_cited_by_count", "first"),
         "institution_country_code": ("institution_country_code", "first"),
@@ -297,5 +311,8 @@ def aggregate_to_quarterly(data: pd.DataFrame) -> pd.DataFrame:
 
     # group by author and quarter, aggregate calcs
     output_data = data.groupby(["author", "quarter"]).agg(**agg_dict).reset_index()
+
+    # made quarter into a str
+    output_data["quarter"] = output_data["quarter"].astype(str)
 
     return output_data

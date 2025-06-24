@@ -149,6 +149,7 @@ def process_citation_levels(
             "publication_date",
             "mesh_terms",
             "cited_by_count",
+            "fwci",
             "authorships",
             "parent_level",
             "strength",

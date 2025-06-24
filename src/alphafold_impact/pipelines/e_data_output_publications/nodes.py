@@ -181,6 +181,11 @@ def create_cc_counts(data, icite_data):
     Returns:
         pandas.DataFrame: The updated data DataFrame with a new 'count' column.
     """
+    # if icite_data's cited_by_clin is a str, set "None" to nan
+    icite_data["cited_by_clin"] = icite_data["cited_by_clin"].apply(
+        lambda x: np.nan if x == "None" else x
+    )
+
     # change pmid, doi to str
     icite_data["pmid"] = icite_data["pmid"].astype(str)
     icite_data["doi"] = icite_data["doi"].astype(str)
@@ -208,7 +213,11 @@ def create_cc_counts(data, icite_data):
     )
 
     # create count column
-    combined_data["ca_count"] = combined_data["cited_by_clin"].apply(len)
+    combined_data["ca_count"] = combined_data["cited_by_clin"].apply(
+        lambda x: len(x) if x is not None else 0
+    )
+
+    combined_data = combined_data.drop_duplicates(subset=["id"])
 
     # merge back with data, fill with 0 for missing count
     data = data.merge(combined_data[["id", "ca_count"]], on="id", how="left")

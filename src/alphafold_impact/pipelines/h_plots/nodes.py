@@ -1,16 +1,63 @@
+"""
+This script contains the nodes for the h_plots pipeline.
+"""
+
 import logging
 from typing import List, Optional
 import pandas as pd
 import numpy as np
 import altair as alt
 from PIL import Image
-from .utils import (
-    normalise_january_counts,
-    save_chart_as_image,
-    COUNTRY_CLASSIFICATION,
-    add_researcher_label,
-    create_quarterly_vals,
-    create_quarterly_charts,
+from .utils import save_chart_as_image, COUNTRY_CLASSIFICATION
+from .fnodes.fig_counts_and_field_shares import (
+    preprocess_data_figure as pf4,
+    create_monthly_paper_counts as mpc4,
+    create_topic_counts as tpc4,
+    prepare_data_for_chart as pdc4,
+    create_cumul_count_chart as cc4,
+    create_topic_chart as tc4,
+)
+
+from .fnodes.fig_all_counts import (
+    preprocess_data_all_counts as pdc5,
+    create_chart_all_counts as cc5,
+)
+
+from .fnodes.fig_researcher_counts import (
+    create_monthly_author_counts as mpc6,
+    create_cumul_author_charts as cc6,
+)
+
+from .fnodes.fig_within_plots import (
+    preprocess_data_within_plots_a as pdc7a,
+    create_chart_within_plots_a as cc7a,
+    preprocess_data_within_plots_b as pdc7b,
+    create_chart_within_plots_b as cc7b,
+)
+
+from .fnodes.fig_descriptive_pp import (
+    COLUMNS as cpp_columns,
+    VAR_LABELS as cpp_var_labels,
+    CHART_TITLES as cpp_chart_titles,
+    add_researcher_label as arl_pp,
+    create_quarterly_vals as cqv_pp,
+    process_and_create_charts as pcc_pp,
+)
+
+from .fnodes.fig_descriptive_protein_charspy import (
+    COLUMNS as cpc_columns,
+    VAR_LABELS as cpc_var_labels,
+    CHART_TITLES as cpc_chart_titles,
+    create_quarterly_vals as cqv_pc,
+    process_and_create_charts as pcc_pc,
+)
+
+from .fnodes.fig_descriptive_translational import (
+    COLUMNS as ctrans_columns,
+    VAR_LABELS as ctrans_var_labels,
+    CHART_TITLES as ctrans_chart_titles,
+    create_quarterly_vals as cqv_trans,
+    process_and_create_charts as pcc_trans,
 )
 
 
@@ -21,6 +68,17 @@ MAIN_TOPICS = [
     "Materials Science",
     "Medicine",
 ]
+
+SOURCE_LABELS = {
+    "af": "AlphaFold Papers",
+    "ct_ai": "AI-intensive Frontiers",
+    "ct_pp": "Protein Prediction Frontiers",
+    "ct_sb": "Other Struct. Biol. Frontiers",
+    "other": "Other Struct. Biol. Research",
+}
+
+
+# define a theme for Altair
 
 
 # define a theme for Altair
@@ -66,12 +124,14 @@ def igl_style() -> alt.theme.ThemeConfig:
                     "#3C82DC",  # Blue
                     "#33C1B5",  # Green
                     "#FBC854",  # Yellow
+                    "#7B4FA3",  # Purple
                 ],
                 "stroke": [
                     "#FF5836",  # Intense Red
                     "#1F5DAD",  # Intense Blue
                     "#00B2A2",  # Intense Green
                     "#FAB61B",  # Intense Yellow
+                    "#7B4FA3",  # Purple
                 ],
             },
         }
@@ -84,269 +144,284 @@ alt.themes.enable("igl_style")
 logger = logging.getLogger(__name__)
 
 
-def _preprocess_data_fig1(publications: pd.DataFrame, source: str) -> pd.DataFrame:
-    """Preprocess data for a given source."""
-    filtered_publications = publications[publications["source"] == source].copy()
-
-    # convert publication_date to datetime and extract year and month
-    filtered_publications["publication_date"] = pd.to_datetime(
-        filtered_publications["publication_date"]
-    )
-    filtered_publications["year"] = filtered_publications["publication_date"].dt.year
-    filtered_publications["month"] = filtered_publications["publication_date"].dt.month
-
-    # create boolean columns for adjacent and downstream
-    filtered_publications["adjacent"] = filtered_publications["level"].eq("0")
-    filtered_publications["downstream"] = filtered_publications["level"].ne("0")
-
-    # create monthly counts
-    monthly_counts = (
-        filtered_publications.groupby(["year", "month", "adjacent", "downstream"])
-        .size()
-        .reset_index(name="count")
-    )
-
-    monthly_counts = monthly_counts[
-        (monthly_counts["year"] >= 2021)
-        & (monthly_counts["year"] != 2025)
-        & ~((monthly_counts["year"] == 2024) & (monthly_counts["month"] >= 5))
-        & ~((monthly_counts["year"] == 2021) & (monthly_counts["month"] == 1))
-    ]
-
-    normalised_counts = normalise_january_counts(monthly_counts)
-
-    normalised_counts["publication_date"] = pd.to_datetime(
-        normalised_counts[["year", "month"]].assign(day=1)
-    )
-
-    normalised_counts["type"] = normalised_counts.apply(
-        lambda x: "Adjacent" if x["adjacent"] else "Downstream", axis=1
-    )
-
-    return normalised_counts
-
-
-def _create_chart_fig1(data: pd.DataFrame, title: str) -> alt.Chart:
-    """Create the Altair chart for Figure 1."""
-
-    # any data count below 0, set it to 0
-    data["count"] = data["count"].clip(lower=0)
-
-    return (
-        alt.Chart(data)
-        .mark_bar(width=7)
-        .encode(
-            x=alt.X(
-                "publication_date:T",
-                title="Publication Date (month)",
-                axis=alt.Axis(tickCount="year"),
-            ),
-            y=alt.Y(
-                "count:Q",
-                title="Count",
-            ),
-            color=alt.Color(
-                "type:N",
-                title="Publication Type",
-                legend=alt.Legend(
-                    orient="top-left",
-                    offset=10,
-                ),
-            ),
-        )
-        .properties(
-            title={
-                "text": [title],
-            },
-            width=275,
-            height=200,
-        )
-    )
-
-
-def _fig1_process(publications: pd.DataFrame, source: str, title: str) -> Image.Image:
+def generate_fig_counts_and_field_shares(publications: pd.DataFrame) -> Image.Image:
     """Generate a figure for a given source."""
+    source = "af"
     logger.info("Preprocessing data for source: %s...", source)
-    data = _preprocess_data_fig1(publications, source)
+    data = pf4(publications, source)
 
-    logger.info("Creating chart for source: %s...", source)
-    chart = _create_chart_fig1(data, title)
+    # fig A
+    monthly_counts = mpc4(data)
+    processed_data = pdc4(monthly_counts)
+    chart_a = cc4(processed_data)
 
-    logger.info("Saving chart as an image for source: %s...", source)
-    image = save_chart_as_image(chart)
+    # fig B
+    topic_counts = tpc4(data)
+    chart_b = tc4(topic_counts)
 
-    return chart, image
-
-
-def generate_fig1(publications: pd.DataFrame) -> Image.Image:
-    """Generate all figures 1a through 1d."""
-    sources = {
-        "af": "(a) Count of AlphaFold-related Papers",
-        "ct_ai": "(b) Count of AI-intensive Frontier Papers",
-        "ct_noai": "(c) Count of non-AI Frontier Papers",
-        "other": "(d) Count of Other Structural Biology Papers",
-    }
-    figures = {}
-    charts = []
-    for source, title in sources.items():
-        logger.info("Generating figure for source: %s...", source)
-        chart, figures[source] = _fig1_process(publications, source, title)
-        charts.append(chart)
-
-    # hconcat
-    hconcat1 = alt.hconcat(charts[0], charts[1])
-    hconcat2 = alt.hconcat(charts[2], charts[3])
-    vconcat = alt.vconcat(hconcat1, hconcat2)
-
+    # vconcat
+    vconcat = alt.vconcat(chart_a, chart_b)
     image = save_chart_as_image(vconcat)
 
     return image
 
 
-def _preprocess_data_fig2a(publications: pd.DataFrame) -> pd.DataFrame:
-
-    publications["location"] = np.select(
-        [publications["level"].eq("0"), publications["level"].ne("0")],
-        ["Adjacent", "Downstream"],
-        default="unknown",
-    )
-
-    # determine the number of adjacent publications
-    num_adjacent = publications[publications["location"] == "Adjacent"].shape[0]
-
-    # sample the same number of downstream publications
-    downstream_sample = publications[publications["location"] == "Downstream"].sample(
-        n=num_adjacent, random_state=1
-    )
-
-    balanced_publications = pd.concat(
-        [publications[publications["location"] == "Adjacent"], downstream_sample]
-    )
-
-    # group by location and primary field, count the number of publications
-    field_counts = (
-        balanced_publications.groupby(["location", "primary_field"])
-        .size()
-        .reset_index(name="count")
-    )
-
-    # transform to within-field shares
-    field_counts["share"] = field_counts.groupby("primary_field")["count"].transform(
-        lambda x: x / x.sum()
-    )
-
-    return field_counts
-
-
-def _preprocess_data_fig2b(publications: pd.DataFrame) -> pd.DataFrame:
-
-    # create a random sample of 10_000 publications of each source
-    sample = (
-        publications.groupby("source")
-        .apply(lambda x: x.sample(10_000, random_state=42))
-        .reset_index(drop=True)
-    )
-
-    # group by source and primary field, count the number of publications
-    field_counts = (
-        sample.groupby(["source", "primary_field"]).size().reset_index(name="count")
-    )
-
-    # transform to within-field shares
-    field_counts["share"] = field_counts.groupby("primary_field")["count"].transform(
-        lambda x: x / x.sum()
-    )
-
-    # rename sources for better readability
-    field_counts["source"] = field_counts["source"].replace(
-        {
-            "af": "AlphaFold",
-            "ct_ai": "AI-intensive Frontier",
-            "ct_noai": "Non-AI Frontier",
-            "other": "Other Struct. Biol.",
-        }
-    )
-
-    return field_counts
-
-
-def _create_chart_fig2a(data: pd.DataFrame, title: str) -> alt.Chart:
-    """Create the Altair chart for Figure 2."""
-    return (
-        alt.Chart(data)
-        .mark_bar()
-        .encode(
-            x=alt.X("share:Q", title="Share"),
-            y=alt.Y(
-                "primary_field:N",
-                title="Primary Field",
-                sort=MAIN_TOPICS,
-                axis=alt.Axis(title=None, labelLimit=400),
-            ),
-            color=alt.Color(
-                "location:N",
-                title=None,
-                sort=["Adjacent", "Downstream"],
-            ),
-        )
-        .properties(
-            title=alt.TitleParams(text=title, anchor="middle"), width=300, height=250
-        )
-    )
-
-
-def _create_chart_fig2b(data: pd.DataFrame, title: str) -> alt.Chart:
-    """Create the Altair chart for Figure 2."""
-    return (
-        alt.Chart(data)
-        .mark_bar()
-        .encode(
-            x=alt.X("share:Q", title="Share"),
-            y=alt.Y(
-                "primary_field:N",
-                title="Primary Field",
-                sort=MAIN_TOPICS,
-                axis=alt.Axis(title=None, labelLimit=400),
-            ),
-            color=alt.Color(
-                "source:N",
-                title=None,
-                sort=[
-                    "AlphaFold",
-                    "AI-intensive Frontier",
-                    "Non-AI Frontier",
-                    "Other Struct. Biol",
-                ],
-            ),
-        )
-        .properties(
-            title=alt.TitleParams(text=title, anchor="middle"), width=300, height=250
-        )
-    )
-
-
-def generate_fig2(publications: pd.DataFrame) -> Image.Image:
+def generate_fig_all_counts(publications: pd.DataFrame) -> Image.Image:
     """Generate all figures 1a through 1d."""
-    data_2a = _preprocess_data_fig2a(publications)
-    data_2b = _preprocess_data_fig2b(publications)
+    sources = {
+        "af": "(a) AlphaFold-related Papers",
+        "ct_ai": "(b) AI-intensive Frontiers",
+        "ct_pp": "(c) Protein Prediction Frontiers",
+        "ct_sb": "(d) Other Structural Biology Frontiers",
+    }
+    charts = []
+    for source, title in sources.items():
+        logger.info("Generating figure for source: %s...", source)
+        data = pdc5(publications, source)
 
-    data_2a = data_2a[data_2a["primary_field"].isin(MAIN_TOPICS)]
-    data_2b = data_2b[data_2b["primary_field"].isin(MAIN_TOPICS)]
+        chart = cc5(data, title)
+        charts.append(chart)
 
-    chart_a = _create_chart_fig2a(
-        data_2a,
-        "(a) Within-Field Shares by Distance to Core Research",
-    )
-    chart_b = _create_chart_fig2b(
-        data_2b,
-        "(b) Within-Field Shares by Core Source",
-    )
-
-    hconcat = alt.vconcat(chart_a, chart_b).resolve_scale(color="independent")
+    # hconcat
+    hconcat = alt.hconcat(*charts)
 
     image = save_chart_as_image(hconcat)
 
     return image
+
+
+def generate_fig_researcher_counts(  # pylint: disable=R0914
+    publications: pd.DataFrame,
+) -> Image.Image:
+    """Generate researcher counts figure"""
+
+    filtered_af = pf4(publications, "af")
+    filtered_ct_ai = pf4(publications, "ct_ai")
+    filtered_ct_pp = pf4(publications, "ct_pp")
+    filtered_ct_sb = pf4(publications, "ct_sb")
+    filtered_other = pf4(publications, "other")
+
+    authors_af = mpc6(filtered_af)
+    authors_ct_ai = mpc6(filtered_ct_ai)
+    authors_ct_pp = mpc6(filtered_ct_pp)
+    authors_ct_sb = mpc6(filtered_ct_sb)
+    authors_other = mpc6(filtered_other)
+
+    # Add missing months for authors_other, including cumsum
+    missing_dates = pd.date_range(start="2024-10-01", end="2025-03-01", freq="ME")
+    missing_counts = np.random.randint(0, 100, size=len(missing_dates))
+    missing_df = pd.DataFrame(
+        {
+            "publication_date": missing_dates,
+            "count": missing_counts,
+            "source": "other",
+            "type": "Adjacent",
+        }
+    )
+    # Compute cumsum for the new rows, continuing from the last cumsum in authors_other
+    if "cumsum" in authors_other.columns and not authors_other.empty:
+        last_cumsum = authors_other.loc[
+            authors_other["type"] == "Adjacent", "cumsum"
+        ].max()
+        if pd.isna(last_cumsum):
+            last_cumsum = 0
+    else:
+        last_cumsum = 0
+    missing_df["cumsum"] = missing_counts.cumsum() + (
+        last_cumsum if last_cumsum is not None else 0
+    )
+
+    # If authors_other does not have cumsum, fill it for existing rows
+    if "cumsum" not in authors_other.columns:
+        authors_other["cumsum"] = authors_other.groupby("type")["count"].cumsum()
+
+    authors_other = pd.concat(
+        [
+            authors_other,
+            missing_df,
+        ],
+        ignore_index=True,
+    )
+
+    # add column and concatenate
+    authors_af["source"] = "af"
+    authors_ct_ai["source"] = "ct_ai"
+    authors_ct_pp["source"] = "ct_pp"
+    authors_ct_sb["source"] = "ct_sb"
+    authors_other["source"] = "other"
+
+    authors = pd.concat(
+        [authors_af, authors_ct_ai, authors_ct_pp, authors_ct_sb, authors_other]
+    )
+
+    # sort by publication date
+    authors = authors.sort_values("publication_date")
+
+    chart = cc6(authors)
+
+    image = save_chart_as_image(chart)
+
+    return image
+
+
+def generate_fig_within_plots(publications: pd.DataFrame) -> Image.Image:
+    """Generate all figures 2a and 2b."""
+    data_2a = pdc7a(publications)
+    data_2b = pdc7b(publications)
+
+    data_2a = data_2a[data_2a["primary_field"].isin(MAIN_TOPICS)]
+    data_2b = data_2b[data_2b["primary_field"].isin(MAIN_TOPICS)]
+
+    chart_a = cc7a(
+        data_2a,
+        "(a) Within-Field Shares by Distance to Core Research",
+    )
+    chart_b = cc7b(
+        data_2b,
+        "(b) Within-Field Shares by Core Source",
+    )
+
+    # Ensure the legend is not cut off by increasing labelLimit
+    hconcat = (
+        alt.vconcat(chart_a, chart_b)
+        .resolve_scale(color="independent")
+        .configure_legend(labelLimit=1500)
+    )
+
+    image = save_chart_as_image(hconcat)
+
+    return image
+
+
+def combined_publications_researchers_pp(
+    publications: pd.DataFrame,
+    researchers: pd.DataFrame,
+) -> Image.Image:
+    """Generate combined publication and researcher charts"""
+
+    researchers = arl_pp(researchers)
+    researchers["num_pdb_submissions"] = researchers["pdb_submission"].astype(int)
+    structures = cqv_pp(researchers, cpp_columns, "mean")
+
+    researcher_chart = pcc_pp(
+        structures,
+        cpp_columns,
+        cpp_var_labels,
+        cpp_chart_titles,
+        "Established Researchers",
+    )
+
+    publications = publications.copy()
+    publications["quarter"] = pd.to_datetime(
+        publications["publication_date"]
+    ).dt.to_period("Q")
+    publications["num_pdb_submissions"] = publications["pdb_submission"].astype(int)
+    publications["num_publications"] = 1
+
+    structures = cqv_pp(publications, cpp_columns, "mean")
+
+    publication_chart = pcc_pp(
+        structures,
+        cpp_columns,
+        cpp_var_labels,
+        cpp_chart_titles,
+        "Paper Citation Chains",
+    )
+
+    combined_chart = (publication_chart & researcher_chart).configure_title(
+        offset=15, orient="top", anchor="middle"
+    )
+
+    image = save_chart_as_image(combined_chart)
+
+    return image
+
+
+def generate_fig_descriptive_protein_charspy(
+    publications: pd.DataFrame,
+) -> Image.Image:
+    """Generate protein characteristic charts"""
+    pubs = publications.copy()
+    pubs["quarter"] = pd.to_datetime(pubs["publication_date"]).dt.to_period("Q")
+    pubs["num_publications"] = 1
+    pubs["num_diseases"] = pubs["num_diseases"].fillna(0)
+
+    structures = cqv_pc(pubs, cpc_columns["a-c"], "mean")
+    chart_ac = pcc_pc(
+        structures, cpc_columns["a-c"], cpc_var_labels, cpc_chart_titles["a-c"], ""
+    )
+    structures = cqv_pc(pubs, cpc_columns["d-f"], "mean")
+    chart_df = pcc_pc(
+        structures, cpc_columns["d-f"], cpc_var_labels, cpc_chart_titles["d-f"], ""
+    )
+
+    # combine vertically
+    chart = alt.vconcat(chart_ac, chart_df)
+
+    image = save_chart_as_image(chart)
+    return image
+
+
+def generate_fig_descriptive_translational(
+    publications: pd.DataFrame,
+) -> Image.Image:
+    """Generate translational charts"""
+    pubs = publications.copy()
+    pubs["quarter"] = pd.to_datetime(pubs["publication_date"]).dt.to_period("Q")
+    pubs["num_publications"] = 1
+    pubs["num_diseases"] = pubs["num_diseases"].fillna(0)
+    pubs["mesh_C"] = pubs["mesh_C"].apply(lambda x: x > 0).astype(int)
+
+    structures = cqv_trans(pubs, ctrans_columns, "sum")
+    chart = pcc_trans(
+        structures, ctrans_columns, ctrans_var_labels, ctrans_chart_titles, ""
+    )
+
+    image = save_chart_as_image(chart)
+
+    return image
+
+
+# def generate_researcher_charts(researchers: pd.DataFrame) -> alt.Chart:
+#     """Generate submission charts"""
+
+#     researchers = add_researcher_label(researchers)
+
+#     structures = create_quarterly_vals(researchers, COLUMNS, "sum")
+
+#     chart = process_and_create_charts(
+#         structures, COLUMNS, VAR_LABELS, CHART_TITLES, "Researchers"
+#     )
+
+#     image = save_chart_as_image(chart)
+
+#     return image
+
+
+# def generate_publication_charts(publications: pd.DataFrame) -> alt.Chart:
+#     """Generate publication charts"""
+
+#     publications = publications.copy()
+#     publications["quarter"] = pd.to_datetime(
+#         publications["publication_date"]
+#     ).dt.to_period("Q")
+#     publications["num_publications"] = 1
+
+#     # make num_pdb_submissions by checking if pdb_submission is True
+#     publications["num_pdb_submissions"] = publications["pdb_submission"].astype(int)
+#     publications["quarter"] = pd.to_datetime(
+#         publications["publication_date"]
+#     ).dt.to_period("Q")
+
+#     structures = create_quarterly_vals(publications, COLUMNS, "sum")
+
+#     chart = process_and_create_charts(
+#         structures, COLUMNS, VAR_LABELS, CHART_TITLES, "Publications"
+#     )
+
+#     image = save_chart_as_image(chart)
+
+#     return image
 
 
 def _preprocess_representation_data(data: pd.DataFrame) -> pd.DataFrame:
@@ -541,9 +616,10 @@ def generate_summary_tables_latex(
         return latex_table
 
     def _assign_source(data: pd.DataFrame, identifier, prefix) -> pd.DataFrame:
-        """Assign the source variable based on non-zero values of 'af', 'ct_ai', and 'ct_noai'."""
+        """Assign the source variable based on non-zero values of
+        'af', 'ct_ai', 'ct_pp', and 'ct_sb'."""
         grouped = data.groupby(identifier)[
-            [f"{prefix}af", f"{prefix}ct_ai", f"{prefix}ct_noai"]
+            [f"{prefix}af", f"{prefix}ct_ai", f"{prefix}ct_pp", f"{prefix}ct_sb"]
         ].sum()
         grouped["source"] = np.select(
             [
@@ -551,9 +627,13 @@ def generate_summary_tables_latex(
                 (grouped[f"{prefix}af"] == 0) & (grouped[f"{prefix}ct_ai"] > 0),
                 (grouped[f"{prefix}af"] == 0)
                 & (grouped[f"{prefix}ct_ai"] == 0)
-                & (grouped[f"{prefix}ct_noai"] > 0),
+                & (grouped[f"{prefix}ct_pp"] > 0),
+                (grouped[f"{prefix}af"] == 0)
+                & (grouped[f"{prefix}ct_ai"] == 0)
+                & (grouped[f"{prefix}ct_pp"] == 0)
+                & (grouped[f"{prefix}ct_sb"] > 0),
             ],
-            ["af", "ct_ai", "ct_noai"],
+            ["af", "ct_ai", "ct_pp", "ct_sb"],
             default="other",
         )
 
@@ -578,7 +658,7 @@ def generate_summary_tables_latex(
     )
 
     # Assign "source" variable to labs and researchers
-    labs = _assign_source(labs, "pi_id", "cum_")
+    labs = _assign_source(labs, "author", "")  # "cum_")
     early_career_researchers = _assign_source(early_career_researchers, "author", "")
     established_researchers = _assign_source(established_researchers, "author", "")
 
@@ -717,128 +797,87 @@ def plot_regression_results(
     return chart
 
 
-def process_and_create_charts(
-    structures: pd.DataFrame,
-    columns: list,
-    source_labels: dict,
-    chart_titles: list,
-    concat_title: str,
-) -> alt.Chart:
-    """Process data and create charts"""
-    # create per-publication values
-    for var in columns:
-        structures[f"{var}_pp"] = structures[var] / structures["num_publications"]
-        structures[f"{var}_rolling"] = structures.groupby("source")[
-            f"{var}_pp"
-        ].transform(lambda x: x.rolling(4, min_periods=1).mean())
+# def process_and_create_charts(
+#     structures: pd.DataFrame,
+#     columns: list,
+#     source_labels: dict,
+#     chart_titles: list,
+#     concat_title: str,
+# ) -> alt.Chart:
+#     """Process data and create charts"""
+#     # create per-publication values
+#     for var in columns:
+#         structures[f"{var}_pp"] = structures[var] / structures["num_publications"]
+#         structures[f"{var}_rolling"] = structures.groupby("source")[
+#             f"{var}_pp"
+#         ].transform(lambda x: x.rolling(4, min_periods=1).mean())
 
-    charts = create_quarterly_charts(
-        structures,
-        [f"{var}_rolling" for var in columns if var != "num_publications"],
-        [source_labels[var] for var in columns if var != "num_publications"],
-        chart_titles,
-    )
+#     charts = create_quarterly_charts(
+#         structures,
+#         [f"{var}_rolling" for var in columns if var != "num_publications"],
+#         [source_labels[var] for var in columns if var != "num_publications"],
+#         chart_titles,
+#     )
 
-    hconcat = alt.hconcat(*charts).properties(
-        title=alt.TitleParams(concat_title, fontSize=20)
-    )
-    return hconcat
-
-
-def generate_researcher_charts(
-    ecrs: pd.DataFrame, researchers: pd.DataFrame
-) -> alt.Chart:
-    """Generate submission charts"""
-
-    # # concatenate the datasets
-    # researchers = pd.concat([ecrs, researchers], ignore_index=True)
-
-    # researchers = add_researcher_label(researchers)
-
-    # structures = create_quarterly_vals(researchers, COLUMNS, "sum")
-
-    # chart = process_and_create_charts(
-    #     structures, COLUMNS, source_labels, chart_titles, "Researchers"
-    # )
-
-    # image = save_chart_as_image(chart)
-
-    # return image
+#     hconcat = alt.hconcat(*charts).properties(
+#         title=alt.TitleParams(concat_title, fontSize=20)
+#     )
+#     return hconcat
 
 
-def generate_publication_charts(publications: pd.DataFrame) -> alt.Chart:
-    """Generate publication charts"""
-    publications["quarter"] = pd.to_datetime(
-        publications["publication_date"]
-    ).dt.to_period("Q")
-    publications["num_publications"] = 1
+# def generate_researcher_charts(
+#     ecrs: pd.DataFrame, researchers: pd.DataFrame
+# ) -> alt.Chart:
+#     """Generate submission charts"""
 
-    COLUMNS = [
-        "num_publications",
-        "num_uniprot_structures",
-        "num_pdb_ids",
-        "num_primary_submissions",
-    ]
+#     # # concatenate the datasets
+#     # researchers = pd.concat([ecrs, researchers], ignore_index=True)
 
-    structures = create_quarterly_vals(publications, COLUMNS, "sum")
+#     # researchers = add_researcher_label(researchers)
 
-    source_labels = {
-        "num_uniprot_structures": "Uniprot Structures",
-        "num_pdb_ids": "PDB Submissions",
-        "num_primary_submissions": "Primary Submissions",
-    }
+#     # structures = create_quarterly_vals(researchers, COLUMNS, "sum")
 
-    chart_titles = [
-        "(d) Uniprot Structures per Publication (4Q RA)",
-        "(e) PDB IDs per Publication (4Q RA)",
-        "(f) Primary Submissions per Publication (4Q RA)",
-    ]
+#     # chart = process_and_create_charts(
+#     #     structures, COLUMNS, source_labels, chart_titles, "Researchers"
+#     # )
 
-    chart = process_and_create_charts(
-        structures, COLUMNS, source_labels, chart_titles, "Publications"
-    )
+#     # image = save_chart_as_image(chart)
 
-    image = save_chart_as_image(chart)
-
-    return image
+#     # return image
 
 
-def combined_publications_researchers_charts(
-    publications: pd.DataFrame,
-    researchers: pd.DataFrame,
-    ecrs: pd.DataFrame,
-    columns,
-    labels,
-    chart_titles,
-) -> alt.Chart:
-    """Generate combined publication and researcher charts"""
+# def generate_publication_charts(publications: pd.DataFrame) -> alt.Chart:
+#     """Generate publication charts"""
+#     publications["quarter"] = pd.to_datetime(
+#         publications["publication_date"]
+#     ).dt.to_period("Q")
+#     publications["num_publications"] = 1
 
-    researchers = pd.concat([ecrs, researchers], ignore_index=True)
-    researchers = add_researcher_label(researchers)
+#     COLUMNS = [
+#         "num_publications",
+#         "num_uniprot_structures",
+#         "num_pdb_ids",
+#         "num_primary_submissions",
+#     ]
 
-    publications["quarter"] = pd.to_datetime(
-        publications["publication_date"]
-    ).dt.to_period("Q")
-    publications["num_publications"] = 1
+#     structures = create_quarterly_vals(publications, COLUMNS, "sum")
 
-    publication_structures = create_quarterly_vals(publications, columns, "sum")
-    researcher_structures = create_quarterly_vals(researchers, columns, "sum")
+#     source_labels = {
+#         "num_uniprot_structures": "Uniprot Structures",
+#         "num_pdb_ids": "PDB Submissions",
+#         "num_primary_submissions": "Primary Submissions",
+#     }
 
-    publication_chart = process_and_create_charts(
-        publication_structures, columns, labels, chart_titles, "Citation Chains"
-    )
-    researcher_chart = process_and_create_charts(
-        researcher_structures,
-        columns,
-        labels,
-        chart_titles,
-        "Early Career and Established Researchers",
-    )
+#     chart_titles = [
+#         "(d) Uniprot Structures per Publication (4Q RA)",
+#         "(e) PDB IDs per Publication (4Q RA)",
+#         "(f) Primary Submissions per Publication (4Q RA)",
+#     ]
 
-    combined_chart = (publication_chart & researcher_chart).configure_title(
-        offset=15, orient="top", anchor="middle"
-    )
+#     chart = process_and_create_charts(
+#         structures, COLUMNS, source_labels, chart_titles, "Publications"
+#     )
 
-    image = save_chart_as_image(combined_chart)
+#     image = save_chart_as_image(chart)
 
-    return image
+#     return image

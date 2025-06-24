@@ -36,7 +36,7 @@ Functions:
 
     collect_covid_references(data: pd.DataFrame) -> pd.DataFrame:
 
-    aggregate_to_quarterly(data: pd.DataFrame) -> pd.DataFrame:
+    aggregate_to_quarterly(data: pd.DataFrame, show_progress: bool = False) -> pd.DataFrame:
 
     create_cc_counts(data: pd.DataFrame, icite_data: pd.DataFrame) -> pd.DataFrame:
 
@@ -190,6 +190,36 @@ def _get_candidate_authors(data: pd.DataFrame) -> pd.DataFrame:
     return author_data_out, author_labels
 
 
+def _get_depth_primary_level(publications_data: pd.DataFrame) -> dict[str, str]:
+    """
+    Get the depth of an author in the author data.
+    """
+    exploded_author_data = publications_data.explode("authorships")
+    exploded_author_data["author"] = exploded_author_data["authorships"].apply(
+        lambda x: x[0] if x is not None else None
+    )
+    agg_exploded_author_data = (
+        exploded_author_data.groupby("author")["level"].value_counts().reset_index()
+    )
+
+    # get the most common level
+    max_exploded_author_data = agg_exploded_author_data.loc[
+        agg_exploded_author_data.groupby("author")["level"].idxmin()
+    ]
+
+    # "depth" with "foundational" if level 0, else "applied"
+    max_exploded_author_data["depth"] = np.where(
+        max_exploded_author_data["level"] == "0", "foundational", "applied"
+    )
+
+    # create a dictionary of author and depth
+    depth_primary_level = dict(
+        zip(max_exploded_author_data["author"], max_exploded_author_data["depth"])
+    )
+
+    return depth_primary_level
+
+
 def get_unique_authors(
     publications_data: pd.DataFrame,
 ) -> pd.DataFrame:
@@ -241,6 +271,10 @@ def get_unique_authors(
         authors[col] = authors[col].astype(int)
 
     authors = authors.merge(strength_labels, on=["author", "quarter"], how="left")
+
+    # add depth column
+    depth_primary_level = _get_depth_primary_level(publications_data)
+    authors["depth"] = authors["author"].map(depth_primary_level)
 
     return authors
 
@@ -560,14 +594,36 @@ def merge_author_data(
 
         # merge author and institutions metadata
         data = data.merge(institutions, on="institution", how="left")
-        data = data.merge(candidate_authors, on=["author", "quarter"], how="left")
+        data = data.merge(
+            candidate_authors[
+                [col for col in candidate_authors.columns if col not in ["depth"]]
+            ],
+            on=["author", "quarter"],
+            how="left",
+        )
+
+        # filter only keep authors in candidate_authors
+        data = data[data["author"].isin(candidate_authors["author"])]
+
+        # get unique author-depth combinations
+        unique_author_depth = candidate_authors[["author", "depth"]].drop_duplicates()
+
+        # add depth by merging only on author
+        data = data.merge(
+            unique_author_depth,
+            on="author",
+            how="left",
+        )
 
         # sort by quarter, bfill and ffill for missing af. ct_ai, ct_pp, ct_sb, other
         data = data.sort_values(by=["author", "quarter"])
-        cols_to_fill = [
-            col for col in candidate_authors.columns if col not in ["author", "quarter"]
+
+        use_and_intent_cols_to_fill = ["af", "ct_ai", "ct_pp", "ct_sb", "other"] + [
+            col
+            for col in candidate_authors.columns
+            if col not in ["author", "quarter", "depth"]
         ]
-        for col in cols_to_fill:
+        for col in use_and_intent_cols_to_fill:
             data[col] = data.groupby("author")[col].ffill().fillna(0).astype(int)
 
         # get patent citations
@@ -852,6 +908,7 @@ def aggregate_to_quarterly(data: pd.DataFrame) -> pd.DataFrame:
     Args:
         data (pd.DataFrame): The input DataFrame containing the data
             to be aggregated.
+        show_progress (bool): Whether to show progress during aggregation.
 
     Returns:
         pd.DataFrame: The aggregated DataFrame with the data aggregated
@@ -864,6 +921,7 @@ def aggregate_to_quarterly(data: pd.DataFrame) -> pd.DataFrame:
 
     # aggregation dictionary
     agg_dict = {
+        "depth": ("depth", "first"),
         "num_publications": ("id", "size"),
         "num_cited_by_count": ("cited_by_count", "sum"),
         "num_cit_0": ("cit_0", "sum"),
@@ -969,6 +1027,12 @@ def create_cc_counts(data, icite_data):
     Returns:
         pandas.DataFrame: The updated data DataFrame with a new 'count' column.
     """
+
+    # if icite_data's cited_by_clin is a str, set "None" to nan
+    icite_data["cited_by_clin"] = icite_data["cited_by_clin"].apply(
+        lambda x: np.nan if x == "None" else x
+    )
+
     # change pmid, doi to str
     icite_data["pmid"] = icite_data["pmid"].astype(str)
     icite_data["doi"] = icite_data["doi"].astype(str)
@@ -994,7 +1058,11 @@ def create_cc_counts(data, icite_data):
     )
 
     # create count column
-    combined_data["ca_count"] = combined_data["cited_by_clin"].apply(len)
+    combined_data["ca_count"] = combined_data["cited_by_clin"].apply(
+        lambda x: len(x) if x is not None else 0
+    )
+
+    combined_data = combined_data.drop_duplicates(subset=["id"])
 
     # merge back with data, fill with 0 for missing count
     data = data.merge(combined_data[["id", "ca_count"]], on="id", how="left")
@@ -1119,6 +1187,8 @@ def _result_transformations(data: pd.DataFrame) -> pd.DataFrame:
             "grants",
             # "topics",
             "ids",
+            "citation_normalized_percentile",
+            "cited_by_percentile_year",
         ],
         inplace=True,
     )
