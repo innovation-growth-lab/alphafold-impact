@@ -12,7 +12,7 @@ options(width = 250)
 # Define the paths containing the RDS files and their origins
 base_paths <- list(
   nonecr = "data/05_model_output/authors/nonecr/quarterly/coef_tables/",
-  ecr = "data/05_model_output/authors/ecr/quarterly/coef_tables/",
+  # ecr = "data/05_model_output/authors/ecr/quarterly/coef_tables/",
   labs = "data/05_model_output/labs/quarterly/coef_tables/",
   papers = "data/05_model_output/papers/coef_tables/" # nolint
 )
@@ -81,29 +81,37 @@ all_tables_combined %>%
 
 
 dep_var_labels <- c(
-  "mesh_C" = "Proportion of disease-relevant articles",
-  "ln1p_cited_by_count" = "ln (1 + Cited by count)",
-  "ln1p_fwci" = "ln (1 + Field-Weighted Citation Impact)",
-  "logit_cit_norm_perc" = "logit (Citation percentile)",
-  "patent_count" = "Patent citation count",
-  "patent_citation" = "Patent-to-patent citation count",
-  "ca_count" = "Clinical article citation count",
-  "ln1p_resolution" = "ln (1 + Resolution)",
-  "ln1p_R_free" = "ln (1 + R-free)",
-  "num_pdb_ids" = "PDB ID submissions",
-  "num_pdb_submissions" = "PDB submissions",
-  "num_publications" = "Publications",
-  "num_uniprot_structures" = "Uniprot structures",
-  "num_primary_submissions" = "Primary submissions",
-  "num_diseases" = "Number of Diseases",
-  "organism_rarity_mean" = "Organism rarity mean",
-  "mean_tmscore" = "Mean TM-score",
-  "num_uniprot_structures_w_disease" = "Uniprot structures with disease relevance", # nolint
-  "num_primary_submissions_w_disease" = "Primary submissions with disease relevance", # nolint
-  "num_uniprot_structures_w_rare_organisms" = "Uniprot structures with rare organisms", # nolint
-  "num_primary_submissions_w_rare_organisms" = "Primary submissions with rare organisms", # nolint
-  "num_uniprot_structures_w_low_similarity" = "Uniprot structures with low similarity", # nolint
-  "num_primary_submissions_w_low_similarity" = "Primary submissions with low similarity" # nolint
+  # Bibliometric & Impact Metrics
+  "cited_by_count" = "Number of Citations Received",
+  "ln1p_fwci" = "Field-Weighted Citation Impact (log-scale)",
+  "patent_count" = "Number of Patent-Paper Citations",
+  "patent_citation" = "Number of Patent-Patent Citations",
+  "ca_count" = "Number of Clinical Article Citations",
+  "num_publications" = "Number of Publications",
+
+  # Disease & Clinical Relevance Metrics
+  "ln1p_mesh_C" = "Disease Relevance (MeSH C-index, log-scale)",
+  "num_diseases" = "Number of Structure-Associated Diseases",
+  "num_uniprot_structures_w_disease" = "Number of Disease-Relevant Structures",
+  "num_primary_submissions_w_disease" = "Number of Novel Disease-Relevant Structures", # nolint
+
+  # Experimental Output & Quality Metrics
+  "ln1p_resolution" = "Crystallographic Resolution (log-scale)",
+  "ln1p_R_free" = "R-free Value (log-scale)",
+  "num_pdb_ids" = "Number of PDB Structure IDs",
+  "num_pdb_submissions" = "Number of PDB Submissions",
+  "num_uniprot_structures" = "Number of UniProt Structures",
+
+  # Novelty & Rarity Metrics
+  "num_primary_submissions" = "Number of Novel UniProt Structures",
+  "ln1p_organism_rarity_max" = "Max. Organism Rarity (log-scale)",
+  "ln1p_max_tmscore" = "Str. Similarity (TM-score, log-scale)",
+  "ln1p_max_fident" = "Max. Sequence Identity (log-scale)",
+  "ln1p_max_score" = "Global Shape Similarity (RCSB, log-scale)",
+  "num_uniprot_structures_w_rare_organisms" = "UniProt Structures / Rare Organisms", # nolint
+  "num_primary_submissions_w_rare_organisms" = "Primary PDB Submissions / Rare Organisms", # nolint
+  "num_uniprot_structures_w_low_similarity" = "UniProt Structures / Low Similarity", # nolint
+  "num_primary_submissions_w_low_similarity" = "Primary PDB Submissions / Low Similarity" # nolint
 )
 
 # Updated coefficient labels with new naming
@@ -111,15 +119,18 @@ coef_labels <- c(
   # Core coefficients
   "af" = "AlphaFold",
   "ct_ai" = "AI Frontier",
-  "ct_noai" = "No AI Frontier",
+  "ct_pp" = "PP Frontier",
+  "ct_sb" = "SB Frontier",
 
   # Strong coefficients
-  "af_strong0" = "AlphaFold - Bkg.",
-  "af_strong1" = "AlphaFold - Method",
-  "ct_ai_strong0" = "AI Frontier - Bkg.",
-  "ct_ai_strong1" = "AI Frontier - Method",
-  "ct_noai_strong0" = "No AI Frontier - Bkg.",
-  "ct_noai_strong1" = "No AI Frontier - Method"
+  "af_intent_strong" = "AlphaFold - Method",
+  "af_intent_weak" = "AlphaFold - Bkg.",
+  "ct_ai_intent_strong" = "AI Frontier - Method",
+  "ct_ai_intent_weak" = "AI Frontier - Bkg.",
+  "ct_pp_intent_strong" = "PP Frontier - Method",
+  "ct_pp_intent_weak" = "PP Frontier - Bkg.",
+  "ct_sb_intent_strong" = "SB Frontier - Method",
+  "ct_sb_intent_weak" = "SB Frontier - Bkg."
 )
 
 strip_colors <- c(
@@ -147,8 +158,8 @@ field_colors <- c(
 subgroup_order <- c("All PDB", "High PDB")
 scope_order <- c("scope_All", "scope_Intent")
 field_order <- c(
-  "field_Medicine",
-  "field_Biochemistry",
+  # "field_Medicine",
+  # "field_Biochemistry",
   "field_All Fields"
 )
 
@@ -171,11 +182,12 @@ grouped_observation_labels <- c(
 )
 
 # Define core coefficients and strong coefficients
-core_coef_vars <- c("af", "ct_ai", "ct_noai")
+core_coef_vars <- c("af", "ct_ai", "ct_pp", "ct_sb")
 strong_coef_vars <- c(
-  "af_strong0", "af_strong1",
-  "ct_ai_strong0", "ct_ai_strong1",
-  "ct_noai_strong0", "ct_noai_strong1"
+  "af_intent_strong", "af_intent_weak",
+  "ct_ai_intent_strong", "ct_ai_intent_weak",
+  "ct_pp_intent_strong", "ct_pp_intent_weak",
+  "ct_sb_intent_strong", "ct_sb_intent_weak"
 )
 
 
@@ -348,8 +360,6 @@ generate_core_coef_plots <- function(coef_table) { # nolint
 
 
 # --- Function to generate strong coefficient plots ---
-
-# --- Function to generate coefficient plots ---
 generate_strong_coef_plots <- function(coef_table) { # nolint
 
   # rename vars
@@ -529,6 +539,7 @@ generate_grouped_coef_plots <- function(coef_table) {
     ) %>%
     mutate(
       dep_var = recode(dep_var, !!!dep_var_labels),
+      dep_var = factor(dep_var, levels = unname(dep_var_labels)),
       source_origin = factor(source_origin, levels = grouped_observation_order),
       source_origin = recode(source_origin, !!!grouped_observation_labels),
       treat_var = factor(treat_var, levels = rev(core_coef_vars)),
@@ -543,105 +554,107 @@ generate_grouped_coef_plots <- function(coef_table) {
   # Generate plot for each source origin
   for (source in unique(plot_data$source_origin)) {
     for (ufield in unique(plot_data$field)) {
-      source_data <- plot_data %>%
-        filter(source_origin == source, field == ufield) # nolint
+      if (ufield == "field_All Fields") {
+        source_data <- plot_data %>%
+          filter(source_origin == source, field == ufield) # nolint
 
-      # Create faceted plot
-      grouped_plot <- ggplot(
-        source_data,
-        aes(x = estimate, y = treat_var) # nolint
-      ) +
-        geom_point(size = 12) +
-        geom_errorbarh(
-          aes(
-            xmin = estimate - 1.645 * std_error, # nolint
-            xmax = estimate + 1.645 * std_error # nolint
-          ),
-          height = 0,
-          linewidth = 2
+        # Create faceted plot
+        grouped_plot <- ggplot(
+          source_data,
+          aes(x = estimate, y = treat_var) # nolint
         ) +
-        geom_errorbarh(
-          aes(xmin = conf_low, xmax = conf_high), # nolint
-          height = 0.4,
-          linewidth = 1.2
-        ) +
-        geom_vline(xintercept = 0, color = "black", linewidth = 1) +
-        facet_wrap(
-          ~dep_var,
-          scales = "free_x",
-          ncol = 3
-        ) +
-        scale_x_continuous(breaks = scales::pretty_breaks(n = 3)) +
-        labs(
-          title = paste("Coefficient Estimates for", source, "|", ufield),
-          x = "Estimate (with 95% CI)",
-          y = "Coefficient Variable"
-        ) +
-        theme_classic() +
-        theme(
-          text = element_text(family = "muli"),
-          axis.text.y = element_text(size = 84),
-          axis.text.x = element_text(size = 90),
-          axis.title = element_text(size = 90),
-          strip.text = element_text(
-            size = 72, # Increased from 94
-            face = "bold",
-            color = "white",
-            margin = margin(t = 10, b = 10) # Add some vertical padding
-          ),
-          strip.background = element_rect(
-            fill = grouped_strip_colors[source],
-            color = "black", # Add border
-            linewidth = 1
-          ),
-          panel.grid.major.x = element_line(linewidth = 1.2, color = "grey"),
-          panel.border = element_rect(color = "black", fill = NA, linewidth = 1), # nolint
-          panel.spacing = unit(2, "lines"),
-          plot.title = element_text(size = 102, face = "bold"),
-          plot.margin = margin(1, 1, 1, 1, "cm")
+          geom_point(size = 12) +
+          geom_errorbarh(
+            aes(
+              xmin = estimate - 1.645 * std_error, # nolint
+              xmax = estimate + 1.645 * std_error # nolint
+            ),
+            height = 0,
+            linewidth = 2
+          ) +
+          geom_errorbarh(
+            aes(xmin = conf_low, xmax = conf_high), # nolint
+            height = 0.4,
+            linewidth = 1.2
+          ) +
+          geom_vline(xintercept = 0, color = "black", linewidth = 1) +
+          facet_wrap(
+            ~dep_var,
+            scales = "free_x",
+            ncol = 3
+          ) +
+          scale_x_continuous(breaks = scales::pretty_breaks(n = 3)) +
+          labs(
+            title = paste("Coefficient Estimates for", source, "|", ufield),
+            x = "Estimate (with 95% CI)",
+            y = "Coefficient Variable"
+          ) +
+          theme_classic() +
+          theme(
+            text = element_text(family = "muli"),
+            axis.text.y = element_text(size = 84),
+            axis.text.x = element_text(size = 90),
+            axis.title = element_text(size = 90),
+            strip.text = element_text(
+              size = 72, # Increased from 94
+              face = "bold",
+              color = "white",
+              margin = margin(t = 10, b = 10) # Add some vertical padding
+            ),
+            strip.background = element_rect(
+              fill = grouped_strip_colors[source],
+              color = "black", # Add border
+              linewidth = 1
+            ),
+            panel.grid.major.x = element_line(linewidth = 1.2, color = "grey"),
+            panel.border = element_rect(color = "black", fill = NA, linewidth = 1), # nolint
+            panel.spacing = unit(2, "lines"),
+            plot.title = element_text(size = 102, face = "bold"),
+            plot.margin = margin(1, 1, 1, 1, "cm")
+          )
+
+        # Add observation counts
+        grouped_plot <- grouped_plot + geom_text(
+          aes(label = paste0("n = ", n_obs), x = Inf, y = -Inf), # nolint
+          hjust = 1.1,
+          vjust = -0.5,
+          size = 24
         )
 
-      # Add observation counts
-      grouped_plot <- grouped_plot + geom_text(
-        aes(label = paste0("n = ", n_obs), x = Inf, y = -Inf), # nolint
-        hjust = 1.1,
-        vjust = -0.5,
-        size = 24
-      )
+        # Create directory and save plot
+        pathdir <- paste0(
+          "data/08_reporting/2025Q1/coefplots/grouped/",
+          ufield, "/"
+        )
+        if (!dir.exists(pathdir)) {
+          dir.create(pathdir, recursive = TRUE)
+        }
 
-      # Create directory and save plot
-      pathdir <- paste0(
-        "data/08_reporting/2025Q1/coefplots/grouped/",
-        ufield, "/"
-      )
-      if (!dir.exists(pathdir)) {
-        dir.create(pathdir, recursive = TRUE)
+        outfile <- paste0(pathdir, source, "_grouped.png")
+        message("Saving plot to: ", outfile)
+
+        # Calculate dimensions based on number of dependent variables
+        n_deps <- length(unique(source_data$dep_var))
+        n_cols <- 3
+        n_rows <- ceiling(n_deps / n_cols)
+        plot_height <- max(12, n_rows * 4) # Increased base height
+        plot_width <- min(24, n_cols * 8) # Increased base width
+
+        ggsave(
+          outfile,
+          grouped_plot,
+          width = plot_width,
+          height = plot_height,
+          dpi = 300
+        )
       }
-
-      outfile <- paste0(pathdir, source, "_grouped.png")
-      message("Saving plot to: ", outfile)
-
-      # Calculate dimensions based on number of dependent variables
-      n_deps <- length(unique(source_data$dep_var))
-      n_cols <- 3
-      n_rows <- ceiling(n_deps / n_cols)
-      plot_height <- max(12, n_rows * 4) # Increased base height
-      plot_width <- min(24, n_cols * 8) # Increased base width
-
-      ggsave(
-        outfile,
-        grouped_plot,
-        width = plot_width,
-        height = plot_height,
-        dpi = 300
-      )
     }
   }
 }
 
 
 # --- Function to generate grouped coefficient plots ---
-generate_grouped_highpdb_coef_plots <- function(coef_table) { # nolint
+generate_grouped_highpdb_coef_plots <- function(coef_table) {
   # Prepare the data
   plot_data <- coef_table %>%
     filter(
@@ -653,6 +666,7 @@ generate_grouped_highpdb_coef_plots <- function(coef_table) { # nolint
     ) %>%
     mutate(
       dep_var = recode(dep_var, !!!dep_var_labels),
+      dep_var = factor(dep_var, levels = unname(dep_var_labels)),
       source_origin = factor(source_origin, levels = grouped_observation_order),
       source_origin = recode(source_origin, !!!grouped_observation_labels),
       treat_var = factor(treat_var, levels = rev(core_coef_vars)),
@@ -778,6 +792,7 @@ generate_grouped_strong_coef_plots <- function(coef_table) {
     ) %>%
     mutate(
       dep_var = recode(dep_var, !!!dep_var_labels),
+      dep_var = factor(dep_var, levels = unname(dep_var_labels)),
       source_origin = factor(source_origin, levels = grouped_observation_order),
       source_origin = recode(source_origin, !!!grouped_observation_labels),
       treat_var = factor(treat_var, levels = rev(strong_coef_vars)),

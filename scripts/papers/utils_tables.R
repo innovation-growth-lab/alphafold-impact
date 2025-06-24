@@ -115,28 +115,19 @@ dict_vars <- c(
   "ct_sb:is_applied" = "SB Frontier x Applied",
   "af_intent_strong" = "AlphaFold - Method",
   "af_intent_weak" = "AlphaFold - Bkg.",
-  "af_intent_mixed" = "AlphaFold x Applied - Mixed",
   "af_intent_strong:is_applied" = "AlphaFold x Applied - Method",
   "af_intent_weak:is_applied" = "AlphaFold x Applied - Bkg.",
   "ct_ai_intent_strong" = "AI Frontier - Method",
   "ct_ai_intent_weak" = "AI Frontier - Bkg.",
-  "ct_ai_intent_mixed" = "AI Frontier x Applied - Mixed",
-  "ct_ai_intent_strong:is_applied" = "AI Frontier x Applied - Method",
   "is_applied:ct_ai_intent_strong" = "AI Frontier x Applied - Method",
-  "ct_ai_intent_weak:is_applied" = "AI Frontier x Applied - Bkg.",
   "is_applied:ct_ai_intent_weak" = "AI Frontier x Applied - Bkg.",
   "ct_pp_intent_strong" = "PP Frontier - Method",
   "ct_pp_intent_weak" = "PP Frontier - Bkg.",
-  "ct_pp_intent_mixed" = "PP Frontier x Applied - Mixed",
-  "ct_pp_intent_strong:is_applied" = "PP Frontier x Applied - Method",
   "is_applied:ct_pp_intent_strong" = "PP Frontier x Applied - Method",
-  "ct_pp_intent_weak:is_applied" = "PP Frontier x Applied - Bkg.",
   "is_applied:ct_pp_intent_weak" = "PP Frontier x Applied - Bkg.",
   "ct_sb_intent_strong" = "SB Frontier - Method",
   "ct_sb_intent_weak" = "SB Frontier - Bkg.",
-  "ct_sb_intent_mixed" = "SB Frontier x Applied - Mixed",
-  "ct_sb_intent_strong:is_applied" = "SB Frontier x Applied - Method",
-  "ct_sb_intent_weak:is_applied" = "SB Frontier x Applied - Bkg.",
+  "is_applied:ct_sb_intent_strong" = "SB Frontier x Applied - Method",
   "is_applied:ct_sb_intent_weak" = "SB Frontier x Applied - Bkg."
 )
 
@@ -193,6 +184,7 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
           results[result_names],
           drop = c(
             "num_publications", "Constant",
+            ".*intent_mixed.*",
             "^covid_", "^field_", "^mesh_", "^institution_"
           ),
           tex = TRUE,
@@ -200,6 +192,7 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
           digits = 3,
           digits.stats = 2,
           powerBelow = -20,
+          order = c("^AlphaFold", "^AI Frontier", "^PP Frontier", "^SB Frontier"),
           fitstat = c("n", "pr2", "r2")
         )
 

@@ -453,7 +453,7 @@ match_out_af_coarse_treatment <- matchit(
   )),
   data = quarterly_cem, method = "cem", k2k = TRUE
 )
-message("Matched data for coarse_cols")
+
 # Store matched data for coarse_cols
 cem_data_coarse_treatment <- match.data(match_out_af_coarse_treatment)
 
@@ -477,6 +477,15 @@ message("Matched data for exact_cols")
 # Store matched data for exact_cols
 cem_data_exact_treatment <- match.data(match_out_treatment_exact)
 
+# ---- AlphaFold - Exact ----
+match_out_af_exact <- matchit(
+  as.formula(paste0("af ~ ", paste0(exact_cols, collapse = " + "))),
+  data = quarterly_cem, method = "exact"
+)
+
+# Store matched data for exact_cols
+cem_data_exact_af <- match.data(match_out_af_exact)
+
 # ---- PDB Submissions - Less Strict Matching ----
 
 # quarterly_cem with no na values for the pdb_cols
@@ -487,7 +496,7 @@ quarterly_cem_pdb <- quarterly_cem %>%
 match_out_pdb <- matchit(
   as.formula(
     paste0(
-      "high_pdb_pre2021 ~ ",
+      "af ~ ",
       paste0(pdb_cols, collapse = " + ")
     )
   ),
@@ -503,13 +512,18 @@ combined_cem_data_treatment <- intersect(
   cem_data_exact_treatment$author
 )
 
+combined_cem_data_af <- intersect(
+  cem_data_coarse_af$author,
+  cem_data_exact_af$author
+)
+
 # union with af
 combined_cem_data <- union(
   combined_cem_data_treatment,
-  cem_data_coarse_af$author
+  combined_cem_data_af
 )
 
-# union with af and pdb
+# union with pdb
 combined_cem_data <- union(
   combined_cem_data,
   cem_data_pdb$author
@@ -645,12 +659,12 @@ colnames(matched_data) <- gsub(",", "", colnames(matched_data))
 
 # Define sub_samples as a list of samples
 sub_samples <- list()
-sub_groups <- c("All PDB", "High PDB")
+sub_groups <- c("All PDB") # , "High PDB")
 unique_scopes <- c("All", "Intent") # Changed to All/Intent distinction
 unique_fields <- c(
-  "All Fields",
-  "Molecular Biology",
-  "Medicine"
+  "All Fields" # ,
+  # "Molecular Biology",
+  # "Medicine"
 )
 
 # Create subsets for all combinations of depth, field, and sub_group

@@ -191,7 +191,7 @@ for (dep_var in dep_vars) { # nolint
     if (dep_var == "num_publications") {
       local_covs <- covs[[cov_set]][
         -which(covs[[cov_set]] == "num_publications")
-        ]
+      ]
     } else if (dep_var == "ln1p_mesh_C") {
       local_covs <- covs[[cov_set]][-which(covs[[cov_set]] == "mesh_C")]
     }

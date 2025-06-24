@@ -9,8 +9,8 @@ if (!dir.exists(tables)) {
 # ------------------------------------------------------------------------------
 
 table_info <- list(
-  "ln1p_cited_by_count" = list(
-    file_name = "ln1p_cited_by_count.tex"
+  "cited_by_count" = list(
+    file_name = "cited_by_count.tex"
   ),
   "ln1p_cit_0" = list(
     file_name = "ln1p_cit_0.tex"
@@ -54,11 +54,29 @@ table_info <- list(
   "num_primary_submissions" = list(
     file_name = "num_primary_submissions.tex"
   ),
-  "organism_rarity_mean" = list(
-    file_name = "organism_rarity_mean.tex"
+  "ln1p_organism_rarity_mean" = list(
+    file_name = "ln1p_organism_rarity_mean.tex"
   ),
-  "mean_tmscore" = list(
-    file_name = "mean_tmscore.tex"
+  "ln1p_organism_rarity_max" = list(
+    file_name = "ln1p_organism_rarity_max.tex"
+  ),
+  "ln1p_max_tmscore" = list(
+    file_name = "ln1p_max_tmscore.tex"
+  ),
+  "ln1p_max_fident" = list(
+    file_name = "ln1p_max_fident.tex"
+  ),
+  "ln1p_max_score" = list(
+    file_name = "ln1p_max_score.tex"
+  ),
+  "normalised_max_tmscore" = list(
+    file_name = "normalised_max_tmscore.tex"
+  ),
+  "normalised_max_fident" = list(
+    file_name = "normalised_max_fident.tex"
+  ),
+  "normalised_max_score" = list(
+    file_name = "normalised_max_score.tex"
   ),
   "num_uniprot_structures_w_disease" = list(
     file_name = "num_uniprot_structures_w_disease.tex"
@@ -81,25 +99,40 @@ table_info <- list(
   "num_diseases" = list(
     file_name = "num_diseases.tex"
   ),
-  "mesh_C" = list(
-    file_name = "mesh_C.tex"
+  "ln1p_mesh_C" = list(
+    file_name = "ln1p_mesh_C.tex"
   )
 )
 
 dict_vars <- c(
   "af" = "AlphaFold",
   "ct_ai" = "AI Frontier",
-  "ct_noai" = "No AI Frontier",
-  "af_strong0" = "AlphaFold - Bkg.",
-  "af_strong1" = "AlphaFold - Method",
-  "ct_ai_strong0" = "AI Frontier - Bkg.",
-  "ct_ai_strong1" = "AI Frontier - Method",
-  "ct_noai_strong0" = "No AI Frontier - Bkg.",
-  "ct_noai_strong1" = "No AI Frontier - Method"
+  "ct_pp" = "PP Frontier",
+  "ct_sb" = "SB Frontier",
+  "af:is_applied" = "AlphaFold x Applied",
+  "ct_ai:is_applied" = "AI Frontier x Applied",
+  "ct_pp:is_applied" = "PP Frontier x Applied",
+  "ct_sb:is_applied" = "SB Frontier x Applied",
+  "af_intent_strong" = "AlphaFold - Method",
+  "af_intent_weak" = "AlphaFold - Bkg.",
+  "af_intent_strong:is_applied" = "AlphaFold x Applied - Method",
+  "af_intent_weak:is_applied" = "AlphaFold x Applied - Bkg.",
+  "ct_ai_intent_strong" = "AI Frontier - Method",
+  "ct_ai_intent_weak" = "AI Frontier - Bkg.",
+  "is_applied:ct_ai_intent_strong" = "AI Frontier x Applied - Method",
+  "is_applied:ct_ai_intent_weak" = "AI Frontier x Applied - Bkg.",
+  "ct_pp_intent_strong" = "PP Frontier - Method",
+  "ct_pp_intent_weak" = "PP Frontier - Bkg.",
+  "is_applied:ct_pp_intent_strong" = "PP Frontier x Applied - Method",
+  "is_applied:ct_pp_intent_weak" = "PP Frontier x Applied - Bkg.",
+  "ct_sb_intent_strong" = "SB Frontier - Method",
+  "ct_sb_intent_weak" = "SB Frontier - Bkg.",
+  "is_applied:ct_sb_intent_strong" = "SB Frontier x Applied - Method",
+  "is_applied:ct_sb_intent_weak" = "SB Frontier x Applied - Bkg."
 )
 
 # Function to generate tables
-generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe_list, treat_vars) { # nolint
+generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe_list, treat_vars, intermediate_path) { # nolint
 
   scopes <- c("scope_All", "scope_Intent")
   fields <- c(
@@ -107,7 +140,7 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
     "field_Molecular Biology",
     "field_Medicine"
   )
-  subgroups <- c("subgroup_All PDB")
+  subgroups <- c("subgroup_All PDB", "subgroup_High PDB")
 
   for (dep_var in dep_vars) {
     file_name <- table_info[[dep_var]]$file_name
@@ -156,6 +189,8 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
             # Drop specific patterns we don't want
             "^af_ct.*",
             "^ct_ai_ct.*",
+            # anything with intent_mixed
+            ".*intent_mixed.*",
             # Drop renamed interaction terms
             ".*\\$\\\\times\\$.*", # matches the LaTeX formatted interactions
             "AlphaFold.*AI Frontier.*",
@@ -174,6 +209,7 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
           digits = 3,
           digits.stats = 2,
           powerBelow = -20,
+          order = c("^AlphaFold", "^AI Frontier", "^PP Frontier", "^SB Frontier"),
           fitstat = c("n", "pr2", "r2")
         )
 
@@ -183,34 +219,53 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
         })
 
         mean_y_row <- paste0(
-          "Mean(Dep. Var.) & ", paste(sprintf("%.3f", mean_y_values), collapse = " & "), " \\\\"
+          "Mean(Dep. Var.) & ", paste(sprintf("%.3f", mean_y_values), collapse = " & "), " \\\\" # nolint
         )
 
         etable_lines <- unlist(strsplit(etable_output, "\n"))
 
         # Top Field: All Fields
         if (field_label == "All Fields") {
-          # Intent headers
-          intent_headers <- "\\multicolumn{1}{c}{All} & \\multicolumn{2}{c}{With Intent Data}"
-          intent_headers <- paste0(
-            " & ", intent_headers, " \\\\"
+          pdb_headers <- c(
+            "\\multicolumn{3}{c}{All Authors} & \\multicolumn{3}{c}{Experienced Authors}"
           )
-          intent_cmidrules <- "\\cmidrule(lr){2-2} \\cmidrule(lr){3-4}"
+          pdb_headers <- paste0(
+            " & ", paste(pdb_headers, collapse = " & "), " \\\\"
+          )
+          pdb_cmidrules <- "\\cmidrule(lr){2-4} \\cmidrule(lr){5-7}"
+
+          # Second level: Intent headers
+          intent_headers <- paste0(
+            rep(
+              "\\multicolumn{1}{c}{All} & \\multicolumn{2}{c}{With Intent Data}",
+              2
+            )
+          )
+          intent_headers <- paste0(
+            " & ", paste(intent_headers, collapse = " & "), " \\\\"
+          )
+          intent_cmidrules <- paste0(
+            "\\cmidrule(lr){2-2} \\cmidrule(lr){3-4}",
+            " \\cmidrule(lr){5-5} \\cmidrule(lr){6-7}"
+          )
 
           # add field label in italics and with midrules
           field_label_line <- paste0(
-            "\\multicolumn{3}{c}{\\textit{", field_label, "}} \\\\"
+            "\\multicolumn{6}{c}{\\textit{", field_label, "}} \\\\"
           )
           field_label_line <- paste0(
             " & ", paste(field_label_line, collapse = " & "), " \\\\"
           )
 
           # Insert headers and cmidrules
-          etable_lines <- append(etable_lines, intent_headers, after = 5)
-          etable_lines <- append(etable_lines, intent_cmidrules, after = 6)
-          etable_lines <- append(etable_lines, field_label_line, after = 7)
+          etable_lines <- append(etable_lines, pdb_headers, after = 5)
+          etable_lines <- append(etable_lines, pdb_cmidrules, after = 6)
+          etable_lines <- append(etable_lines, intent_headers, after = 7)
+          etable_lines <- append(etable_lines, intent_cmidrules, after = 8)
+          etable_lines <- append(etable_lines, field_label_line, after = 9)
           # drop old header lines
-          etable_lines <- etable_lines[-c(9, 10, 11)]
+          etable_lines <- etable_lines[-c(11, 12, 13)]
+
 
           # add mean y row in 6th last row
           etable_lines <- append(
@@ -226,6 +281,7 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
           )
           latex_output <- c(latex_output, etable_lines)
 
+
           # Second Field: Molecular Biology
         } else if (field_label == "Molecular Biology") {
           chunks <- unlist(
@@ -237,7 +293,7 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
 
           # add field label in italics and with midrules
           field_label_line <- paste0(
-            "\\multicolumn{3}{c}{\\textit{", field_label, "}} \\\\"
+            "\\multicolumn{6}{c}{\\textit{", field_label, "}} \\\\"
           )
           field_label_line <- paste0(
             " & ", paste(field_label_line, collapse = " & "), " \\\\"
@@ -264,7 +320,7 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
 
           # add field label in italics and with midrules
           field_label_line <- paste0(
-            "\\multicolumn{3}{c}{\\textit{", field_label, "}} \\\\"
+            "\\multicolumn{6}{c}{\\textit{", field_label, "}} \\\\"
           )
           field_label_line <- paste0(
             " & ", paste(field_label_line, collapse = " & "), " \\\\"
@@ -293,6 +349,8 @@ generate_tables <- function(results, dep_vars, table_info, subsets, cov_sets, fe
 
     pathdir <- paste0(
       tables,
+      "/",
+      intermediate_path,
       "/"
     )
     if (!dir.exists(pathdir)) {

@@ -261,7 +261,7 @@ for (dep_var in dep_vars) { # nolint
         n_authors + n_quarters
         > nrow(non_na_data)
       ) {
-        message("Skipping regression: ", regression_label, ". Not enough data.")
+        message("Skipping regression. Not enough data.")
         results[[regression_label]] <- feols(
           as.formula(paste(dep_var, "~ 1")),
           data = local_data
@@ -367,10 +367,10 @@ for (dep_var in dep_vars) { # nolint
         treat_vars = c(treat_vars_base, treat_vars_with_strong),
         treat_var_interest = c(
           "af", "ct_ai", "ct_pp", "ct_sb",
-          "af_intent_strong", "af_intent_weak", "af_intent_mixed",
-          "ct_ai_intent_strong", "ct_ai_intent_weak", "ct_ai_intent_mixed",
-          "ct_pp_intent_strong", "ct_pp_intent_weak", "ct_pp_intent_mixed",
-          "ct_sb_intent_strong", "ct_sb_intent_weak", "ct_sb_intent_mixed",
+          "af_intent_strong", "af_intent_weak",
+          "ct_ai_intent_strong", "ct_ai_intent_weak",
+          "ct_pp_intent_strong", "ct_pp_intent_weak",
+          "ct_sb_intent_strong", "ct_sb_intent_weak",
           "af:is_applied", "ct_ai:is_applied", "ct_pp:is_applied",
           "ct_sb:is_applied", "af_intent_strong:is_applied",
           "af_intent_weak:is_applied", "ct_ai_intent_strong:is_applied",

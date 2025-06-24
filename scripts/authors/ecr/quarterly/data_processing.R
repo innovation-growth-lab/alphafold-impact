@@ -47,7 +47,7 @@ Sys.setenv(
 
 # Define the S3 bucket and path
 bucket <- "igl-alphafold"
-path <- "oct/03_primary/ecr/publications_quarterly.parquet" # nolint
+path <- "2025Q1/03_primary/ecr/publications_quarterly.parquet" # nolint # mistake saved to oct
 
 # Fetch the data from the S3 bucket
 ecr_data <- s3read_using(
@@ -56,9 +56,34 @@ ecr_data <- s3read_using(
   bucket = bucket
 )
 
+# Fix quarter
+to_year_quarter <- function(code_vec) {
+  year <- 1970 + (code_vec %/% 4)
+  quarter <- (code_vec %% 4) + 1
+  paste0(year, "Q", quarter)
+}
+
+# impute quarter
+ecr_data <- ecr_data %>%
+  mutate(quarter = to_year_quarter(quarter))
+
+# drop obs after 2025Q1 (ie. 2025Q2)
+ecr_data <- ecr_data %>%
+  filter(quarter <= "2025Q1")
+
 # ------------------------------------------------------------------------------
 # Strong Data Prep
 # ------------------------------------------------------------------------------
+
+# replace core counts to correct cumul ones
+ecr_data <- ecr_data %>%
+  mutate(
+    af = af_strong + af_weak + af_mixed + af_unknown,
+    ct_ai = ct_ai_strong + ct_ai_weak + ct_ai_mixed + ct_ai_unknown,
+    ct_pp = ct_pp_strong + ct_pp_weak + ct_pp_mixed + ct_pp_unknown,
+    ct_sb = ct_sb_strong + ct_sb_weak + ct_sb_mixed + ct_sb_unknown,
+    other = other_strong + other_weak + other_mixed + other_unknown
+  )
 
 # Calculate intent ratios for each author across all periods
 author_intent_ratios <- ecr_data %>%
@@ -68,145 +93,122 @@ author_intent_ratios <- ecr_data %>%
       (sum(af_with_intent, na.rm = TRUE) + sum(af_unknown, na.rm = TRUE)),
     ct_ai_intent_ratio = sum(ct_ai_with_intent, na.rm = TRUE) /
       (sum(ct_ai_with_intent, na.rm = TRUE) + sum(ct_ai_unknown, na.rm = TRUE)),
-    ct_noai_intent_ratio = sum(ct_noai_with_intent, na.rm = TRUE) /
-      (sum(ct_noai_with_intent, na.rm = TRUE) + sum(ct_noai_unknown, na.rm = TRUE)) # nolint
+    ct_pp_intent_ratio = sum(ct_pp_with_intent, na.rm = TRUE) /
+      (sum(ct_pp_with_intent, na.rm = TRUE) + sum(ct_pp_unknown, na.rm = TRUE)),
+    ct_sb_intent_ratio = sum(ct_sb_with_intent, na.rm = TRUE) /
+      (sum(ct_sb_with_intent, na.rm = TRUE) + sum(ct_sb_unknown, na.rm = TRUE)) # nolint
   )
 
-# Join the ratios back to main data and create the strong0/strong1 columns
-ecr_data <- ecr_data %>%
-  left_join(author_intent_ratios, by = "author") %>%
-  mutate(
-    # Calculate row mean of intent ratios, handling NaN cases properly
-    all_intents_high = {
-      means <- rowMeans(
-        cbind(
-          af_intent_ratio,
-          ct_ai_intent_ratio,
-          ct_noai_intent_ratio
-        ),
-        na.rm = TRUE
+# ------------------------------------------------------------------------------
+# Create Hierarchical Intent Variables (all untriggered = 0)
+# ------------------------------------------------------------------------------
+
+create_hierarchical_intent <- function(data, tech_prefix) {
+  strong_var <- paste0(tech_prefix, "_strong")
+  mixed_var <- paste0(tech_prefix, "_mixed")
+  weak_var <- paste0(tech_prefix, "_weak")
+
+  intent_strong_var <- paste0(tech_prefix, "_intent_strong")
+  intent_mixed_var <- paste0(tech_prefix, "_intent_mixed")
+  intent_weak_var <- paste0(tech_prefix, "_intent_weak")
+
+  data %>% # nolint
+    group_by(author) %>% # nolint
+    mutate( # nolint
+      has_strong = any(!!sym(strong_var) > 0, na.rm = TRUE), # nolint
+      has_mixed = !has_strong & any(!!sym(mixed_var) > 0, na.rm = TRUE), # nolint
+      has_weak = !has_strong & !has_mixed & any(!!sym(weak_var) > 0, na.rm = TRUE), # nolint
+      !!intent_strong_var := ifelse(has_strong & !!sym(strong_var) > 0, 1, 0), # nolint
+      !!intent_mixed_var := ifelse(has_strong, 0, ifelse(has_mixed & !!sym(mixed_var) > 0, 1, 0)), # nolint
+      !!intent_weak_var := ifelse(has_strong | has_mixed, 0, ifelse(has_weak & !!sym(weak_var) > 0, 1, 0)) # nolint
+    ) %>%
+    ungroup() %>% # nolint
+    select(-has_strong, -has_mixed, -has_weak)
+}
+
+ecr_data <- create_hierarchical_intent(ecr_data, "af")
+ecr_data <- create_hierarchical_intent(ecr_data, "ct_ai")
+ecr_data <- create_hierarchical_intent(ecr_data, "ct_pp")
+ecr_data <- create_hierarchical_intent(ecr_data, "ct_sb")
+
+# ------------------------------------------------------------------------------
+# Mask intent variables for authors with too much unknown (less than 1/3 intent)
+# ------------------------------------------------------------------------------
+
+mask_intent_for_unknown <- function(data) {
+  # Get all technology prefixes
+  tech_prefixes <- c("af", "ct_ai", "ct_pp", "ct_sb")
+
+  # Calculate mask per author based on any technology having too much unknown
+  mask_df <- data %>% # nolint
+    group_by(author) %>% # nolint
+    summarise(
+      # For each technology, calculate the ratio of intent to total citations
+      across( # nolint
+        all_of(tech_prefixes), # nolint
+        ~ {
+          unknown_sum <- sum(get(paste0(cur_column(), "_unknown")), na.rm = TRUE) # nolint
+          intent_sum <- sum(get(paste0(cur_column(), "_strong")), na.rm = TRUE) + # nolint
+            sum(get(paste0(cur_column(), "_mixed")), na.rm = TRUE) +
+            sum(get(paste0(cur_column(), "_weak")), na.rm = TRUE)
+          total_sum <- unknown_sum + intent_sum
+          # If no citations, return 1 (don't mask)
+          if (total_sum == 0) 1 else intent_sum / total_sum
+        }
+      ),
+      .groups = "drop"
+    ) %>%
+    # If any technology has ratio < 1/3, mask all intent variables
+    mutate( # nolint
+      mask = if_else( # nolint
+        if_any(all_of(tech_prefixes), ~ . < 1 / 4), # nolint
+        TRUE,
+        FALSE
       )
-      # If all values were NA (resulting in NaN), or mean <= 0.5, return FALSE
-      !is.nan(means) & means > 0.5
-    },
+    ) %>%
+    select(author, mask) # nolint
 
-    # Only pass values if intent ratio mean is high enough
-    "af_strong0" = if_else(all_intents_high, af_weak, NA_real_),
-    "af_strong1" = if_else(all_intents_high, af_strong, NA_real_),
-    "ct_ai_strong0" = if_else(all_intents_high, ct_ai_weak, NA_real_),
-    "ct_ai_strong1" = if_else(all_intents_high, ct_ai_strong, NA_real_),
-    "ct_noai_strong0" = if_else(all_intents_high, ct_noai_weak, NA_real_),
-    "ct_noai_strong1" = if_else(all_intents_high, ct_noai_strong, NA_real_)
-  )
+  # Join mask and set all intent variables to NA if mask is TRUE
+  data <- data %>% # nolint
+    left_join(mask_df, by = "author") %>% # nolint
+    mutate( # nolint1
+      across( # nolint
+        c(
+          ends_with(c("_intent_strong", "_intent_mixed", "_intent_weak")), # nolint
+          ends_with("_with_intent") # nolint
+        ),
+        ~ if_else(mask, NA_real_, .)
+      )
+    ) %>%
+    select(-mask) # nolint
 
-# If strong1 exists for any type, set corresponding strong0 to 0
-ecr_data <- ecr_data %>%
-  group_by(author) %>%
-  mutate(
-    "af_strong0" = case_when(
-      is.na(`af_strong0`) ~ NA_real_,
-      any(`af_strong1` > 0, na.rm = TRUE) ~ 0,
-      TRUE ~ `af_strong0`
-    ),
-    "ct_ai_strong0" = case_when(
-      is.na(`ct_ai_strong0`) ~ NA_real_,
-      any(`ct_ai_strong1` > 0, na.rm = TRUE) ~ 0,
-      TRUE ~ `ct_ai_strong0`
-    ),
-    "ct_noai_strong0" = case_when(
-      is.na(`ct_noai_strong0`) ~ NA_real_,
-      any(`ct_noai_strong1` > 0, na.rm = TRUE) ~ 0,
-      TRUE ~ `ct_noai_strong0`
-    )
-  ) %>%
-  ungroup()
+  data
+}
 
-# create interactions between the strong variables
-ecr_data <- ecr_data %>%
-  mutate(
-    "af_ct_ai_strong0" = `af_strong0` * `ct_ai_strong0`,
-    "af_ct_ai_strong1" = `af_strong1` * `ct_ai_strong1`,
-    "af_ct_noai_strong0" = `af_strong0` * `ct_noai_strong0`,
-    "af_ct_noai_strong1" = `af_strong1` * `ct_noai_strong1`,
-    "ct_ai_ct_noai_strong0" = `ct_ai_strong0` * `ct_noai_strong0`,
-    "ct_ai_ct_noai_strong1" = `ct_ai_strong1` * `ct_noai_strong1`
-  )
+# Apply the masking function once for all technologies
+ecr_data <- mask_intent_for_unknown(ecr_data)
 
 # ------------------------------------------------------------------------------
 # Create Extensive Margin Variables
 # ------------------------------------------------------------------------------
 
+# create is_applied variable
+ecr_data <- ecr_data %>%
+  mutate(is_applied = ifelse(depth == "applied", 1, 0))
+
+# create is_applied variable
 ecr_data <- ecr_data %>%
   mutate(
-    # Basic variables - convert NAs to 0 and then to binary
     af = ifelse(af > 0, 1, 0),
     ct_ai = ifelse(ct_ai > 0, 1, 0),
-    ct_noai = ifelse(ct_noai > 0, 1, 0),
+    ct_pp = ifelse(ct_pp > 0, 1, 0),
+    ct_sb = ifelse(ct_sb > 0, 1, 0),
     other = ifelse(other > 0, 1, 0),
-
-    # Strong variables - keep NAs as NAs
-    "af_strong0" = case_when(
-      is.na(`af_strong0`) ~ NA_real_,
-      `af_strong0` > 0 ~ 1,
-      TRUE ~ 0
-    ),
-    "af_strong1" = case_when(
-      is.na(`af_strong1`) ~ NA_real_,
-      `af_strong1` > 0 ~ 1,
-      TRUE ~ 0
-    ),
-    "ct_ai_strong0" = case_when(
-      is.na(`ct_ai_strong0`) ~ NA_real_,
-      `ct_ai_strong0` > 0 ~ 1,
-      TRUE ~ 0
-    ),
-    "ct_ai_strong1" = case_when(
-      is.na(`ct_ai_strong1`) ~ NA_real_,
-      `ct_ai_strong1` > 0 ~ 1,
-      TRUE ~ 0
-    ),
-    "ct_noai_strong0" = case_when(
-      is.na(`ct_noai_strong0`) ~ NA_real_,
-      `ct_noai_strong0` > 0 ~ 1,
-      TRUE ~ 0
-    ),
-    "ct_noai_strong1" = case_when(
-      is.na(`ct_noai_strong1`) ~ NA_real_,
-      `ct_noai_strong1` > 0 ~ 1,
-      TRUE ~ 0
-    ),
-
-    # Interaction variables - keep NAs as NAs
-    "af_ct_ai_strong0" = case_when(
-      is.na(`af_ct_ai_strong0`) ~ NA_real_,
-      `af_ct_ai_strong0` > 0 ~ 1,
-      TRUE ~ 0
-    ),
-    "af_ct_ai_strong1" = case_when(
-      is.na(`af_ct_ai_strong1`) ~ NA_real_,
-      `af_ct_ai_strong1` > 0 ~ 1,
-      TRUE ~ 0
-    ),
-    "af_ct_noai_strong0" = case_when(
-      is.na(`af_ct_noai_strong0`) ~ NA_real_,
-      `af_ct_noai_strong0` > 0 ~ 1,
-      TRUE ~ 0
-    ),
-    "af_ct_noai_strong1" = case_when(
-      is.na(`af_ct_noai_strong1`) ~ NA_real_,
-      `af_ct_noai_strong1` > 0 ~ 1,
-      TRUE ~ 0
-    ),
-    "ct_ai_ct_noai_strong0" = case_when(
-      is.na(`ct_ai_ct_noai_strong0`) ~ NA_real_,
-      `ct_ai_ct_noai_strong0` > 0 ~ 1,
-      TRUE ~ 0
-    ),
-    "ct_ai_ct_noai_strong1" = case_when(
-      is.na(`ct_ai_ct_noai_strong1`) ~ NA_real_,
-      `ct_ai_ct_noai_strong1` > 0 ~ 1,
-      TRUE ~ 0
-    )
+    af_with_intent = ifelse(af_with_intent > 0, 1, 0),
+    ct_ai_with_intent = ifelse(ct_ai_with_intent > 0, 1, 0),
+    ct_pp_with_intent = ifelse(ct_pp_with_intent > 0, 1, 0),
+    ct_sb_with_intent = ifelse(ct_sb_with_intent > 0, 1, 0),
+    other_with_intent = ifelse(other_with_intent > 0, 1, 0)
   )
 
 # ------------------------------------------------------------------------------
@@ -226,8 +228,9 @@ ecr_data <- ecr_data %>%
     ),
     organism_rarity_mean_quantile = factor(ntile(organism_rarity_mean, 4)),
     organism_rarity_max_quantile = factor(ntile(organism_rarity_max, 4)),
-    mean_tmscore_quantile = factor(ntile(mean_tmscore, 4)),
-    max_tmscore_quantile = factor(ntile(max_tmscore, 4))
+    max_tmscore_quantile = factor(ntile(max_tmscore, 4)),
+    max_score_quantile = factor(ntile(max_score, 4)),
+    max_fident_quantile = factor(ntile(max_fident, 4))
   )
 
 # fill with nan
@@ -281,37 +284,71 @@ ecr_data <- ecr_data %>%
       num_primary_submissions > 0 & organism_rarity_mean_quantile == 4, num_primary_submissions, 0 # nolint
     ),
     num_uniprot_structures_w_low_similarity = ifelse(
-      num_uniprot_structures > 0 & mean_tmscore_quantile == 1, num_uniprot_structures, 0 # nolint
+      num_uniprot_structures > 0 & max_tmscore_quantile == 1, num_uniprot_structures, 0 # nolint
     ),
     num_primary_submissions_w_low_similarity = ifelse(
-      num_primary_submissions > 0 & mean_tmscore_quantile == 1, num_primary_submissions, 0 # nolint
+      num_primary_submissions > 0 & max_tmscore_quantile == 1, num_primary_submissions, 0 # nolint
     )
   )
 # create factors, log transforms
 ecr_data <- ecr_data %>%
   mutate(
     author = as.factor(author),
-    author_position = as.factor(author_position),
     institution = as.factor(institution),
     institution_type = as.factor(institution_type),
     institution_country_code = as.factor(institution_country_code),
     ln1p_cited_by_count = log1p(cited_by_count),
     ln1p_fwci = log1p(fwci),
-    ln1p_cit_0 = log1p(cit_0),
-    ln1p_cit_1 = log1p(cit_1),
-    ln1p_cit_norm_perc = log1p(percentile_value),
-    logit_cit_norm_perc = log(
-      percentile_value /
-        (1 - percentile_value)
-    ),
     ln1p_ca_count = log1p(ca_count),
     ln1p_patent_count = log1p(patent_count),
     ln1p_patent_citation = log1p(patent_citation),
     primary_field = as.factor(primary_field),
-    ln1p_resolution = log1p(as.numeric(resolution_mean)),
-    ln1p_R_free = log1p(as.numeric(R_free_mean)),
-    ln1p_score = log1p(as.numeric(score_mean))
+    ln1p_resolution = log1p(as.numeric(resolution)),
+    ln1p_R_free = log1p(as.numeric(R_free)),
+    ln1p_organism_rarity_mean = log1p(as.numeric(organism_rarity_mean)),
+    ln1p_organism_rarity_max = log1p(as.numeric(organism_rarity_max)),
+    ln1p_max_tmscore = log1p(as.numeric(max_tmscore)),
+    ln1p_max_fident = log1p(as.numeric(max_fident)),
+    ln1p_max_score = log1p(as.numeric(max_score)),
+    ln1p_mesh_C = log1p(as.numeric(mesh_C)),
+    year = as.integer(str_sub(quarter, 1, 4))
   )
+
+
+# Calculate pre-2021 PDB submissions per author and identify top decile authors
+# First calculate the submissions per author
+author_submissions <- ecr_data %>%
+  group_by(author) %>%
+  summarise(pre_2021_pdb_submissions = sum(num_pdb_submissions[year < 2021]))
+
+# Calculate the 90th percentile threshold across all authors
+submission_threshold <- quantile(
+  author_submissions$pre_2021_pdb_submissions, 0.99,
+  na.rm = TRUE
+)
+
+# Join back and create the indicator
+ecr_data <- ecr_data %>%
+  left_join(author_submissions, by = "author") %>%
+  mutate(
+    high_pdb_pre2021 = pre_2021_pdb_submissions > submission_threshold
+  )
+
+# Print diagnostics
+message(paste0(
+  "90th percentile threshold of pre-2021 PDB submissions: ",
+  round(submission_threshold, 2)
+))
+
+message(paste0(
+  "Number of unique authors with high_pdb_pre2021 = TRUE: ",
+  ecr_data %>%
+    filter(high_pdb_pre2021 == TRUE) %>%
+    pull(author) %>%
+    n_distinct()
+))
+
+
 # Define the mapping of old values to new values
 field_mapping <- c(
   "Biochemistry, Genetics and Molecular Biology" = "Molecular Biology"
@@ -326,10 +363,15 @@ ecr_data$primary_field <- recode(ecr_data$primary_field, !!!field_mapping)
 
 # Define the columns to be used for matching
 coarse_cols <- c(
-  "ln1p_cited_by_count", "num_publications"
+  "cited_by_count", "ln1p_fwci", "num_publications", "num_pdb_submissions",
+  "field_biochemist", "field_chemistry", "field_medicine",
+  "covid_share_2020"
 )
 
-exact_cols <- c("institution_country_code")
+exact_cols <- c(
+  "institution_country_code",
+  "institution_h_index"
+)
 
 mode_function <- function(x) {
   ux <- unique(x)
@@ -339,50 +381,149 @@ mode_function <- function(x) {
 # Filter and prepare data for collapsing
 quarterly_cem <- ecr_data %>%
   group_by(author) %>%
-  mutate(af = max(af)) %>%
+  mutate(treatment = max(af, ct_ai, ct_pp, ct_sb), af = max(af)) %>%
   ungroup() %>%
   filter(complete.cases(across(coarse_cols))) %>%
-  filter(quarter %in% 200:208) %>% # (2020-2022)
-  select(af, author, all_of(coarse_cols), all_of(exact_cols)) %>%
+  filter(year %in% c(2021, 2022)) %>%
+  select(
+    af, treatment, author, other, high_pdb_pre2021,
+    all_of(coarse_cols), all_of(exact_cols)
+  ) %>%
   group_by(author) %>%
   summarise(
     af = max(af),
+    other = max(other),
+    treatment = max(treatment),
+    high_pdb_pre2021 = max(high_pdb_pre2021),
     across(coarse_cols, \(x) mean(x, na.rm = TRUE)),
     across(exact_cols, mode_function)
   )
+
+
+cat("Before pre-filtering:", nrow(quarterly_cem), "authors\n")
+
+# Remove extreme outliers (1%-99%) and low-publication authors
+quarterly_cem <- quarterly_cem %>%
+  filter(
+    cited_by_count >= quantile(cited_by_count, 0.01, na.rm = TRUE),
+    cited_by_count <= quantile(cited_by_count, 0.99, na.rm = TRUE),
+    num_publications > 1
+  )
+
+cat("After pre-filtering:", nrow(quarterly_cem), "authors\n")
+
+# Downsample controls if ratio > 10:1 to reduce memory
+n_treated <- sum(quarterly_cem$af)
+n_control <- sum(1 - quarterly_cem$af)
+control_ratio <- n_control / n_treated
+
+if (control_ratio > 10) {
+  cat(
+    "Control ratio", round(control_ratio, 1),
+    ":1 too high, downsampling controls\n"
+  )
+
+  # Stratified downsampling to preserve distribution
+  treated_data <- quarterly_cem %>% filter(af == 1)
+  control_data <- quarterly_cem %>%
+    filter(af == 0) %>%
+    slice_sample(n = n_treated * 8) # Keep 8:1 ratio
+
+  quarterly_cem <- bind_rows(treated_data, control_data)
+
+  cat("After ratio'd pre-filtering:", nrow(quarterly_cem), "authors\n")
+}
+
+
 
 # ------------------------------------------------------------------------------
 # CEM (Coarsened Exact Matching) - Match
 # ------------------------------------------------------------------------------
 
+# ---- Treatment ----
+match_out_af_coarse_treatment <- matchit(
+  as.formula(paste0(
+    "treatment ~ ",
+    paste(coarse_cols, collapse = " + ")
+  )),
+  data = quarterly_cem, method = "cem", k2k = TRUE
+)
+
+# Store matched data for coarse_cols
+cem_data_coarse_treatment <- match.data(match_out_af_coarse_treatment)
+
+# ---- AlphaFold ----
 match_out_af_coarse <- matchit(
   as.formula(paste0(
     "af ~ ",
     paste(coarse_cols, collapse = " + ")
   )),
-  data = quarterly_cem, method = "cem", k2k = FALSE
+  data = quarterly_cem, method = "cem", k2k = TRUE
 )
+message("Matched data for af")
+cem_data_coarse_af <- match.data(match_out_af_coarse)
 
-# Store matched data for coarse_cols
-cem_data_coarse <- match.data(match_out_af_coarse)
+# ---- Treatment - Exact ----
+match_out_treatment_exact <- matchit(
+  as.formula(paste0("treatment ~ ", paste0(exact_cols, collapse = " + "))),
+  data = quarterly_cem, method = "exact"
+)
+message("Matched data for exact_cols")
+# Store matched data for exact_cols
+cem_data_exact_treatment <- match.data(match_out_treatment_exact)
 
-# Exact matching on the collapsed data using exact_cols
+# ---- AlphaFold - Exact ----
 match_out_af_exact <- matchit(
   as.formula(paste0("af ~ ", paste0(exact_cols, collapse = " + "))),
   data = quarterly_cem, method = "exact"
 )
 
 # Store matched data for exact_cols
-cem_data_exact <- match.data(match_out_af_exact)
+cem_data_exact_af <- match.data(match_out_af_exact)
 
 # Combine the matched results
-combined_cem_data <- intersect(
-  cem_data_coarse$author,
-  cem_data_exact$author
+combined_cem_data_treatment <- intersect(
+  cem_data_coarse_treatment$author,
+  cem_data_exact_treatment$author
+)
+
+combined_cem_data_af <- intersect(
+  cem_data_coarse_af$author,
+  cem_data_exact_af$author
+)
+
+# union with af
+combined_cem_data <- union(
+  combined_cem_data_treatment,
+  combined_cem_data_af
 )
 
 matched_data <- ecr_data %>%
   filter(author %in% combined_cem_data)
+
+
+# Print number of unique authors for each tool type
+message(paste0(
+  "Number of AlphaFold authors: ",
+  matched_data %>% filter(af == 1) %>% pull(author) %>% n_distinct()
+))
+message(paste0(
+  "Number of AI tool authors: ",
+  matched_data %>% filter(ct_ai == 1) %>% pull(author) %>% n_distinct()
+))
+message(paste0(
+  "Number of protein prediction tool authors: ",
+  matched_data %>% filter(ct_pp == 1) %>% pull(author) %>% n_distinct()
+))
+message(paste0(
+  "Number of structure biology tool authors: ",
+  matched_data %>% filter(ct_sb == 1) %>% pull(author) %>% n_distinct()
+))
+message(paste0(
+  "Number of other authors: ",
+  matched_data %>% filter(other == 1) %>% pull(author) %>% n_distinct()
+))
+
 
 # ------------------------------------------------------------------------------
 # Sample Prep
@@ -392,10 +533,12 @@ matched_data <- ecr_data %>%
 matched_data <- matched_data %>%
   select(
     # Sample-defining variables
-    "all_intents_high",
+    "is_applied",
+    "high_pdb_pre2021",
 
     # Basic identifiers and time
     "quarter",
+    "year",
     "author",
 
     # Institution variables
@@ -409,13 +552,12 @@ matched_data <- matched_data %>%
 
     # Publication metrics
     "num_publications",
-    "ln1p_cited_by_count",
-    "ln1p_cit_0",
-    "ln1p_cit_1",
-    "ln1p_fwci",
+    "cited_by_count",
     "patent_count",
     "patent_citation",
     "ca_count",
+    "ln1p_fwci",
+    "ln1p_mesh_C",
 
     # Covid
     "covid_share_2020",
@@ -423,29 +565,33 @@ matched_data <- matched_data %>%
     # Structure quality metrics
     "ln1p_resolution",
     "ln1p_R_free",
-    "ln1p_score",
 
     # Basic usage
     "af",
     "ct_ai",
-    "ct_noai",
+    "ct_pp",
+    "ct_sb",
     "other",
 
-    # Strong usage
-    "af_strong0",
-    "af_strong1",
-    "ct_ai_strong0",
-    "ct_ai_strong1",
-    "ct_noai_strong0",
-    "ct_noai_strong1",
+    # Intent usage
+    "af_with_intent",
+    "ct_ai_with_intent",
+    "ct_pp_with_intent",
+    "ct_sb_with_intent",
 
-    # Strong usage interactions
-    "af_ct_ai_strong0",
-    "af_ct_ai_strong1",
-    "af_ct_noai_strong0",
-    "af_ct_noai_strong1",
-    "ct_ai_ct_noai_strong0",
-    "ct_ai_ct_noai_strong1",
+    # Intent variables
+    "af_intent_strong",
+    "af_intent_weak",
+    "af_intent_mixed",
+    "ct_ai_intent_strong",
+    "ct_ai_intent_weak",
+    "ct_ai_intent_mixed",
+    "ct_pp_intent_strong",
+    "ct_pp_intent_weak",
+    "ct_pp_intent_mixed",
+    "ct_sb_intent_strong",
+    "ct_sb_intent_weak",
+    "ct_sb_intent_mixed",
 
     # Field and classification
     "primary_field",
@@ -460,8 +606,14 @@ matched_data <- matched_data %>%
 
     # Disease and organism metrics
     "num_diseases",
-    "organism_rarity_mean",
-    "mean_tmscore",
+    "ln1p_organism_rarity_max",
+    "ln1p_organism_rarity_mean",
+    "ln1p_max_score",
+    "ln1p_max_tmscore",
+    "ln1p_max_fident",
+    "normalised_max_score",
+    "normalised_max_tmscore",
+    "normalised_max_fident",
 
     # Translational variables
     "num_uniprot_structures_w_disease",
@@ -477,11 +629,9 @@ colnames(matched_data) <- gsub(",", "", colnames(matched_data))
 # Define sub_samples as a list of samples
 sub_samples <- list()
 sub_groups <- c("All PDB")
-unique_scopes <- c("All", "Intent") # Changed to All/Intent distinction
+unique_scopes <- c("All")#, "Intent") # Changed to All/Intent distinction
 unique_fields <- c(
-  "All Fields",
-  "Molecular Biology",
-  "Medicine"
+  "All Fields"
 )
 
 # Create subsets for all combinations of depth, field, and sub_group
@@ -498,9 +648,7 @@ for (scope_lvl in unique_scopes) {
       sub_sample <- matched_data
 
       # # Apply depth filter
-      if (scope_lvl == "Intent") {
-        sub_sample <- subset(sub_sample, all_intents_high == TRUE)
-      } else {
+      if (scope_lvl == "All") {
         # drop strong
         sub_sample <- sub_sample %>%
           select(-matches("strong[01]$|_strong"))
@@ -509,6 +657,11 @@ for (scope_lvl in unique_scopes) {
       # Apply field filter
       if (field != "All Fields") {
         sub_sample <- subset(sub_sample, primary_field == field)
+      }
+
+      # Apply sub_group filter
+      if (grepl("High PDB", sub_group)) {
+        sub_sample <- subset(sub_sample, high_pdb_pre2021 == TRUE)
       }
 
       # Store the subset

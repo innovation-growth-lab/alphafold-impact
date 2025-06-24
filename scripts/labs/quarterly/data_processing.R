@@ -368,7 +368,7 @@ labs_data$primary_field <- recode(labs_data$primary_field, !!!field_mapping)
 # Define the columns to be used for matching
 coarse_cols <- c(
   "cited_by_count", "ln1p_fwci", "num_publications", "num_pdb_submissions",
-  "field_biochemist", "field_chemistry", "field_medicine",
+  "patent_count", "field_biochemist", "field_chemistry", "field_medicine",
   "covid_share_2020"
 )
 
@@ -444,6 +444,15 @@ match_out_treatment_exact <- matchit(
 # Store matched data for exact_cols
 cem_data_exact_treatment <- match.data(match_out_treatment_exact)
 
+# ---- AlphaFold - Exact ----
+match_out_af_exact <- matchit(
+  as.formula(paste0("af ~ ", paste0(exact_cols, collapse = " + "))),
+  data = quarterly_cem, method = "exact"
+)
+
+# Store matched data for exact_cols
+cem_data_exact_af <- match.data(match_out_af_exact)
+
 # ---- PDB Submissions - Less Strict Matching ----
 
 # quarterly_cem with no na values for the pdb_cols
@@ -454,7 +463,7 @@ quarterly_cem_pdb <- quarterly_cem %>%
 match_out_pdb <- matchit(
   as.formula(
     paste0(
-      "high_pdb_pre2021 ~ ",
+      "af ~ ",
       paste0(pdb_cols, collapse = " + ")
     )
   ),
@@ -470,13 +479,18 @@ combined_cem_data_treatment <- intersect(
   cem_data_exact_treatment$author
 )
 
+combined_cem_data_af <- intersect(
+  cem_data_coarse_af$author,
+  cem_data_exact_af$author
+)
+
 # union with af
 combined_cem_data <- union(
   combined_cem_data_treatment,
-  cem_data_coarse_af$author
+  combined_cem_data_af
 )
 
-# union with af and pdb
+# union with pdb
 combined_cem_data <- union(
   combined_cem_data,
   cem_data_pdb$author

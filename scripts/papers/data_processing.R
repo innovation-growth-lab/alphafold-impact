@@ -267,9 +267,9 @@ sub_samples <- list()
 sub_groups <- c("All PDB", "High PDB")
 unique_scopes <- c("All", "Intent") # Changed to All/Intent distinction
 unique_fields <- c(
-  "All Fields",
-  "Molecular Biology",
-  "Medicine"
+  "All Fields"
+  # "Molecular Biology",
+  # "Medicine"
 )
 
 papers <- papers %>%
