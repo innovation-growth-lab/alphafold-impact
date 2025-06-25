@@ -1,6 +1,9 @@
 """
-This is a boilerplate pipeline 'data_collection_nih_icite'
-generated using Kedro 0.19.1
+Pipeline for PubMed and iCite data collection.
+
+This pipeline handles data collection from:
+- ClinicalTrials.gov (API v2)
+- NIH iCite database (from figshare repository)
 """
 
 from .pipeline import create_pipeline

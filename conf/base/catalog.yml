@@ -115,7 +115,7 @@ oa.data_processing.structural_biology.depth.intermediate:
 
 oa.data_processing.subfield.structural_biology.primary:
   <<: *_pq
-  filepath: s3://igl-alphafold/oct/03_primary/oa/works/subfield/structural_biology/main.parquet
+  filepath: s3://igl-alphafold/2025Q1/03_primary/oa/works/subfield/structural_biology/main.parquet
 
 oa.data_processing.structural_biology.depth.other.intermediate:
   <<: *_pq
@@ -341,22 +341,6 @@ applied_lab.data_collection.institution_info.primary:
 
 # -------------------------------------------------------------
 
-foundational_lab.data_analysis.staggered.outputs.primary:
-  <<: *_pq
-  filepath: s3://igl-alphafold/oct/04_output/analysis/foundational_labs/staggered/outputs_primary.parquet
-
-foundational_lab.data_analysis.staggered.outputs.quarterly.primary:
-  <<: *_pq
-  filepath: s3://igl-alphafold/oct/04_output/analysis/foundational_labs/staggered/outputs_quarterly.parquet
-
-applied_lab.data_analysis.staggered.outputs.primary:
-  <<: *_pq
-  filepath: s3://igl-alphafold/oct/04_output/analysis/applied_labs/staggered/outputs_primary.parquet
-
-applied_lab.data_analysis.staggered.outputs.quarterly.primary:
-  <<: *_pq
-  filepath: s3://igl-alphafold/oct/04_output/analysis/applied_labs/staggered/outputs_quarterly.parquet
-
 foundational_lab.outputs.primary:
   <<: *_pq
   filepath: s3://igl-alphafold/2025Q1/04_output/analysis/foundational_labs/individual/outputs_primary.parquet
@@ -376,11 +360,11 @@ applied_lab.outputs.quarterly:
 
 ecr.candidate_authors.raw:
   <<: *_pq
-  filepath: s3://igl-alphafold/2025Q1/01_raw/ecr/candidate_authors.parquet
+  filepath: s3://igl-alphafold/oct/01_raw/ecr/candidate_authors.parquet
 
 ecr.authors.raw:
   <<: *_pq
-  filepath: s3://igl-alphafold/2025Q1/01_raw/ecr/authors.parquet
+  filepath: s3://igl-alphafold/oct/01_raw/ecr/authors.parquet
  
 ecr.publications.raw:
   <<: *_pq_ptd
@@ -392,7 +376,7 @@ nonecr.publications.raw:
 
 ecr.institutions.raw:
   <<: *_pq
-  filepath: s3://igl-alphafold/2025Q1/01_raw/ecr/institutions.parquet
+  filepath: s3://igl-alphafold/oct/01_raw/ecr/institutions.parquet
 
 ecr.publications.primary:
   <<: *_pq
@@ -408,7 +392,7 @@ nonecr.publications.primary:
 
 nonecr.publications.quarterly:
   <<: *_pq
-  filepath: s3://igl-alphafold/oct/03_primary/nonecr/publications_quarterly.parquet
+  filepath: s3://igl-alphafold/2025Q1/03_primary/nonecr/publications_quarterly.parquet
 
 # -------------------------------------------------------------
 
@@ -482,6 +466,33 @@ reach.new_data.publications:
 # -------------------------------------------------------------
 
 # Plots
+fig.counts_and_field_shares:
+  <<: *_image
+  filepath: s3://igl-alphafold/2025Q1/04_output/figures/fig_counts_and_field_shares.png
+
+fig.all_counts:
+  <<: *_image
+  filepath: s3://igl-alphafold/2025Q1/04_output/figures/fig_all_counts.png
+
+fig.researcher_counts:
+  <<: *_image
+  filepath: s3://igl-alphafold/2025Q1/04_output/figures/fig_researcher_counts.png
+
+fig.within_plots:
+  <<: *_image
+  filepath: s3://igl-alphafold/2025Q1/04_output/figures/fig_within_plots.png
+
+fig.descriptive_pp:
+  <<: *_image
+  filepath: s3://igl-alphafold/2025Q1/04_output/figures/fig_descriptive_pp.png
+
+fig.descriptive_protein_charspy:
+  <<: *_image
+  filepath: s3://igl-alphafold/2025Q1/04_output/figures/fig_descriptive_protein_charspy.png
+
+fig.descriptive_translational:
+  <<: *_image
+  filepath: s3://igl-alphafold/2025Q1/04_output/figures/fig_descriptive_translational.png
 
 fig.1:
   <<: *_image
