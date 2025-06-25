@@ -65,6 +65,11 @@ from .fnodes.fig_topics_over_time import (
     create_chart_topics_over_time as cctot,
 )
 
+from .fnodes.fig_pp_distributions import (
+    process_chart_data as pcd_pp,
+    create_distribution_chart as cdc_pp,
+)
+
 
 MAIN_TOPICS = [
     "Biochemistry, Genetics and Molecular Biology",
@@ -407,6 +412,13 @@ def generate_fig_topics_over_time(publications: pd.DataFrame) -> Image.Image:
     """Generate topics over time figure"""
     data = pdtot(publications)
     chart = cctot(data, "")
+    image = save_chart_as_image(chart)
+    return image
+
+def generate_fig_pp_distributions(publications: pd.DataFrame) -> Image.Image:
+    """Generate PP distributions figure"""
+    data = pcd_pp(publications)
+    chart = cdc_pp(data)
     image = save_chart_as_image(chart)
     return image
 

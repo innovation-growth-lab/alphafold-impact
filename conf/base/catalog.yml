@@ -522,6 +522,14 @@ fig.4combined:
   <<: *_image
   filepath: s3://igl-alphafold/2025Q1/04_output/figures/fig4combined.png
 
+fig.topics_over_time:
+  <<: *_image
+  filepath: s3://igl-alphafold/2025Q1/04_output/figures/fig_topics_over_time.png
+
+fig.pp_distributions:
+  <<: *_image
+  filepath: s3://igl-alphafold/2025Q1/04_output/figures/fig_pp_distributions.png
+
 # -------------------------------------------------------------
 
 # RDS

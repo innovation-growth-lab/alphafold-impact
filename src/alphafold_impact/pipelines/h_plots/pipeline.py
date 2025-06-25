@@ -15,7 +15,8 @@ from .nodes import (
     combined_publications_researchers_pp,
     generate_fig_descriptive_protein_charspy,
     generate_fig_descriptive_translational,
-    generate_fig_topics_over_time
+    generate_fig_topics_over_time,
+    generate_fig_pp_distributions,
 )
 
 
@@ -104,6 +105,12 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                 inputs={"publications": "publications.data.outputs"},
                 outputs="fig.topics_over_time",
                 name="generate_fig_topics_over_time",
+            ),
+            node(
+                func=generate_fig_pp_distributions,
+                inputs={"publications": "publications.data.outputs"},
+                outputs="fig.pp_distributions",
+                name="generate_fig_pp_distributions",
             ),
         ]
     )
