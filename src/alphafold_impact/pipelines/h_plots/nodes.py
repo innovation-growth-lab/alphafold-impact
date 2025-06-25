@@ -60,6 +60,11 @@ from .fnodes.fig_descriptive_translational import (
     process_and_create_charts as pcc_trans,
 )
 
+from .fnodes.fig_topics_over_time import (
+    preprocess_data_topics_over_time as pdtot,
+    create_chart_topics_over_time as cctot,
+)
+
 
 MAIN_TOPICS = [
     "Biochemistry, Genetics and Molecular Biology",
@@ -125,6 +130,13 @@ def igl_style() -> alt.theme.ThemeConfig:
                     "#33C1B5",  # Green
                     "#FBC854",  # Yellow
                     "#7B4FA3",  # Purple
+                    "#FF6B9D",  # Pink
+                    "#A8E6CF",  # Light Green
+                    "#FFD93D",  # Bright Yellow
+                    "#6BCF7F",  # Medium Green
+                    "#B4A7D6",  # Light Purple
+                    "#FFB347",  # Orange
+                    "#87CEEB",  # Sky Blue
                 ],
                 "stroke": [
                     "#FF5836",  # Intense Red
@@ -132,6 +144,13 @@ def igl_style() -> alt.theme.ThemeConfig:
                     "#00B2A2",  # Intense Green
                     "#FAB61B",  # Intense Yellow
                     "#7B4FA3",  # Purple
+                    "#E91E63",  # Intense Pink
+                    "#4CAF50",  # Intense Green
+                    "#FFC107",  # Intense Yellow
+                    "#8BC34A",  # Intense Light Green
+                    "#9C27B0",  # Intense Purple
+                    "#FF9800",  # Intense Orange
+                    "#2196F3",  # Intense Blue
                 ],
             },
         }
@@ -257,6 +276,9 @@ def generate_fig_researcher_counts(  # pylint: disable=R0914
     # sort by publication date
     authors = authors.sort_values("publication_date")
 
+    # cumsum as int
+    authors["cumsum"] = authors["cumsum"].astype(int)
+
     chart = cc6(authors)
 
     image = save_chart_as_image(chart)
@@ -379,6 +401,13 @@ def generate_fig_descriptive_translational(
 
     image = save_chart_as_image(chart)
 
+    return image
+
+def generate_fig_topics_over_time(publications: pd.DataFrame) -> Image.Image:
+    """Generate topics over time figure"""
+    data = pdtot(publications)
+    chart = cctot(data, "")
+    image = save_chart_as_image(chart)
     return image
 
 

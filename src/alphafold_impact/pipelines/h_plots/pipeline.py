@@ -14,7 +14,8 @@ from .nodes import (
     plot_regression_results,
     combined_publications_researchers_pp,
     generate_fig_descriptive_protein_charspy,
-    generate_fig_descriptive_translational
+    generate_fig_descriptive_translational,
+    generate_fig_topics_over_time
 )
 
 
@@ -98,24 +99,12 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                 outputs="regression_results",
                 name="plot_regression_results",
             ),
-            # node(
-            #     func=generate_researcher_charts,
-            #     inputs={
-            #         "ecrs": "ecr.publications.quarterly",
-            #         "researchers": "nonecr.publications.quarterly"
-            #     },
-            #     outputs="fig.4",
-            #     name="generate_researcher_charts",
-            # ),
-            # node(
-            #     func=generate_publication_charts,
-            #     inputs={
-            #         "publications": "publications.data.outputs",
-            #     },
-            #     outputs="fig.5",
-            #     name="generate_publication_charts",
-            # ),
-
+            node(
+                func=generate_fig_topics_over_time,
+                inputs={"publications": "publications.data.outputs"},
+                outputs="fig.topics_over_time",
+                name="generate_fig_topics_over_time",
+            ),
         ]
     )
 

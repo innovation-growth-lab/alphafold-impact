@@ -46,12 +46,14 @@ def igl_style() -> alt.theme.ThemeConfig:
                     "#3C82DC",  # Blue
                     "#33C1B5",  # Green
                     "#FBC854",  # Yellow
+                    "#7B4FA3",  # Purple
                 ],
                 "stroke": [
                     "#FF5836",  # Intense Red
                     "#1F5DAD",  # Intense Blue
                     "#00B2A2",  # Intense Green
                     "#FAB61B",  # Intense Yellow
+                    "#7B4FA3",  # Purple
                 ],
             },
         }

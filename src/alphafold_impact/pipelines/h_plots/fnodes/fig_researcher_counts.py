@@ -17,18 +17,50 @@ SOURCE_LABELS = {
 
 def create_monthly_author_counts(filtered_publications: pd.DataFrame) -> pd.DataFrame:
     """create cumulative counts of authors by month, colour by source, and
-    have Adjacent and Downstream side-by-side.."""
+    have Adjacent and Downstream side-by-side. Counts are weighted by the
+    proportion of strong users per source-and-type combination."""
 
     filtered_publications = filtered_publications.explode("author")
     unique_authors = filtered_publications.sort_values(
         "publication_date"
     ).drop_duplicates(subset=["author"], keep="first")
 
+    # Calculate strong user proportions per source-and-type combination
+    # First, we need to identify the source for each author
+    # Assuming there's a 'source' column in the data
+    strong_proportions = (
+        unique_authors.groupby(["adjacent", "downstream"])
+        .agg({"strong": "sum", "weak": "sum"})  # Total strong users  # Total weak users
+        .reset_index()
+    )
+
+    # Calculate proportion of strong users: strong / (strong + weak)
+    strong_proportions["strong_proportion"] = strong_proportions["strong"] / (
+        strong_proportions["strong"] + strong_proportions["weak"]
+    )
+
+    # Handle division by zero (set to 0 if no users)
+    strong_proportions["strong_proportion"] = strong_proportions[
+        "strong_proportion"
+    ].fillna(0)
+
     # create monthly counts
     monthly_counts = (
-        unique_authors.groupby(["year", "month", "adjacent", "downstream"])
+        unique_authors.groupby(["year", "month", "adjacent", "downstream", "source"])
         .size()
         .reset_index(name="count")
+    )
+
+    # Merge with strong proportions
+    monthly_counts = monthly_counts.merge(
+        strong_proportions[["adjacent", "downstream", "strong_proportion"]],
+        on=["adjacent", "downstream"],
+        how="left",
+    )
+
+    # Apply strong user proportion weighting to counts
+    monthly_counts["count"] = (
+        monthly_counts["count"] * monthly_counts["strong_proportion"]
     )
 
     normalised_counts = normalise_january_counts(monthly_counts)
@@ -45,7 +77,10 @@ def create_monthly_author_counts(filtered_publications: pd.DataFrame) -> pd.Data
     normalised_counts = normalised_counts.sort_values("publication_date")
 
     # calculate cumsums
-    normalised_counts["cumsum"] = normalised_counts.groupby(["type"])["count"].cumsum()
+    normalised_counts["cumsum"] = normalised_counts.groupby(["type", "source"])["count"].cumsum()
+
+    # drop strong-proportion column
+    normalised_counts = normalised_counts.drop(columns=["strong_proportion"])
 
     return normalised_counts
 
