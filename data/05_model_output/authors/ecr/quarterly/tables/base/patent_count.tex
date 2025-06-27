@@ -1,24 +1,40 @@
 \begingroup
 \centering
-\begin{tabular}{lc}
+\begin{tabular}{lcc}
    \tabularnewline \midrule \midrule
-   Dependent Variable: & patent\_count\\   
+   Dependent Variable: & \multicolumn{2}{c}{patent\_count}\\
  & \multicolumn{3}{c}{All Authors} & \multicolumn{3}{c}{Experienced Authors} \\
 \cmidrule(lr){2-4} \cmidrule(lr){5-7}
  & \multicolumn{1}{c}{All} & \multicolumn{2}{c}{With Intent Data} & \multicolumn{1}{c}{All} & \multicolumn{2}{c}{With Intent Data} \\
 \cmidrule(lr){2-2} \cmidrule(lr){3-4} \cmidrule(lr){5-5} \cmidrule(lr){6-7}
  & \multicolumn{6}{c}{\textit{All Fields}} \\ \\
-   AlphaFold           & 0.264\\   
-                       & (0.317)\\   
-   AI Frontier         & 0.906$^{***}$\\   
-                       & (0.292)\\   
-   PP Frontier         & 0.113\\   
-                       & (0.305)\\   
-   SB Frontier         & 0.394\\   
-                       & (0.372)\\   
+   AlphaFold            & 0.669   &   \\   
+                        & (0.499) &   \\   
+   AlphaFold - Method   &         & 0.011\\   
+                        &         & (0.351)\\   
+   AlphaFold - Bkg.     &         & 1.08\\   
+                        &         & (0.664)\\   
+   AI Frontier          & 0.521   &   \\   
+                        & (0.550) &   \\   
+   AI Frontier - Method &         & 0.150\\   
+                        &         & (0.667)\\   
+   AI Frontier - Bkg.   &         & 0.625\\   
+                        &         & (0.610)\\   
+   PP Frontier          & -0.333  &   \\   
+                        & (0.565) &   \\   
+   PP Frontier - Method &         & -1.13\\   
+                        &         & (1.26)\\   
+   PP Frontier - Bkg.   &         & 0.161\\   
+                        &         & (0.443)\\   
+   SB Frontier          & -0.355  &   \\   
+                        & (0.845) &   \\   
+   SB Frontier - Method &         & -12.8$^{***}$\\   
+                        &         & (0.270)\\   
+   SB Frontier - Bkg.   &         & -0.173\\   
+                        &         & (0.799)\\   
    \midrule
    \emph{Fit statistics}\\
-   Observations        & 4,281\\  
-   Pseudo R$^2$        & 0.33\\  
-Mean(Dep. Var.) & 0.292 \\
+   Observations         & 1,804   & 1,804\\  
+   Pseudo R$^2$         & 0.39    & 0.39\\  
+Mean(Dep. Var.) & 0.368 & 0.368 \\
    

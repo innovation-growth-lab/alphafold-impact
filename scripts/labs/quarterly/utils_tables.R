@@ -78,6 +78,9 @@ table_info <- list(
   "normalised_max_score" = list(
     file_name = "normalised_max_score.tex"
   ),
+  "ln1p_maxtmscore_lt_0.405" = list(
+    file_name = "ln1p_maxtmscore_lt_0.405.tex"
+  ),
 
   "num_uniprot_structures_w_disease" = list(
     file_name = "num_uniprot_structures_w_disease.tex"

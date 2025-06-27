@@ -68,6 +68,7 @@ from .fnodes.fig_topics_over_time import (
 from .fnodes.fig_pp_distributions import (
     process_chart_data as pcd_pp,
     create_distribution_chart as cdc_pp,
+    save_ridgeline_chart_as_image,
 )
 
 
@@ -408,6 +409,7 @@ def generate_fig_descriptive_translational(
 
     return image
 
+
 def generate_fig_topics_over_time(publications: pd.DataFrame) -> Image.Image:
     """Generate topics over time figure"""
     data = pdtot(publications)
@@ -415,11 +417,12 @@ def generate_fig_topics_over_time(publications: pd.DataFrame) -> Image.Image:
     image = save_chart_as_image(chart)
     return image
 
+
 def generate_fig_pp_distributions(publications: pd.DataFrame) -> Image.Image:
     """Generate PP distributions figure"""
     data = pcd_pp(publications)
     chart = cdc_pp(data)
-    image = save_chart_as_image(chart)
+    image = save_ridgeline_chart_as_image(chart)
     return image
 
 

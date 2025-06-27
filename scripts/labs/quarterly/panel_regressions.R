@@ -43,6 +43,12 @@ sub_samples <- readRDS(paste0(pathdir, "data/sub_samples.rds"))
 # DATA PREPARATION
 # ------------------------------------------------------------------------------
 
+# create boolean for whether ln1p_max_tmscore is smaller than 0.405 across sub-samples
+sub_samples <- lapply(sub_samples, function(x) {
+  x$ln1p_maxtmscore_lt_0.405 <- x$ln1p_max_tmscore < 0.405
+  x
+})
+
 field_cols <- grep("^field_", names(sub_samples[[1]]), value = TRUE)
 mesh_cols <- grep("^mesh_", names(sub_samples[[1]]), value = TRUE)
 
@@ -86,7 +92,8 @@ dep_vars <- c(
   "num_uniprot_structures_w_rare_organisms",
   "num_primary_submissions_w_rare_organisms",
   "num_uniprot_structures_w_low_similarity",
-  "num_primary_submissions_w_low_similarity"
+  "num_primary_submissions_w_low_similarity",
+  "ln1p_maxtmscore_lt_0.405"
 )
 
 # Define base treatment vars that exist in all samples
@@ -286,7 +293,8 @@ for (dep_var in dep_vars) { # nolint
         "num_uniprot_structures_w_rare_organisms",
         "num_primary_submissions_w_rare_organisms",
         "num_uniprot_structures_w_low_similarity",
-        "num_primary_submissions_w_low_similarity"
+        "num_primary_submissions_w_low_similarity",
+        "ln1p_maxtmscore_lt_0.405"
       )) {
         # PDB not updated for 2025.
         local_data <- local_data[local_data$year < 2025, ]
@@ -320,7 +328,7 @@ for (dep_var in dep_vars) { # nolint
         next
       }
 
-      # run the regression as linear, but make exceptions for counts
+      # run the regression as linear, but make exceptions for counts and binary variables
       # so actually once you drop enough, you can get a rough 25% increase, similar to the linear reg. #nolint
       # the main thing is, using ln is odd because it assumes continuous variables and far from zero values #nolint
       if (dep_var %in% c(
@@ -347,6 +355,43 @@ for (dep_var in dep_vars) { # nolint
             model <- fepois(
               form_list[[form]],
               data = local_data,
+              cluster = c("author", "quarter"),
+              fixef.iter = 250,
+              nthreads = 1,
+              lean = FALSE,
+              mem.clean = TRUE
+            )
+
+            # Check if model converged by looking at convergence code
+            if (!model$convStatus) {
+              message("Model did not converge, using fallback model")
+              feols(as.formula(paste(dep_var, "~ 1")), data = local_data)
+            } else {
+              model
+            }
+          },
+          error = function(e) {
+            message(
+              "Error in regression: ", regression_label, " - ", e$message
+            )
+            return(
+              feols(as.formula(paste(dep_var, "~ 1")), data = local_data)
+            )
+          }
+        )
+      } else if (dep_var %in% c("ln1p_maxtmscore_lt_0.405")) {
+        message("Running Logistic regression")
+        results[[regression_label]] <- tryCatch(
+          {
+            # Apply the collinearity fix function before running the regression
+            local_data <- fix_perfect_collinearity(
+              local_data, fes[["fe1"]], dep_var
+            )
+
+            model <- feglm(
+              form_list[[form]],
+              data = local_data,
+              family = binomial(link = "logit"),
               cluster = c("author", "quarter"),
               fixef.iter = 250,
               nthreads = 1,

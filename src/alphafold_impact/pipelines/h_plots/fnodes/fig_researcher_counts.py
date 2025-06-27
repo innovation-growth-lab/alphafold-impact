@@ -22,7 +22,7 @@ def create_monthly_author_counts(filtered_publications: pd.DataFrame) -> pd.Data
 
     filtered_publications = filtered_publications.explode("author")
     unique_authors = filtered_publications.sort_values(
-        "publication_date"
+        ["strong", "weak", "publication_date"], ascending=[False, True, True]
     ).drop_duplicates(subset=["author"], keep="first")
 
     # Calculate strong user proportions per source-and-type combination
@@ -77,7 +77,9 @@ def create_monthly_author_counts(filtered_publications: pd.DataFrame) -> pd.Data
     normalised_counts = normalised_counts.sort_values("publication_date")
 
     # calculate cumsums
-    normalised_counts["cumsum"] = normalised_counts.groupby(["type", "source"])["count"].cumsum()
+    normalised_counts["cumsum"] = normalised_counts.groupby(["type", "source"])[
+        "count"
+    ].cumsum()
 
     # drop strong-proportion column
     normalised_counts = normalised_counts.drop(columns=["strong_proportion"])

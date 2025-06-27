@@ -195,6 +195,14 @@ def save_chart_as_image(chart: alt.Chart) -> Image.Image:
     image = Image.open(BytesIO(png_bytes))
     return image
 
+def save_chart_as_image_vega(chart: alt.Chart) -> Image.Image:
+    """Convert an Altair chart to a Pillow Image object."""
+    png_bytes = vlc.vegalite_to_png(  # pylint: disable=no-member
+        chart.to_json(format="vega"), scale=3
+    )
+    image = Image.open(BytesIO(png_bytes))
+    return image
+
 
 def normalise_january_counts(monthly_counts: pd.DataFrame):
     """Normalise January counts in the input DataFrame, avoiding negative values."""

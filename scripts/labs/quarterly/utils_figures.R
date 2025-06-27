@@ -120,7 +120,8 @@ dep_var_labels <- c(
   "num_uniprot_structures_w_rare_organisms" = "Uniprot structures with rare organisms", # nolint
   "num_primary_submissions_w_rare_organisms" = "Primary submissions with rare organisms", # nolint
   "num_uniprot_structures_w_low_similarity" = "Uniprot structures with low similarity", # nolint
-  "num_primary_submissions_w_low_similarity" = "Primary submissions with low similarity" # nolint
+  "num_primary_submissions_w_low_similarity" = "Primary submissions with low similarity", # nolint
+  "ln1p_maxtmscore_lt_0.405" = "Max TM-score < 0.5"
 )
 
 coef_labels <- c(

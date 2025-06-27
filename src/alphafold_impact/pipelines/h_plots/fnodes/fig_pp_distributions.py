@@ -5,6 +5,9 @@ This module contains the code to create the distribution charts for the PP nodes
 import pandas as pd
 import numpy as np
 import altair as alt
+import vl_convert as vlc
+from PIL import Image
+from io import BytesIO
 
 alt.data_transformers.enable("vegafusion")
 
@@ -153,7 +156,7 @@ def process_chart_data(publications: pd.DataFrame) -> pd.DataFrame:
 
 
 def create_distribution_chart(
-    data: pd.DataFrame, title: str = "Score Distributions by Source"
+    data: pd.DataFrame, title: str = ""
 ) -> alt.Chart:
     """Create modern ridgeline plots for max_tmscore, max_fident, and max_score by source."""
     # Map source codes to human-readable labels for plotting
@@ -238,3 +241,35 @@ def create_distribution_chart(
     )
 
     return combined_chart
+
+
+def save_ridgeline_chart_as_image(chart: alt.Chart) -> Image.Image:
+    """Convert a complex ridgeline chart to a Pillow Image object with proper Vega handling."""
+    try:
+        # First try with Vega format (required by vegafusion)
+        vega_spec = chart.to_dict(format="vega")
+        png_bytes = vlc.vega_to_png(vega_spec, scale=3)  # Use vega_to_png instead
+        image = Image.open(BytesIO(png_bytes))
+        return image
+    except Exception as e:
+        # If Vega conversion fails, temporarily disable vegafusion and use VegaLite
+        print(f"Vega conversion failed: {e}")
+        print("Falling back to VegaLite format...")
+
+        # Temporarily disable vegafusion
+        alt.data_transformers.disable_max_rows()
+        alt.data_transformers.enable("default")
+
+        try:
+            vegalite_spec = chart.to_dict()
+            png_bytes = vlc.vegalite_to_png(vegalite_spec, scale=3)
+            image = Image.open(BytesIO(png_bytes))
+
+            # Re-enable vegafusion
+            alt.data_transformers.enable("vegafusion")
+            return image
+        except Exception as fallback_error:
+            print(f"VegaLite fallback also failed: {fallback_error}")
+            # Re-enable vegafusion even if fallback fails
+            alt.data_transformers.enable("vegafusion")
+            raise

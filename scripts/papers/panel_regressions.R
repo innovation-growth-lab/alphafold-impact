@@ -44,10 +44,12 @@ sub_samples <- readRDS(paste0(pathdir, "data/sub_samples.rds"))
 # ------------------------------------------------------------------------------
 
 field_cols <- grep("^field_", names(sub_samples[[1]]), value = TRUE)
+mesh_cols <- grep("^mesh_", names(sub_samples[[1]]), value = TRUE)
 
 covs <- list()
 covs[["base0"]] <- c(
-  field_cols
+  field_cols,
+  mesh_cols
 )
 
 fes <- list()
@@ -245,7 +247,8 @@ for (dep_var in dep_vars) { # nolint
         "num_uniprot_structures_w_rare_organisms",
         "num_primary_submissions_w_rare_organisms",
         "num_uniprot_structures_w_low_similarity",
-        "num_primary_submissions_w_low_similarity"
+        "num_primary_submissions_w_low_similarity",
+        "ln1p_maxtmscore_lt_0.405"
       )) {
         # PDB not updated for 2025.
         local_data <- local_data[local_data$year < 2025, ]
@@ -310,6 +313,43 @@ for (dep_var in dep_vars) { # nolint
               lean = FALSE,
               mem.clean = TRUE
             )
+            # Check if model converged by looking at convergence code
+            if (!model$convStatus) {
+              message("Model did not converge, using fallback model")
+              feols(as.formula(paste(dep_var, "~ 1")), data = local_data)
+            } else {
+              model
+            }
+          },
+          error = function(e) {
+            message(
+              "Error in regression: ", regression_label, " - ", e$message
+            )
+            return(
+              feols(as.formula(paste(dep_var, "~ 1")), data = local_data)
+            )
+          }
+        )
+      } else if (dep_var %in% c("ln1p_maxtmscore_lt_0.405")) {
+        message("Running Logistic regression")
+        results[[regression_label]] <- tryCatch(
+          {
+            # Apply the collinearity fix function before running the regression
+            local_data <- fix_perfect_collinearity(
+              local_data, fes[["fe1"]], dep_var
+            )
+
+            model <- feglm(
+              form_list[[form]],
+              data = local_data,
+              family = binomial(link = "logit"),
+              cluster = c("author", "quarter"),
+              fixef.iter = 250,
+              nthreads = 1,
+              lean = FALSE,
+              mem.clean = TRUE
+            )
+
 
             # Check if model converged by looking at convergence code
             if (!model$convStatus) {

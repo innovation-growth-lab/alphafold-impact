@@ -12,7 +12,7 @@ options(width = 250)
 # Define the paths containing the RDS files and their origins
 base_paths <- list(
   nonecr = "data/05_model_output/authors/nonecr/quarterly/coef_tables/",
-  # ecr = "data/05_model_output/authors/ecr/quarterly/coef_tables/",
+  ecr = "data/05_model_output/authors/ecr/quarterly/coef_tables/",
   labs = "data/05_model_output/labs/quarterly/coef_tables/",
   papers = "data/05_model_output/papers/coef_tables/" # nolint
 )
@@ -111,7 +111,8 @@ dep_var_labels <- c(
   "num_uniprot_structures_w_rare_organisms" = "UniProt Structures / Rare Organisms", # nolint
   "num_primary_submissions_w_rare_organisms" = "Primary PDB Submissions / Rare Organisms", # nolint
   "num_uniprot_structures_w_low_similarity" = "UniProt Structures / Low Similarity", # nolint
-  "num_primary_submissions_w_low_similarity" = "Primary PDB Submissions / Low Similarity" # nolint
+  "num_primary_submissions_w_low_similarity" = "Primary PDB Submissions / Low Similarity", # nolint
+  "ln1p_maxtmscore_lt_0.405" = "Max TM-score < 0.5"
 )
 
 # Updated coefficient labels with new naming
@@ -164,14 +165,15 @@ field_order <- c(
 )
 
 # Updated observation order - removing ecr
-observation_order <- c("papers", "nonecr", "labs")
+observation_order <- c("papers", "nonecr", "ecr", "labs")
 
 grouped_observation_order <- c("papers", "nonecr", "labs", "ecr")
 
 observation_labels <- c(
   "papers" = "Citing Papers",
   "labs" = "Laboratories",
-  "nonecr" = "Researchers"
+  "nonecr" = "Researchers",
+  "ecr" = "Early Career Researchers"
 )
 
 grouped_observation_labels <- c(
@@ -296,7 +298,7 @@ generate_core_coef_plots <- function(coef_table) { # nolint
           ) + # nolint
           scale_x_continuous(breaks = scales::pretty_breaks(n = 3)) +
           labs( # nolint
-            title = paste("Dependent Variable:", single_dep_var, " | ", field, " | ", scopesubgroup), # nolint
+            title = paste("Dependent Variable:", single_dep_var), # nolint
             x = "Estimate (with 95% CI)",
             y = "Coefficient Variable"
           ) +
@@ -346,10 +348,14 @@ generate_core_coef_plots <- function(coef_table) { # nolint
         )
         plot_height <- n_y_facet_rows * 4.5 # nolint
 
+        # Calculate width based on number of source_origin facets
+        n_source_facets <- length(unique(field_subgroup_coef_plot_data$source_origin))
+        plot_width <- n_source_facets * 4.5 # 4.5 units per facet
+
         ggsave( # nolint
           outfile, # nolint
           coeffplot,
-          width = 14,
+          width = plot_width,
           height = plot_height,
           dpi = 300
         )
@@ -378,10 +384,24 @@ generate_strong_coef_plots <- function(coef_table) { # nolint
     )
 
   for (single_dep_var in unique_dep_vars) {
+    # For specific variables, filter source origins
+    if (single_dep_var == "Number of Publications") {
+      allowed_sources <- c("nonecr", "labs")
+    } else if (single_dep_var %in% c(
+      "Number of Citations Received",
+      "Field-Weighted Citation Impact (log-scale)",
+      "Number of Clinical Article Citations",
+      "Number of Patent-Paper Citations"
+    )) {
+      allowed_sources <- c("papers", "nonecr", "labs")
+    } else {
+      allowed_sources <- names(observation_labels)
+    }
+
     coef_plot_data <- coef_table %>% # nolint
       filter(
         treat_var %in% strong_coef_vars, # nolint
-        source_origin %in% names(observation_labels), # nolint
+        source_origin %in% allowed_sources, # nolint
         dep_var == single_dep_var # nolint
       ) %>%
       mutate( # nolint
@@ -464,7 +484,7 @@ generate_strong_coef_plots <- function(coef_table) { # nolint
           ) + # nolint
           scale_x_continuous(breaks = scales::pretty_breaks(n = 3)) +
           labs( # nolint
-            title = paste("Dependent Variable:", single_dep_var, " | ", field), # nolint
+            title = paste("Dependent Variable:", single_dep_var), # nolint
             x = "Estimate (with 95% CI)",
             y = "Coefficient Variable"
           ) +
@@ -514,10 +534,14 @@ generate_strong_coef_plots <- function(coef_table) { # nolint
         )
         plot_height <- n_y_facet_rows * 4.5 # nolint
 
+        # Calculate width based on number of source_origin facets
+        n_source_facets <- length(unique(field_subgroup_coef_plot_data$source_origin))
+        plot_width <- n_source_facets * 4.5 # 4.5 units per facet
+
         ggsave( # nolint
           outfile, # nolint
           coeffplot,
-          width = 14,
+          width = plot_width,
           height = plot_height,
           dpi = 300
         )
@@ -889,8 +913,8 @@ generate_grouped_strong_coef_plots <- function(coef_table) {
       n_deps <- length(unique(source_data$dep_var))
       n_cols <- 3
       n_rows <- ceiling(n_deps / n_cols)
-      plot_height <- max(12, n_rows * 4) # Increased base height
-      plot_width <- min(24, n_cols * 8) # Increased base width
+      plot_height <- max(16, n_rows * 6) # Increased base height
+      plot_width <- min(30, n_cols * 10) # Increased base width
 
       ggsave(
         outfile,

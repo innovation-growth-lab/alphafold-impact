@@ -629,7 +629,7 @@ colnames(matched_data) <- gsub(",", "", colnames(matched_data))
 # Define sub_samples as a list of samples
 sub_samples <- list()
 sub_groups <- c("All PDB")
-unique_scopes <- c("All")#, "Intent") # Changed to All/Intent distinction
+unique_scopes <- c("All", "Intent") # Changed to All/Intent distinction
 unique_fields <- c(
   "All Fields"
 )

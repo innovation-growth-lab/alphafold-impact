@@ -50,6 +50,7 @@ treatments <- c("af")# , "ct_ai", "ct_pp", "ct_sb")
 
 # Full list of dependent variables as defined in panel_regressions.R
 panel_dep_vars <- c(
+  "num_publications",
   "ln1p_fwci",
   "cited_by_count",
   "ln1p_mesh_C",
