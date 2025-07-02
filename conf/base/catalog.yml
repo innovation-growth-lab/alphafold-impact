@@ -285,59 +285,59 @@ publications.regression.inputs:
 
 foundational_lab.data_collection.candidates.publications.intermediate:
   <<: *_js_ptd
-  path: s3://igl-alphafold/2025Q1/02_intermediate/oa/foundational_labs/candidate_publications/
+  path: s3://igl-alphafold/2025Q2/02_intermediate/oa/foundational_labs/candidate_publications/
 
 foundational_lab.data_collection.candidates.scores.intermediate:
   <<: *_pq_ptd
-  path: s3://igl-alphafold/2025Q1/02_intermediate/oa/foundational_labs/scores/
+  path: s3://igl-alphafold/2025Q2/02_intermediate/oa/foundational_labs/scores/
 
 foundational_lab.data_collection.candidates.scores.primary:
   <<: *_pq
-  filepath: s3://igl-alphafold/2025Q1/03_primary/oa/foundational_labs/main_scores.parquet
+  filepath: s3://igl-alphafold/2025Q2/03_primary/oa/foundational_labs/main_scores.parquet
 
 foundational_lab.data_collection.assignment.primary:
   <<: *_pq
-  filepath: s3://igl-alphafold/oct/03_primary/oa/foundational_labs/assignments.parquet
+  filepath: s3://igl-alphafold/2025Q2/03_primary/oa/foundational_labs/assignments.parquet
 
 foundational_lab.data_collection.publications.raw:
   <<: *_pq_ptd
-  path: s3://igl-alphafold/2025Q1/01_raw/oa/foundational_labs/publications/
+  path: s3://igl-alphafold/2025Q2/01_raw/oa/foundational_labs/publications/
 
 foundational_lab.data_collection.candidates.map:
   <<: *_pq
-  filepath: s3://igl-alphafold/2025Q1/02_intermediate/oa/foundational_labs/candidates_map.parquet
+  filepath: s3://igl-alphafold/2025Q2/02_intermediate/oa/foundational_labs/candidates_map.parquet
 
 foundational_lab.data_collection.institution_info.primary:
   <<: *_pq
-  filepath: s3://igl-alphafold/2025Q1/03_primary/oa/foundational_labs/institution_info.parquet
+  filepath: s3://igl-alphafold/2025Q2/03_primary/oa/foundational_labs/institution_info.parquet
 
 applied_lab.data_collection.candidates.publications.intermediate:
   <<: *_js_ptd
-  path: s3://igl-alphafold/2025Q1/02_intermediate/oa/applied_labs/candidate_publications/
+  path: s3://igl-alphafold/2025Q2/02_intermediate/oa/applied_labs/candidate_publications/
 
 applied_lab.data_collection.candidates.scores.intermediate:
   <<: *_pq_ptd
-  path: s3://igl-alphafold/2025Q1/02_intermediate/oa/applied_labs/scores/
+  path: s3://igl-alphafold/2025Q2/02_intermediate/oa/applied_labs/scores/
 
 applied_lab.data_collection.candidates.scores.primary:
   <<: *_pq
-  filepath: s3://igl-alphafold/2025Q1/03_primary/oa/applied_labs/main_scores.parquet
+  filepath: s3://igl-alphafold/2025Q2/03_primary/oa/applied_labs/main_scores.parquet
 
 applied_lab.data_collection.assignment.primary:
   <<: *_pq
-  filepath: s3://igl-alphafold/oct/03_primary/oa/applied_labs/assignments.parquet
+  filepath: s3://igl-alphafold/2025Q2/03_primary/oa/applied_labs/assignments.parquet
 
 applied_lab.data_collection.publications.raw:
   <<: *_pq_ptd
-  path: s3://igl-alphafold/2025Q1/01_raw/oa/applied_labs/publications/
+  path: s3://igl-alphafold/2025Q2/01_raw/oa/applied_labs/publications/
 
 applied_lab.data_collection.candidates.map:
   <<: *_pq
-  filepath: s3://igl-alphafold/2025Q1/02_intermediate/oa/applied_labs/candidates_map.parquet
+  filepath: s3://igl-alphafold/2025Q2/02_intermediate/oa/applied_labs/candidates_map.parquet
 
 applied_lab.data_collection.institution_info.primary:
   <<: *_pq
-  filepath: s3://igl-alphafold/2025Q1/03_primary/oa/applied_labs/institution_info.parquet
+  filepath: s3://igl-alphafold/2025Q2/03_primary/oa/applied_labs/institution_info.parquet
 
 # -------------------------------------------------------------
 
