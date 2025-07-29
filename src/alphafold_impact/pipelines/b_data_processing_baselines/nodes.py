@@ -180,9 +180,9 @@ def process_baseline_data(
         lambda x: any("C154945302" in sublist[0] for sublist in x)
     )
 
-    # select only if parent_publication_date >= 2017-01-01 and <= 2022-06-15
+    # select only if parent_publication_date >= 2017-12-01 and <= 2022-06-15
     processed_data = processed_data[
-        (processed_data["parent_publication_date"] >= "2017-01-01")
+        (processed_data["parent_publication_date"] >= "2017-12-01")
         & (processed_data["parent_publication_date"] <= "2022-06-15")
     ]
 
