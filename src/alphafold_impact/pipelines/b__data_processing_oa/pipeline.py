@@ -51,7 +51,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
             )
             for level in settings.DYNAMIC_PIPELINES_MAPPING["depth_levels"]
         ],
-        tags=["data_processing_oa", "Q1"],
+        tags=["data_processing_oa", "step_2"],
     )
 
     # STEP 2B: Combine AlphaFold levels for processing
@@ -70,7 +70,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 name="combine_af_levels",
             )
         ],
-        tags=["data_processing_oa", "Q1"],
+        tags=["data_processing_oa", "step_2"],
     )
 
     # STEP 2C: Process structural biology baseline data
@@ -85,7 +85,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 name="process_sb",
             )
         ],
-        tags=["data_processing_oa"],
+        tags=["data_processing_oa", "step_2"],
     )
 
     # STEP 2D: Process baseline level 0 data
@@ -103,7 +103,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 name="process_sb_level_0",
             )
         ],
-        tags=["data_processing_oa"],
+        tags=["data_processing_oa", "step_2"],
     )
 
     # STEP 2E: Process baseline level 1 data (large dataset, requires partitioning)
@@ -129,9 +129,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 name="concatenate_sb_partitioned",
             ),
         ],
-        tags=[
-            "data_processing_oa",
-        ],
+        tags=["data_processing_oa", "step_2"],
     )
 
     # STEP 2F: Combine baseline levels and split into counterfactual vs other papers
@@ -162,7 +160,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 name="extract_ct_sb_levels",
             ),
         ],
-        tags=["reassign_ct_levels", "ct_collection"],
+        tags=["reassign_ct_levels", "ct_collection", "step_2"],
     )
 
     # STEP 5: Process additional CT data (runs AFTER a_data_collection_oa collects more data)
