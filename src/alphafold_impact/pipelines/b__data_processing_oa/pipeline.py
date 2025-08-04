@@ -129,7 +129,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 name="concatenate_sb_partitioned",
             ),
         ],
-        tags=["data_processing_oa"], #, "step_2", "step_2_complete"],
+        tags=["data_processing_oa", "step_2", "step_2_complete"],
     )
 
     # STEP 2F: Combine baseline levels and split into counterfactual vs other papers

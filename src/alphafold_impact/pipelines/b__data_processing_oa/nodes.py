@@ -100,31 +100,25 @@ def _json_loader(
             )
         )
 
-        # keep only a list of tuples with "descriptor_ui" and "descriptor_name" for each
+        # keep only pipe-delimited string with "descriptor_ui,descriptor_name" for each
         df["mesh_terms"] = df["mesh_terms"].apply(
             lambda x: (
-                [(c["descriptor_ui"], c["descriptor_name"]) for c in x] if x else None
+                "|".join([f"{c['descriptor_ui']},{c['descriptor_name']}" for c in x])
+                if x
+                else None
             )
         )
 
-        # break atuhorship nested dictionary jsons, create triplets of authorship
+        # break authorship nested dictionary jsons, create pipe-delimited string of authorship triplets
         df["authorships"] = df["authorships"].apply(
             lambda x: (
-                [
-                    (
-                        (
-                            author["author"]["id"].replace("https://openalex.org/", ""),
-                            (
-                                inst["id"].replace("https://openalex.org/", "")
-                                if inst
-                                else None
-                            ),
-                            author["author_position"],
-                        )
-                    )
-                    for author in x
-                    for inst in author["institutions"] or [{}]
-                ]
+                "|".join(
+                    [
+                        f"{author['author']['id'].replace('https://openalex.org/', '')},{inst['id'].replace('https://openalex.org/', '') if inst else ''},{author['author_position']}"
+                        for author in x
+                        for inst in author["institutions"] or [{}]
+                    ]
+                )
                 if x
                 else None
             )
@@ -133,39 +127,29 @@ def _json_loader(
         # change doi to remove the url
         df["doi"] = df["doi"].str.replace("https://doi.org/", "")
 
-        # create a list of topics
+        # create a pipe-delimited string of topics (topic_id,subfield_id,field_id,domain_id)
         df["topics"] = df["topics"].apply(
             lambda x: (
-                [
-                    (
-                        int(topic["id"].replace("https://openalex.org/T", "")),
-                        int(
-                            topic["subfield"]["id"].replace(
-                                "https://openalex.org/subfields/", ""
-                            )
-                        ),
-                        int(
-                            topic["field"]["id"].replace(
-                                "https://openalex.org/fields/", ""
-                            )
-                        ),
-                        int(
-                            topic["domain"]["id"].replace(
-                                "https://openalex.org/domains/", ""
-                            )
-                        ),
-                    )
-                    for topic in x
-                ]
+                "|".join(
+                    [
+                        f"{int(topic['id'].replace('https://openalex.org/T', ''))},{int(topic['subfield']['id'].replace('https://openalex.org/subfields/', ''))},{int(topic['field']['id'].replace('https://openalex.org/fields/', ''))},{int(topic['domain']['id'].replace('https://openalex.org/domains/', ''))}"
+                        for topic in x
+                    ]
+                )
                 if x
                 else None
             )
         )
 
-        # extract concepts
+        # extract concepts as pipe-delimited string
         df["concepts"] = df["concepts"].apply(
             lambda x: (
-                [concept["id"].replace("https://openalex.org/", "") for concept in x]
+                "|".join(
+                    [
+                        concept["id"].replace("https://openalex.org/", "")
+                        for concept in x
+                    ]
+                )
                 if x
                 else None
             )
@@ -573,10 +557,12 @@ def process_subfield_data(data: Dict[str, AbstractDataset]) -> pd.DataFrame:
             logger.warning("Skipping subfield data processing. No mesh terms found.")
             continue
 
-        # mesh tuples
+        # mesh as pipe-delimited string
         df["mesh_terms"] = df["mesh_terms"].apply(
             lambda x: (
-                [(c["descriptor_ui"], c["descriptor_name"]) for c in x] if x else None
+                "|".join([f"{c['descriptor_ui']},{c['descriptor_name']}" for c in x])
+                if x
+                else None
             )
         )
 
@@ -589,24 +575,16 @@ def process_subfield_data(data: Dict[str, AbstractDataset]) -> pd.DataFrame:
             )
         )
 
-        # break atuhorship nested dictionary jsons, create triplets of authorship
+        # break authorship nested dictionary jsons, create pipe-delimited string of authorship triplets
         df["authorships"] = df["authorships"].apply(
             lambda x: (
-                [
-                    (
-                        (
-                            author["author"]["id"].replace("https://openalex.org/", ""),
-                            (
-                                inst["id"].replace("https://openalex.org/", "")
-                                if inst
-                                else None
-                            ),
-                            author["author_position"],
-                        )
-                    )
-                    for author in x
-                    for inst in author["institutions"] or [{}]
-                ]
+                "|".join(
+                    [
+                        f"{author['author']['id'].replace('https://openalex.org/', '')},{inst['id'].replace('https://openalex.org/', '') if inst else ''},{author['author_position']}"
+                        for author in x
+                        for inst in author["institutions"] or [{}]
+                    ]
+                )
                 if x
                 else None
             )
@@ -615,39 +593,29 @@ def process_subfield_data(data: Dict[str, AbstractDataset]) -> pd.DataFrame:
         # change doi to remove the url
         df["doi"] = df["doi"].str.replace("https://doi.org/", "")
 
-        # create a list of topics
+        # create a pipe-delimited string of topics (topic_id,subfield_id,field_id,domain_id)
         df["topics"] = df["topics"].apply(
             lambda x: (
-                [
-                    (
-                        int(topic["id"].replace("https://openalex.org/T", "")),
-                        int(
-                            topic["subfield"]["id"].replace(
-                                "https://openalex.org/subfields/", ""
-                            )
-                        ),
-                        int(
-                            topic["field"]["id"].replace(
-                                "https://openalex.org/fields/", ""
-                            )
-                        ),
-                        int(
-                            topic["domain"]["id"].replace(
-                                "https://openalex.org/domains/", ""
-                            )
-                        ),
-                    )
-                    for topic in x
-                ]
+                "|".join(
+                    [
+                        f"{int(topic['id'].replace('https://openalex.org/T', ''))},{int(topic['subfield']['id'].replace('https://openalex.org/subfields/', ''))},{int(topic['field']['id'].replace('https://openalex.org/fields/', ''))},{int(topic['domain']['id'].replace('https://openalex.org/domains/', ''))}"
+                        for topic in x
+                    ]
+                )
                 if x
                 else None
             )
         )
 
-        # extract concepts
+        # extract concepts as pipe-delimited string
         df["concepts"] = df["concepts"].apply(
             lambda x: (
-                [concept["id"].replace("https://openalex.org/", "") for concept in x]
+                "|".join(
+                    [
+                        concept["id"].replace("https://openalex.org/", "")
+                        for concept in x
+                    ]
+                )
                 if x
                 else None
             )
