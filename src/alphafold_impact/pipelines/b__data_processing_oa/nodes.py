@@ -15,6 +15,7 @@ Functions:
 
 import logging
 from typing import Dict, Generator, Tuple
+import random
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
@@ -113,15 +114,13 @@ def _json_loader(
                     (
                         (
                             author["author"]["id"].replace("https://openalex.org/", ""),
-                            inst["id"].replace("https://openalex.org/", ""),
+                            (
+                                inst["id"].replace("https://openalex.org/", "")
+                                if inst
+                                else None
+                            ),
                             author["author_position"],
                         )
-                        if author["institutions"]
-                        else [
-                            author["author"]["id"].replace("https://openalex.org/", ""),
-                            "",
-                            author["author_position"],
-                        ]
                     )
                     for author in x
                     for inst in author["institutions"] or [{}]
@@ -140,13 +139,15 @@ def _json_loader(
                 [
                     (
                         topic["id"].replace("https://openalex.org/", ""),
-                        topic["display_name"],
-                        topic["subfield"]["id"].replace("https://openalex.org/", ""),
-                        topic["subfield"]["display_name"],
-                        topic["field"]["id"].replace("https://openalex.org/", ""),
-                        topic["field"]["display_name"],
-                        topic["domain"]["id"].replace("https://openalex.org/", ""),
-                        topic["domain"]["display_name"],
+                        topic["subfield"]["id"].replace(
+                            "https://openalex.org/subfields/", ""
+                        ),
+                        topic["field"]["id"].replace(
+                            "https://openalex.org/fields/", ""
+                        ),
+                        topic["domain"]["id"].replace(
+                            "https://openalex.org/domains/", ""
+                        ),
                     )
                     for topic in x
                 ]
@@ -158,13 +159,7 @@ def _json_loader(
         # extract concepts
         df["concepts"] = df["concepts"].apply(
             lambda x: (
-                [
-                    (
-                        concept["id"].replace("https://openalex.org/", ""),
-                        concept["display_name"],
-                    )
-                    for concept in x
-                ]
+                [concept["id"].replace("https://openalex.org/", "") for concept in x]
                 if x
                 else None
             )
@@ -175,8 +170,8 @@ def _json_loader(
             df[
                 [
                     "citation_normalized_percentile_value",
-                    "citation_normalized_percentile_is_in_top_1_percent",
-                    "citation_normalized_percentile_is_in_top_10_percent",
+                    "is_top_1",
+                    "is_top_10",
                 ]
             ] = df.apply(
                 lambda x: (pd.Series(x["citation_normalized_percentile"])),
@@ -200,6 +195,15 @@ def _json_loader(
             result_type="expand",
         )
 
+        # create counts for the last 3 years
+        df[
+            [
+                "cited_by_count_12_months",
+                "cited_by_count_24_months",
+                "cited_by_count_36_months",
+            ]
+        ] = df.apply(_create_recent_citation_counts, axis=1)
+
         # remove any column that is all NAN
         df.dropna(axis=1, how="all", inplace=True)
 
@@ -209,6 +213,56 @@ def _json_loader(
     df = pd.concat(output, ignore_index=True)
 
     return df
+
+
+def _create_recent_citation_counts(row: pd.Series) -> pd.Series:
+    """
+    Calculate rolling citation counts for the first 12, 24, and 36 months after publication.
+
+    Args:
+        row (pd.Series): A row from a DataFrame containing at least the following fields:
+            - "counts_by_year": List[Dict] with keys "year" (int) and "cited_by_count" (int).
+            - "publication_date": Publication date as a string or datetime.
+
+    Returns:
+        pd.Series: Series with keys:
+            - "cited_by_count_first_12_months"
+            - "cited_by_count_first_24_months"
+            - "cited_by_count_first_36_months"
+        Each value is the cumulative citation count for the respective period after publication.
+        If not enough years are available, the remaining values are set to None.
+    """
+    counts_by_year = row["counts_by_year"]
+    publication_date = pd.to_datetime(row["publication_date"])
+
+    # refactor into dict
+    counts_by_year = {
+        count_val["year"]: count_val["cited_by_count"] for count_val in counts_by_year
+    }
+
+    # create the portion of value that belongs to year t and t+1
+    year_t_prop = 1 - publication_date.month / 12
+    year_t_plus_1_prop = publication_date.month / 12
+
+    # create year var
+    year_t = publication_date.year
+
+    counts = {}
+    years = 1
+    max_years = 3
+    while year_t <= 2026 and years <= max_years:
+        counts[f"cited_by_count_{str(12 * years)}_months"] = int(
+            counts_by_year.get(year_t, 0) * year_t_prop
+            + counts_by_year.get(year_t + 1, 0) * year_t_plus_1_prop
+        ) + counts.get(f"cited_by_count_{str(12 * (years - 1))}_months", 0)
+        year_t += 1
+        years += 1
+
+    # if not all three years were collected, fill the remaining with None
+    for y in range(years, max_years + 1):
+        counts[f"cited_by_count_{str(12 * y)}_months"] = None
+
+    return pd.Series(counts)
 
 
 def process_data_by_level(data: Dict[str, AbstractDataset], level: int) -> pd.DataFrame:
@@ -248,12 +302,12 @@ def process_data_by_level(data: Dict[str, AbstractDataset], level: int) -> pd.Da
             "publication_date",
             "mesh_terms",
             "cited_by_count",
-            "counts_by_year",
             "authorships",
             "topics",
             "concepts",
             "fwci",
-            "citation_normalized_percentile_value",
+            "cited_by_count_36_months",
+            "is_top_1",
         ]
     ]
 
@@ -397,12 +451,12 @@ def process_data_by_level_ptd(
                     "publication_date",
                     "mesh_terms",
                     "cited_by_count",
-                    "counts_by_year",
                     "authorships",
                     "topics",
                     "concepts",
                     "fwci",
-                    "citation_normalized_percentile_value",
+                    "cited_by_count_36_months",
+                    "is_top_1",
                 ]
             ]
         }
@@ -421,6 +475,7 @@ def concat_pq_ptd(
         pd.DataFrame: A DataFrame containing the concatenated data.
     """
     output = []
+    seen_pairs = set()
     for i, loader in enumerate(data.values()):
         logger.info("Processing data partition: %s / %s", i + 1, len(data))
         data_pt = loader()
@@ -433,8 +488,31 @@ def concat_pq_ptd(
                 )
             )
         ]
+        # Remove any duplicate (id, parent_id) pairs within this partition
+        data_pt = data_pt.drop_duplicates(subset=["id", "parent_id"])
+
+        # Only add rows whose (parent_id, id) pair has not been seen before,
+
+        mask = []
+        for _, row in data_pt.iterrows():
+            pair = (row["parent_id"], row["id"])
+            if pair not in seen_pairs:
+                if random.random() < 0.1:
+                    # With 10% probability, skip this row
+                    mask.append(False)
+                else:
+                    seen_pairs.add(pair)
+                    mask.append(True)
+            else:
+                mask.append(False)
+        data_pt = data_pt[mask]
+
         output.append(data_pt)
-    return pd.concat(output)
+
+    if output:
+        return pd.concat(output, ignore_index=True)
+    else:
+        return pd.DataFrame()
 
 
 def process_subfield_data(data: Dict[str, AbstractDataset]) -> pd.DataFrame:
@@ -512,15 +590,13 @@ def process_subfield_data(data: Dict[str, AbstractDataset]) -> pd.DataFrame:
                     (
                         (
                             author["author"]["id"].replace("https://openalex.org/", ""),
-                            inst["id"].replace("https://openalex.org/", ""),
+                            (
+                                inst["id"].replace("https://openalex.org/", "")
+                                if inst
+                                else None
+                            ),
                             author["author_position"],
                         )
-                        if author["institutions"]
-                        else [
-                            author["author"]["id"].replace("https://openalex.org/", ""),
-                            "",
-                            author["author_position"],
-                        ]
                     )
                     for author in x
                     for inst in author["institutions"] or [{}]
@@ -530,19 +606,18 @@ def process_subfield_data(data: Dict[str, AbstractDataset]) -> pd.DataFrame:
             )
         )
 
+        # change doi to remove the url
+        df["doi"] = df["doi"].str.replace("https://doi.org/", "")
+
         # create a list of topics
         df["topics"] = df["topics"].apply(
             lambda x: (
                 [
                     (
                         topic["id"].replace("https://openalex.org/", ""),
-                        topic["display_name"],
                         topic["subfield"]["id"].replace("https://openalex.org/", ""),
-                        topic["subfield"]["display_name"],
                         topic["field"]["id"].replace("https://openalex.org/", ""),
-                        topic["field"]["display_name"],
                         topic["domain"]["id"].replace("https://openalex.org/", ""),
-                        topic["domain"]["display_name"],
                     )
                     for topic in x
                 ]
@@ -554,13 +629,7 @@ def process_subfield_data(data: Dict[str, AbstractDataset]) -> pd.DataFrame:
         # extract concepts
         df["concepts"] = df["concepts"].apply(
             lambda x: (
-                [
-                    (
-                        concept["id"].replace("https://openalex.org/", ""),
-                        concept["display_name"],
-                    )
-                    for concept in x
-                ]
+                [concept["id"].replace("https://openalex.org/", "") for concept in x]
                 if x
                 else None
             )
@@ -571,8 +640,8 @@ def process_subfield_data(data: Dict[str, AbstractDataset]) -> pd.DataFrame:
             df[
                 [
                     "citation_normalized_percentile_value",
-                    "citation_normalized_percentile_is_in_top_1_percent",
-                    "citation_normalized_percentile_is_in_top_10_percent",
+                    "is_top_1",
+                    "is_top_10",
                 ]
             ] = df.apply(
                 lambda x: (pd.Series(x["citation_normalized_percentile"])),
@@ -583,8 +652,7 @@ def process_subfield_data(data: Dict[str, AbstractDataset]) -> pd.DataFrame:
             logger.warning(
                 "citation_normalized_percentile not found in %s", df["id"].values[0]
             )
-
-        # Extract the content of cited_by_percentile_year
+            # Extract the content of cited_by_percentile_year
         df[
             [
                 "cited_by_percentile_year_min",
@@ -595,6 +663,15 @@ def process_subfield_data(data: Dict[str, AbstractDataset]) -> pd.DataFrame:
             axis=1,
             result_type="expand",
         )
+
+        # create counts for the last 3 years
+        df[
+            [
+                "cited_by_count_12_months",
+                "cited_by_count_24_months",
+                "cited_by_count_36_months",
+            ]
+        ] = df.apply(_create_recent_citation_counts, axis=1)
 
         # change doi to remove the url
         df["doi"] = df["doi"].str.replace("https://doi.org/", "")
@@ -618,7 +695,11 @@ def process_subfield_data(data: Dict[str, AbstractDataset]) -> pd.DataFrame:
             "concepts",
             "topics",
             "fwci",
-            "citation_normalized_percentile_value",
+            "is_top_1",
+            "is_top_10",
+            "cited_by_count_12_months",
+            "cited_by_count_24_months",
+            "cited_by_count_36_months",
         ]
     ]
 
