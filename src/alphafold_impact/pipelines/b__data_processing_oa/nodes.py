@@ -138,15 +138,21 @@ def _json_loader(
             lambda x: (
                 [
                     (
-                        topic["id"].replace("https://openalex.org/", ""),
-                        topic["subfield"]["id"].replace(
-                            "https://openalex.org/subfields/", ""
+                        int(topic["id"].replace("https://openalex.org/T", "")),
+                        int(
+                            topic["subfield"]["id"].replace(
+                                "https://openalex.org/subfields/", ""
+                            )
                         ),
-                        topic["field"]["id"].replace(
-                            "https://openalex.org/fields/", ""
+                        int(
+                            topic["field"]["id"].replace(
+                                "https://openalex.org/fields/", ""
+                            )
                         ),
-                        topic["domain"]["id"].replace(
-                            "https://openalex.org/domains/", ""
+                        int(
+                            topic["domain"]["id"].replace(
+                                "https://openalex.org/domains/", ""
+                            )
                         ),
                     )
                     for topic in x
@@ -498,7 +504,7 @@ def concat_pq_ptd(
             pair = (row["parent_id"], row["id"])
             if pair not in seen_pairs:
                 if random.random() < 0.1:
-                    # With 10% probability, skip this row
+                    # With 10% probability, skip this row (benign size reduction)
                     mask.append(False)
                 else:
                     seen_pairs.add(pair)
@@ -614,10 +620,22 @@ def process_subfield_data(data: Dict[str, AbstractDataset]) -> pd.DataFrame:
             lambda x: (
                 [
                     (
-                        topic["id"].replace("https://openalex.org/", ""),
-                        topic["subfield"]["id"].replace("https://openalex.org/", ""),
-                        topic["field"]["id"].replace("https://openalex.org/", ""),
-                        topic["domain"]["id"].replace("https://openalex.org/", ""),
+                        int(topic["id"].replace("https://openalex.org/T", "")),
+                        int(
+                            topic["subfield"]["id"].replace(
+                                "https://openalex.org/subfields/", ""
+                            )
+                        ),
+                        int(
+                            topic["field"]["id"].replace(
+                                "https://openalex.org/fields/", ""
+                            )
+                        ),
+                        int(
+                            topic["domain"]["id"].replace(
+                                "https://openalex.org/domains/", ""
+                            )
+                        ),
                     )
                     for topic in x
                 ]
