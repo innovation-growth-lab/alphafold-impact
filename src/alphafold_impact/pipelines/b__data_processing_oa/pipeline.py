@@ -132,7 +132,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
         tags=["data_processing_oa", "step_2", "step_2_complete"],
     )
 
-    # STEP 2F: Combine baseline levels and split into counterfactual vs other papers
+    # STEP 4b: Combine baseline levels and split into counterfactual vs other papers
     # → NEXT: Goes to b_data_processing_baselines (for counterfactual identification)
     # → ALSO: The output is used by a_data_collection_oa for additional data collection
     reassign_baseline_levels_pipeline = pipeline(

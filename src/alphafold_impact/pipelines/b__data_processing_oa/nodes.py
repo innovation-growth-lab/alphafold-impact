@@ -487,12 +487,8 @@ def concat_pq_ptd(
         for _, row in data_pt.iterrows():
             pair = (row["parent_id"], row["id"])
             if pair not in seen_pairs:
-                if random.random() < 0.1:
-                    # With 10% probability, skip this row (benign size reduction)
-                    mask.append(False)
-                else:
-                    seen_pairs.add(pair)
-                    mask.append(True)
+                seen_pairs.add(pair)
+                mask.append(True)
             else:
                 mask.append(False)
         data_pt = data_pt[mask]

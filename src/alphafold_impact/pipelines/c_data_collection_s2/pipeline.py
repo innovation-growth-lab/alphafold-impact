@@ -34,7 +34,7 @@ from .nodes_bulk import (
 
 def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
 
-    # STEP 6A: Add citation intent data for AlphaFold papers
+    # STEP 3A1: Add citation intent data for AlphaFold papers
     # ← FROM: b__data_processing_oa (oa.data_processing.depth.intermediate)
     # → NEXT: Goes to d_data_processing_chains for final analysis
     primary_data_intent_pipeline = pipeline(
@@ -64,7 +64,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
         tags=["data_collection_s2"],
     )
 
-    # STEP 6B: Add citation intent data for baseline seed papers
+    # STEP 3A1: Add citation intent data for baseline seed papers
     # ← FROM: b__data_processing_oa (oa.data_processing.subfield.structural_biology.primary)
     # → NEXT: Used by b_data_processing_baselines for counterfactual selection
     baseline_seed_pipeline = pipeline(

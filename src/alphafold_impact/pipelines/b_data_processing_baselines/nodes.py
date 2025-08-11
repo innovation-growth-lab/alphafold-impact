@@ -163,21 +163,17 @@ def process_baseline_data(
 
     # create a boolean column for whether topics includes "T10044", or "T12254"
     processed_data["parent_pp_topic"] = processed_data["parent_topics"].apply(
-        lambda x: (
-            any("T10044" in sublist[0] or "T12254" in sublist[0] for sublist in x)
-        )
+        lambda x: ("10044" in x or "12254" in x) if isinstance(x, str) else False
     )
 
     # create a boolean if it includes protein concepts, C18051474 and C47701112
     processed_data["parent_protein_concept"] = processed_data["parent_concepts"].apply(
-        lambda x: (
-            any("C18051474" in sublist[0] or "C47701112" in sublist[0] for sublist in x)
-        )
+        lambda x: ("C18051474" in x or "C47701112" in x) if isinstance(x, str) else False
     )
 
     # create a boolean if AI concept
     processed_data["parent_ai_concept"] = processed_data["parent_concepts"].apply(
-        lambda x: any("C154945302" in sublist[0] for sublist in x)
+        lambda x: ("C154945302" in x) if isinstance(x, str) else False
     )
 
     # select only if parent_publication_date >= 2017-12-01 and <= 2022-06-15
@@ -217,7 +213,7 @@ def process_baseline_data(
     )
 
     # get candidates: more than 50 num_citations
-    baseline_candidates = baseline_agg[baseline_agg["num_citations"] > 50]
+    baseline_candidates = baseline_agg[baseline_agg["cited_by_count_36_months"] > 50]
 
     # manually remove past matches deemed not suitable
     baseline_candidates = baseline_candidates[

@@ -356,8 +356,9 @@ s2:
       af_doi: 10.1038/s41586-021-03819-2
       api:
         # key: 4xdrZY4Ukp2YvjViW2jiT1wIjKCme2AXvQGWQJJi # bse
-        key: cj1l5au6JK7x3OHofSG6691jbYfh6JkJ2nrEJeVX # nesta
+        # key: cj1l5au6JK7x3OHofSG6691jbYfh6JkJ2nrEJeVX # nesta
         # key: vOdbPkueUl7rY41Swx6DB8TP0e3Quf1T2UETSpYt # upf
+        key: SGG3EAbEDR5obH5L3oFmd4ro08ZFKNrdamdskrJG # george
         base_url: https://api.semanticscholar.org/graph/v1/paper
         bulk_url: https://api.semanticscholar.org/datasets/v1/release/latest/dataset/citations
         cites: citations
