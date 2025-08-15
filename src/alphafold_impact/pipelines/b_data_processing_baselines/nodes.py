@@ -61,7 +61,7 @@ def process_baseline_data(
     logger.info("Merging baseline data with seed baseline data")
     df = baseline_data.merge(
         seed_baseline_data[
-            ["id", "doi", "pmid", "concepts", "topics", "publication_date"]
+            ["id", "doi", "pmid", "concepts", "topics", "publication_date", "is_top_1"]
         ],
         left_on="parent_id",
         right_on="id",
@@ -76,6 +76,7 @@ def process_baseline_data(
             "concepts_parent": "parent_concepts",
             "topics_parent": "parent_topics",
             "publication_date_parent": "parent_publication_date",
+            "is_top_1_parent": "parent_is_top_1",
         },
         inplace=True,
     )
@@ -168,7 +169,9 @@ def process_baseline_data(
 
     # create a boolean if it includes protein concepts, C18051474 and C47701112
     processed_data["parent_protein_concept"] = processed_data["parent_concepts"].apply(
-        lambda x: ("C18051474" in x or "C47701112" in x) if isinstance(x, str) else False
+        lambda x: (
+            ("C18051474" in x or "C47701112" in x) if isinstance(x, str) else False
+        )
     )
 
     # create a boolean if AI concept
@@ -205,7 +208,12 @@ def process_baseline_data(
     # add parent_pp_topic, parent_protein_concept, parent_ai_concept
     baseline_agg = baseline_agg.merge(
         processed_data.groupby("parent_id")[
-            ["parent_pp_topic", "parent_protein_concept", "parent_ai_concept"]
+            [
+                "parent_pp_topic",
+                "parent_protein_concept",
+                "parent_ai_concept",
+                "parent_is_top_1",
+            ]
         ]
         .first()
         .reset_index(),
@@ -213,7 +221,10 @@ def process_baseline_data(
     )
 
     # get candidates: more than 50 num_citations
-    baseline_candidates = baseline_agg[baseline_agg["cited_by_count_36_months"] > 50]
+    baseline_candidates = baseline_agg[
+        (baseline_agg["parent_is_top_1"] == True) &
+        (baseline_agg["num_citations"] > 50)
+    ]
 
     # manually remove past matches deemed not suitable
     baseline_candidates = baseline_candidates[
@@ -340,13 +351,13 @@ def assign_focal_label(
 
     # Sort each group by distance and take top 30
     ai_papers = baseline_candidates[baseline_candidates["label"] == "ai"].nsmallest(
-        30, "distance"
+        25, "distance"
     )
     sb_papers = baseline_candidates[baseline_candidates["label"] == "sb"].nsmallest(
-        30, "distance"
+        25, "distance"
     )
     pp_papers = baseline_candidates[baseline_candidates["label"] == "pp"].nsmallest(
-        30, "distance"
+        25, "distance"
     )
 
     # Combine the selected papers

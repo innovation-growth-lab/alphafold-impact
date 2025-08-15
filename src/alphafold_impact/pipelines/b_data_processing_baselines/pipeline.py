@@ -3,7 +3,7 @@ The poorly named pipeline for processing the structural biology baseline data to
 the counterfactual papers to AlphaFold.
 
 PIPELINE FLOW:
-    STEP 3: This pipeline (b_data_processing_baselines) creates counterfactual candidates
+    STEP 4: This pipeline (b_data_processing_baselines) creates counterfactual candidates
     FROM: ← b__data_processing_oa (provides processed OpenAlex data)
     NEXT: → a_data_collection_oa (triggers collection of more citation data for counterfactuals)
     THEN: → b__data_processing_oa (processes the new counterfactual data)
