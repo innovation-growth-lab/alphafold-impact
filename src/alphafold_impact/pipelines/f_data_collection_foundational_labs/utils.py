@@ -38,13 +38,13 @@ def get_sb_candidate_authors(data: pd.DataFrame) -> List[Tuple[str, str]]:
         .explode("authorships_parsed")
         .assign(
             author=lambda x: x["authorships_parsed"].apply(
-                lambda y: y[0] if y and len(y) > 0 else None
+                lambda y: y[0] if isinstance(y, list) and len(y) > 0 else None
             ),
             institution=lambda x: x["authorships_parsed"].apply(
-                lambda y: y[1] if y and len(y) > 1 else None
+                lambda y: y[1] if isinstance(y, list) and len(y) > 1 else None
             ),
             position=lambda x: x["authorships_parsed"].apply(
-                lambda y: y[2] if y and len(y) > 2 else None
+                lambda y: y[2] if isinstance(y, list) and len(y) > 2 else None
             ),
         )
         .dropna(subset=["author"])
@@ -306,13 +306,13 @@ def explode_author_data(data: pd.DataFrame) -> pd.DataFrame:
         .explode("authorships_parsed")
         .assign(
             author=lambda x: x["authorships_parsed"].apply(
-                lambda y: y[0] if y and len(y) > 0 else None
+                lambda y: y[0] if isinstance(y, list) and len(y) > 0 else None
             ),
             institution=lambda x: x["authorships_parsed"].apply(
-                lambda y: y[1] if y and len(y) > 1 else None
+                lambda y: y[1] if isinstance(y, list) and len(y) > 1 else None
             ),
             position=lambda x: x["authorships_parsed"].apply(
-                lambda y: y[2] if y and len(y) > 2 else None
+                lambda y: y[2] if isinstance(y, list) and len(y) > 2 else None
             ),
         )
         .dropna(subset=["author"])

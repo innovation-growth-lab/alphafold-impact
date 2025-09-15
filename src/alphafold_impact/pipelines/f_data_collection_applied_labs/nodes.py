@@ -42,19 +42,23 @@ def _get_applied_candidate_authors(data: pd.DataFrame) -> List[Tuple[str, str]]:
         data.drop_duplicates(subset=["id"])
         .assign(
             authorships_parsed=lambda x: x["authorships"].apply(
-                lambda y: [auth.split(',') for auth in y.split('|')] if isinstance(y, str) and y != '' else []
+                lambda y: (
+                    [auth.split(",") for auth in y.split("|")]
+                    if isinstance(y, str) and y != ""
+                    else []
+                )
             )
         )
         .explode("authorships_parsed")
         .assign(
             author=lambda x: x["authorships_parsed"].apply(
-                lambda y: y[0] if y and len(y) > 0 else None
+                lambda y: y[0] if isinstance(y, list) and len(y) > 0 else None
             ),
             institution=lambda x: x["authorships_parsed"].apply(
-                lambda y: y[1] if y and len(y) > 1 else None
+                lambda y: y[1] if isinstance(y, list) and len(y) > 1 else None
             ),
             position=lambda x: x["authorships_parsed"].apply(
-                lambda y: y[2] if y and len(y) > 2 else None
+                lambda y: y[2] if isinstance(y, list) and len(y) > 2 else None
             ),
         )
         .dropna(subset=["author"])
@@ -336,11 +340,15 @@ def calculate_lab_determinants(
         # break authorship nested dictionary jsons, create pipe-delimited string of authorship triplets
         data["authorships"] = data["authorships"].apply(
             lambda x: (
-                "|".join([
-                    f"{author['author']['id'].replace('https://openalex.org/', '')},{inst['id'].replace('https://openalex.org/', '') if inst else ''},{author['author_position']}"
-                    for author in x
-                    for inst in author["institutions"] or [{}]
-                ]) if x else None
+                "|".join(
+                    [
+                        f"{author['author']['id'].replace('https://openalex.org/', '')},{inst['id'].replace('https://openalex.org/', '') if inst else ''},{author['author_position']}"
+                        for author in x
+                        for inst in author["institutions"] or [{}]
+                    ]
+                )
+                if x
+                else None
             )
         )
 
