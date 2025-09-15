@@ -23,19 +23,28 @@ def get_sb_candidate_authors(data: pd.DataFrame) -> List[Tuple[str, str]]:
     """
     # threshold = 10 if baseline else 1
 
-    # get the author whose third element is the last author
+    # get the author whose third element is the last author (parse pipe-delimited authorships)
     author_data = (
         data.drop_duplicates(subset=["id"])
-        .explode("authorships")
         .assign(
-            author=lambda x: x["authorships"].apply(
-                lambda y: y[0] if y is not None else None
+            authorships_parsed=lambda x: x["authorships"].apply(
+                lambda y: (
+                    [auth.split(",") for auth in y.split("|")]
+                    if isinstance(y, str) and y != ""
+                    else []
+                )
+            )
+        )
+        .explode("authorships_parsed")
+        .assign(
+            author=lambda x: x["authorships_parsed"].apply(
+                lambda y: y[0] if y and len(y) > 0 else None
             ),
-            institution=lambda x: x["authorships"].apply(
-                lambda y: y[1] if y is not None else None
+            institution=lambda x: x["authorships_parsed"].apply(
+                lambda y: y[1] if y and len(y) > 1 else None
             ),
-            position=lambda x: x["authorships"].apply(
-                lambda y: y[2] if y is not None else None
+            position=lambda x: x["authorships_parsed"].apply(
+                lambda y: y[2] if y and len(y) > 2 else None
             ),
         )
         .dropna(subset=["author"])
@@ -285,16 +294,25 @@ def explode_author_data(data: pd.DataFrame) -> pd.DataFrame:
 
     author_data = (
         data.drop_duplicates(subset=["id"])
-        .explode("authorships")
         .assign(
-            author=lambda x: x["authorships"].apply(
-                lambda y: y[0] if y is not None else None
+            authorships_parsed=lambda x: x["authorships"].apply(
+                lambda y: (
+                    [auth.split(",") for auth in y.split("|")]
+                    if isinstance(y, str) and y != ""
+                    else []
+                )
+            )
+        )
+        .explode("authorships_parsed")
+        .assign(
+            author=lambda x: x["authorships_parsed"].apply(
+                lambda y: y[0] if y and len(y) > 0 else None
             ),
-            institution=lambda x: x["authorships"].apply(
-                lambda y: y[1] if y is not None else None
+            institution=lambda x: x["authorships_parsed"].apply(
+                lambda y: y[1] if y and len(y) > 1 else None
             ),
-            position=lambda x: x["authorships"].apply(
-                lambda y: y[2] if y is not None else None
+            position=lambda x: x["authorships_parsed"].apply(
+                lambda y: y[2] if y and len(y) > 2 else None
             ),
         )
         .dropna(subset=["author"])

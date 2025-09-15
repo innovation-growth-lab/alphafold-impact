@@ -199,28 +199,14 @@ def calculate_lab_determinants(
         # transform to dataframe and add parent_id
         data = pd.DataFrame(json_data)
 
-        # break atuhorship nested dictionary jsons, create triplets of authorship
+        # break authorship nested dictionary jsons, create pipe-delimited string of authorship triplets
         data["authorships"] = data["authorships"].apply(
             lambda x: (
-                [
-                    (
-                        (
-                            author["author"]["id"].replace("https://openalex.org/", ""),
-                            inst["id"].replace("https://openalex.org/", ""),
-                            author["author_position"],
-                        )
-                        if author["institutions"]
-                        else [
-                            author["author"]["id"].replace("https://openalex.org/", ""),
-                            "",
-                            author["author_position"],
-                        ]
-                    )
+                "|".join([
+                    f"{author['author']['id'].replace('https://openalex.org/', '')},{inst['id'].replace('https://openalex.org/', '') if inst else ''},{author['author_position']}"
                     for author in x
                     for inst in author["institutions"] or [{}]
-                ]
-                if x
-                else None
+                ]) if x else None
             )
         )
 
@@ -548,32 +534,14 @@ def get_publications_from_labs(
                     )
                 )
 
-                # break atuhorship nested dictionary jsons, create triplets of authorship
+                # break authorship nested dictionary jsons, create pipe-delimited string of authorship triplets
                 df["authorships"] = df["authorships"].apply(
                     lambda x: (
-                        [
-                            (
-                                (
-                                    author["author"]["id"].replace(
-                                        "https://openalex.org/", ""
-                                    ),
-                                    inst["id"].replace("https://openalex.org/", ""),
-                                    author["author_position"],
-                                )
-                                if author["institutions"]
-                                else [
-                                    author["author"]["id"].replace(
-                                        "https://openalex.org/", ""
-                                    ),
-                                    "",
-                                    author["author_position"],
-                                ]
-                            )
+                        "|".join([
+                            f"{author['author']['id'].replace('https://openalex.org/', '')},{inst['id'].replace('https://openalex.org/', '') if inst else ''},{author['author_position']}"
                             for author in x
                             for inst in author["institutions"] or [{}]
-                        ]
-                        if x
-                        else None
+                        ]) if x else None
                     )
                 )
 

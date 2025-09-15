@@ -37,19 +37,24 @@ def _get_applied_candidate_authors(data: pd.DataFrame) -> List[Tuple[str, str]]:
     # Select the rows in 'applied_ids' that are not in 'other_ids'
     data = data[data["id"].isin(applied_ids) & ~data["id"].isin(sb_ids)]
 
-    # get the author whose third element is the last author
+    # get the author whose third element is the last author (parse pipe-delimited authorships)
     author_data = (
         data.drop_duplicates(subset=["id"])
-        .explode("authorships")
         .assign(
-            author=lambda x: x["authorships"].apply(
-                lambda y: y[0] if y is not None else None
+            authorships_parsed=lambda x: x["authorships"].apply(
+                lambda y: [auth.split(',') for auth in y.split('|')] if isinstance(y, str) and y != '' else []
+            )
+        )
+        .explode("authorships_parsed")
+        .assign(
+            author=lambda x: x["authorships_parsed"].apply(
+                lambda y: y[0] if y and len(y) > 0 else None
             ),
-            institution=lambda x: x["authorships"].apply(
-                lambda y: y[1] if y is not None else None
+            institution=lambda x: x["authorships_parsed"].apply(
+                lambda y: y[1] if y and len(y) > 1 else None
             ),
-            position=lambda x: x["authorships"].apply(
-                lambda y: y[2] if y is not None else None
+            position=lambda x: x["authorships_parsed"].apply(
+                lambda y: y[2] if y and len(y) > 2 else None
             ),
         )
         .dropna(subset=["author"])
@@ -328,28 +333,14 @@ def calculate_lab_determinants(
         # transform to dataframe and add parent_id
         data = pd.DataFrame(json_data)
 
-        # break atuhorship nested dictionary jsons, create triplets of authorship
+        # break authorship nested dictionary jsons, create pipe-delimited string of authorship triplets
         data["authorships"] = data["authorships"].apply(
             lambda x: (
-                [
-                    (
-                        (
-                            author["author"]["id"].replace("https://openalex.org/", ""),
-                            inst["id"].replace("https://openalex.org/", ""),
-                            author["author_position"],
-                        )
-                        if author["institutions"]
-                        else [
-                            author["author"]["id"].replace("https://openalex.org/", ""),
-                            "",
-                            author["author_position"],
-                        ]
-                    )
+                "|".join([
+                    f"{author['author']['id'].replace('https://openalex.org/', '')},{inst['id'].replace('https://openalex.org/', '') if inst else ''},{author['author_position']}"
                     for author in x
                     for inst in author["institutions"] or [{}]
-                ]
-                if x
-                else None
+                ]) if x else None
             )
         )
 
