@@ -70,7 +70,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 name="combine_af_levels",
             )
         ],
-        tags=["data_processing_oa"]#, "step_2"],
+        tags=["data_processing_oa"],
     )
 
     # STEP 2C: Process structural biology baseline data
@@ -85,7 +85,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 name="process_sb",
             )
         ],
-        tags=["data_processing_oa"], #, "step_2"],
+        tags=["data_processing_oa"],  # , "step_2"],
     )
 
     # STEP 2D: Process baseline level 0 data
@@ -123,7 +123,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
             node(
                 func=concat_pq_ptd,
                 inputs={
-                    "data": "oa.data_collection.subfield.structural_biology.depth.1.ptd.intermediate",  # pylint: disable=line-too-long
+                    "data": "oa.data_collection.subfield.structural_biology.depth.1.ptd.intermediate",  # noqa
                 },
                 outputs="oa.data_collection.subfield.structural_biology.depth.1.intermediate",
                 name="concatenate_sb_partitioned",
@@ -141,8 +141,8 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 func=combine_levels_data,
                 inputs={
                     "level_seed": "oa.data_processing.subfield.structural_biology.primary",
-                    "level0": "oa.data_collection.subfield.structural_biology.depth.0.intermediate",
-                    "level1": "oa.data_collection.subfield.structural_biology.depth.1.intermediate",
+                    "level0": "oa.data_collection.subfield.structural_biology.depth.0.intermediate",  # noqa
+                    "level1": "oa.data_collection.subfield.structural_biology.depth.1.intermediate",  # noqa
                 },
                 outputs="oa.data_processing.structural_biology.depth.intermediate",
                 name="combine_sb_levels",
@@ -160,7 +160,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 name="extract_ct_sb_levels",
             ),
         ],
-        tags=["reassign_ct_levels", "ct_collection"], #, "step_2", "step_2_complete"],
+        tags=["reassign_ct_levels", "ct_collection"],  # , "step_2", "step_2_complete"],
     )
 
     # STEP 5: Process additional CT data (runs AFTER a_data_collection_oa collects more data)
@@ -189,7 +189,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
             node(
                 func=combine_levels_data_counterfactuals,
                 inputs={
-                    "level1": "oa.data_processing.structural_biology.depth.reassigned.ct.intermediate",  # pylint: disable=line-too-long
+                    "level1": "oa.data_processing.structural_biology.depth.reassigned.ct.intermediate",  # noqa
                     "level2": "oa.data_collection.structural_biology.depth.ct.2.intermediate",
                 },
                 outputs="oa.data_processing.structural_biology.depth.ct.intermediate",

@@ -191,7 +191,7 @@ chains.complete_strong_links.id.other.primary:
 
 oa.chain_labels.id.af.primary: # oct: skip to here because of S2 problems
   <<: *_pq
-  filepath: s3://igl-alphafold/03_primary/oa/works/af/chain_labels.parquet
+  filepath: s3://igl-alphafold/2025Q2/03_primary/oa/works/af/chain_labels.parquet
 
 oa.chain_labels.id.ct.primary:
   <<: *_pq
@@ -407,9 +407,8 @@ uniprot.entries.raw:
 # -------------------------------------------------------------
 
 foldseek.pdb_similarities.raw:
-  filepath: s3://igl-alphafold/2025Q2/01_raw/foldseek/pairwise_similarities.tsv
+  filepath: data/01_raw/pairwise_similarities.tsv
   type: pandas.CSVDataset
-  credentials: s3_credentials
   load_args:
     chunksize: 1000000
     sep: '\t'

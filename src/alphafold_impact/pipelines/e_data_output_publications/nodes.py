@@ -267,8 +267,9 @@ def _get_field_distr(data: pd.DataFrame) -> pd.DataFrame:
     Processes the input DataFrame to calculate the distribution of fields for each author.
     Args:
         data (pd.DataFrame): Input DataFrame containing at least the columns 'id' and 'topics'.
-            'topics' should be a list of lists where each sublist contains elements
-            with the 6th element being the field of interest.
+            'topics' should be a pipe-delimited string where each topic is formatted as
+            "topic_id,subfield_id,field_id,domain_id" and the 3rd element (field_id) is the field
+                of interest.
     Returns:
         pd.DataFrame: A DataFrame with the original data merged with the calculated field
             distribution. The resulting DataFrame will have additional columns prefixed
@@ -277,8 +278,13 @@ def _get_field_distr(data: pd.DataFrame) -> pd.DataFrame:
 
     df = data.copy()
 
+    # Parse pipe-delimited topics string and extract field_id (3rd element in each topic)
     df["fields"] = df["topics"].apply(
-        lambda x: [y[5] for y in x] if x is not None and len(x) > 0 else []
+        lambda x: (
+            [topic.split(",")[2] for topic in x.split("|")]
+            if isinstance(x, str) and x != ""
+            else []
+        )
     )
     # explode the subfields column into multiple rows
     df = df.explode("fields")
@@ -305,14 +311,11 @@ def _get_field_distr(data: pd.DataFrame) -> pd.DataFrame:
     # merge with data on author and time
     data = data.merge(df, on=["id"], how="left")
 
-    # add primary field
+    # add primary field (extract field_id from first topic in pipe-delimited string)
     data["primary_field"] = data["topics"].apply(
         lambda x: (
-            x[0][5]
-            if isinstance(x, np.ndarray)
-            and len(x) > 0
-            and isinstance(x[0], np.ndarray)
-            and len(x[0]) > 0
+            x.split("|")[0].split(",")[2]
+            if isinstance(x, str) and x != "" and len(x.split("|")[0].split(",")) > 2
             else None
         )
     )
@@ -332,10 +335,15 @@ def _calculate_mesh_balance(data: pd.DataFrame, mesh_terms_dict: dict) -> pd.Dat
     """
     df = data.copy()
 
-    # transform mesh_terms by mapping to term_group
+    # Parse pipe-delimited mesh_terms string and extract descriptor_ui (1st element in each term)
     df["mesh_terms"] = df["mesh_terms"].apply(
-        lambda x: [y[0] for y in x] if x is not None else []
+        lambda x: (
+            [term.split(",")[0] for term in x.split("|")]
+            if isinstance(x, str) and x != ""
+            else []
+        )
     )
+    # Map descriptor_ui to term_group using mesh_terms_dict
     df["mesh_terms"] = df["mesh_terms"].apply(
         lambda x: [mesh_terms_dict.get(y, "") for y in x] if x is not None else []
     )
@@ -616,9 +624,13 @@ def get_institution_info(
         pd.DataFrame: DataFrame containing institution data.
 
     """
-    # keep last author from data authorships
+    # keep last author from data authorships (parse pipe-delimited string)
     publications["last_author_institution"] = publications["authorships"].apply(
-        lambda x: x[-1][1] if x is not None and len(x) > 0 else None
+        lambda x: (
+            x.split("|")[-1].split(",")[1]
+            if isinstance(x, str) and x != "" and len(x.split("|")[-1].split(",")) > 1
+            else None
+        )
     )
 
     institutions = publications["last_author_institution"].unique().tolist()
@@ -670,7 +682,11 @@ def define_high_pdb_authors(
     author_pdb_submissions = pdb_submissions.dropna(subset=["authorships"])
 
     author_pdb_submissions["author"] = author_pdb_submissions["authorships"].apply(
-        lambda x: [y[0] for y in x] if x is not None else []
+        lambda x: (
+            [auth.split(",")[0] for auth in x.split("|")]
+            if isinstance(x, str) and x != ""
+            else []
+        )
     )
 
     # explode and drop id authors duplicates
@@ -678,13 +694,21 @@ def define_high_pdb_authors(
     author_pdb_submissions.drop_duplicates(subset=["id", "author"], inplace=True)
 
     # do the same with the publications
-    # keep last author from data authorships
+    # keep last author from data authorships (parse pipe-delimited string)
     data["last_author"] = data["authorships"].apply(
-        lambda x: x[-1][0] if x is not None and len(x) > 0 else None
+        lambda x: (
+            x.split("|")[-1].split(",")[0]
+            if isinstance(x, str) and x != "" and len(x.split("|")[-1].split(",")) > 0
+            else None
+        )
     )
 
     data["author"] = data["authorships"].apply(
-        lambda x: [y[0] for y in x] if x is not None else []
+        lambda x: (
+            [auth.split(",")[0] for auth in x.split("|")]
+            if isinstance(x, str) and x != ""
+            else []
+        )
     )
     authors = data.explode("author")
     authors_list = authors["author"].unique()

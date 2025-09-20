@@ -4,6 +4,8 @@ generated using Kedro 0.19.1
 """
 
 import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 import pandas as pd
 import numpy as np
 from Bio import Entrez
@@ -23,10 +25,41 @@ Entrez.email = "david.ampudia@nesta.org.uk"
 logger = logging.getLogger(__name__)
 
 
+def _process_seed_id(
+    seed_id: str, depth_data: pd.DataFrame, identifier: str, num_levels: int
+) -> pd.DataFrame:
+    """
+    Worker function to process a single seed_id.
+
+    Args:
+        seed_id (str): The seed identifier to process.
+        depth_data (pd.DataFrame): The input DataFrame containing citation link data.
+        identifier (str): The identifier used to filter the citation links.
+        num_levels (int): The number of levels in the citation chain.
+
+    Returns:
+        pd.DataFrame: The processed DataFrame for this seed_id.
+    """
+    logger.info("Building citation chain for seed %s", seed_id)
+    data_dict = build_chain_dict(depth_data, identifier, seed_id, 0, num_levels)
+    flat_rows = flatten_dict(data_dict)
+    seed_df = pd.DataFrame(flat_rows)
+    seed_df["seed_id"] = seed_id
+    seed_df = ensure_levels(seed_df, num_levels)
+    seed_df = seed_df[
+        [
+            "seed_id",
+        ]
+        + [f"level_{i}" for i in range(num_levels)]
+    ]
+    return seed_df
+
+
 def filter_relevant_citation_links(
     depth_data: pd.DataFrame,
     identifier: str,
     num_levels: int,
+    max_workers: int = 8,
     **kwargs,
 ) -> pd.DataFrame:
     """
@@ -37,6 +70,8 @@ def filter_relevant_citation_links(
              link data.
         identifier (str): The identifier used to filter the citation links.
         num_levels (int): The number of levels in the citation chain.
+        max_workers (int): Maximum number of threads to use for parallel processing.
+            Defaults to 8.
         **kwargs: Additional keyword arguments for custom sorting.
 
     Returns:
@@ -81,29 +116,39 @@ def filter_relevant_citation_links(
     logger.info("Drop duplicates of parent_id, identifier, and intent")
     depth_data.drop_duplicates(subset=["parent_id", identifier, "intent"], inplace=True)
 
-    output = []
     seeds = depth_data[depth_data["level"] == 0][f"parent_{identifier}"].unique()
 
     if len(seeds) == 0:
         # move level up by 1
         depth_data["level"] = depth_data["level"] - 1
 
-    for seed_id in list(
+    # get the final list of seeds after potential level adjustment
+    seed_list = list(
         depth_data[depth_data["level"] == 0][f"parent_{identifier}"].unique()
-    ):
-        logger.info("Building citation chain for seed %s", seed_id)
-        data_dict = build_chain_dict(depth_data, identifier, seed_id, 0, num_levels)
-        flat_rows = flatten_dict(data_dict)
-        seed_df = pd.DataFrame(flat_rows)
-        seed_df["seed_id"] = seed_id
-        seed_df = ensure_levels(seed_df, num_levels)
-        seed_df = seed_df[
-            [
-                "seed_id",
-            ]
-            + [f"level_{i}" for i in range(num_levels)]
-        ]
-        output.append(seed_df)
+    )
+
+    logger.info("Processing %d seeds using multithreading", len(seed_list))
+    output = []
+    max_workers = min(len(seed_list), max_workers)  # limit to max_workers threads
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        # submit all tasks
+        future_to_seed = {
+            executor.submit(
+                _process_seed_id, seed_id, depth_data, identifier, num_levels
+            ): seed_id
+            for seed_id in seed_list
+        }
+
+        # collect results as they complete
+        for future in as_completed(future_to_seed):
+            seed_id = future_to_seed[future]
+            try:
+                result = future.result()
+                output.append(result)
+                logger.info("Completed processing seed %s", seed_id)
+            except Exception as exc:
+                logger.error("Seed %s generated an exception: %s", seed_id, exc)
+                raise
 
     chains_df = pd.concat(output)
 

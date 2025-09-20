@@ -24,6 +24,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                 },
                 outputs="oa.chain_labels.id.af.updated",
                 name="update_alphafold_triad",
+                tags="fix",
             ),
             node(
                 create_publications_data,
@@ -37,6 +38,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                 },
                 outputs="publications.data.af",
                 name="create_publications_data_af",
+                tags="fix",
             ),
             node(
                 create_publications_data,
@@ -74,14 +76,14 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                 },
                 outputs="publications.data.merged",
                 name="merge_publications_data",
-                tags="complete",
+                tags="fix",
             ),
             node(
                 get_institution_info,
                 inputs={"publications": "publications.data.merged"},
                 outputs="publications.data.intermediate",
                 name="get_last_author_institution_info",
-                tags="complete",
+                tags="fix",
             ),
             node(
                 define_high_pdb_authors,
@@ -91,7 +93,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                 },
                 outputs="publications.data.outputs",
                 name="define_high_pdb_authors",
-                tags="complete",
+                tags="fix",
             ),
             node(
                 select_regression_columns,
@@ -101,7 +103,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                 },
                 outputs="publications.regression.inputs",
                 name="subset_columns_for_regression",
-                tags="complete",
+                tags="fix",
             ),
         ],
         tags=["data_output_publications"],

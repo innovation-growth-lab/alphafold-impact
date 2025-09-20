@@ -142,6 +142,9 @@ async def fetch_citation_details_async(
                     retry_delay,
                 )
                 await asyncio.sleep(retry_delay)
+            except TypeError as e:
+                logger.error("Type error for %s: %s", work_id, str(e))
+                return []
 
     return data_list
 
@@ -428,9 +431,7 @@ def create_parent_child_df(oa_dataset: pd.DataFrame) -> pd.DataFrame:
     """
     inner_df = oa_dataset.copy()
     # if level is str, convert to int with "seed" as -1
-    inner_df["level"] = inner_df["level"].apply(
-        lambda x: -1 if x == "seed" else int(x)
-    )
+    inner_df["level"] = inner_df["level"].apply(lambda x: -1 if x == "seed" else int(x))
 
     # drop duplicates within level
     inner_df = inner_df.drop_duplicates(subset=["id", "parent_id", "level"])

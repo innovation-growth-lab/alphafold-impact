@@ -60,7 +60,7 @@ def create_pipeline(  # pylint: disable=unused-argument&missing-function-docstri
                 name="get_chain_labels_af",
             ),
         ],
-        tags=["data_processing_af_chains"],
+        tags=["data_processing_af_chains", "fix"],
     )
 
     # STEP 7B: Analyse counterfactual citation chains

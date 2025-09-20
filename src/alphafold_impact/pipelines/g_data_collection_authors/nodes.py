@@ -73,25 +73,34 @@ def _get_candidate_authors(data: pd.DataFrame) -> pd.DataFrame:
         pd.DataFrame: A DataFrame containing the candidate authors and their counts.
     """
 
-    # get the authors
+    # get the authors (parse pipe-delimited authorships)
     author_data = (
         data.drop_duplicates(subset=["id"])
-        .explode("authorships")
         .assign(
-            author=lambda x: x["authorships"].apply(
-                lambda y: y[0] if y is not None else None
+            authorships_parsed=lambda x: x["authorships"].apply(
+                lambda y: (
+                    [auth.split(",") for auth in y.split("|")]
+                    if isinstance(y, str) and y != ""
+                    else []
+                )
+            )
+        )
+        .explode("authorships_parsed")
+        .assign(
+            author=lambda x: x["authorships_parsed"].apply(
+                lambda y: y[0] if isinstance(y, list) and len(y) > 0 else None
             ),
-            institution=lambda x: x["authorships"].apply(
-                lambda y: y[1] if y is not None else None
+            institution=lambda x: x["authorships_parsed"].apply(
+                lambda y: y[1] if isinstance(y, list) and len(y) > 1 else None
             ),
-            position=lambda x: x["authorships"].apply(
-                lambda y: y[2] if y is not None else None
+            position=lambda x: x["authorships_parsed"].apply(
+                lambda y: y[2] if isinstance(y, list) and len(y) > 2 else None
             ),
         )
         .dropna(subset=["author"])
         .drop_duplicates(subset=["id", "author"])
         .reset_index(drop=True)
-        .drop(columns=["authorships"])
+        .drop(columns=["authorships", "authorships_parsed"])
     )
 
     # drop A9999999999
@@ -194,9 +203,17 @@ def _get_depth_primary_level(publications_data: pd.DataFrame) -> dict[str, str]:
     """
     Get the depth of an author in the author data.
     """
-    exploded_author_data = publications_data.explode("authorships")
-    exploded_author_data["author"] = exploded_author_data["authorships"].apply(
-        lambda x: x[0] if x is not None else None
+    exploded_author_data = publications_data.assign(
+        authorships_parsed=lambda x: x["authorships"].apply(
+            lambda y: (
+                [auth.split(",") for auth in y.split("|")]
+                if isinstance(y, str) and y != ""
+                else []
+            )
+        )
+    ).explode("authorships_parsed")
+    exploded_author_data["author"] = exploded_author_data["authorships_parsed"].apply(
+        lambda y: y[0] if isinstance(y, list) and len(y) > 0 else None
     )
     agg_exploded_author_data = (
         exploded_author_data.groupby("author")["level"].value_counts().reset_index()
@@ -453,16 +470,24 @@ def fetch_author_outputs(
         # do necessary transformations
         slice_papers = _result_transformations(slice_papers)
 
-        # explode the authorships
-        slice_papers = slice_papers.explode("authorships")
+        # parse pipe-delimited authorships and explode
+        slice_papers = slice_papers.assign(
+            authorships_parsed=lambda x: x["authorships"].apply(
+                lambda y: (
+                    [auth.split(",") for auth in y.split("|")]
+                    if isinstance(y, str) and y != ""
+                    else []
+                )
+            )
+        ).explode("authorships_parsed")
 
-        # separate tuples into columns
+        # separate parsed authorships into columns
         slice_papers[["author", "institution", "author_position"]] = pd.DataFrame(
-            slice_papers["authorships"].tolist(), index=slice_papers.index
+            slice_papers["authorships_parsed"].tolist(), index=slice_papers.index
         )
 
-        # drop the authorships column
-        slice_papers.drop(columns=["authorships"], inplace=True)
+        # drop the authorships columns
+        slice_papers.drop(columns=["authorships", "authorships_parsed"], inplace=True)
 
         # filter for authorships in the author list
         slice_papers = slice_papers[slice_papers["author"].isin(authors)]
@@ -1101,26 +1126,16 @@ def _result_transformations(data: pd.DataFrame) -> pd.DataFrame:
             else None
         )
     )
-    # extract the content of authorships
+    # extract the content of authorships, create pipe-delimited string of authorship triplets
     data["authorships"] = data["authorships"].apply(
         lambda x: (
-            [
-                (
-                    (
-                        author["author"]["id"].replace("https://openalex.org/", ""),
-                        inst["id"].replace("https://openalex.org/", ""),
-                        author["author_position"],
-                    )
-                    if author["institutions"]
-                    else [
-                        author["author"]["id"].replace("https://openalex.org/", ""),
-                        "",
-                        author["author_position"],
-                    ]
-                )
-                for author in x
-                for inst in author["institutions"] or [{}]
-            ]
+            "|".join(
+                [
+                    f"{author['author']['id'].replace('https://openalex.org/', '')},{inst['id'].replace('https://openalex.org/', '') if inst else ''},{author['author_position']}"
+                    for author in x
+                    for inst in author["institutions"] or [{}]
+                ]
+            )
             if x
             else None
         )
@@ -1257,13 +1272,23 @@ def _normalise_citation_counts(data: pd.DataFrame) -> pd.DataFrame:
 
 def _process_pdb_data(pdb_submissions: pd.DataFrame) -> pd.DataFrame:
     return (
-        pdb_submissions.explode("authorships")
+        pdb_submissions.assign(
+            authorships_parsed=lambda x: x["authorships"].apply(
+                lambda y: (
+                    [auth.split(",") for auth in y.split("|")]
+                    if isinstance(y, str) and y != ""
+                    else []
+                )
+            )
+        )
+        .explode("authorships_parsed")
         .assign(
-            authorships=lambda x: x["authorships"].apply(
-                lambda y: y[0] if isinstance(y, np.ndarray) and len(y) > 0 else None
+            authorships=lambda x: x["authorships_parsed"].apply(
+                lambda y: y[0] if isinstance(y, list) and len(y) > 0 else None
             )
         )
         .rename(columns={"authorships": "author"})
+        .drop(columns=["authorships_parsed"])
     )
 
 

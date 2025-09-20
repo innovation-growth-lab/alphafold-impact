@@ -20,20 +20,20 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
 ) -> Pipeline:
     return pipeline(
         [
-            # STEP 4A: Process baseline structural biology data to find counterfactual candidates
+            # STEP 4a: Process baseline structural biology data to find counterfactual candidates
             # ← FROM: b__data_processing_oa (provides processed baseline and AlphaFold data)
             node(
                 process_baseline_data,
                 inputs={
                     "alphafold_data": "oa.data_processing.depth.af.primary",
                     "intent_data": "oa.data_processing.depth.level.0.baseline.primary",
-                    "baseline_data": "oa.data_collection.subfield.structural_biology.depth.0.intermediate", # actually level 1 (eventually)
+                    "baseline_data": "oa.data_collection.subfield.structural_biology.depth.0.intermediate", # actually level 1 (eventually)  # noqa
                     "seed_baseline_data": "oa.data_processing.subfield.structural_biology.primary",
                 },
                 outputs="baseline_candidates",
                 name="process_sb_for_chain_assignment",
             ),
-            # STEP 4B: Process AlphaFold data to create target profile for comparison
+            # STEP 4a: Process AlphaFold data to create target profile for comparison
             # ← FROM: b__data_processing_oa (provides processed AlphaFold data)
             node(
                 process_af_data,
@@ -41,7 +41,7 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                 outputs="alphafold_target",
                 name="process_af_for_chain_assignment",
             ),
-            # STEP 4C: Assign labels and select best counterfactual papers
+            # STEP 4a: Assign labels and select best counterfactual papers
             # → NEXT: Triggers a_data_collection_oa to collect more citation data for these papers
             node(
                 assign_focal_label,

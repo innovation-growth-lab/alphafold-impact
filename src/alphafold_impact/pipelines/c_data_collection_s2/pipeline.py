@@ -116,7 +116,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
     )
 
     # STEP 6D: Add citation intent data for other structural biology papers
-    # ← FROM: b__data_processing_oa (oa.data_processing.structural_biology.depth.other.intermediate)
+    # ← FROM: b__data_processing_oa (oa.data_processing.structural_biology.depth.other.intermediate
     # → NEXT: Goes to d_data_processing_chains for final analysis
     other_pipeline = pipeline(
         [
@@ -145,7 +145,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
         tags=["sb_s2_pipeline"],
     )
 
-    # STEP 6E: Alternative bulk data collection method (optional)
+    # STEP 6E: Alternative bulk data collection method (NOT USED)
     # This provides an alternative way to collect Semantic Scholar data in bulk
     bulk_data_pipeline = pipeline(
         [
@@ -164,12 +164,10 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
                 name="fetch_s2_bulk_data",
             ),
         ],
-        tags=["bulk_data_s2"],
     )
     return (
         primary_data_intent_pipeline
         + baseline_seed_pipeline
         + counterfactual_pipeline
         + other_pipeline
-        + bulk_data_pipeline
     )

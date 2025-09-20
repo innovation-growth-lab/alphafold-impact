@@ -109,7 +109,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
         tags=["data_collection_oa"],
     )
 
-    # STEP 4: Collect additional citations for CT papers (runs AFTER b_data_processing_baselines)
+    # STEP 4c: Collect additional citations for CT papers (runs AFTER b_data_processing_baselines)
     # This step is triggered by data created in b_data_processing_baselines
     # → NEXT: Goes back to b__data_processing_oa for processing the new counterfactual data
     last_level_ct_pipeline = pipeline(
