@@ -230,7 +230,7 @@ pubmed.data_processing.icite.intermediate:
   
 lens.data_processing.csv.raw:
   <<: *_csv_ptd
-  path: s3://igl-alphafold/2025Q2/01_raw/lens/
+  path: s3://igl-alphafold/2025Q1/01_raw/lens/
 
 lens.data_processing.primary:
   <<: *_pq
@@ -363,8 +363,12 @@ ecr.candidate_authors.raw:
   filepath: s3://igl-alphafold/oct/01_raw/ecr/candidate_authors.parquet
 
 ecr.authors.raw:
+  <<: *_pq_ptd
+  path: s3://igl-alphafold/2025Q2/01_raw/ecr/authors/
+
+ecr.authors.merged:
   <<: *_pq
-  filepath: s3://igl-alphafold/oct/01_raw/ecr/authors.parquet
+  filepath: s3://igl-alphafold/2025Q2/02_intermediate/ecr/authors_merged.parquet
  
 ecr.publications.raw:
   <<: *_pq_ptd

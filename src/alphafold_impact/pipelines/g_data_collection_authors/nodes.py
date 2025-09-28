@@ -301,7 +301,7 @@ def fetch_candidate_ecr_status(
     from_publication_date: str,
     to_publication_date: str,
     api_config: Dict[str, str],
-) -> pd.DataFrame:
+) -> Generator[Dict[str, pd.DataFrame], None, None]:
     """
     Fetches the status of candidate Early Career Researchers (ECR) based on their
     publication records. This function processes a list of authors, divides them
@@ -319,8 +319,9 @@ def fetch_candidate_ecr_status(
         api_config (Dict[str, str]): Configuration dictionary for the API, including
             parameters like 'perpage'.
 
-    Returns:
-        pd.DataFrame: A DataFrame containing the authors and their ECR status.
+    Yields:
+        Dict[str, pd.DataFrame]: A dictionary where keys are slice identifiers and values
+            are DataFrames containing the authors and their ECR status for each slice.
     """
     # create list of author ids
     author_ids = list(set(authors["author"].tolist()))
@@ -336,9 +337,6 @@ def fetch_candidate_ecr_status(
 
     # slice to create parallel jobs that produce slices
     slices = [filter_batches[i : i + 250] for i in range(0, len(filter_batches), 250)]
-
-    # create authors final data
-    authors_final = pd.DataFrame()
 
     logger.info("Fetching papers for %d author batches", len(slices))
     for i, slice_ in enumerate(slices):
@@ -390,11 +388,31 @@ def fetch_candidate_ecr_status(
             "ecr",
         )
 
-        authors_final = pd.concat(
-            [authors_final, slice_candidates_df], ignore_index=True
-        )
+        yield {f"s{i}": slice_candidates_df}
 
-    return authors_final
+
+def merge_ecr_authors_data(
+    data_loaders: Dict[str, AbstractDataset],
+) -> pd.DataFrame:
+    """
+    Merges partitioned ECR authors data into a single DataFrame.
+    
+    Args:
+        data_loaders (Dict[str, AbstractDataset]): A dictionary where keys are strings
+            and values are data loader functions that return DataFrames.
+    
+    Returns:
+        pd.DataFrame: A single DataFrame containing all ECR authors data.
+    """
+    logger.info("Merging ECR authors data from %d partitions", len(data_loaders))
+    
+    authors_data = pd.DataFrame()
+    for i, loader in enumerate(data_loaders.values()):
+        logger.info("Processing authors partition %d / %d", i + 1, len(data_loaders))
+        partition_data = loader()
+        authors_data = pd.concat([authors_data, partition_data], ignore_index=True)
+    
+    return authors_data
 
 
 def fetch_author_outputs(

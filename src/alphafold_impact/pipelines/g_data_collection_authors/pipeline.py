@@ -7,6 +7,7 @@ from kedro.pipeline import Pipeline, pipeline, node
 from .nodes import (
     get_unique_authors,
     fetch_candidate_ecr_status,
+    merge_ecr_authors_data,
     fetch_author_outputs,
     merge_author_data,
     aggregate_to_quarterly,
@@ -48,8 +49,17 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                 outputs="ecr.institutions.raw",
                 name="get_ecr_institution_info",
             ),
+            node(
+                func=merge_ecr_authors_data,
+                inputs={
+                    "data_loaders": "ecr.authors.raw",
+                },
+                outputs="ecr.authors.merged",
+                name="merge_ecr_authors_data",
+            ),
         ],
         tags=["basic_ecr_collection"],
+
     )
 
     ecr_pipeline = pipeline(
@@ -57,7 +67,7 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
             node(
                 func=fetch_author_outputs,
                 inputs={
-                    "authors": "ecr.authors.raw",
+                    "authors": "ecr.authors.merged",
                     "ecr": "params:ecr.data_collection.ecr_bool.ecr",
                     "from_publication_date": "params:ecr.data_collection.from_ecr_date",
                     "api_config": "params:ecr.data_collection.api",
@@ -70,7 +80,7 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                 inputs={
                     "data_loaders": "ecr.publications.raw",
                     "candidate_authors": "ecr.candidate_authors.raw",
-                    "authors": "ecr.authors.raw",
+                    "authors": "ecr.authors.merged",
                     "institutions": "ecr.institutions.raw",
                     "ecr": "params:ecr.data_collection.ecr_bool.ecr",
                     "patents_data": "lens.data_processing.primary",
@@ -98,7 +108,7 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
             node(
                 func=fetch_author_outputs,
                 inputs={
-                    "authors": "ecr.authors.raw",
+                    "authors": "ecr.authors.merged",
                     "ecr": "params:ecr.data_collection.ecr_bool.nonecr",
                     "from_publication_date": "params:ecr.data_collection.from_nonecr_date",
                     "api_config": "params:ecr.data_collection.api",
@@ -111,7 +121,7 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
                 inputs={
                     "data_loaders": "nonecr.publications.raw",
                     "candidate_authors": "ecr.candidate_authors.raw",
-                    "authors": "ecr.authors.raw",
+                    "authors": "ecr.authors.merged",
                     "institutions": "ecr.institutions.raw",
                     "ecr": "params:ecr.data_collection.ecr_bool.nonecr",
                     "patents_data": "lens.data_processing.primary",
@@ -136,4 +146,8 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
         tags=["nonecr_pipeline"],
     )
 
-    return basic_pipeline + ecr_pipeline + nonecr_pipeline
+    return (
+        basic_pipeline + 
+        # ecr_pipeline + 
+        nonecr_pipeline
+    )
