@@ -22,14 +22,14 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
 ) -> Pipeline:
     basic_pipeline = pipeline(
         [
-            node(
-                func=get_unique_authors,
-                inputs={
-                    "publications_data": "publications.data.outputs",
-                },
-                outputs="ecr.candidate_authors.raw",
-                name="get_unique_authors",
-            ),
+            # node(
+            #     func=get_unique_authors,
+            #     inputs={
+            #         "publications_data": "publications.data.outputs",
+            #     },
+            #     outputs="ecr.candidate_authors.raw",
+            #     name="get_unique_authors",
+            # ),
             node(
                 func=fetch_candidate_ecr_status,
                 inputs={
