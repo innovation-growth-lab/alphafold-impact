@@ -114,6 +114,8 @@ def fetch_author_publications(
     logger.info("Fetching papers for %d author batches", len(slices))
 
     for i, slice_ in enumerate(slices):
+        if i < 718:
+            continue
         logger.info("Processing batch number %d / %d", i + 1, len(slices))
 
         slice_results = Parallel(n_jobs=8, backend="loky", verbose=10)(
@@ -289,7 +291,7 @@ def combine_lab_results(
 
 
 def assign_lab_label(
-    candidate_data: pd.DataFrame, quantile_val: float = 0.75
+    candidate_data: pd.DataFrame, quantile_val: float = 0.9
 ) -> pd.DataFrame:
     """
     Assigns lab labels to candidate data based on matching with ground truth data.
@@ -308,6 +310,25 @@ def assign_lab_label(
         drop=True
     )
 
+    logger.info("Filtering candidate data based on quantile 0.75 for publication count or cited by count at least one year before 2021")
+    candidate_data["year"] = candidate_data["year"].astype(int)
+    
+    # filter data to years before 2021
+    pre_2021_data = candidate_data[candidate_data["year"] < 2021]
+    
+    # calculate 0.75 quantiles for pre-2021 data
+    pub_count_quantile_75 = pre_2021_data["publication_count"].quantile(0.75)
+    cited_by_quantile_75 = pre_2021_data["cited_by_count"].quantile(0.75)
+    
+    # filter candidates who have at least one year before 2021 with either metric above 0.75 qt
+    # keep all years (including post-2021) for qualifying candidates
+    candidate_data = candidate_data.groupby(["author", "institution"]).filter(
+        lambda group: (
+            (group[group["year"] < 2021]["publication_count"] > pub_count_quantile_75).any() or
+            (group[group["year"] < 2021]["cited_by_count"] > cited_by_quantile_75).any()
+        )
+    )
+
     logger.info(
         "Filtering candidate data based on appearing in three consecutive years"
     )
@@ -320,18 +341,6 @@ def assign_lab_label(
     candidate_data["mean_apf"] = candidate_data.groupby(["author", "institution"])[
         "apf"
     ].transform("mean")
-
-    logger.info("Calculating quantiles")
-    quantiles = candidate_data["mean_apf"].quantile([0.25, 0.5, 0.75])
-
-    logger.info(
-        "Filtering candidate data based on having at least one year above 75th percentile of APF"
-    )
-    candidate_data = candidate_data[
-        candidate_data.groupby(["author", "institution"])["apf"].transform(
-            lambda x: x.max() > quantiles[0.75]
-        )
-    ]
 
     logger.info("Calculating 3-year average APF")
     candidate_data["apf_3yr_avg"] = (
@@ -383,10 +392,10 @@ def assign_lab_label(
 
     # assign weights
     weights = {
-        "apf": 0.4,
+        "apf": 0.3,
         "mean_apf": 0.1,
         "apf_3yr_avg": 0.2,
-        "publication_count": 0.2,
+        "publication_count": 0.3,
         "cited_by_count": 0.1,
     }
 
@@ -399,10 +408,27 @@ def assign_lab_label(
     )
 
     logger.info("Make final selection")
-    quantile_val = candidate_data["score"].quantile(quantile_val)
+    quantile_res = candidate_data["score"].quantile(quantile_val)
     likely_pis = candidate_data.groupby(["author", "institution"]).filter(
-        is_likely_pi, quantile=quantile_val
+        is_likely_pi, quantile=quantile_res
     )
+
+    # Check if we have more than 15,000 unique authors and limit if necessary
+    unique_authors = likely_pis["author"].nunique()
+    if unique_authors > 15000:
+        logger.info("Found %d unique authors, limiting to top 15,000 by author score", unique_authors)
+        
+        # calculate max score per author
+        author_scores = likely_pis.groupby("author")["score"].max().reset_index()
+        author_scores = author_scores.sort_values("score", ascending=False)
+        
+        # Select top 15,000 authors
+        top_authors = author_scores.head(15000)["author"].tolist()
+        
+        # Filter likely_pis to only include these authors
+        likely_pis = likely_pis[likely_pis["author"].isin(top_authors)]
+        
+        logger.info("Limited to %d unique authors", likely_pis["author"].nunique())
 
     return likely_pis
 
@@ -435,11 +461,6 @@ def get_publications_from_labs(
     author_ids = data["author"].unique().tolist()
 
     logger.info("Fetching publications for %d authors", len(author_ids))
-
-    # # create batches of 50 authors
-    # author_batches = [
-    #     "|".join(author_ids[i : i + 50]) for i in range(0, len(author_ids), 50)
-    # ]
 
     filter_batches = [[from_publication_date, author_id] for author_id in author_ids]
 

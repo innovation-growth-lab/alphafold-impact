@@ -14,9 +14,11 @@ logger = logging.getLogger(__name__)
 
 def get_usage(data: pd.DataFrame) -> pd.DataFrame:
     """Get the usage of frontier and AF methods"""
+    data_subset = data[["id", "authorships", "level", "publication_date", "source"]].copy()
+    
     # get the authors
     author_data = (
-        data.drop_duplicates(subset=["id"])
+        data_subset.drop_duplicates(subset=["id"])
         .assign(
             authorships_parsed=lambda x: x["authorships"].apply(
                 lambda y: (
@@ -26,22 +28,20 @@ def get_usage(data: pd.DataFrame) -> pd.DataFrame:
                 )
             )
         )
+        .drop(columns=["authorships"])
         .explode("authorships_parsed")
         .assign(
             author=lambda x: x["authorships_parsed"].apply(
-                lambda y: y[0] if isinstance(y, np.ndarray) and len(y) > 0 else None
+                lambda y: y[0] if isinstance(y, list) and len(y) > 0 else None
             ),
             institution=lambda x: x["authorships_parsed"].apply(
-                lambda y: y[1] if isinstance(y, np.ndarray) and len(y) > 1 else None
-            ),
-            position=lambda x: x["authorships_parsed"].apply(
-                lambda y: y[2] if isinstance(y, np.ndarray) and len(y) > 2 else None
+                lambda y: y[1] if isinstance(y, list) and len(y) > 1 else None
             ),
         )
         .dropna(subset=["author"])
         .drop_duplicates(subset=["id", "author"])
         .reset_index(drop=True)
-        .drop(columns=["authorships", "authorships_parsed"])
+        .drop(columns=["authorships_parsed"])
     )
 
     # drop A9999999999
@@ -112,9 +112,6 @@ def get_intent(data: pd.DataFrame) -> pd.DataFrame:
             ),
             institution=lambda x: x["authorships_parsed"].apply(
                 lambda y: y[1] if isinstance(y, np.ndarray) and len(y) > 1 else None
-            ),
-            position=lambda x: x["authorships_parsed"].apply(
-                lambda y: y[2] if isinstance(y, np.ndarray) and len(y) > 2 else None
             ),
         )
         .dropna(subset=["author"])
