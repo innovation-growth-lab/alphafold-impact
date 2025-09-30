@@ -29,13 +29,13 @@ def get_usage(data: pd.DataFrame) -> pd.DataFrame:
         .explode("authorships_parsed")
         .assign(
             author=lambda x: x["authorships_parsed"].apply(
-                lambda y: y[0] if y is not None and len(y) > 0 else None
+                lambda y: y[0] if isinstance(y, np.ndarray) and len(y) > 0 else None
             ),
             institution=lambda x: x["authorships_parsed"].apply(
-                lambda y: y[1] if y is not None and len(y) > 1 else None
+                lambda y: y[1] if isinstance(y, np.ndarray) and len(y) > 1 else None
             ),
             position=lambda x: x["authorships_parsed"].apply(
-                lambda y: y[2] if y is not None and len(y) > 2 else None
+                lambda y: y[2] if isinstance(y, np.ndarray) and len(y) > 2 else None
             ),
         )
         .dropna(subset=["author"])
@@ -108,13 +108,13 @@ def get_intent(data: pd.DataFrame) -> pd.DataFrame:
         .explode("authorships_parsed")
         .assign(
             author=lambda x: x["authorships_parsed"].apply(
-                lambda y: y[0] if y is not None and len(y) > 0 else None
+                lambda y: y[0] if isinstance(y, np.ndarray) and len(y) > 0 else None
             ),
             institution=lambda x: x["authorships_parsed"].apply(
-                lambda y: y[1] if y is not None and len(y) > 1 else None
+                lambda y: y[1] if isinstance(y, np.ndarray) and len(y) > 1 else None
             ),
             position=lambda x: x["authorships_parsed"].apply(
-                lambda y: y[2] if y is not None and len(y) > 2 else None
+                lambda y: y[2] if isinstance(y, np.ndarray) and len(y) > 2 else None
             ),
         )
         .dropna(subset=["author"])
@@ -545,21 +545,12 @@ def process_institutional_data(institutional_data: pd.DataFrame) -> pd.DataFrame
 def process_pdb_data(pdb_submissions: pd.DataFrame) -> pd.DataFrame:
     """Process the PDB submissions data by exploding the authorships."""
     return (
-        pdb_submissions.assign(
-            authorships_parsed=lambda x: x["authorships"].apply(
-                lambda y: (
-                    [auth.split(",") for auth in y.split("|")]
-                    if isinstance(y, str) and y != ""
-                    else []
-                )
-            )
-        )
-        .explode("authorships_parsed")
+        pdb_submissions.explode("authorships")
         .assign(
-            authorships=lambda x: x["authorships_parsed"].apply(
-                lambda y: y[0] if y is not None and len(y) > 0 else None
+            authorships=lambda x: x["authorships"].apply(
+                lambda y: y[0] if isinstance(y, np.ndarray) and len(y) > 0 else None
             )
         )
-        .drop(columns=["authorships_parsed"])
         .rename(columns={"authorships": "author"})
     )
+
