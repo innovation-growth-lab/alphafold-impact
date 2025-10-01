@@ -1,3 +1,25 @@
+# =============================================================================
+# REPORTING PLOTS GENERATION SCRIPT
+# =============================================================================
+#
+# This script generates publication-ready coefficient plots for the AlphaFold
+# impact analysis. It produces:
+#
+# 1. Core coefficient plots: Individual plots for each dependent variable showing
+#    treatment effects (AlphaFold, AI Frontier, PP Frontier, SB Frontier) with
+#    95% confidence intervals, organized by scope, field, and subgroup
+# 2. Strong coefficient plots: Method vs background intent analysis for each
+#    technology group with strong/weak intent classifications
+# 3. Grouped coefficient plots: Faceted visualizations combining all dependent
+#    variables for each source origin (Laboratories, Researchers, Citing Papers)
+# 4. High PDB subgroup plots: Specialized plots for high PDB submission groups
+# 5. Strong intent grouped plots: Method-focused analysis with intent-based
+#    treatment classifications
+#
+# Combines coefficient tables from multiple sources (labs, authors, papers)
+# Output: PNG plots saved to data/08_reporting/2025Q1/coefplots/ subdirectories
+# =============================================================================
+
 # Load necessary library
 library(dplyr)
 library(ggplot2)

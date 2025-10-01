@@ -1,3 +1,22 @@
+# =============================================================================
+# DESCRIPTIVE STATISTICS SCRIPT
+# =============================================================================
+#
+# This script generates descriptive statistics and summary tables for the
+# AlphaFold impact analysis. It produces:
+#
+# 1. LaTeX summary tables showing quarterly counts by technology group,
+#    research depth (foundational vs applied), and time period (pre/post 2021Q2)
+# 2. Tables for multiple datasets: foundational labs, applied labs, ECR authors,
+#    non-ECR authors, and citing papers
+# 3. Summary statistics including total publications, PDB submissions,
+#    clinical citations, and patent citations
+# 4. Technology group classifications: AlphaFold Papers, AI-intensive Frontiers,
+#    Protein Prediction Frontiers, Other Struct. Biol. Frontiers, Other Research
+#
+# Output: LaTeX tables saved to data/05_model_output/descriptive_stats/
+# =============================================================================
+
 # Clean out the workspace
 rm(list = ls())
 options(max.print = 1000)

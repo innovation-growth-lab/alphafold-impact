@@ -1,5 +1,22 @@
-# Event Study Analysis for Multiple Overlapping Treatments
-# Using Callaway and Sant'Anna (2021) difference-in-differences methodology
+# =============================================================================
+# EVENT STUDY ANALYSIS SCRIPT
+# =============================================================================
+#
+# This script performs event study analysis using Callaway and Sant'Anna (2021)
+# difference-in-differences methodology for the AlphaFold impact analysis. It produces:
+#
+# 1. Dynamic treatment effect plots showing Average Treatment Effect on the Treated (ATT)
+#    over time relative to treatment adoption, with 95% confidence intervals
+# 2. Event study visualizations for multiple outcome variables including citations,
+#    publications, PDB submissions, disease relevance, and structural quality metrics
+# 3. Treatment timing analysis identifying first adoption quarter for each author/lab
+# 4. Pre/post treatment period analysis with proper control group construction
+# 5. Results saved as both plots (PNG) and analysis objects (RDS) for further use
+#
+# Supports both "labs" and "authors" data types
+# Uses "notyettreated" control group with anticipation=0 and clustered standard errors
+# Output: PNG plots and RDS results saved to did_plots/ subdirectory
+# =============================================================================
 
 # Clean workspace and set options
 rm(list = ls())

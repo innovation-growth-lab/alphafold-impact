@@ -46,7 +46,7 @@ Sys.setenv(
 
 # Define the S3 bucket and path
 bucket <- "igl-alphafold"
-path <- "2025Q1/04_output/publications/regression_inputs.parquet" # nolint
+path <- "2025Q2/04_output/publications/regression_inputs.parquet" # nolint
 
 
 # Fetch the data from the S3 bucket
@@ -113,7 +113,8 @@ papers <- papers %>%
     ),
     num_pdb_ids = ifelse(is.na(num_pdb_ids), 0, num_pdb_ids),
     num_primary_submissions = ifelse(is.na(num_primary_submissions), 0, num_primary_submissions), # nolint
-    mesh_C = ifelse(is.na(mesh_C), 0, mesh_C)
+    mesh_C = ifelse(is.na(mesh_C), 0, mesh_C),
+    last_author = ifelse(is.na(last_author), "unknown", last_author)
   )
 
 # adding translational variables

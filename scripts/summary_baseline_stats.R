@@ -1,3 +1,27 @@
+# =============================================================================
+# SUMMARY BASELINE STATISTICS SCRIPT
+# =============================================================================
+#
+# This script generates baseline descriptive statistics and statistical tests
+# comparing treatment groups in the AlphaFold impact analysis. It produces:
+#
+# 1. Baseline statistics table showing mean and standard deviation for key
+#    variables (publications, citations, PDB submissions, etc.) by treatment g
+# 2. Treatment group classifications: AlphaFold, AI Frontiers, PP Frontiers,
+#    SB Frontiers, and Baseline Control groups
+# 3. Statistical significance tests (Wilcoxon rank-sum) comparing AlphaFold
+#    group to baseline control for each variable
+# 4. Effect size analysis using Cohen's d with practical significance
+#    interpretations (Negligible, Small, Medium, Large)
+# 5. Combined significance indicators showing both statistical and practical
+#    significance for treatment effects
+# 6. LaTeX-formatted summary table with proper formatting and column headers
+# 
+# Analyzes data from three datasets: Early Career Researchers, Established
+# Researchers, and Laboratories for baseline years 2015-2020
+# Output: LaTeX table saved to data/05_model_output/summary/stats.tex
+# =============================================================================
+
 # Clean out the workspace
 rm(list = ls())
 options(max.print = 1000)

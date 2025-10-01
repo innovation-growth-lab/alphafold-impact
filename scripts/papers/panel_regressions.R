@@ -39,6 +39,9 @@ bind_rows <- dplyr::bind_rows
 # ------------------------------------------------------------------------------
 sub_samples <- readRDS(paste0(pathdir, "data/sub_samples.rds"))
 
+# print number of nan in each column
+print(sapply(sub_samples$"scope_All__field_All Fields__subgroup_All PDB", function(x) sum(is.na(x))))
+
 # ------------------------------------------------------------------------------
 # DATA PREPARATION
 # ------------------------------------------------------------------------------

@@ -1,5 +1,24 @@
-# Event Study Analysis for Multiple Overlapping Treatments
-# Using Callaway and Sant'Anna (2021) difference-in-differences methodology
+# =============================================================================
+# EVENT STUDY COMBINED PLOTS SCRIPT
+# =============================================================================
+#
+# This script combines individual event study plots into publication-ready
+# multi-panel figures for the AlphaFold impact analysis. It produces:
+#
+# 1. Combined event study plots arranging individual PNG plots into 2x4 grids
+# 2. Multi-panel figures for different research groups: Laboratories and
+#    Established Researchers
+# 3. Selected outcome variables: Field-Weighted Citation Impact, Publications,
+#    TM-Score, Fold Identity, PDB Submissions, Disease-relevant Structures,
+#    Clinical Citations, and Patent Citations
+# 4. Publication-ready formatting with proper titles, alignment, and spacing
+# 5. High-resolution output (300 DPI) suitable for academic publications
+# 6. Handles missing plots gracefully with placeholder text
+#
+# Loads existing event study plots from did_plots/af/ directories and combines
+# them using cowplot and magick packages for image manipulation
+# Output: Combined PNG plots saved to data/05_model_output/combined_did_plots/
+# =============================================================================
 
 # Clean workspace and set options
 rm(list = ls())
