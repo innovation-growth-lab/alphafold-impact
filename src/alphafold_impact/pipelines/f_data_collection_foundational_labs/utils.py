@@ -7,6 +7,7 @@ from typing import List, Tuple
 import requests
 import pandas as pd
 import numpy as np
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -253,29 +254,33 @@ def fetch_institution_data(institution):
     """
     url = f"https://api.openalex.org/institutions/{institution}"
     while True:
-        try:
-            response = requests.get(url, timeout=40)
+        response = requests.get(url, timeout=40)
+        if response.status_code in [429, 443]:
+            logger.info(
+                "Rate limited or connection refused for institution %s, retrying...",
+                institution,
+            )
+            time.sleep(1)  # Wait 1 second before retry
+            continue
 
-            # Process the response if the request was successful
-            institution_data = response.json()
+        # Process the response if the request was successful
+        institution_data = response.json()
 
-            # extract country_code, type, works_count, cited_by_count, summary_stats
-            institution_data = {
-                "institution": institution,
-                "country_code": institution_data.get("country_code"),
-                "type": institution_data.get("type"),
-                "works_count": institution_data.get("works_count"),
-                "cited_by_count": institution_data.get("cited_by_count"),
-                "2yr_mean_citedness": institution_data.get("summary_stats", {}).get(
-                    "2yr_mean_citedness"
-                ),
-                "h_index": institution_data.get("summary_stats", {}).get("h_index"),
-                "i10_index": institution_data.get("summary_stats", {}).get("i10_index"),
-            }
-            break
-        except:  # pylint: disable=bare-except
-            logger.info("Error fetching for institution %s", institution)
-            return None
+        # extract country_code, type, works_count, cited_by_count, summary_stats
+        institution_data = {
+            "institution": institution,
+            "country_code": institution_data.get("country_code"),
+            "type": institution_data.get("type"),
+            "works_count": institution_data.get("works_count"),
+            "cited_by_count": institution_data.get("cited_by_count"),
+            "2yr_mean_citedness": institution_data.get("summary_stats", {}).get(
+                "2yr_mean_citedness"
+            ),
+            "h_index": institution_data.get("summary_stats", {}).get("h_index"),
+            "i10_index": institution_data.get("summary_stats", {}).get("i10_index"),
+        }
+        break
+
     return institution_data
 
 

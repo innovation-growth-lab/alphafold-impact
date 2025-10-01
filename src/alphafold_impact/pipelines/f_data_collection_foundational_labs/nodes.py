@@ -204,11 +204,15 @@ def calculate_lab_determinants(
         # break authorship nested dictionary jsons, create pipe-delimited string of authorship triplets
         data["authorships"] = data["authorships"].apply(
             lambda x: (
-                "|".join([
-                    f"{author['author']['id'].replace('https://openalex.org/', '')},{inst['id'].replace('https://openalex.org/', '') if inst else ''},{author['author_position']}"
-                    for author in x
-                    for inst in author["institutions"] or [{}]
-                ]) if x else None
+                "|".join(
+                    [
+                        f"{author['author']['id'].replace('https://openalex.org/', '')},{inst['id'].replace('https://openalex.org/', '') if inst else ''},{author['author_position']}"
+                        for author in x
+                        for inst in author["institutions"] or [{}]
+                    ]
+                )
+                if x
+                else None
             )
         )
 
@@ -310,22 +314,28 @@ def assign_lab_label(
         drop=True
     )
 
-    logger.info("Filtering candidate data based on quantile 0.75 for publication count or cited by count at least one year before 2021")
+    logger.info(
+        "Filtering candidate data based on quantile 0.75 for publication count or cited by count at least one year before 2021"
+    )
     candidate_data["year"] = candidate_data["year"].astype(int)
-    
+
     # filter data to years before 2021
     pre_2021_data = candidate_data[candidate_data["year"] < 2021]
-    
+
     # calculate 0.75 quantiles for pre-2021 data
     pub_count_quantile_75 = pre_2021_data["publication_count"].quantile(0.75)
     cited_by_quantile_75 = pre_2021_data["cited_by_count"].quantile(0.75)
-    
+
     # filter candidates who have at least one year before 2021 with either metric above 0.75 qt
     # keep all years (including post-2021) for qualifying candidates
     candidate_data = candidate_data.groupby(["author", "institution"]).filter(
         lambda group: (
-            (group[group["year"] < 2021]["publication_count"] > pub_count_quantile_75).any() or
-            (group[group["year"] < 2021]["cited_by_count"] > cited_by_quantile_75).any()
+            (
+                group[group["year"] < 2021]["publication_count"] > pub_count_quantile_75
+            ).any()
+            or (
+                group[group["year"] < 2021]["cited_by_count"] > cited_by_quantile_75
+            ).any()
         )
     )
 
@@ -415,20 +425,24 @@ def assign_lab_label(
 
     # Check if we have more than 15,000 unique authors and limit if necessary
     unique_authors = likely_pis["author"].nunique()
-    if unique_authors > 15000:
-        logger.info("Found %d unique authors, limiting to top 15,000 by author score", unique_authors)
-        
-        # calculate max score per author
-        author_scores = likely_pis.groupby("author")["score"].max().reset_index()
-        author_scores = author_scores.sort_values("score", ascending=False)
-        
-        # Select top 15,000 authors
-        top_authors = author_scores.head(15000)["author"].tolist()
-        
+    if unique_authors > 20000:
+        logger.info(
+            "Found %d unique authors, sampling 20,000 unique authors uniformly at random",
+            unique_authors,
+        )
+
+        # Sample 20,000 unique authors uniformly at random
+        sampled_authors = (
+            likely_pis["author"]
+            .drop_duplicates()
+            .sample(n=20000, random_state=42)
+            .tolist()
+        )
+
         # Filter likely_pis to only include these authors
-        likely_pis = likely_pis[likely_pis["author"].isin(top_authors)]
-        
-        logger.info("Limited to %d unique authors", likely_pis["author"].nunique())
+        likely_pis = likely_pis[likely_pis["author"].isin(sampled_authors)]
+
+        logger.info("Sampled to %d unique authors", likely_pis["author"].nunique())
 
     return likely_pis
 
@@ -558,11 +572,15 @@ def get_publications_from_labs(
                 # break authorship nested dictionary jsons, create pipe-delimited string of authorship triplets
                 df["authorships"] = df["authorships"].apply(
                     lambda x: (
-                        "|".join([
-                            f"{author['author']['id'].replace('https://openalex.org/', '')},{inst['id'].replace('https://openalex.org/', '') if inst else ''},{author['author_position']}"
-                            for author in x
-                            for inst in author["institutions"] or [{}]
-                        ]) if x else None
+                        "|".join(
+                            [
+                                f"{author['author']['id'].replace('https://openalex.org/', '')},{inst['id'].replace('https://openalex.org/', '') if inst else ''},{author['author_position']}"
+                                for author in x
+                                for inst in author["institutions"] or [{}]
+                            ]
+                        )
+                        if x
+                        else None
                     )
                 )
 
@@ -726,14 +744,11 @@ def get_institution_info(
     slices = [institutions[i : i + 150] for i in range(0, len(institutions), 150)]
 
     logger.info("Slicing authors into %d slices", len(slices))
-    institution_data_list = Parallel(n_jobs=8, verbose=10)(
+    institution_data_list = Parallel(n_jobs=4, verbose=10)(
         delayed(fetch_institution_data)(institution)
         for slice_ in slices
         for institution in slice_
     )
-
-    # filter out None values
-    institution_data_list = [data for data in institution_data_list if data is not None]
 
     # convert the list of dictionaries to a DataFrame
     data = pd.DataFrame(institution_data_list)
