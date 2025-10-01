@@ -682,11 +682,7 @@ def define_high_pdb_authors(
     author_pdb_submissions = pdb_submissions.dropna(subset=["authorships"])
 
     author_pdb_submissions["author"] = author_pdb_submissions["authorships"].apply(
-        lambda x: (
-            [auth.split(",")[0] for auth in x.split("|")]
-            if isinstance(x, str) and x != ""
-            else []
-        )
+        lambda x: [auth[0] for auth in x] if isinstance(x, np.ndarray) else []
     )
 
     # explode and drop id authors duplicates
