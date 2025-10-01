@@ -535,6 +535,8 @@ def collect_covid_references(data: pd.DataFrame) -> pd.DataFrame:
 
 def process_institutional_data(institutional_data: pd.DataFrame) -> pd.DataFrame:
     """Process the institutional data by dropping duplicates and renaming columns."""
+    # drop column author
+    institutional_data.drop(columns=["author"], inplace=True)
     # change institutional_data columns to institution, unless column is institution
     institutional_data.drop_duplicates(subset="institution", inplace=True)
     institutional_data.columns = [

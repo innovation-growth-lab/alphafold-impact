@@ -72,20 +72,29 @@ def get_lab_individual_outputs(
     # extract author id (first item in each sublist in authorships)
     author_data = (
         publications_data[["authorships"]]
-        .explode("authorships")
         .assign(
-            author=lambda x: x["authorships"].apply(
-                lambda y: y[0] if y is not None else None
+            authorships_parsed=lambda x: x["authorships"].apply(
+                lambda y: (
+                    [auth.split(",") for auth in y.split("|")]
+                    if isinstance(y, str) and y != ""
+                    else []
+                )
+            )
+        )
+        .explode("authorships_parsed")
+        .assign(
+            author=lambda x: x["authorships_parsed"].apply(
+                lambda y: y[0] if isinstance(y, list) and len(y) > 0 else None
             ),
-            institution=lambda x: x["authorships"].apply(
-                lambda y: y[1] if y is not None else None
+            institution=lambda x: x["authorships_parsed"].apply(
+                lambda y: y[1] if isinstance(y, list) and len(y) > 1 else None
             ),
         )
         .dropna(subset=["author"])
         .query("institution != ''")
         .drop_duplicates(subset=["author"])
         .reset_index(drop=True)
-        .drop(columns=["authorships"])
+        .drop(columns=["authorships", "authorships_parsed"])
     )
 
     output_data = pd.DataFrame()
@@ -197,7 +206,9 @@ def get_lab_individual_outputs(
     norm_vars = ["patent_count", "ca_count"]
 
     for var in norm_vars:
-        group_mean = output_data.groupby(["primary_field", "year"])[var].transform("mean")
+        group_mean = output_data.groupby(["primary_field", "year"])[var].transform(
+            "mean"
+        )
 
         # Avoid division by zero
         group_mean.replace(0, np.nan, inplace=True)
