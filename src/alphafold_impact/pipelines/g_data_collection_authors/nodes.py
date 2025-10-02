@@ -396,22 +396,22 @@ def merge_ecr_authors_data(
 ) -> pd.DataFrame:
     """
     Merges partitioned ECR authors data into a single DataFrame.
-    
+
     Args:
         data_loaders (Dict[str, AbstractDataset]): A dictionary where keys are strings
             and values are data loader functions that return DataFrames.
-    
+
     Returns:
         pd.DataFrame: A single DataFrame containing all ECR authors data.
     """
     logger.info("Merging ECR authors data from %d partitions", len(data_loaders))
-    
+
     authors_data = pd.DataFrame()
     for i, loader in enumerate(data_loaders.values()):
         logger.info("Processing authors partition %d / %d", i + 1, len(data_loaders))
         partition_data = loader()
         authors_data = pd.concat([authors_data, partition_data], ignore_index=True)
-    
+
     return authors_data
 
 
@@ -649,7 +649,11 @@ def merge_author_data(
         data = data[data["author"].isin(candidate_authors["author"])]
 
         # get unique author-depth combinations
-        unique_author_depth = candidate_authors[["author", "depth"]].drop_duplicates()
+        unique_author_depth = (
+            candidate_authors[["author", "depth"]]
+            .sort_values(by="depth", ascending=False)
+            .drop_duplicates()
+        )
 
         # add depth by merging only on author
         data = data.merge(
