@@ -99,14 +99,7 @@ dep_vars <- c(
 # Define base treatment vars that exist in all samples
 treat_vars_base <- paste(
   c(
-    "af", "ct_ai", "ct_pp", "ct_sb",
-    "af:ct_ai", "af:ct_pp", "af:ct_sb",
-    "ct_ai:ct_pp", "ct_ai:ct_sb",
-    "ct_pp:ct_sb",
-    "af:ct_ai:ct_pp", "af:ct_ai:ct_sb",
-    "af:ct_pp:ct_sb",
-    "ct_ai:ct_pp:ct_sb",
-    "af:ct_ai:ct_pp:ct_sb"
+    "af", "ct_ai", "ct_pp", "ct_sb"
   ),
   collapse = " + "
 )
@@ -114,31 +107,9 @@ treat_vars_base <- paste(
 treat_vars_base_w_het <- paste(
   c(
     "af", "ct_ai", "ct_pp", "ct_sb",
-    "af:ct_ai", "af:ct_pp", "af:ct_sb",
-    "ct_ai:ct_pp", "ct_ai:ct_sb",
-    "ct_pp:ct_sb",
-    "af:ct_ai:ct_pp", "af:ct_ai:ct_sb",
-    "af:ct_pp:ct_sb",
-    "ct_ai:ct_pp:ct_sb",
-    "af:ct_ai:ct_pp:ct_sb",
     "af:is_applied", "ct_ai:is_applied", "ct_pp:is_applied", "ct_sb:is_applied"
   ),
   collapse = " + "
-)
-
-strong_base_list <- c(
-  "af_intent_strong",
-  "af_intent_weak",
-  "af_intent_mixed",
-  "ct_ai_intent_strong",
-  "ct_ai_intent_weak",
-  "ct_ai_intent_mixed",
-  "ct_pp_intent_strong",
-  "ct_pp_intent_weak",
-  "ct_pp_intent_mixed",
-  "ct_sb_intent_strong",
-  "ct_sb_intent_weak",
-  "ct_sb_intent_mixed"
 )
 
 # Define treatment vars with strong interactions
