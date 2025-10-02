@@ -1290,23 +1290,13 @@ def _normalise_citation_counts(data: pd.DataFrame) -> pd.DataFrame:
 
 def _process_pdb_data(pdb_submissions: pd.DataFrame) -> pd.DataFrame:
     return (
-        pdb_submissions.assign(
-            authorships_parsed=lambda x: x["authorships"].apply(
-                lambda y: (
-                    [auth.split(",") for auth in y.split("|")]
-                    if isinstance(y, str) and y != ""
-                    else []
-                )
-            )
-        )
-        .explode("authorships_parsed")
+        pdb_submissions.explode("authorships")
         .assign(
-            authorships=lambda x: x["authorships_parsed"].apply(
-                lambda y: y[0] if isinstance(y, list) and len(y) > 0 else None
+            authorships=lambda x: x["authorships"].apply(
+                lambda y: y[0] if isinstance(y, np.ndarray) and len(y) > 0 else None
             )
         )
         .rename(columns={"authorships": "author"})
-        .drop(columns=["authorships_parsed"])
     )
 
 
