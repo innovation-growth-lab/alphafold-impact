@@ -148,6 +148,6 @@ def create_pipeline(  # pylint: disable=unused-argument,missing-function-docstri
 
     return (
         basic_pipeline + 
-        # ecr_pipeline + 
+        ecr_pipeline + 
         nonecr_pipeline
     )
