@@ -407,9 +407,9 @@ cat("Before pre-filtering:", nrow(quarterly_cem), "authors\n")
 # Remove extreme outliers (1%-99%) and low-publication authors
 quarterly_cem <- quarterly_cem %>%
   filter(
-    cited_by_count >= quantile(cited_by_count, 0.01, na.rm = TRUE),
-    cited_by_count <= quantile(cited_by_count, 0.99, na.rm = TRUE),
-    num_publications > 1
+    cited_by_count >= quantile(cited_by_count, 0.02, na.rm = TRUE),
+    cited_by_count <= quantile(cited_by_count, 0.98, na.rm = TRUE),
+    num_publications > 2
   )
 
 cat("After pre-filtering:", nrow(quarterly_cem), "authors\n")
