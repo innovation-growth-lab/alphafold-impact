@@ -64,6 +64,14 @@ papers <- papers %>%
   filter(level != -1) %>%
   select(-author)
 
+papers <- papers %>%
+  filter(
+    publication_date >= as.Date("2018-01-01") &
+      # publication_date <= as.Date("2024-12-31")
+    publication_date <= as.Date("2025-06-31")
+  )
+
+
 # creating quantiles for institution controls and translational
 papers <- papers %>%
   mutate(
@@ -229,23 +237,24 @@ papers <- papers %>%
     ln1p_max_fident = log1p(as.numeric(max_fident)),
     ln1p_max_score = log1p(as.numeric(max_score)),
     year = as.integer(str_sub(publication_date, 1, 4)),
-    quarter_year = paste0(
-      year(publication_date), " Q", quarter(publication_date)
+    quarter = paste0(
+      year(publication_date), "Q", quarter(publication_date)
     ),
-    year = year(publication_date)
+    year = year(publication_date),
+    ln1p_maxtmscore_lt_0.405 = ln1p_max_tmscore < 0.405
   ) %>%
   rename(author = last_author)
 
 
 pubs_per_quarter <- papers %>%
-  group_by(author, quarter_year) %>%
+  group_by(author, quarter) %>%
   summarise(num_publications = n()) %>%
   ungroup()
 
 
 # Merge the summary back into the original papers DataFrame
 papers <- papers %>%
-  left_join(pubs_per_quarter, by = c("author", "quarter_year"))
+  left_join(pubs_per_quarter, by = c("author", "quarter"))
 
 # Fill NA values in 'field_' and 'mesh_' prefix columns with 0
 papers <- papers %>%
@@ -275,7 +284,7 @@ unique_fields <- c(
 
 papers <- papers %>%
   select(c(
-    "quarter_year",
+    "quarter",
     "year",
     "author",
     "institution_type",
@@ -337,7 +346,8 @@ papers <- papers %>%
     "num_uniprot_structures_w_rare_organisms",
     "num_primary_submissions_w_rare_organisms",
     "num_uniprot_structures_w_low_similarity",
-    "num_primary_submissions_w_low_similarity"
+    "num_primary_submissions_w_low_similarity",
+    "ln1p_maxtmscore_lt_0.405"
   ))
 
 # Create subsets for all combinations of depth, field, and sub_group

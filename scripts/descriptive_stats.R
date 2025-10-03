@@ -116,7 +116,7 @@ labs_data <- labs_data %>%
 
 # drop obs after 2025Q1 (ie. 2025Q2)
 labs_data <- labs_data %>%
-  filter(quarter <= "2025Q1")
+  filter(quarter <= "2025Q2")
 
 # --------------------------- Seek to merge --------------------- #
 papers_data <- papers_data %>% mutate(

@@ -47,7 +47,7 @@ Sys.setenv(
 
 # Define the S3 bucket and path
 bucket <- "igl-alphafold"
-path <- "2025Q1/03_primary/ecr/publications_quarterly.parquet" # nolint # mistake saved to oct
+path <- "2025Q2/03_primary/ecr/publications_quarterly.parquet" # nolint # mistake saved to oct
 
 # Fetch the data from the S3 bucket
 ecr_data <- s3read_using(
@@ -67,9 +67,9 @@ to_year_quarter <- function(code_vec) {
 ecr_data <- ecr_data %>%
   mutate(quarter = to_year_quarter(quarter))
 
-# drop obs after 2025Q1 (ie. 2025Q2)
+# drop obs after 2025Q2 (ie. 2025Q3)
 ecr_data <- ecr_data %>%
-  filter(quarter <= "2025Q1")
+  filter(quarter <= "2025Q2")
 
 # ------------------------------------------------------------------------------
 # Strong Data Prep
@@ -311,7 +311,8 @@ ecr_data <- ecr_data %>%
     ln1p_max_fident = log1p(as.numeric(max_fident)),
     ln1p_max_score = log1p(as.numeric(max_score)),
     ln1p_mesh_C = log1p(as.numeric(mesh_C)),
-    year = as.integer(str_sub(quarter, 1, 4))
+    year = as.integer(str_sub(quarter, 1, 4)),
+    ln1p_maxtmscore_lt_0.405 = ln1p_max_tmscore < 0.405
   )
 
 
@@ -363,7 +364,7 @@ ecr_data$primary_field <- recode(ecr_data$primary_field, !!!field_mapping)
 
 # Define the columns to be used for matching
 coarse_cols <- c(
-  "cited_by_count", "ln1p_fwci", "num_publications", "num_pdb_submissions",
+  "cited_by_count", "ln1p_fwci", "num_publications",
   "field_biochemist", "field_chemistry", "field_medicine",
   "covid_share_2020"
 )
@@ -614,6 +615,7 @@ matched_data <- matched_data %>%
     "normalised_max_score",
     "normalised_max_tmscore",
     "normalised_max_fident",
+    "ln1p_maxtmscore_lt_0.405",
 
     # Translational variables
     "num_uniprot_structures_w_disease",

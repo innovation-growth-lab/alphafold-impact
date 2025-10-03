@@ -43,11 +43,6 @@ sub_samples <- readRDS(paste0(pathdir, "data/sub_samples.rds"))
 # DATA PREPARATION
 # ------------------------------------------------------------------------------
 
-# create boolean for whether ln1p_max_tmscore is smaller than 0.405 across sub-samples
-sub_samples <- lapply(sub_samples, function(x) {
-  x$ln1p_maxtmscore_lt_0.405 <- x$ln1p_max_tmscore < 0.405
-  x
-})
 
 field_cols <- grep("^field_", names(sub_samples[[1]]), value = TRUE)
 mesh_cols <- grep("^mesh_", names(sub_samples[[1]]), value = TRUE)
@@ -245,32 +240,8 @@ for (dep_var in dep_vars) { # nolint
           local_data$year >= 2021 & local_data$year <= 2025,
         ]
       }
-      if (dep_var %in% c(
-        "num_uniprot_structures",
-        "num_pdb_ids",
-        "num_primary_submissions",
-        "num_diseases",
-        "ln1p_organism_rarity_mean",
-        "ln1p_organism_rarity_max",
-        "ln1p_max_score",
-        "ln1p_max_tmscore",
-        "ln1p_max_fident",
-        "normalised_max_score",
-        "normalised_max_tmscore",
-        "normalised_max_fident",
-        "num_pdb_ids",
-        "num_uniprot_structures_w_disease",
-        "num_primary_submissions_w_disease",
-        "num_uniprot_structures_w_rare_organisms",
-        "num_primary_submissions_w_rare_organisms",
-        "num_uniprot_structures_w_low_similarity",
-        "num_primary_submissions_w_low_similarity",
-        "ln1p_maxtmscore_lt_0.405"
-      )) {
-        # PDB not updated for 2025.
-        local_data <- local_data[local_data$year < 2025, ]
-      }
 
+      # remove na obs on dep_var
       non_na_data <- local_data[!is.na(local_data[[dep_var]]), ]
 
       # compute the unique number of quarter

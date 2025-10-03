@@ -85,20 +85,14 @@ dep_vars <- c(
   "num_uniprot_structures_w_rare_organisms",
   "num_primary_submissions_w_rare_organisms",
   "num_uniprot_structures_w_low_similarity",
-  "num_primary_submissions_w_low_similarity"
+  "num_primary_submissions_w_low_similarity",
+  "ln1p_maxtmscore_lt_0.405"
 )
 
 # Define base treatment vars that exist in all samples
 treat_vars_base <- paste(
   c(
-    "af", "ct_ai", "ct_pp", "ct_sb",
-    "af:ct_ai", "af:ct_pp", "af:ct_sb",
-    "ct_ai:ct_pp", "ct_ai:ct_sb",
-    "ct_pp:ct_sb",
-    "af:ct_ai:ct_pp", "af:ct_ai:ct_sb",
-    "af:ct_pp:ct_sb",
-    "ct_ai:ct_pp:ct_sb",
-    "af:ct_ai:ct_pp:ct_sb"
+    "af", "ct_ai", "ct_pp", "ct_sb"
   ),
   collapse = " + "
 )
@@ -107,31 +101,9 @@ treat_vars_base <- paste(
 treat_vars_base_w_het <- paste(
   c(
     "af", "ct_ai", "ct_pp", "ct_sb",
-    "af:ct_ai", "af:ct_pp", "af:ct_sb",
-    "ct_ai:ct_pp", "ct_ai:ct_sb",
-    "ct_pp:ct_sb",
-    "af:ct_ai:ct_pp", "af:ct_ai:ct_sb",
-    "af:ct_pp:ct_sb",
-    "ct_ai:ct_pp:ct_sb",
-    "af:ct_ai:ct_pp:ct_sb",
     "af:is_applied", "ct_ai:is_applied", "ct_pp:is_applied", "ct_sb:is_applied"
   ),
   collapse = " + "
-)
-
-strong_base_list <- c(
-  "af_intent_strong",
-  "af_intent_weak",
-  "af_intent_mixed",
-  "ct_ai_intent_strong",
-  "ct_ai_intent_weak",
-  "ct_ai_intent_mixed",
-  "ct_pp_intent_strong",
-  "ct_pp_intent_weak",
-  "ct_pp_intent_mixed",
-  "ct_sb_intent_strong",
-  "ct_sb_intent_weak",
-  "ct_sb_intent_mixed"
 )
 
 # Define treatment vars with strong interactions
@@ -266,30 +238,6 @@ for (dep_var in dep_vars) { # nolint
           local_data$year >= 2021 & local_data$year <= 2025,
         ]
       }
-      if (dep_var %in% c(
-        "num_uniprot_structures",
-        "num_pdb_ids",
-        "num_primary_submissions",
-        "num_diseases",
-        "ln1p_organism_rarity_mean",
-        "ln1p_organism_rarity_max",
-        "ln1p_max_score",
-        "ln1p_max_tmscore",
-        "ln1p_max_fident",
-        "normalised_max_score",
-        "normalised_max_tmscore",
-        "normalised_max_fident",
-        "num_pdb_ids",
-        "num_uniprot_structures_w_disease",
-        "num_primary_submissions_w_disease",
-        "num_uniprot_structures_w_rare_organisms",
-        "num_primary_submissions_w_rare_organisms",
-        "num_uniprot_structures_w_low_similarity",
-        "num_primary_submissions_w_low_similarity"
-      )) {
-        # PDB not updated for 2025.
-        local_data <- local_data[local_data$year < 2025, ]
-      }
 
       non_na_data <- local_data[!is.na(local_data[[dep_var]]), ]
 
@@ -319,7 +267,7 @@ for (dep_var in dep_vars) { # nolint
         next
       }
 
-      # run the regression as linear, but make exceptions for counts
+      # run the regression as linear, but make exceptions for counts and binary variables
       # so actually once you drop enough, you can get a rough 25% increase, similar to the linear reg. #nolint
       # the main thing is, using ln is odd because it assumes continuous variables and far from zero values #nolint
       if (dep_var %in% c(
@@ -347,7 +295,44 @@ for (dep_var in dep_vars) { # nolint
               form_list[[form]],
               data = local_data,
               cluster = c("author", "quarter"),
-              fixef.iter = 150,
+              fixef.iter = 250,
+              nthreads = 1,
+              lean = FALSE,
+              mem.clean = TRUE
+            )
+
+            # Check if model converged by looking at convergence code
+            if (!model$convStatus) {
+              message("Model did not converge, using fallback model")
+              feols(as.formula(paste(dep_var, "~ 1")), data = local_data)
+            } else {
+              model
+            }
+          },
+          error = function(e) {
+            message(
+              "Error in regression: ", regression_label, " - ", e$message
+            )
+            return(
+              feols(as.formula(paste(dep_var, "~ 1")), data = local_data)
+            )
+          }
+        )
+      } else if (dep_var %in% c("ln1p_maxtmscore_lt_0.405")) {
+        message("Running Logistic regression")
+        results[[regression_label]] <- tryCatch(
+          {
+            # Apply the collinearity fix function before running the regression
+            local_data <- fix_perfect_collinearity(
+              local_data, fes[["fe1"]], dep_var
+            )
+
+            model <- feglm(
+              form_list[[form]],
+              data = local_data,
+              family = binomial(link = "logit"),
+              cluster = c("author", "quarter"),
+              fixef.iter = 250,
               nthreads = 1,
               lean = FALSE,
               mem.clean = TRUE

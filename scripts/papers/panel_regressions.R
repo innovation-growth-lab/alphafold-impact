@@ -56,7 +56,7 @@ covs[["base0"]] <- c(
 )
 
 fes <- list()
-fes[["fe1"]] <- c("author", "quarter_year")
+fes[["fe1"]] <- c("author", "quarter")
 
 ### Extensive ###
 
@@ -89,7 +89,8 @@ dep_vars <- c(
   "num_uniprot_structures_w_rare_organisms",
   "num_primary_submissions_w_rare_organisms",
   "num_uniprot_structures_w_low_similarity",
-  "num_primary_submissions_w_low_similarity"
+  "num_primary_submissions_w_low_similarity",
+  "ln1p_maxtmscore_lt_0.405"
 )
 
 # Define base treatment vars that exist in all samples
@@ -231,37 +232,12 @@ for (dep_var in dep_vars) { # nolint
           local_data$year >= 2021 & local_data$year <= 2025,
         ]
       }
-      if (dep_var %in% c(
-        "num_uniprot_structures",
-        "num_pdb_ids",
-        "num_primary_submissions",
-        "num_diseases",
-        "ln1p_organism_rarity_mean",
-        "ln1p_organism_rarity_max",
-        "ln1p_max_score",
-        "ln1p_max_tmscore",
-        "ln1p_max_fident",
-        "normalised_max_score",
-        "normalised_max_tmscore",
-        "normalised_max_fident",
-        "num_pdb_ids",
-        "num_uniprot_structures_w_disease",
-        "num_primary_submissions_w_disease",
-        "num_uniprot_structures_w_rare_organisms",
-        "num_primary_submissions_w_rare_organisms",
-        "num_uniprot_structures_w_low_similarity",
-        "num_primary_submissions_w_low_similarity",
-        "ln1p_maxtmscore_lt_0.405"
-      )) {
-        # PDB not updated for 2025.
-        local_data <- local_data[local_data$year < 2025, ]
-      }
 
       non_na_data <- local_data[!is.na(local_data[[dep_var]]), ]
 
-      # compute the unique number of quarter_year
+      # compute the unique number of quarter
       n_authors <- length(unique(non_na_data$author))
-      n_quarters <- length(unique(non_na_data$quarter_year))
+      n_quarters <- length(unique(non_na_data$quarter))
 
       if (
         n_authors + n_quarters
@@ -310,7 +286,7 @@ for (dep_var in dep_vars) { # nolint
             model <- fepois(
               form_list[[form]],
               data = local_data,
-              cluster = c("author", "quarter_year"),
+              cluster = c("author", "quarter"),
               fixef.iter = 500,
               nthreads = 1,
               lean = FALSE,
@@ -374,7 +350,7 @@ for (dep_var in dep_vars) { # nolint
             feols(
               form_list[[form]],
               data = local_data,
-              cluster = c("author", "quarter_year"),
+              cluster = c("author", "quarter"),
               lean = FALSE,
               mem.clean = TRUE
             )

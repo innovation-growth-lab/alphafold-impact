@@ -428,7 +428,8 @@ labs_data <- labs_data %>%
     ln1p_max_fident = log1p(as.numeric(max_fident)),
     ln1p_max_score = log1p(as.numeric(max_score)),
     ln1p_mesh_C = log1p(as.numeric(mesh_C)),
-    year = as.integer(str_sub(quarter, 1, 4))
+    year = as.integer(str_sub(quarter, 1, 4)),
+    ln1p_maxtmscore_lt_0.405 = ln1p_max_tmscore < 0.405
   )
 
 # Calculate pre-2021 PDB submissions per author and identify top decile authors
@@ -722,6 +723,7 @@ matched_data <- matched_data %>%
     "normalised_max_score",
     "normalised_max_tmscore",
     "normalised_max_fident",
+    "ln1p_maxtmscore_lt_0.405",
 
     # Translational variables
     "num_uniprot_structures_w_disease",
