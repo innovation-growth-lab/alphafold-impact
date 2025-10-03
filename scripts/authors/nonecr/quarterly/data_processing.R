@@ -333,7 +333,7 @@ submission_threshold <- quantile(
 nonecr_data <- nonecr_data %>%
   left_join(author_submissions, by = "author") %>%
   mutate(
-    high_pdb_pre2021 = pre_2021_pdb_submissions > submission_threshold
+    high_pdb_pre2021 = pre_2021_pdb_submissions > 1
   )
 
 # Print diagnostics
@@ -412,9 +412,9 @@ cat("Before pre-filtering:", nrow(quarterly_cem), "authors\n")
 # Remove extreme outliers (1%-99%) and low-publication authors
 quarterly_cem <- quarterly_cem %>%
   filter(
-    cited_by_count >= quantile(cited_by_count, 0.01, na.rm = TRUE),
-    cited_by_count <= quantile(cited_by_count, 0.99, na.rm = TRUE),
-    num_publications > 1
+    cited_by_count >= quantile(cited_by_count, 0.02, na.rm = TRUE),
+    cited_by_count <= quantile(cited_by_count, 0.98, na.rm = TRUE),
+    num_publications > 2
   )
 
 cat("After pre-filtering:", nrow(quarterly_cem), "authors\n")
