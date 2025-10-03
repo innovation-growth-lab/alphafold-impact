@@ -60,7 +60,7 @@ fe_list <- c("fe1")
 dep_vars <- c(
   "num_publications",
   "cited_by_count",
-  "ln1p_mesh_C",
+  "mesh_C",
   "ln1p_fwci",
   "ln1p_resolution",
   "ln1p_R_free",
@@ -164,7 +164,7 @@ for (dep_var in dep_vars) { # nolint
       local_covs <- covs[[cov_set]][
         -which(covs[[cov_set]] == "num_publications")
       ]
-    } else if (dep_var == "ln1p_mesh_C") {
+    } else if (dep_var %in% c("ln1p_mesh_C", "mesh_C")) {
       local_covs <- covs[[cov_set]][-which(covs[[cov_set]] == "mesh_C")]
     }
     # Iterate over fixed effects
@@ -318,7 +318,7 @@ for (dep_var in dep_vars) { # nolint
             )
           }
         )
-      } else if (dep_var %in% c("ln1p_maxtmscore_lt_0.405")) {
+      } else if (dep_var %in% c("ln1p_maxtmscore_lt_0.405", "mesh_C")) {
         message("Running Logistic regression")
         results[[regression_label]] <- tryCatch(
           {

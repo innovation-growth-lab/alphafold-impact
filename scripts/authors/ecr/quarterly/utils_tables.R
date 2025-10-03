@@ -101,6 +101,12 @@ table_info <- list(
   ),
   "ln1p_mesh_C" = list(
     file_name = "ln1p_mesh_C.tex"
+  ),
+  "mesh_C" = list(
+    file_name = "mesh_C.tex"
+  ),
+  "ln1p_maxtmscore_lt_0.405" = list(
+    file_name = "ln1p_maxtmscore_lt_0.405.tex"
   )
 )
 

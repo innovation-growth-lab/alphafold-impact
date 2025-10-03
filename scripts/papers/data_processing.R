@@ -66,9 +66,9 @@ papers <- papers %>%
 
 papers <- papers %>%
   filter(
-    publication_date >= as.Date("2018-01-01") &
+    publication_date >= as.Date("2015-01-01") &
       # publication_date <= as.Date("2024-12-31")
-    publication_date <= as.Date("2025-06-31")
+    publication_date <= as.Date("2025-03-31")
   )
 
 
@@ -229,6 +229,7 @@ papers <- papers %>%
     primary_field = as.factor(primary_field), # nolint
     publication_date = as.Date(publication_date),
     ln1p_mesh_C = log1p(mesh_C),
+    mesh_C = ifelse(mesh_C > 0, 1, 0),
     ln1p_resolution = log1p(as.numeric(resolution)),
     ln1p_R_free = log1p(as.numeric(R_free)),
     ln1p_organism_rarity_mean = log1p(as.numeric(organism_rarity_mean)),
@@ -326,7 +327,7 @@ papers <- papers %>%
     "ct_sb_intent_weak",
     "primary_field",
     "q4_pdb_pre2021_any",
-    "ln1p_mesh_C",
+    "mesh_C",
     grep("^field_", names(papers), value = TRUE),
     "num_uniprot_structures",
     "num_pdb_ids",

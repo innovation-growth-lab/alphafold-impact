@@ -62,7 +62,7 @@ fe_list <- c("fe1")
 dep_vars <- c(
   "num_publications",
   "cited_by_count",
-  "ln1p_mesh_C",
+  "mesh_C",
   "ln1p_fwci",
   "ln1p_resolution",
   "ln1p_R_free",
@@ -165,7 +165,7 @@ for (dep_var in dep_vars) { # nolint
       local_covs <- covs[[cov_set]][
         -which(covs[[cov_set]] == "num_publications")
       ]
-    } else if (dep_var == "ln1p_mesh_C") {
+    } else if (dep_var %in% c("ln1p_mesh_C", "mesh_C")) {
       local_covs <- covs[[cov_set]][-which(covs[[cov_set]] == "mesh_C")]
     }
 
@@ -277,7 +277,7 @@ for (dep_var in dep_vars) { # nolint
         "num_publications", "num_pdb_ids", "num_pdb_submissions",
         "ca_count", "patent_count", "patent_citation",
         "num_uniprot_structures", "cited_by_count",
-        "num_primary_submissions",
+        "num_primary_submissions", "mesh_C",
         "num_diseases",
         "num_uniprot_structures_w_disease",
         "num_primary_submissions_w_disease",

@@ -311,6 +311,7 @@ ecr_data <- ecr_data %>%
     ln1p_max_fident = log1p(as.numeric(max_fident)),
     ln1p_max_score = log1p(as.numeric(max_score)),
     ln1p_mesh_C = log1p(as.numeric(mesh_C)),
+    mesh_C = ifelse(mesh_C > 0, 1, 0),
     year = as.integer(str_sub(quarter, 1, 4)),
     ln1p_maxtmscore_lt_0.405 = ln1p_max_tmscore < 0.405
   )
@@ -558,7 +559,7 @@ matched_data <- matched_data %>%
     "patent_citation",
     "ca_count",
     "ln1p_fwci",
-    "ln1p_mesh_C",
+    "mesh_C",
 
     # Covid
     "covid_share_2020",

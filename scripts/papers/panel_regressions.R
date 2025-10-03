@@ -63,7 +63,7 @@ fes[["fe1"]] <- c("author", "quarter")
 cov_sets <- c("base0")
 fe_list <- c("fe1")
 dep_vars <- c(
-  "ln1p_mesh_C",
+  "mesh_C",
   "cited_by_count",
   "ln1p_fwci",
   "ln1p_resolution",
@@ -160,6 +160,11 @@ for (dep_var in dep_vars) { # nolint
   # Iterate over covariate sets
   for (cov_set in cov_sets) {
     local_covs <- covs[[cov_set]]
+
+    if (dep_var %in% c("ln1p_mesh_C", "mesh_C")) {
+      local_covs <- covs[[cov_set]][-which(covs[[cov_set]] == "mesh_C")]
+    }
+
     # Iterate over fixed effects
     for (fe in fe_list) {
       # Check if the sample has strong variable before creating formulas
@@ -309,7 +314,7 @@ for (dep_var in dep_vars) { # nolint
             )
           }
         )
-      } else if (dep_var %in% c("ln1p_maxtmscore_lt_0.405")) {
+      } else if (dep_var %in% c("ln1p_maxtmscore_lt_0.405", "mesh_C")) {
         message("Running Logistic regression")
         results[[regression_label]] <- tryCatch(
           {

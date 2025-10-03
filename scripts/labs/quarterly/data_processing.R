@@ -76,9 +76,9 @@ labs_data <- bind_rows(foundational_labs_data, applied_labs_data)
 labs_data <- labs_data %>%
   distinct(author, quarter, .keep_all = TRUE)
 
-# drop obs after 2025Q2 (ie. 2025Q3)
+# drop obs after 2025Q1 (ie. 2025Q2)
 labs_data <- labs_data %>%
-  filter(quarter <= "2025Q2")
+  filter(quarter <= "2025Q1")
 
 # ------------------------------------------------------------------------------
 # Strong Data Prep
@@ -215,10 +215,10 @@ labs_data <- labs_data %>%
     other_period = other - lag(other, default = 0),
     # Intent-specific period variables
     af_with_intent_period = af_with_intent - lag(af_with_intent, default = 0),
-    ct_ai_with_intent_period = ct_ai_with_intent - lag(ct_ai_with_intent, default = 0),
-    ct_pp_with_intent_period = ct_pp_with_intent - lag(ct_pp_with_intent, default = 0),
-    ct_sb_with_intent_period = ct_sb_with_intent - lag(ct_sb_with_intent, default = 0),
-    other_with_intent_period = other_with_intent - lag(other_with_intent, default = 0)
+    ct_ai_with_intent_period = ct_ai_with_intent - lag(ct_ai_with_intent, default = 0), # nolint
+    ct_pp_with_intent_period = ct_pp_with_intent - lag(ct_pp_with_intent, default = 0), # nolint
+    ct_sb_with_intent_period = ct_sb_with_intent - lag(ct_sb_with_intent, default = 0), # nolint
+    other_with_intent_period = other_with_intent - lag(other_with_intent, default = 0) # nolint
   ) %>%
   ungroup()
 
@@ -226,15 +226,15 @@ labs_data <- labs_data %>%
 labs_data <- labs_data %>%
   mutate(
     # Regular intensity variables
-    af_intensity = ifelse(num_publications > 0, af_period / num_publications, 0),
-    ct_ai_intensity = ifelse(num_publications > 0, ct_ai_period / num_publications, 0),
-    ct_pp_intensity = ifelse(num_publications > 0, ct_pp_period / num_publications, 0),
-    ct_sb_intensity = ifelse(num_publications > 0, ct_sb_period / num_publications, 0),
+    af_intensity = ifelse(num_publications > 0, af_period / num_publications, 0), # nolint
+    ct_ai_intensity = ifelse(num_publications > 0, ct_ai_period / num_publications, 0), # nolint
+    ct_pp_intensity = ifelse(num_publications > 0, ct_pp_period / num_publications, 0), # nolint
+    ct_sb_intensity = ifelse(num_publications > 0, ct_sb_period / num_publications, 0), # nolint
     # Intent-specific intensity variables
-    af_with_intent_intensity = ifelse(num_publications > 0, af_with_intent_period / num_publications, 0),
-    ct_ai_with_intent_intensity = ifelse(num_publications > 0, ct_ai_with_intent_period / num_publications, 0),
-    ct_pp_with_intent_intensity = ifelse(num_publications > 0, ct_pp_with_intent_period / num_publications, 0),
-    ct_sb_with_intent_intensity = ifelse(num_publications > 0, ct_sb_with_intent_period / num_publications, 0)
+    af_with_intent_intensity = ifelse(num_publications > 0, af_with_intent_period / num_publications, 0), # nolint
+    ct_ai_with_intent_intensity = ifelse(num_publications > 0, ct_ai_with_intent_period / num_publications, 0), # nolint
+    ct_pp_with_intent_intensity = ifelse(num_publications > 0, ct_pp_with_intent_period / num_publications, 0), # nolint
+    ct_sb_with_intent_intensity = ifelse(num_publications > 0, ct_sb_with_intent_period / num_publications, 0) # nolint
   )
 
 # Calculate thresholds for "frequent users" based on relative intensity
@@ -258,19 +258,19 @@ ct_sb_threshold <- quantile(
 
 # Intent-specific thresholds
 af_with_intent_threshold <- quantile(
-  labs_data$af_with_intent_intensity[labs_data$af_with_intent_intensity > 0], 0.5,
+  labs_data$af_with_intent_intensity[labs_data$af_with_intent_intensity > 0], 0.5, # nolint
   na.rm = TRUE
 )
 ct_ai_with_intent_threshold <- quantile(
-  labs_data$ct_ai_with_intent_intensity[labs_data$ct_ai_with_intent_intensity > 0], 0.5,
+  labs_data$ct_ai_with_intent_intensity[labs_data$ct_ai_with_intent_intensity > 0], 0.5, # nolint
   na.rm = TRUE
 )
 ct_pp_with_intent_threshold <- quantile(
-  labs_data$ct_pp_with_intent_intensity[labs_data$ct_pp_with_intent_intensity > 0], 0.5,
+  labs_data$ct_pp_with_intent_intensity[labs_data$ct_pp_with_intent_intensity > 0], 0.5, # nolint
   na.rm = TRUE
 )
 ct_sb_with_intent_threshold <- quantile(
-  labs_data$ct_sb_with_intent_intensity[labs_data$ct_sb_with_intent_intensity > 0], 0.5,
+  labs_data$ct_sb_with_intent_intensity[labs_data$ct_sb_with_intent_intensity > 0], 0.5, # nolint
   na.rm = TRUE
 )
 
@@ -295,10 +295,10 @@ labs_data <- labs_data %>%
     ct_pp_adoption = ifelse(ct_pp_intensity >= ct_pp_threshold, 1, 0),
     ct_sb_adoption = ifelse(ct_sb_intensity >= ct_sb_threshold, 1, 0),
     # Identify first period when author becomes intensive (intent-specific)
-    af_with_intent_adoption = ifelse(af_with_intent_intensity >= af_with_intent_threshold, 1, 0),
-    ct_ai_with_intent_adoption = ifelse(ct_ai_with_intent_intensity >= ct_ai_with_intent_threshold, 1, 0),
-    ct_pp_with_intent_adoption = ifelse(ct_pp_with_intent_intensity >= ct_pp_with_intent_threshold, 1, 0),
-    ct_sb_with_intent_adoption = ifelse(ct_sb_with_intent_intensity >= ct_sb_with_intent_threshold, 1, 0)
+    af_with_intent_adoption = ifelse(af_with_intent_intensity >= af_with_intent_threshold, 1, 0), # nolint
+    ct_ai_with_intent_adoption = ifelse(ct_ai_with_intent_intensity >= ct_ai_with_intent_threshold, 1, 0), # nolint
+    ct_pp_with_intent_adoption = ifelse(ct_pp_with_intent_intensity >= ct_pp_with_intent_threshold, 1, 0), # nolint
+    ct_sb_with_intent_adoption = ifelse(ct_sb_with_intent_intensity >= ct_sb_with_intent_threshold, 1, 0) # nolint
   ) %>%
   # Forward-fill: once adopted, always treated in subsequent periods
   mutate(
@@ -428,6 +428,7 @@ labs_data <- labs_data %>%
     ln1p_max_fident = log1p(as.numeric(max_fident)),
     ln1p_max_score = log1p(as.numeric(max_score)),
     ln1p_mesh_C = log1p(as.numeric(mesh_C)),
+    mesh_C = ifelse(mesh_C > 0, 1, 0),
     year = as.integer(str_sub(quarter, 1, 4)),
     ln1p_maxtmscore_lt_0.405 = ln1p_max_tmscore < 0.405
   )
@@ -459,9 +460,10 @@ print(paste0(
 
 print(paste0(
   "Number of unique authors with high_pdb_pre2021 = TRUE: ",
-  labs_data %>% filter(
-    high_pdb_pre2021 == TRUE
-  ) %>% pull(author) %>% n_distinct()
+  labs_data %>%
+    filter(high_pdb_pre2021 == TRUE) %>%
+    pull(author) %>%
+    n_distinct()
 ))
 
 
@@ -479,7 +481,7 @@ labs_data$primary_field <- recode(labs_data$primary_field, !!!field_mapping)
 
 # Define the columns to be used for matching
 coarse_cols <- c(
-  "cited_by_count", "ln1p_fwci", "num_publications",
+  "cited_by_count", "ln1p_fwci", "num_publications", "num_pdb_submissions",
   "patent_count", "field_biochemist", "field_chemistry", "field_medicine",
   "covid_share_2020"
 )
@@ -572,7 +574,7 @@ quarterly_cem_pdb <- quarterly_cem %>%
   filter(complete.cases(across(pdb_cols)))
 
 # Use quartiles instead of binary threshold for PDB matching
-match_out_pdb <- matchit(
+match_out_treatment_pdb <- matchit(
   as.formula(
     paste0(
       "treatment ~ ",
@@ -583,7 +585,20 @@ match_out_pdb <- matchit(
   k2k = FALSE
 )
 
-cem_data_pdb <- match.data(match_out_pdb)
+cem_data_treatment_pdb <- match.data(match_out_treatment_pdb)
+
+match_out_af_pdb <- matchit(
+  as.formula(
+    paste0(
+      "af ~ ",
+      paste0(pdb_cols, collapse = " + ")
+    )
+  ),
+  data = quarterly_cem_pdb, method = "cem",
+  k2k = FALSE
+)
+
+cem_data_af_pdb <- match.data(match_out_af_pdb)
 
 # Combine the matched results
 combined_cem_data_treatment <- intersect(
@@ -596,6 +611,11 @@ combined_cem_data_af <- intersect(
   cem_data_exact_af$author
 )
 
+combined_cem_data_pdb <- intersect(
+  cem_data_treatment_pdb$author,
+  cem_data_af_pdb$author
+)
+
 # union with af
 combined_cem_data <- union(
   combined_cem_data_treatment,
@@ -605,7 +625,8 @@ combined_cem_data <- union(
 # union with pdb
 combined_cem_data <- union(
   combined_cem_data,
-  cem_data_pdb$author
+  # combined_cem_data_pdb
+  cem_data_af_pdb$author
 )
 
 matched_data <- labs_data %>%
@@ -666,7 +687,7 @@ matched_data <- matched_data %>%
     "patent_citation",
     "ca_count",
     "ln1p_fwci",
-    "ln1p_mesh_C",
+    "mesh_C",
 
     # Covid
     "covid_share_2020",

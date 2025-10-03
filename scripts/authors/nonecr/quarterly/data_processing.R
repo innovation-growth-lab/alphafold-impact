@@ -67,9 +67,9 @@ to_year_quarter <- function(code_vec) {
 nonecr_data <- nonecr_data %>%
   mutate(quarter = to_year_quarter(quarter))
 
-# drop obs after 2025Q2 (ie. 2025Q3)
+# drop obs after 2025Q1 (ie. 2025Q2)
 nonecr_data <- nonecr_data %>%
-  filter(quarter <= "2025Q2")
+  filter(quarter <= "2025Q1")
 
 # ------------------------------------------------------------------------------
 # Strong Data Prep
@@ -311,6 +311,7 @@ nonecr_data <- nonecr_data %>%
     ln1p_max_fident = log1p(as.numeric(max_fident)),
     ln1p_max_score = log1p(as.numeric(max_score)),
     ln1p_mesh_C = log1p(as.numeric(mesh_C)),
+    mesh_C = ifelse(mesh_C > 0, 1, 0),
     year = as.integer(str_sub(quarter, 1, 4)),
     ln1p_maxtmscore_lt_0.405 = ln1p_max_tmscore < 0.405
   )
@@ -364,7 +365,7 @@ nonecr_data$primary_field <- recode(nonecr_data$primary_field, !!!field_mapping)
 
 # Define the columns to be used for matching
 coarse_cols <- c(
-  "cited_by_count", "ln1p_fwci", "num_publications",
+  "cited_by_count", "ln1p_fwci", "num_publications", "num_pdb_submissions",
   "field_biochemist", "field_chemistry", "field_medicine",
   "covid_share_2020"
 )
@@ -497,7 +498,7 @@ quarterly_cem_pdb <- quarterly_cem %>%
 match_out_pdb <- matchit(
   as.formula(
     paste0(
-      "treatment ~ ",
+      "af ~ ",
       paste0(pdb_cols, collapse = " + ")
     )
   ),
@@ -589,7 +590,7 @@ matched_data <- matched_data %>%
     "patent_citation",
     "ca_count",
     "ln1p_fwci",
-    "ln1p_mesh_C",
+    "mesh_C",
 
     # Covid
     "covid_share_2020",

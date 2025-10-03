@@ -105,6 +105,9 @@ table_info <- list(
   ),
   "ln1p_mesh_C" = list(
     file_name = "ln1p_mesh_C.tex"
+  ),
+  "mesh_C" = list(
+    file_name = "mesh_C.tex"
   )
 )
 
