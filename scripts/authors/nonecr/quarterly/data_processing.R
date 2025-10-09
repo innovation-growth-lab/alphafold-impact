@@ -47,7 +47,7 @@ Sys.setenv(
 
 # Define the S3 bucket and path
 bucket <- "igl-alphafold"
-path <- "2025Q2/03_primary/nonecr/publications_quarterly.parquet" # nolint # mistake saved to oct
+path <- "2025Q2/03_primary/nonecr/publications_quarterly_restored.parquet"
 
 # Fetch the data from the S3 bucket
 nonecr_data <- s3read_using(
@@ -333,7 +333,7 @@ submission_threshold <- quantile(
 nonecr_data <- nonecr_data %>%
   left_join(author_submissions, by = "author") %>%
   mutate(
-    high_pdb_pre2021 = pre_2021_pdb_submissions > 1
+    high_pdb_pre2021 = pre_2021_pdb_submissions > submission_threshold
   )
 
 # Print diagnostics
@@ -365,7 +365,7 @@ nonecr_data$primary_field <- recode(nonecr_data$primary_field, !!!field_mapping)
 
 # Define the columns to be used for matching
 coarse_cols <- c(
-  "cited_by_count", "ln1p_fwci", "num_publications", "num_pdb_submissions",
+  "cited_by_count", "ln1p_fwci", "num_publications",
   "field_biochemist", "field_chemistry", "field_medicine",
   "covid_share_2020"
 )
@@ -406,19 +406,6 @@ quarterly_cem <- nonecr_data %>%
     across(pdb_cols, \(x) mean(x, na.rm = TRUE))
   )
 
-
-cat("Before pre-filtering:", nrow(quarterly_cem), "authors\n")
-
-# Remove extreme outliers (1%-99%) and low-publication authors
-quarterly_cem <- quarterly_cem %>%
-  filter(
-    cited_by_count >= quantile(cited_by_count, 0.02, na.rm = TRUE),
-    cited_by_count <= quantile(cited_by_count, 0.98, na.rm = TRUE),
-    num_publications > 2
-  )
-
-cat("After pre-filtering:", nrow(quarterly_cem), "authors\n")
-
 # Downsample controls if ratio > 10:1 to reduce memory
 n_treated <- sum(quarterly_cem$af)
 n_control <- sum(1 - quarterly_cem$af)
@@ -447,17 +434,21 @@ if (control_ratio > 10) {
 # CEM (Coarsened Exact Matching) - Match
 # ------------------------------------------------------------------------------
 
+message("Matching treatment")
+
 # ---- Treatment ----
 match_out_af_coarse_treatment <- matchit(
   as.formula(paste0(
     "treatment ~ ",
     paste(coarse_cols, collapse = " + ")
   )),
-  data = quarterly_cem, method = "cem", k2k = TRUE
+  data = quarterly_cem, method = "cem", k2k = FALSE
 )
 
 # Store matched data for coarse_cols
 cem_data_coarse_treatment <- match.data(match_out_af_coarse_treatment)
+
+cat("Matched data for treatment", nrow(cem_data_coarse_treatment), "authors\n")
 
 # ---- AlphaFold ----
 match_out_af_coarse <- matchit(
@@ -465,10 +456,12 @@ match_out_af_coarse <- matchit(
     "af ~ ",
     paste(coarse_cols, collapse = " + ")
   )),
-  data = quarterly_cem, method = "cem", k2k = TRUE
+  data = quarterly_cem, method = "cem", k2k = FALSE
 )
 message("Matched data for af")
 cem_data_coarse_af <- match.data(match_out_af_coarse)
+
+cat("Matched data for af", nrow(cem_data_coarse_af), "authors\n")
 
 # ---- Treatment - Exact ----
 match_out_treatment_exact <- matchit(
@@ -485,8 +478,11 @@ match_out_af_exact <- matchit(
   data = quarterly_cem, method = "exact"
 )
 
+
 # Store matched data for exact_cols
 cem_data_exact_af <- match.data(match_out_af_exact)
+
+cat("Matched data for exact_cols", nrow(cem_data_exact_af), "authors\n")
 
 # ---- PDB Submissions - Less Strict Matching ----
 
@@ -505,8 +501,11 @@ match_out_pdb <- matchit(
   data = quarterly_cem_pdb, method = "cem",
   k2k = FALSE
 )
-message("Matched data for pdb_cols")
+
+
 cem_data_pdb <- match.data(match_out_pdb)
+
+cat("Matched data for pdb_cols", nrow(cem_data_pdb), "authors\n")
 
 # Combine the matched results
 combined_cem_data_treatment <- intersect(

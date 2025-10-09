@@ -1,40 +1,25 @@
 \begingroup
 \centering
-\begin{tabular}{lccc}
+\begin{tabular}{lcccccc}
    \tabularnewline \midrule \midrule
-   Dependent Variable: & \multicolumn{3}{c}{num\_primary\_submissions}\\
+   Dependent Variable: & \multicolumn{6}{c}{num\_primary\_submissions}\\
  & \multicolumn{3}{c}{All Authors} & \multicolumn{3}{c}{Experienced Authors} \\
 \cmidrule(lr){2-4} \cmidrule(lr){5-7}
  & \multicolumn{1}{c}{All} & \multicolumn{2}{c}{With Intent Data} & \multicolumn{1}{c}{All} & \multicolumn{2}{c}{With Intent Data} \\
 \cmidrule(lr){2-2} \cmidrule(lr){3-4} \cmidrule(lr){5-5} \cmidrule(lr){6-7}
  & \multicolumn{6}{c}{\textit{All Fields}} \\ \\
-   AlphaFold            & 0.803$^{***}$ & 0.948$^{**}$ &   \\   
-                        & (0.211)       & (0.439)      &   \\   
-   AlphaFold - Method   &               &              & 1.11$^{***}$\\   
-                        &               &              & (0.419)\\   
-   AlphaFold - Bkg.     &               &              & -0.173\\   
-                        &               &              & (0.464)\\   
-   AI Frontier          & 0.186         & -0.045       &   \\   
-                        & (0.295)       & (0.543)      &   \\   
-   AI Frontier - Method &               &              & -2.56$^{***}$\\   
-                        &               &              & (0.608)\\   
-   AI Frontier - Bkg.   &               &              & 0.013\\   
-                        &               &              & (0.399)\\   
-   PP Frontier          & 0.291         & 0.164        &   \\   
-                        & (0.272)       & (0.586)      &   \\   
-   PP Frontier - Method &               &              & -1.77$^{*}$\\   
-                        &               &              & (0.995)\\   
-   PP Frontier - Bkg.   &               &              & -1.54$^{**}$\\   
-                        &               &              & (0.775)\\   
-   SB Frontier          & 0.855         & 1.86$^{***}$ &   \\   
-                        & (0.532)       & (0.693)      &   \\   
-   SB Frontier - Method &               &              & 0.647\\   
-                        &               &              & (1.06)\\   
-   SB Frontier - Bkg.   &               &              & 0.926\\   
-                        &               &              & (0.683)\\   
+   \emph{Variables}\\
+   AlphaFold    & 0.398$^{**}$ &           &           & -0.347      &        &   \\   
+                & (0.164)      &           &           & (0.404)     &        &   \\   
+   AI Frontier  & -0.174       &           &           & -0.201      &        &   \\   
+                & (0.167)      &           &           & (0.334)     &        &   \\   
+   PP Frontier  & 0.246        &           &           & 0.469$^{*}$ &        &   \\   
+                & (0.193)      &           &           & (0.254)     &        &   \\   
+   SB Frontier  & 0.116        &           &           & 0.408       &        &   \\   
+                & (0.159)      &           &           & (0.250)     &        &   \\   
    \midrule
    \emph{Fit statistics}\\
-   Observations         & 24,201        & 9,973        & 9,973\\  
-   Pseudo R$^2$         & 0.47          & 0.50         & 0.50\\  
-Mean(Dep. Var.) & 0.384 & 0.411 & 0.411 \\
+   Observations & 53,529       & 3,297,347 & 3,297,347 & 9,761       & 13,382 & 13,382\\  
+Mean(Dep. Var.) & 0.466 & 0.008 & 0.008 & 0.767 & 0.560 & 0.560 \\
+   Pseudo R$^2$ & 0.48         &           &           & 0.51        &        & \\  
    

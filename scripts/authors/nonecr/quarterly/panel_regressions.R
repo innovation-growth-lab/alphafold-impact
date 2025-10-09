@@ -273,7 +273,7 @@ for (dep_var in dep_vars) { # nolint
       if (dep_var %in% c(
         "num_publications", "num_pdb_ids", "num_pdb_submissions",
         "ca_count", "patent_count", "patent_citation",
-        "num_uniprot_structures", "cited_by_count",
+        "num_uniprot_structures", "cited_by_count", "mesh_C",
         "num_primary_submissions",
         "num_diseases",
         "num_uniprot_structures_w_disease",
@@ -318,7 +318,7 @@ for (dep_var in dep_vars) { # nolint
             )
           }
         )
-      } else if (dep_var %in% c("ln1p_maxtmscore_lt_0.405", "mesh_C")) {
+      } else if (dep_var %in% c("ln1p_maxtmscore_lt_0.405")) {#, "mesh_C")) {
         message("Running Logistic regression")
         results[[regression_label]] <- tryCatch(
           {
@@ -327,15 +327,30 @@ for (dep_var in dep_vars) { # nolint
               local_data, fes[["fe1"]], dep_var
             )
 
-            model <- feglm(
-              form_list[[form]],
-              data = local_data,
-              family = binomial(link = "logit"),
-              cluster = c("author", "quarter"),
-              fixef.iter = 250,
-              nthreads = 1,
-              lean = FALSE,
-              mem.clean = TRUE
+            # Try multiple convergence strategies
+            model <- NULL
+
+            # Strategy 1: Relaxed tolerance
+            tryCatch(
+              {
+                model <- feglm(
+                  form_list[[form]],
+                  data = local_data,
+                  family = binomial(link = "logit"),
+                  cluster = c("author", "quarter"),
+                  fixef.iter = 1000000,
+                  fixef.tol = 1e-3, # Relaxed tolerance
+                  iter.max = 1000000,
+                  nthreads = 8,
+                  lean = FALSE,
+                  mem.clean = TRUE,
+                  glm.iter = 150,
+                  glm.tol = 1e-04
+                )
+              },
+              error = function(e) {
+                message("Strategy 1 failed: ", e$message)
+              }
             )
 
             # Check if model converged by looking at convergence code

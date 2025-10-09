@@ -1,60 +1,33 @@
 \begingroup
 \centering
-\begin{tabular}{lccc}
+\begin{tabular}{lcccccc}
    \tabularnewline \midrule \midrule
-   Dependent Variable: & \multicolumn{3}{c}{num\_primary\_submissions\_w\_rare\_organisms}\\
+   Dependent Variable: & \multicolumn{6}{c}{num\_primary\_submissions\_w\_rare\_organisms}\\
  & \multicolumn{3}{c}{All Authors} & \multicolumn{3}{c}{Experienced Authors} \\
 \cmidrule(lr){2-4} \cmidrule(lr){5-7}
  & \multicolumn{1}{c}{All} & \multicolumn{2}{c}{With Intent Data} & \multicolumn{1}{c}{All} & \multicolumn{2}{c}{With Intent Data} \\
 \cmidrule(lr){2-2} \cmidrule(lr){3-4} \cmidrule(lr){5-5} \cmidrule(lr){6-7}
  & \multicolumn{6}{c}{\textit{All Fields}} \\ \\
-   AlphaFold                      & 0.621$^{*}$   & 0.748        &   \\   
-                                  & (0.353)       & (0.534)      &   \\   
-   AlphaFold x Applied            & -0.786$^{**}$ & -0.845       &   \\   
-                                  & (0.375)       & (0.676)      &   \\   
-   AlphaFold - Method             &               &              & 0.368\\   
-                                  &               &              & (0.530)\\   
-   AlphaFold - Bkg.               &               &              & -0.832\\   
-                                  &               &              & (0.580)\\   
-   AlphaFold x Applied - Method   &               &              & -0.930\\   
-                                  &               &              & (0.917)\\   
-   AlphaFold x Applied - Bkg.     &               &              & 0.038\\   
-                                  &               &              & (0.722)\\   
-   AI Frontier                    & 0.873$^{**}$  & 0.626        &   \\   
-                                  & (0.359)       & (1.58)       &   \\   
-   AI Frontier x Applied          & 0.052         & 0.218        &   \\   
-                                  & (0.383)       & (1.65)       &   \\   
-   AI Frontier - Method           &               &              & -1.16\\   
-                                  &               &              & (1.06)\\   
-   AI Frontier - Bkg.             &               &              & 0.109\\   
-                                  &               &              & (0.746)\\   
-   AI Frontier x Applied - Method &               &              & -0.002\\   
-                                  &               &              & (1.63)\\   
-   AI Frontier x Applied - Bkg.   &               &              & 1.54\\   
-                                  &               &              & (1.15)\\   
-   PP Frontier                    & 0.538         & 0.230        &   \\   
-                                  & (0.503)       & (0.668)      &   \\   
-   PP Frontier x Applied          & 0.137         & -0.476       &   \\   
-                                  & (0.672)       & (1.13)       &   \\   
-   PP Frontier - Method           &               &              & -1.07\\   
-                                  &               &              & (0.975)\\   
-   PP Frontier - Bkg.             &               &              & -1.38\\   
-                                  &               &              & (1.04)\\   
-   PP Frontier x Applied - Bkg.   &               &              & 0.334\\   
-                                  &               &              & (1.55)\\   
-   SB Frontier                    & 2.14$^{***}$  & 2.66$^{***}$ &   \\   
-                                  & (0.730)       & (1.03)       &   \\   
-   SB Frontier x Applied          & -1.15         & 0.482        &   \\   
-                                  & (0.863)       & (1.23)       &   \\   
-   SB Frontier - Method           &               &              & -17.1$^{***}$\\   
-                                  &               &              & (0.556)\\   
-   SB Frontier - Bkg.             &               &              & 1.97$^{**}$\\   
-                                  &               &              & (0.911)\\   
-   SB Frontier x Applied - Bkg.   &               &              & -19.6$^{***}$\\   
-                                  &               &              & (1.46)\\   
+   \emph{Variables}\\
+   AlphaFold             & 0.004         &           &           &        &        &   \\   
+                         & (0.307)       &           &           &        &        &   \\   
+   AlphaFold x Applied   & 0.029         &           &           &        &        &   \\   
+                         & (0.357)       &           &           &        &        &   \\   
+   AI Frontier           & -0.258        &           &           &        &        &   \\   
+                         & (0.211)       &           &           &        &        &   \\   
+   AI Frontier x Applied & 0.374         &           &           &        &        &   \\   
+                         & (0.372)       &           &           &        &        &   \\   
+   PP Frontier           & -0.018        &           &           &        &        &   \\   
+                         & (0.196)       &           &           &        &        &   \\   
+   PP Frontier x Applied & 0.083         &           &           &        &        &   \\   
+                         & (0.355)       &           &           &        &        &   \\   
+   SB Frontier           & -0.103        &           &           &        &        &   \\   
+                         & (0.212)       &           &           &        &        &   \\   
+   SB Frontier x Applied & -0.694$^{**}$ &           &           &        &        &   \\   
+                         & (0.303)       &           &           &        &        &   \\   
    \midrule
    \emph{Fit statistics}\\
-   Observations                   & 11,377        & 4,474        & 4,474\\  
-   Pseudo R$^2$                   & 0.41          & 0.39         & 0.38\\  
-Mean(Dep. Var.) & 0.301 & 0.321 & 0.321 \\
+   Observations          & 24,253        & 3,297,347 & 3,297,347 & 13,382 & 13,382 & 13,382\\  
+Mean(Dep. Var.) & 0.378 & 0.003 & 0.003 & 0.222 & 0.222 & 0.222 \\
+   Pseudo R$^2$          & 0.40          &           &           &        &        & \\  
    
