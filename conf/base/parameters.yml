@@ -436,8 +436,8 @@ labs:
       mailto: data_analytics@nesta.org.uk
       perpage: "200"
   quantile:
-    foundational: 0.90
-    applied: 0.90
+    foundational: 0.80
+    applied: 0.80
 
 ecr:
   data_collection:

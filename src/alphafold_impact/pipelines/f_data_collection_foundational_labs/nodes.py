@@ -430,6 +430,7 @@ def assign_lab_label(
             "Found %d unique authors, sampling 20,000 unique authors uniformly at random",
             unique_authors,
         )
+        # found 77,577
 
         # Sample 20,000 unique authors uniformly at random
         sampled_authors = (

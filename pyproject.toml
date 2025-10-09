@@ -17,10 +17,8 @@ kedro_init_version = "0.19.1"
 tools = "['Linting', 'Custom Logging', 'Data Structure', 'Kedro Viz']"
 
 [tool.ruff]
-line-length = 88
+line-length = 99
 show-fixes = true
-select = [ "F", "W", "E", "I", "UP", "PL", "T201",]
-ignore = [ "E501", "W0621", ]
 
 [project.entry-points."kedro.hooks"]
 

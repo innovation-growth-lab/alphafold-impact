@@ -117,6 +117,10 @@ oa.data_processing.subfield.structural_biology.primary:
   <<: *_pq
   filepath: s3://igl-alphafold/2025Q2/03_primary/oa/works/subfield/structural_biology/main.parquet
 
+oa.data_processing.subfield.structural_biology.primary.old:
+  <<: *_pq
+  filepath: s3://igl-alphafold/2025Q1/03_primary/oa/works/subfield/structural_biology/main.parquet
+
 oa.data_processing.structural_biology.depth.other.intermediate:
   <<: *_pq
   filepath: s3://igl-alphafold/2025Q2/02_intermediate/oa/works/depth/subfield/structural_biology/reassigned_other.parquet
@@ -154,6 +158,10 @@ oa.data_processing.depth.ct.primary:
 oa.data_processing.depth.other.primary:
   <<: *_pq
   filepath: s3://igl-alphafold/2025Q2/03_primary/oa/works/depth/other/main.parquet
+
+oa.data_processing.depth.other.primary.old:
+  <<: *_pq
+  filepath: s3://igl-alphafold/2025Q1/03_primary/oa/works/depth/other/main.parquet
 
 s2.data_collection.strength.api.bulk_data:
   <<: *_pq_ptd
@@ -276,10 +284,27 @@ publications.data.outputs:
   <<: *_pq
   filepath: s3://igl-alphafold/2025Q2/04_output/publications/outputs.parquet
 
+publications.data.outputs.restored:
+  <<: *_pq
+  filepath: s3://igl-alphafold/2025Q2/04_output/publications/outputs_restored.parquet
+
+
+publications.data.outputs.old:
+  <<: *_pq
+  filepath: s3://igl-alphafold/2025Q1/04_output/publications/outputs.parquet
+
 publications.regression.inputs:
   <<: *_pq
   filepath: s3://igl-alphafold/2025Q2/04_output/publications/regression_inputs.parquet
 
+publications.regression.inputs.res:
+  <<: *_pq
+  filepath: s3://igl-alphafold/2025Q2/04_output/publications/regression_inputs_skimmed.parquet
+
+
+publications.regression.inputs.old:
+  <<: *_pq
+  filepath: s3://igl-alphafold/2025Q1/04_output/publications/regression_inputs.parquet
 
 # -------------------------------------------------------------
 
@@ -349,6 +374,10 @@ foundational_lab.outputs.quarterly:
   <<: *_pq
   filepath: s3://igl-alphafold/2025Q2/04_output/analysis/foundational_labs/individual/outputs_quarterly.parquet
 
+foundational_lab.outputs.quarterly.old:
+  <<: *_pq
+  filepath: s3://igl-alphafold/2025Q1/04_output/analysis/foundational_labs/individual/outputs_quarterly.parquet
+
 applied_lab.outputs.primary:
   <<: *_pq
   filepath: s3://igl-alphafold/2025Q2/04_output/analysis/applied_labs/individual/outputs_primary.parquet
@@ -356,6 +385,10 @@ applied_lab.outputs.primary:
 applied_lab.outputs.quarterly:
   <<: *_pq
   filepath: s3://igl-alphafold/2025Q2/04_output/analysis/applied_labs/individual/outputs_quarterly.parquet
+
+applied_lab.outputs.quarterly.old:
+  <<: *_pq
+  filepath: s3://igl-alphafold/2025Q1/04_output/analysis/applied_labs/individual/outputs_quarterly.parquet
 # -------------------------------------------------------------
 
 ecr.candidate_authors.raw:
@@ -398,6 +431,13 @@ nonecr.publications.quarterly:
   <<: *_pq
   filepath: s3://igl-alphafold/2025Q2/03_primary/nonecr/publications_quarterly.parquet
 
+nonecr.publications.quarterly.old:
+  <<: *_pq
+  filepath: s3://igl-alphafold/2025Q1/03_primary/nonecr/publications_quarterly.parquet
+
+nonecr.publications.quarterly.restored:
+  <<: *_pq
+  filepath: s3://igl-alphafold/2025Q2/03_primary/nonecr/publications_quarterly_restored.parquet
 # -------------------------------------------------------------
 
 uniprot.pdb.map:

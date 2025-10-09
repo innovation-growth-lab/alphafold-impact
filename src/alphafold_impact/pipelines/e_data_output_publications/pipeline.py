@@ -98,7 +98,7 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
             node(
                 select_regression_columns,
                 inputs={
-                    "data": "publications.data.outputs",
+                    "data": "publications.data.outputs.restored",
                     "columns": "params:publications.columns_to_drop",
                 },
                 outputs="publications.regression.inputs",
