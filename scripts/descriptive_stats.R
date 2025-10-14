@@ -62,121 +62,94 @@ Sys.setenv(
 )
 
 # Define the S3 bucket and path
-bucket <- "igl-alphafold"
-foundational_path <- "2025Q1/04_output/analysis/foundational_labs/individual/outputs_quarterly.parquet" # nolint
-applied_path <- "2025Q1/04_output/analysis/applied_labs/individual/outputs_quarterly.parquet" # nolint
-nonecr_path <- "2025Q1/03_primary/nonecr/publications_quarterly.parquet" # nolint # mistake saved to oct
-ecr_path <- "2025Q1/03_primary/ecr/publications_quarterly.parquet" # nolint
-papers_path <- "2025Q1/04_output/publications/regression_inputs.parquet" # nolint
+labs_path <- "data/05_model_output/labs/quarterly/data/sub_samples.rds" # nolint
+nonecr_path <- "data/05_model_output/authors/nonecr/quarterly/data/sub_samples.rds" # nolint # mistake saved to oct
+ecr_path <- "data/05_model_output/authors/ecr/quarterly/data/sub_samples.rds" # nolint
+papers_path <- "data/05_model_output/papers/data/sub_samples.rds" # nolint
 
-# Fetch the data from the S3 bucket
-foundational_labs_data <- s3read_using(
-  FUN = arrow::read_parquet,
-  object = foundational_path,
-  bucket = bucket
-)
+# Read the data from local RDS files and select the first sub-sample
+labs_data <- readRDS(labs_path)[["scope_All__field_All Fields__subgroup_All PDB"]]
+nonecr_data <- readRDS(nonecr_path)[["scope_All__field_All Fields__subgroup_All PDB"]]
+ecr_data <- readRDS(ecr_path)[["scope_All__field_All Fields__subgroup_All PDB"]]
+papers_data <- readRDS(papers_path)[["scope_All__field_All Fields__subgroup_All PDB"]]
 
-applied_labs_data <- s3read_using(
-  FUN = arrow::read_parquet,
-  object = applied_path,
-  bucket = bucket
-)
+# # --------------------------- Transforms - Pre ---------------------------- #
+# # create column is_applied
+# foundational_labs_data <- foundational_labs_data %>%
+#   mutate(is_applied = 0)
+# applied_labs_data <- applied_labs_data %>%
+#   mutate(is_applied = 1)
 
-nonecr_data <- s3read_using(
-  FUN = arrow::read_parquet,
-  object = nonecr_path,
-  bucket = bucket
-)
+# # merge the data
+# labs_data <- bind_rows(foundational_labs_data, applied_labs_data)
 
-ecr_data <- s3read_using(
-  FUN = arrow::read_parquet,
-  object = ecr_path,
-  bucket = bucket
-)
+# # drop duplicates by author, quarter
+# labs_data <- labs_data %>%
+#   distinct(author, quarter, .keep_all = TRUE)
 
-papers_data <- s3read_using(
-  FUN = arrow::read_parquet,
-  object = papers_path,
-  bucket = bucket
-)
+# # drop obs after 2025Q1 (ie. 2025Q2)
+# labs_data <- labs_data %>%
+#   filter(quarter <= "2025Q2")
 
-# --------------------------- Transforms - Pre ---------------------------- #
-# create column is_applied
-foundational_labs_data <- foundational_labs_data %>%
-  mutate(is_applied = 0)
-applied_labs_data <- applied_labs_data %>%
-  mutate(is_applied = 1)
-
-# merge the data
-labs_data <- bind_rows(foundational_labs_data, applied_labs_data)
-
-# drop duplicates by author, quarter
-labs_data <- labs_data %>%
-  distinct(author, quarter, .keep_all = TRUE)
-
-# drop obs after 2025Q1 (ie. 2025Q2)
-labs_data <- labs_data %>%
-  filter(quarter <= "2025Q2")
-
-# --------------------------- Seek to merge --------------------- #
+# # --------------------------- Seek to merge --------------------- #
 papers_data <- papers_data %>% mutate(
   author = row_number(),
-  af = ifelse(source == "af", 1, 0),
-  ct_ai = ifelse(source == "ct_ai", 1, 0),
-  ct_pp = ifelse(source == "ct_pp", 1, 0),
-  ct_sb = ifelse(source == "ct_sb", 1, 0),
-  other = ifelse(source == "other", 1, 0),
-  dataset = "papers",
-  num_publications = 1,
-  depth = as.factor(if_else(level == 0, "foundational", "applied")),
-  is_applied = if_else(depth == "applied", 1, 0),
-  num_pdb_submissions = ifelse(pdb_submission > 0, 1, 0),
-  quarter = paste0(year(publication_date), "Q", quarter(publication_date))
+#   af = ifelse(source == "af", 1, 0),
+#   ct_ai = ifelse(source == "ct_ai", 1, 0),
+#   ct_pp = ifelse(source == "ct_pp", 1, 0),
+#   ct_sb = ifelse(source == "ct_sb", 1, 0),
+#   other = ifelse(source == "other", 1, 0),
+  dataset = "papers"
+#   num_publications = 1,
+#   depth = as.factor(if_else(level == 0, "foundational", "applied")),
+#   is_applied = if_else(depth == "applied", 1, 0),
+#   num_pdb_submissions = ifelse(pdb_submission > 0, 1, 0),
+#   quarter = paste0(year(publication_date), "Q", quarter(publication_date))
 )
 
-papers_data <- papers_data %>%
-  arrange(af, ct_ai, ct_pp, ct_sb, other) %>%
-  distinct(id, .keep_all = TRUE)
+# papers_data <- papers_data %>%
+#   arrange(af, ct_ai, ct_pp, ct_sb, other) %>%
+#   distinct(id, .keep_all = TRUE)
 
 nonecr_data <- nonecr_data %>%
   mutate(
-    af = af_strong + af_weak + af_mixed + af_unknown,
-    ct_ai = ct_ai_strong + ct_ai_weak + ct_ai_mixed + ct_ai_unknown,
-    ct_pp = ct_pp_strong + ct_pp_weak + ct_pp_mixed + ct_pp_unknown,
-    ct_sb = ct_sb_strong + ct_sb_weak + ct_sb_mixed + ct_sb_unknown,
-    other = other_strong + other_weak + other_mixed + other_unknown,
-    dataset = "nonecr",
-    is_applied = if_else(depth == "applied", 1, 0),
-    num_pdb_submissions = ifelse(is.na(pdb_submission), 0, pdb_submission)
+#     af = af_strong + af_weak + af_mixed + af_unknown,
+#     ct_ai = ct_ai_strong + ct_ai_weak + ct_ai_mixed + ct_ai_unknown,
+#     ct_pp = ct_pp_strong + ct_pp_weak + ct_pp_mixed + ct_pp_unknown,
+#     ct_sb = ct_sb_strong + ct_sb_weak + ct_sb_mixed + ct_sb_unknown,
+#     other = other_strong + other_weak + other_mixed + other_unknown,
+    dataset = "nonecr"
+#     is_applied = if_else(depth == "applied", 1, 0),
+#     num_pdb_submissions = ifelse(is.na(pdb_submission), 0, pdb_submission)
   )
 
 ecr_data <- ecr_data %>%
   mutate(
-    af = af_strong + af_weak + af_mixed + af_unknown,
-    ct_ai = ct_ai_strong + ct_ai_weak + ct_ai_mixed + ct_ai_unknown,
-    ct_pp = ct_pp_strong + ct_pp_weak + ct_pp_mixed + ct_pp_unknown,
-    ct_sb = ct_sb_strong + ct_sb_weak + ct_sb_mixed + ct_sb_unknown,
-    other = other_strong + other_weak + other_mixed + other_unknown,
-    dataset = "ecr",
-    is_applied = if_else(depth == "applied", 1, 0),
-    num_pdb_submissions = ifelse(is.na(pdb_submission), 0, pdb_submission)
+#     af = af_strong + af_weak + af_mixed + af_unknown,
+#     ct_ai = ct_ai_strong + ct_ai_weak + ct_ai_mixed + ct_ai_unknown,
+#     ct_pp = ct_pp_strong + ct_pp_weak + ct_pp_mixed + ct_pp_unknown,
+#     ct_sb = ct_sb_strong + ct_sb_weak + ct_sb_mixed + ct_sb_unknown,
+#     other = other_strong + other_weak + other_mixed + other_unknown,
+    dataset = "ecr"
+#     is_applied = if_else(depth == "applied", 1, 0),
+#     num_pdb_submissions = ifelse(is.na(pdb_submission), 0, pdb_submission)
   )
 
 labs_data <- labs_data %>%
   mutate(
-    af = af_strong + af_weak + af_mixed + af_unknown,
-    ct_ai = ct_ai_strong + ct_ai_weak + ct_ai_mixed + ct_ai_unknown,
-    ct_pp = ct_pp_strong + ct_pp_weak + ct_pp_mixed + ct_pp_unknown,
-    ct_sb = ct_sb_strong + ct_sb_weak + ct_sb_mixed + ct_sb_unknown,
-    other = other_strong + other_weak + other_mixed + other_unknown,
-    dataset = "labs",
-    num_pdb_submissions = ifelse(is.na(pdb_submission), 0, pdb_submission)
+    # af = af_strong + af_weak + af_mixed + af_unknown,
+    # ct_ai = ct_ai_strong + ct_ai_weak + ct_ai_mixed + ct_ai_unknown,
+    # ct_pp = ct_pp_strong + ct_pp_weak + ct_pp_mixed + ct_pp_unknown,
+    # ct_sb = ct_sb_strong + ct_sb_weak + ct_sb_mixed + ct_sb_unknown,
+    # other = other_strong + other_weak + other_mixed + other_unknown,
+    dataset = "labs"
+    # num_pdb_submissions = ifelse(is.na(pdb_submission), 0, pdb_submission)
   )
 
 # Select relevant columns for analysis
 relevant_cols <- c(
   "author", "dataset", "is_applied", "quarter",
-  "af", "ct_ai", "ct_pp", "ct_sb", "other",
+  "af", "ct_ai", "ct_pp", "ct_sb",# "other",
   "num_pdb_submissions", "num_publications", "ca_count", "patent_count"
 )
 

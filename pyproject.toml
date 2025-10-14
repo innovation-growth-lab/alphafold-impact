@@ -19,6 +19,8 @@ tools = "['Linting', 'Custom Logging', 'Data Structure', 'Kedro Viz']"
 [tool.ruff]
 line-length = 99
 show-fixes = true
+select = [ "F", "W", "E", "I", "UP", "PL", "T201",]
+ignore = [ "E501", ]
 
 [project.entry-points."kedro.hooks"]
 
@@ -31,3 +33,6 @@ attr = "alphafold_impact.__version__"
 [tool.setuptools.packages.find]
 where = [ "src",]
 namespaces = false
+
+[tool.kedro_telemetry]
+project_id = "f298ac0e211440fda892c007b2aa7ea7"

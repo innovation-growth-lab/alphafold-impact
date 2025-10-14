@@ -302,10 +302,6 @@ publications.regression.inputs.res:
   filepath: s3://igl-alphafold/2025Q2/04_output/publications/regression_inputs_skimmed.parquet
 
 
-publications.regression.inputs.old:
-  <<: *_pq
-  filepath: s3://igl-alphafold/2025Q1/04_output/publications/regression_inputs.parquet
-
 # -------------------------------------------------------------
 
 foundational_lab.data_collection.candidates.publications.intermediate:

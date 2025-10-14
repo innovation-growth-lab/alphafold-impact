@@ -759,7 +759,7 @@ def reassign_ct_levels(
     ]
 
     # HACK: keep 50% of the level_0_data for other SB papers
-    level_0_data = level_0_data.sample(frac=0.5, random_state=42)
+    level_0_data = level_0_data.sample(frac=0.25, random_state=42)
 
     # Get level 1 data where parent_id is in level 0 ids
     level_1_data = data_other[

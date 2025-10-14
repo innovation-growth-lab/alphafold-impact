@@ -17,7 +17,7 @@
 #    treatment classifications
 #
 # Combines coefficient tables from multiple sources (labs, authors, papers)
-# Output: PNG plots saved to data/08_reporting/2025Q1/coefplots/ subdirectories
+# Output: PNG plots saved to data/08_reporting/2025Q2/coefplots/ subdirectories
 # =============================================================================
 
 # Load necessary library
@@ -112,7 +112,7 @@ dep_var_labels <- c(
   "num_publications" = "Number of Publications",
 
   # Disease & Clinical Relevance Metrics
-  "ln1p_mesh_C" = "Disease Relevance (MeSH C-index, log-scale)",
+  "mesh_C" = "Disease Relevance (MeSH C-index)",
   "num_diseases" = "Number of Structure-Associated Diseases",
   "num_uniprot_structures_w_disease" = "Number of Disease-Relevant Structures",
   "num_primary_submissions_w_disease" = "Number of Novel Disease-Relevant Structures", # nolint
@@ -179,7 +179,7 @@ field_colors <- c(
 # --- Variable definitions ---
 # Set desired orders for variables and names
 subgroup_order <- c("All PDB", "High PDB")
-scope_order <- c("scope_All", "scope_Intent")
+scope_order <- c("scope_Intent")#"scope_All", "scope_Intent")
 field_order <- c(
   # "field_Medicine",
   # "field_Biochemistry",
@@ -355,7 +355,7 @@ generate_core_coef_plots <- function(coef_table) { # nolint
 
         # Create the directory if it doesn't exist
         pathdir <- paste0(
-          "data/08_reporting/2025Q1/coefplots/core/",
+          "data/08_reporting/2025Q2/coefplots/core/",
           single_dep_var, "/", field, "/"
         )
         outfile <- paste0(pathdir, scopesubgroup, ".png")
@@ -541,7 +541,7 @@ generate_strong_coef_plots <- function(coef_table) { # nolint
 
         # Create the directory if it doesn't exist
         pathdir <- paste0(
-          "data/08_reporting/2025Q1/coefplots/strong/",
+          "data/08_reporting/2025Q2/coefplots/strong/",
           single_dep_var, "/", field, "/"
         )
         outfile <- paste0(pathdir, scopesubgroup, ".png")
@@ -565,7 +565,8 @@ generate_strong_coef_plots <- function(coef_table) { # nolint
           coeffplot,
           width = plot_width,
           height = plot_height,
-          dpi = 300
+          dpi = 300,
+          limitsize = FALSE
         )
       }
     }
@@ -669,7 +670,7 @@ generate_grouped_coef_plots <- function(coef_table) {
 
         # Create directory and save plot
         pathdir <- paste0(
-          "data/08_reporting/2025Q1/coefplots/grouped/",
+          "data/08_reporting/2025Q2/coefplots/grouped/",
           ufield, "/"
         )
         if (!dir.exists(pathdir)) {
@@ -691,7 +692,8 @@ generate_grouped_coef_plots <- function(coef_table) {
           grouped_plot,
           width = plot_width,
           height = plot_height,
-          dpi = 300
+          dpi = 300,
+          limitsize = FALSE
         )
       }
     }
@@ -795,7 +797,7 @@ generate_grouped_highpdb_coef_plots <- function(coef_table) {
 
       # Create directory and save plot
       pathdir <- paste0(
-        "data/08_reporting/2025Q1/coefplots/grouped_highpdb/",
+        "data/08_reporting/2025Q2/coefplots/grouped_highpdb/",
         ufield, "/"
       )
       if (!dir.exists(pathdir)) {
@@ -817,7 +819,8 @@ generate_grouped_highpdb_coef_plots <- function(coef_table) {
         grouped_plot,
         width = plot_width,
         height = plot_height,
-        dpi = 300
+        dpi = 300,
+        limitsize = FALSE
       )
     }
   }
@@ -921,7 +924,7 @@ generate_grouped_strong_coef_plots <- function(coef_table) {
 
       # Create directory and save plot
       pathdir <- paste0(
-        "data/08_reporting/2025Q1/coefplots/grouped_strong/",
+        "data/08_reporting/2025Q2/coefplots/grouped_strong/",
         ufield, "/"
       )
       if (!dir.exists(pathdir)) {
