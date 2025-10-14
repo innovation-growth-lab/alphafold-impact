@@ -189,15 +189,15 @@ logger = logging.getLogger(__name__)
 
 def save_chart_as_image(chart: alt.Chart) -> Image.Image:
     """Convert an Altair chart to a Pillow Image object."""
-    png_bytes = vlc.vegalite_to_png(  # pylint: disable=no-member
-        chart.to_json(), scale=3
+    png_bytes = vlc.vega_to_png(  # pylint: disable=no-member
+        chart.to_json(format="vega"), scale=3
     )
     image = Image.open(BytesIO(png_bytes))
     return image
 
 def save_chart_as_image_vega(chart: alt.Chart) -> Image.Image:
     """Convert an Altair chart to a Pillow Image object."""
-    png_bytes = vlc.vegalite_to_png(  # pylint: disable=no-member
+    png_bytes = vlc.vega_to_png(  # pylint: disable=no-member
         chart.to_json(format="vega"), scale=3
     )
     image = Image.open(BytesIO(png_bytes))

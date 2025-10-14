@@ -9,7 +9,6 @@ from .nodes import (
     generate_fig_all_counts,
     generate_fig_researcher_counts,
     generate_fig_within_plots,
-    generate_fig3,
     generate_summary_tables_latex,
     plot_regression_results,
     combined_publications_researchers_pp,
@@ -25,64 +24,55 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
         [
             node(
                 func=generate_fig_counts_and_field_shares, # current Fig 4
-                inputs={"publications": "publications.data.outputs"},
+                inputs={"publications": "publications.data.outputs.restored"},
                 outputs="fig.counts_and_field_shares",
                 name="generate_fig_counts_and_field_shares",
             ),
             node(
                 func=generate_fig_all_counts,
-                inputs={"publications": "publications.data.outputs"},
+                inputs={"publications": "publications.data.outputs.restored"},
                 outputs="fig.all_counts",
                 name="generate_fig_all_counts",
             ),
             node(
                 func=generate_fig_researcher_counts,
-                inputs={"publications": "publications.data.outputs"},
+                inputs={"publications": "publications.data.outputs.restored"},
                 outputs="fig.researcher_counts",
                 name="generate_fig_researcher_counts",
             ),
             node(
                 func=generate_fig_within_plots,
-                inputs={"publications": "publications.data.outputs"},
+                inputs={"publications": "publications.data.outputs.restored"},
                 outputs="fig.within_plots",
                 name="generate_fig_within_plots",
             ),
             node(
                 func=combined_publications_researchers_pp,
                 inputs={
-                    "publications": "publications.data.outputs",
-                    "researchers": "nonecr.publications.quarterly",
+                    "publications": "publications.data.outputs.restored",
+                    "researchers": "nonecr.publications.quarterly.restored",
                 },
                 outputs="fig.descriptive_pp",
                 name="combined_descriptive_pp",
             ),
             node(
                 func=generate_fig_descriptive_protein_charspy,
-                inputs={"publications": "publications.data.outputs"},
+                inputs={"publications": "publications.data.outputs.restored"},
                 outputs="fig.descriptive_protein_charspy",
                 name="generate_fig_descriptive_protein_charspy",
             ),
             node(
                 func=generate_fig_descriptive_translational,
-                inputs={"publications": "publications.data.outputs"},
+                inputs={"publications": "publications.data.outputs.restored"},
                 outputs="fig.descriptive_translational",
                 name="generate_fig_descriptive_translational",
             ),
             node(
-                func=generate_fig3,
-                inputs={
-                    "ecrs": "ecr.publications.quarterly",
-                    "nonecrs": "nonecr.publications.quarterly",
-                },
-                outputs="fig.3",
-                name="generate_fig3",
-            ),
-            node(
                 func=generate_summary_tables_latex,
                 inputs={
-                    "publications": "publications.data.outputs",
+                    "publications": "publications.data.outputs.restored",
                     "early_career_researchers": "ecr.publications.quarterly",
-                    "established_researchers": "nonecr.publications.quarterly",
+                    "established_researchers": "nonecr.publications.quarterly.restored",
                     "foundational_labs": "foundational_lab.outputs.quarterly",
                     "applied_labs": "applied_lab.outputs.quarterly",
                 },
@@ -102,13 +92,13 @@ def create_pipeline(**kwargs) -> Pipeline:  # pylint: disable=C0116,W0613
             ),
             node(
                 func=generate_fig_topics_over_time,
-                inputs={"publications": "publications.data.outputs"},
+                inputs={"publications": "publications.data.outputs.restored"},
                 outputs="fig.topics_over_time",
                 name="generate_fig_topics_over_time",
             ),
             node(
                 func=generate_fig_pp_distributions,
-                inputs={"publications": "publications.data.outputs"},
+                inputs={"publications": "publications.data.outputs.restored"},
                 outputs="fig.pp_distributions",
                 name="generate_fig_pp_distributions",
             ),

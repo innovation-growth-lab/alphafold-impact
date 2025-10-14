@@ -233,40 +233,40 @@ def generate_fig_researcher_counts(  # pylint: disable=R0914
     authors_other = mpc6(filtered_other)
 
     # Add missing months for authors_other, including cumsum
-    missing_dates = pd.date_range(start="2024-10-01", end="2025-03-01", freq="ME")
-    missing_counts = np.random.randint(0, 100, size=len(missing_dates))
-    missing_df = pd.DataFrame(
-        {
-            "publication_date": missing_dates,
-            "count": missing_counts,
-            "source": "other",
-            "type": "Adjacent",
-        }
-    )
-    # Compute cumsum for the new rows, continuing from the last cumsum in authors_other
-    if "cumsum" in authors_other.columns and not authors_other.empty:
-        last_cumsum = authors_other.loc[
-            authors_other["type"] == "Adjacent", "cumsum"
-        ].max()
-        if pd.isna(last_cumsum):
-            last_cumsum = 0
-    else:
-        last_cumsum = 0
-    missing_df["cumsum"] = missing_counts.cumsum() + (
-        last_cumsum if last_cumsum is not None else 0
-    )
+    # missing_dates = pd.date_range(start="2024-10-01", end="2025-03-01", freq="ME")
+    # missing_counts = np.random.randint(0, 100, size=len(missing_dates))
+    # missing_df = pd.DataFrame(
+    #     {
+    #         "publication_date": missing_dates,
+    #         "count": missing_counts,
+    #         "source": "other",
+    #         "type": "Adjacent",
+    #     }
+    # )
+    # # Compute cumsum for the new rows, continuing from the last cumsum in authors_other
+    # if "cumsum" in authors_other.columns and not authors_other.empty:
+    #     last_cumsum = authors_other.loc[
+    #         authors_other["type"] == "Adjacent", "cumsum"
+    #     ].max()
+    #     if pd.isna(last_cumsum):
+    #         last_cumsum = 0
+    # else:
+    #     last_cumsum = 0
+    # missing_df["cumsum"] = missing_counts.cumsum() + (
+    #     last_cumsum if last_cumsum is not None else 0
+    # )
 
-    # If authors_other does not have cumsum, fill it for existing rows
-    if "cumsum" not in authors_other.columns:
-        authors_other["cumsum"] = authors_other.groupby("type")["count"].cumsum()
+    # # If authors_other does not have cumsum, fill it for existing rows
+    # if "cumsum" not in authors_other.columns:
+    #     authors_other["cumsum"] = authors_other.groupby("type")["count"].cumsum()
 
-    authors_other = pd.concat(
-        [
-            authors_other,
-            missing_df,
-        ],
-        ignore_index=True,
-    )
+    # authors_other = pd.concat(
+    #     [
+    #         authors_other,
+    #         missing_df,
+    #     ],
+    #     ignore_index=True,
+    # )
 
     # add column and concatenate
     authors_af["source"] = "af"
@@ -278,6 +278,9 @@ def generate_fig_researcher_counts(  # pylint: disable=R0914
     authors = pd.concat(
         [authors_af, authors_ct_ai, authors_ct_pp, authors_ct_sb, authors_other]
     )
+
+    # keep if publication_date[:4] >= 2021
+    authors = authors[authors["publication_date"].dt.year >= 2021]
 
     # sort by publication date
     authors = authors.sort_values("publication_date")
@@ -682,7 +685,7 @@ def generate_summary_tables_latex(
         )
 
         # assign the source to the original data
-        dict_source = grouped["source"].to_dict()
+        dict_source = grouped["source"].to_dict(format="vega")
         data["source"] = data[identifier].map(dict_source)
         return data
 
@@ -832,8 +835,8 @@ def plot_regression_results(
 
     # import vl_convert as vlc
 
-    # png_bytes = vlc.vegalite_to_png(  # pylint: disable=no-member
-    #     chart.to_json(), scale=3
+    # png_bytes = vlc.vega_to_png(  # pylint: disable=no-member
+    #     chart.to_json(format="vega"), scale=3
     # )
     # with open("test.png", "wb") as f:
     #     f.write(png_bytes)
