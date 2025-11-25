@@ -105,7 +105,7 @@ all_tables_combined %>%
 dep_var_labels <- c(
   # Bibliometric & Impact Metrics
   "cited_by_count" = "Number of Citations Received",
-  "ln1p_fwci" = "Field-Weighted Citation Impact (log-scale)",
+  "ln1p_fwci" = "Field-Weighted Citation Impact",
   "patent_count" = "Number of Patent-Paper Citations",
   "patent_citation" = "Number of Patent-Patent Citations",
   "ca_count" = "Number of Clinical Article Citations",
@@ -118,23 +118,23 @@ dep_var_labels <- c(
   "num_primary_submissions_w_disease" = "Number of Novel Disease-Relevant Structures", # nolint
 
   # Experimental Output & Quality Metrics
-  "ln1p_resolution" = "Crystallographic Resolution (log-scale)",
-  "ln1p_R_free" = "R-free Value (log-scale)",
+  "ln1p_resolution" = "Crystallographic Resolution",
+  "ln1p_R_free" = "R-free Value",
   "num_pdb_ids" = "Number of PDB Structure IDs",
   "num_pdb_submissions" = "Number of PDB Submissions",
   "num_uniprot_structures" = "Number of UniProt Structures",
 
   # Novelty & Rarity Metrics
   "num_primary_submissions" = "Number of Novel UniProt Structures",
-  "ln1p_organism_rarity_max" = "Max. Organism Rarity (log-scale)",
+  "ln1p_organism_rarity_max" = "Max. Organism Rarity",
   "ln1p_max_tmscore" = "Str. Similarity (TM-score, log-scale)",
-  "ln1p_max_fident" = "Max. Sequence Identity (log-scale)",
+  "ln1p_max_fident" = "Max. Sequence Identity",
   "ln1p_max_score" = "Global Shape Similarity (RCSB, log-scale)",
   "num_uniprot_structures_w_rare_organisms" = "UniProt Structures / Rare Organisms", # nolint
   "num_primary_submissions_w_rare_organisms" = "Primary PDB Submissions / Rare Organisms", # nolint
   "num_uniprot_structures_w_low_similarity" = "UniProt Structures / Low Similarity", # nolint
   "num_primary_submissions_w_low_similarity" = "Primary PDB Submissions / Low Similarity", # nolint
-  "ln1p_maxtmscore_lt_0.405" = "Max TM-score < 0.5"
+  "ln1p_maxtmscore_lt_0.405" = "Novel Proteins (Max TM-score < 0.5)"
 )
 
 # Updated coefficient labels with new naming
@@ -166,7 +166,7 @@ strip_colors <- c(
 grouped_strip_colors <- c(
   "Laboratories" = "#00B2A2",
   "Researchers" = "#FF5836",
-  "Early Career Researchers" = "#FAB61B",
+  # "Early Career Researchers" = "#FAB61B",
   "Citing Papers" = "#1F5DAD"
 )
 
@@ -179,7 +179,7 @@ field_colors <- c(
 # --- Variable definitions ---
 # Set desired orders for variables and names
 subgroup_order <- c("All PDB", "High PDB")
-scope_order <- c("scope_Intent")#"scope_All", "scope_Intent")
+scope_order <- c("scope_All", "scope_Intent")
 field_order <- c(
   # "field_Medicine",
   # "field_Biochemistry",
@@ -187,22 +187,22 @@ field_order <- c(
 )
 
 # Updated observation order - removing ecr
-observation_order <- c("papers", "nonecr", "ecr", "labs")
+observation_order <- c("papers", "nonecr", "labs") # "ecr", "labs")
 
-grouped_observation_order <- c("papers", "nonecr", "labs", "ecr")
+grouped_observation_order <- c("papers", "nonecr", "labs") # , "ecr")
 
 observation_labels <- c(
   "papers" = "Citing Papers",
   "labs" = "Laboratories",
-  "nonecr" = "Researchers",
-  "ecr" = "Early Career Researchers"
+  "nonecr" = "Researchers"
+  # "ecr" = "Early Career Researchers"
 )
 
 grouped_observation_labels <- c(
   "papers" = "Citing Papers",
   "labs" = "Laboratories",
-  "nonecr" = "Researchers",
-  "ecr" = "Early Career Researchers"
+  "nonecr" = "Researchers"
+  # "ecr" = "Early Career Researchers"
 )
 
 # Define core coefficients and strong coefficients
@@ -379,7 +379,8 @@ generate_core_coef_plots <- function(coef_table) { # nolint
           coeffplot,
           width = plot_width,
           height = plot_height,
-          dpi = 300
+          dpi = 300,
+          limitsize = FALSE
         )
       }
     }
@@ -411,7 +412,7 @@ generate_strong_coef_plots <- function(coef_table) { # nolint
       allowed_sources <- c("nonecr", "labs")
     } else if (single_dep_var %in% c(
       "Number of Citations Received",
-      "Field-Weighted Citation Impact (log-scale)",
+      "Field-Weighted Citation Impact",
       "Number of Clinical Article Citations",
       "Number of Patent-Paper Citations"
     )) {
@@ -946,15 +947,337 @@ generate_grouped_strong_coef_plots <- function(coef_table) {
         grouped_plot,
         width = plot_width,
         height = plot_height,
-        dpi = 300
+        dpi = 300,
+        limitsize = FALSE
       )
     }
   }
 }
 
-# Run the function
-generate_core_coef_plots(all_tables_combined)
-generate_strong_coef_plots(all_tables_combined)
-generate_grouped_coef_plots(all_tables_combined)
-generate_grouped_highpdb_coef_plots(all_tables_combined)
-generate_grouped_strong_coef_plots(all_tables_combined)
+# --- Function to generate side-by-side effect plots ---
+generate_sidebyside_effect_plots <- function(coef_table, dep_var_name) {
+  # Filter for the specific dependent variable and core coefficients
+  plot_data <- coef_table %>%
+    filter(
+      dep_var == dep_var_name,
+      treat_var %in% core_coef_vars,
+      source_origin %in% c("papers", "nonecr", "labs"),
+      scope == "scope_All",
+      subgroup == "subgroup_All PDB",
+      field == "field_All Fields"
+    ) %>%
+    mutate(
+      source_origin = factor(source_origin, levels = c("papers", "nonecr", "labs")),
+      source_origin_label = recode(source_origin, !!!observation_labels),
+      treat_var = factor(treat_var, levels = core_coef_vars),
+      treat_var_label = recode(treat_var, !!!coef_labels)
+    ) %>%
+    filter(n_obs >= 1000, estimate >= -10, estimate <= 10)
+
+  # Check if we have data
+  if (nrow(plot_data) == 0) {
+    message("No data found for dep_var: ", dep_var_name)
+    return(NULL)
+  }
+
+  # Calculate % change (for ln1p variables: (exp(estimate) - 1) * 100)
+  plot_data <- plot_data %>%
+    mutate(
+      pct_change = (exp(estimate) - 1) * 100,
+      # Determine significance: check if CI excludes 0
+      is_significant = (conf_low > 0 & conf_high > 0) | (conf_low < 0 & conf_high < 0),
+      # Calculate z-score for significance level
+      z_score = abs(estimate / std_error),
+      # Determine if estimate is positive or negative
+      is_positive = estimate > 0,
+      # Significance level: 0 = not significant (white), higher = darker color
+      # Use z-score to determine darkness: > 2.576 (p<0.01) = darkest, > 1.96 (p<0.05) = medium, else light
+      sig_level = case_when(
+        !is_significant ~ 0, # White (invisible)
+        z_score > 2.576 ~ 3, # Darkest (p < 0.01)
+        z_score > 1.96 ~ 2, # Medium (p < 0.05)
+        TRUE ~ 1 # Light (p < 0.10)
+      ),
+      # Create color key: positive = green, negative = red
+      color_key = paste0(ifelse(is_positive, "green", "red"), "_", sig_level)
+    )
+
+  # Create color scales: white to dark green for positive, white to dark red for negative
+  green_colors <- c("green_0" = "#FFFFFF", "green_1" = "#90EE90", "green_2" = "#32CD32", "green_3" = "#006400")
+  red_colors <- c("red_0" = "#FFFFFF", "red_1" = "#FFB6C1", "red_2" = "#FF6347", "red_3" = "#8B0000")
+  all_colors <- c(green_colors, red_colors)
+
+  # Create the plot - grid layout: rows = treatment variables, cols = groups
+  # Each cell is a single dot
+  effect_plot <- ggplot(plot_data, aes(x = 1, y = 1)) +
+    geom_point(
+      aes(size = abs(estimate), fill = color_key),
+      shape = 21,
+      color = "white",
+      stroke = 1
+    ) +
+    scale_fill_manual(
+      values = all_colors,
+      guide = "none"
+    ) +
+    scale_size_continuous(
+      range = c(15, 35),
+      guide = "none"
+    ) +
+    scale_x_continuous(expand = expansion(mult = 0.3)) +
+    scale_y_continuous(expand = expansion(mult = 0.3)) +
+    geom_text(
+      aes(label = paste0(round(pct_change, 1), "%")),
+      color = "white",
+      size = 18,
+      fontface = "bold"
+    ) +
+    facet_grid(
+      treat_var_label ~ source_origin_label,
+      scales = "free"
+    ) +
+    labs(
+      x = "",
+      y = ""
+    ) +
+    theme_classic() +
+    theme(
+      text = element_text(family = "muli"),
+      axis.text = element_blank(),
+      axis.ticks = element_blank(),
+      axis.title = element_blank(),
+      axis.line = element_blank(),
+      strip.text.x = element_blank(),
+      strip.text.y = element_blank(),
+      plot.title = element_blank(),
+      panel.spacing.x = unit(0.1, "lines"),
+      panel.spacing.y = unit(0.3, "lines"),
+      plot.margin = margin(1, 1, 1, 1, "cm"),
+      panel.grid = element_blank(),
+      panel.border = element_blank()
+    )
+
+  # Create directory and save plot
+  pathdir <- "data/08_reporting/2025Q2/coefplots/sidebyside/"
+  if (!dir.exists(pathdir)) {
+    dir.create(pathdir, recursive = TRUE)
+  }
+
+  # Clean up variable name for filename
+  safe_var_name <- gsub("[^A-Za-z0-9]", "_", dep_var_name)
+  outfile <- paste0(pathdir, safe_var_name, "_sidebyside.png")
+  message("Saving plot to: ", outfile)
+
+  ggsave(
+    outfile,
+    effect_plot,
+    width = 6,
+    height = 6,
+    dpi = 300,
+    limitsize = FALSE
+  )
+
+  return(effect_plot)
+}
+
+# # Run the function
+# generate_core_coef_plots(all_tables_combined)
+# generate_strong_coef_plots(all_tables_combined)
+# generate_grouped_coef_plots(all_tables_combined)
+# generate_grouped_highpdb_coef_plots(all_tables_combined)
+# generate_grouped_strong_coef_plots(all_tables_combined)
+
+# --- Function to generate AlphaFold-only multi-variable effect plots ---
+generate_alphafold_multivar_plots <- function(coef_table, dep_var_names, reverse_color_vars = c()) {
+  # Filter for AlphaFold only and multiple dependent variables
+  plot_data <- coef_table %>%
+    filter(
+      dep_var %in% dep_var_names,
+      treat_var == "af", # Only AlphaFold
+      source_origin %in% c("papers", "nonecr", "labs"),
+      scope == "scope_All",
+      subgroup == "subgroup_All PDB",
+      field == "field_All Fields"
+    ) %>%
+    mutate(
+      source_origin = factor(source_origin, levels = c("papers", "nonecr", "labs")),
+      source_origin_label = recode(source_origin, !!!observation_labels),
+      dep_var_label = recode(dep_var, !!!dep_var_labels),
+      # Wrap long labels into two rows (width of ~30 characters)
+      dep_var_label = sapply(dep_var_label, function(x) {
+        wrapped <- strwrap(x, width = 25)
+        paste(wrapped, collapse = "\n")
+      })
+    ) %>%
+    mutate(
+      dep_var_label = factor(
+        dep_var_label,
+        levels = sapply(unname(dep_var_labels[dep_var_names]), function(x) {
+          wrapped <- strwrap(x, width = 25)
+          paste(wrapped, collapse = "\n")
+        })
+      )
+    ) %>%
+    filter(n_obs >= 1000, estimate >= -10, estimate <= 10)
+
+  # Check if we have data
+  if (nrow(plot_data) == 0) {
+    message("No data found for dep_vars: ", paste(dep_var_names, collapse = ", "))
+    return(NULL)
+  }
+
+  # Calculate % change - check if variable is ln1p
+  plot_data <- plot_data %>%
+    mutate(
+      pct_change = (exp(estimate) - 1) * 100,
+      # Determine significance: check if CI excludes 0
+      is_significant = (conf_low > 0 & conf_high > 0) | (conf_low < 0 & conf_high < 0),
+      # Calculate z-score for significance level
+      z_score = abs(estimate / std_error),
+      # Determine if estimate is positive or negative
+      is_positive = estimate > 0,
+      # Check if this variable should have reversed colors
+      should_reverse = dep_var %in% reverse_color_vars,
+      # Significance level: 0 = not significant (white), higher = darker color
+      sig_level = case_when(
+        !is_significant ~ 0, # White (invisible)
+        z_score > 2.576 ~ 3, # Darkest (p < 0.01)
+        z_score > 1.96 ~ 2, # Medium (p < 0.05)
+        TRUE ~ 1 # Light (p < 0.10)
+      ),
+      # Create color key: positive = green (or red if reversed), negative = red (or green if reversed)
+      color_key = paste0(
+        ifelse(
+          should_reverse,
+          ifelse(is_positive, "red", "green"), # Reversed: positive = red, negative = green
+          ifelse(is_positive, "green", "red") # Normal: positive = green, negative = red
+        ),
+        "_",
+        sig_level
+      ),
+      # Calculate point and text sizes proportional to absolute effect size
+      point_size = 15 + (abs(estimate) / max(abs(estimate), na.rm = TRUE)) * 20, # Range: 15-35
+      text_size = 8 + (abs(estimate) / max(abs(estimate), na.rm = TRUE)) * 8 # Range: 8-16
+    )
+
+  # Create color scales: white to dark green for positive, white to dark red for negative
+  green_colors <- c("green_0" = "#FFFFFF", "green_1" = "#90EE90", "green_2" = "#32CD32", "green_3" = "#006400")
+  red_colors <- c("red_0" = "#FFFFFF", "red_1" = "#FFB6C1", "red_2" = "#FF6347", "red_3" = "#8B0000")
+  all_colors <- c(green_colors, red_colors)
+
+  # Create the plot - grid layout: rows = variables, cols = groups
+  # Each cell is a single dot
+  effect_plot <- ggplot(plot_data, aes(x = 1, y = 1)) +
+    geom_point(
+      aes(size = point_size, fill = color_key),
+      shape = 21,
+      color = "white",
+      stroke = 1
+    ) +
+    scale_fill_manual(
+      values = all_colors,
+      guide = "none"
+    ) +
+    scale_x_continuous(expand = expansion(mult = 0.1)) +
+    scale_y_continuous(expand = expansion(mult = 0.25)) +
+    geom_text(
+      aes(label = paste0(round(pct_change, 1), "%"), size = text_size),
+      color = "white",
+      fontface = "bold"
+    ) +
+    scale_size_identity(guide = "none") +
+    facet_grid(
+      dep_var_label ~ source_origin_label,
+      scales = "free",
+      switch = "y"
+    ) +
+    coord_cartesian(clip = "off") +
+    labs(
+      x = "",
+      y = ""
+    ) +
+    theme_classic() +
+    theme(
+      text = element_text(family = "muli"),
+      axis.text = element_blank(),
+      axis.ticks = element_blank(),
+      axis.title = element_blank(),
+      axis.line = element_blank(),
+      strip.text.x = element_blank(),
+      strip.text.y.left = element_text(size = 28, face = "bold", angle = 0, lineheight = 0.5, margin = margin(0, 0, 0, 0)),
+      strip.text.y = element_text(size = 24, face = "bold", angle = 0, lineheight = 0.5, margin = margin(0, 0, 0, 0)),
+      strip.background.y = element_blank(),
+      strip.placement = "outside",
+      strip.switch.pad.grid = unit(0, "cm"),
+      plot.title = element_blank(),
+      panel.spacing.x = unit(0.1, "lines"),
+      panel.spacing.y = unit(-0.5, "lines"),
+      plot.margin = margin(0.2, 0.5, 0.2, 0.5, "cm"),
+      panel.grid = element_blank(),
+      panel.border = element_blank()
+    )
+
+  # Create directory and save plot
+  pathdir <- "data/08_reporting/2025Q2/coefplots/alphafold_multivar/"
+  if (!dir.exists(pathdir)) {
+    dir.create(pathdir, recursive = TRUE)
+  }
+
+  # Clean up variable names for filename
+  safe_var_names <- paste(sapply(dep_var_names, function(x) gsub("[^A-Za-z0-9]", "_", x)), collapse = "_")
+  outfile <- paste0(pathdir, safe_var_names, "_alphafold.png")
+  message("Saving plot to: ", outfile)
+
+  # Calculate height based on number of variables
+  n_vars <- length(dep_var_names)
+  plot_height <- max(3, n_vars * 1.2)
+
+  ggsave(
+    outfile,
+    effect_plot,
+    width = 6,
+    height = plot_height,
+    dpi = 300,
+    limitsize = FALSE
+  )
+
+  return(effect_plot)
+}
+
+# Generate side-by-side effect plot for ln1p_maxtmscore_lt_0.405
+# generate_sidebyside_effect_plots(all_tables_combined, "ln1p_maxtmscore_lt_0.405")
+
+# Generate AlphaFold multi-variable plot
+# For ln1p_resolution: positive (worse resolution) = red, negative (better resolution) = green
+generate_alphafold_multivar_plots(
+  all_tables_combined,
+  c(
+    "num_pdb_submissions",
+    "ln1p_maxtmscore_lt_0.405",
+    "num_diseases",
+    "ln1p_resolution"
+  ),
+  # reverse_color_vars = c("ln1p_resolution")
+)
+
+# Generate AlphaFold productivity and impact plot
+# Variables: publication volumes, citation counts, and field-weighted citation index
+generate_alphafold_multivar_plots(
+  all_tables_combined,
+  c(
+    "num_publications",
+    "cited_by_count",
+    "ln1p_fwci"
+  )
+)
+
+# Generate AlphaFold translational impact plot
+# Variables: disease relevance, clinical citations, patent-to-paper citations, patent-to-patent citations
+generate_alphafold_multivar_plots(
+  all_tables_combined,
+  c(
+    "mesh_C",
+    "ca_count",
+    "patent_count"
+  )
+)
